@@ -7,10 +7,16 @@
     "build": "next build",
     "build:production": "pnpm build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:styles": "stylelint \"**/*.{css,scss}\"",
+    "lint:styles:fix": "stylelint \"**/*.{css,scss}\" --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm lint && pnpm lint:styles && pnpm format:check && pnpm typecheck && pnpm build"
   },
   "dependencies": {
-    "-": "^0.0.1",
     "@apollo/client": "^4.1.9",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -38,7 +44,12 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
     "socket.io-client": "^4.8.3",
+    "stylelint": "^17.11.1",
+    "stylelint-config-clean-order": "^8.0.1",
+    "stylelint-config-standard-scss": "^17.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
