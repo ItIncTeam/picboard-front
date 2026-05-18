@@ -1,3 +1,3 @@
 export default function Page() {
-  return <h1>settings / profile</h1>;
+  return <h1>settings / profile</h1>
 }

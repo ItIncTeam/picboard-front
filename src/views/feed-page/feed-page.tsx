@@ -1,4 +1,3 @@
-
 export function FeedPage() {
-    return <h1>feed</h1>
+  return <h1>feed</h1>
 }
