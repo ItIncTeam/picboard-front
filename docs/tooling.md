@@ -20,6 +20,9 @@ pnpm format:check
 pnpm typecheck
 pnpm build
 pnpm check
+pnpm hooks:install
+pnpm check:pre-commit
+pnpm check:pre-push
 ```
 
 ## Main Check
@@ -37,6 +40,36 @@ pnpm check
 3. Prettier check.
 4. TypeScript check.
 5. Next.js production build.
+
+## Git Hooks
+
+Hooks находятся в `.husky/`. После `pnpm install` команда `prepare` настраивает Git:
+
+```bash
+git config core.hooksPath .husky
+```
+
+Если hooks не подключились автоматически, запустите:
+
+```bash
+pnpm hooks:install
+```
+
+`pre-commit` — легкая проверка перед коммитом. Она запускает автофиксеры только для staged-файлов:
+Prettier, ESLint `--fix` и Stylelint `--fix`. Исправленные файлы автоматически добавляются обратно
+в commit.
+
+Hook не проверяет весь проект, чтобы не блокировать маленькие рабочие коммиты старыми ошибками.
+
+`pre-push` — строгая проверка перед отправкой ветки на сервер. Она запускает:
+
+1. ESLint.
+2. Stylelint.
+3. Prettier check.
+4. TypeScript check.
+5. Next.js production build.
+
+Если hook падает, в выводе есть команда, причина остановки и короткая подсказка, что исправить.
 
 ## Rules
 

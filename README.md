@@ -44,6 +44,9 @@ pnpm format:check
 pnpm typecheck
 pnpm build
 pnpm check
+pnpm hooks:install
+pnpm check:pre-commit
+pnpm check:pre-push
 ```
 
 Перед PR по умолчанию запускайте:
@@ -51,6 +54,21 @@ pnpm check
 ```bash
 pnpm check
 ```
+
+## Git hooks
+
+Hooks лежат в `.husky/` и подключаются после установки зависимостей через `prepare`. Если hooks не
+срабатывают локально, запустите:
+
+```bash
+pnpm hooks:install
+```
+
+Что проверяется:
+
+- `pre-commit` — легкая проверка: автофикс Prettier, ESLint и Stylelint только для staged-файлов.
+- `pre-push` — строгая проверка перед отправкой на сервер: ESLint, Stylelint, Prettier,
+  TypeScript и production build.
 
 ## Документация
 
@@ -68,6 +86,7 @@ pnpm check
 - `docs/git-flow.md` — ветки, commits, rebase и push.
 - `docs/pull-request.md` — требования к PR.
 
+Для AI-агентов короткая входная инструкция находится в `AGENTS.md`.
 
 ## Next.js
 
