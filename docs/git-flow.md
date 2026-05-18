@@ -1,5 +1,8 @@
 # Git Flow
 
+Основной источник правил: [Picboard Frontend Style Guide](./style_guide_full.md). Этот файл
+описывает рабочий процесс с ветками и коммитами.
+
 ## Branches
 
 Одна задача — одна ветка.
@@ -94,3 +97,4 @@ git push --force
 - Не смешивайте feature, refactor и formatting в одном PR без необходимости.
 - Не держите большие PR.
 - Не меняйте `shared/ui` без согласования, если изменение влияет на другие команды.
+- После rebase используйте только `git push --force-with-lease`.

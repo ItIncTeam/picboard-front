@@ -1,5 +1,8 @@
 # Code Style
 
+Основной источник правил: [Picboard Frontend Style Guide](./style_guide_full.md). Этот файл
+расшифровывает правила для кода и не должен им противоречить.
+
 ## Naming
 
 - Используйте понятные имена без сокращений.
@@ -103,7 +106,8 @@ export const Component = ({ value }: Props) => {
 - Избегайте default exports.
 - Используйте named exports для компонентов, hooks, utils и model-кода.
 - Default export допустим для Next.js special files, framework configs, `React.lazy` и library API,
-  если этого требует инструмент.
+  если этого требует инструмент. Для Next.js special files сначала проверьте
+  `node_modules/next/dist/docs/`.
 
 ```ts
 export { useDebounce } from './useDebounce'

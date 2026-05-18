@@ -1,5 +1,8 @@
 # Pull Request
 
+Основной источник правил: [Picboard Frontend Style Guide](./style_guide_full.md). Этот файл
+помогает проверить готовность изменений к review.
+
 ## Title
 
 Формат:
@@ -35,6 +38,7 @@ pnpm check
 - [ ] Нет новых зависимостей без причины.
 - [ ] `pnpm check` проходит локально.
 - [ ] UI-изменения приложены скриншотами.
+- [ ] Для изменений Next.js API/conventions проверены локальные docs `node_modules/next/dist/docs/`.
 - [ ] Нет конфликтов с `dev`.
 
 ## Merge

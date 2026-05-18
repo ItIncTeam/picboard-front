@@ -1,5 +1,8 @@
 # Tooling
 
+Основной источник правил: [Picboard Frontend Style Guide](./style_guide_full.md). Этот файл
+фиксирует команды и ответственность инструментов.
+
 ## Responsibilities
 
 - Prettier отвечает только за formatting.
@@ -10,6 +13,7 @@
 ## Commands
 
 ```bash
+pnpm dev
 pnpm lint
 pnpm lint:styles
 pnpm format:check
@@ -40,6 +44,8 @@ pnpm check
 - Не добавляйте форматирующие правила в ESLint, если за них отвечает Prettier.
 - Не добавляйте новые зависимости для tooling без необходимости.
 - Не усложняйте config: junior/middle разработчик должен быстро понять, что проверяется.
+- При изменении Next.js config или build behavior проверьте локальные docs:
+  `node_modules/next/dist/docs/`.
 
 ## Known Local Issue
 
