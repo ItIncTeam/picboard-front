@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Picboard Frontend
 
-## Getting Started
+Frontend для Picboard — социальной web-платформы для публикации мультимедийного контента,
+профилей, ленты, подписок, комментариев, сообщений, уведомлений и платных подписок.
 
-First, run the development server:
+Проект разрабатывается как адаптивное Next.js приложение. Продуктовые границы и рабочие правила
+зафиксированы в `docs/`.
+
+## Стек
+
+- Next.js 16
+- React 19
+- TypeScript
+- GraphQL / Apollo Client
+- Redux Toolkit
+- React Hook Form
+- Zod
+- Sass / Tailwind CSS
+- ESLint, Prettier, Stylelint
+
+## Быстрый старт
+
+Установите зависимости:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Запустите dev server:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Откройте `http://localhost:3000`.
 
-## Learn More
+## Команды
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm dev
+pnpm lint
+pnpm lint:styles
+pnpm format:check
+pnpm typecheck
+pnpm build
+pnpm check
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Перед PR по умолчанию запускайте:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm check
+```
 
-## Deploy on Vercel
+## Документация
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Главная точка входа для правил команды:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `docs/style_guide_full.md`
+
+Дополнительные документы:
+
+- `docs/project-brief.md` — цели проекта, scope, out-of-scope, ограничения и milestones.
+- `docs/work-instructions.md` — рабочий порядок для команды и AI-агента.
+- `docs/code-style.md` — naming, TypeScript, React, imports/exports, комментарии.
+- `docs/architecture.md` — архитектурный подход и правила слоев.
+- `docs/tooling.md` — ответственность инструментов и команды проверки.
+- `docs/git-flow.md` — ветки, commits, rebase и push.
+- `docs/pull-request.md` — требования к PR.
+
+
+## Next.js
+
+В проекте используется версия Next.js с возможными breaking changes относительно привычных API и
+conventions. Перед изменением routing, layouts, metadata, server/client components, config или
+framework special files проверяйте локальные документы:
+
+```text
+node_modules/next/dist/docs/
+```
+
+## Рабочие правила
+
+- Держите изменения маленькими и связанными с одной задачей.
+- Для продуктовых задач сверяйтесь с `docs/project-brief.md`.
+- Не добавляйте зависимости без необходимости.
+- Не смешивайте feature, refactor и formatting в одном PR без причины.
+- Используйте strict TypeScript, named exports и не используйте `React.FC`.
+- В summary или PR указывайте, что изменилось, что проверено и какие риски остались.
