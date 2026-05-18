@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config core.hooksPath .husky || true",
+    "hooks:install": "git config core.hooksPath .husky",
+    "check:pre-commit": "sh scripts/check-pre-commit.sh",
+    "check:pre-push": "sh scripts/check-pre-push.sh",
     "dev": "next dev",
     "build": "next build",
     "build:production": "pnpm build",

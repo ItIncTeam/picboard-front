@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Light local check before a commit.
+# Runs only staged-file formatting so commits stay fast and predictable.
+pnpm check:pre-commit
