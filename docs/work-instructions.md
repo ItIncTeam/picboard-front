@@ -14,6 +14,8 @@
 ## Перед изменениями
 
 - Прочитайте `docs/style_guide_full.md` и релевантные документы из `docs/`.
+- Для задач с продуктовым влиянием проверьте `docs/project-brief.md`: входит ли изменение в scope
+  и не затрагивает ли out-of-scope.
 - Сначала изучите существующий код, конфиги и локальные conventions модуля.
 - Для Next.js API и framework conventions проверьте `node_modules/next/dist/docs/`.
 - Следуйте текущей архитектуре проекта.

@@ -10,6 +10,7 @@
 
 ## Документы
 
+- [Project Brief](./project-brief.md) — цели проекта, scope, ограничения, lifecycle и milestones.
 - [Code Style](./code-style.md) — naming, TypeScript, React, imports/exports, комментарии.
 - [Architecture](./architecture.md) — FSD-подход, структура модулей, shared-код.
 - [Tooling](./tooling.md) — ESLint, Prettier, Stylelint, TypeScript и команды проверки.
@@ -32,11 +33,13 @@
 ## Рабочий порядок
 
 1. Перед изменениями прочитайте существующий код, конфиги и релевантные документы из этой папки.
-2. Для Next.js API, роутинга, metadata, server/client components и framework special files сначала
+2. Для задач с продуктовым влиянием проверьте [Project Brief](./project-brief.md): scope,
+   out-of-scope, допущения и ограничения.
+3. Для Next.js API, роутинга, metadata, server/client components и framework special files сначала
    проверьте локальные docs: `node_modules/next/dist/docs/`.
-3. Делайте минимальное изменение в стиле текущего модуля.
-4. После изменения запустите релевантную проверку. Перед PR по умолчанию нужен `pnpm check`.
-5. В PR или summary явно укажите, что изменилось, что проверено и какие риски остались.
+4. Делайте минимальное изменение в стиле текущего модуля.
+5. После изменения запустите релевантную проверку. Перед PR по умолчанию нужен `pnpm check`.
+6. В PR или summary явно укажите, что изменилось, что проверено и какие риски остались.
 
 ## Быстрая проверка
 
