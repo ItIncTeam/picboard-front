@@ -2,8 +2,8 @@
 
 set -u
 
-echo "🔎 Pre-commit: fixing staged files"
-echo "   This hook is intentionally light: it runs autofixers only for files in this commit."
+echo "🔎 Pre-commit: проверяю staged-файлы"
+echo "   Хук легкий: запускает автоисправления только для файлов текущего коммита."
 echo ""
 
 files_file=$(mktemp)
@@ -12,7 +12,7 @@ trap 'rm -f "$files_file"' EXIT
 git diff --cached --name-only --diff-filter=ACMR > "$files_file"
 
 if [ ! -s "$files_file" ]; then
-  echo "✅ No staged files to check."
+  echo "✅ Нет staged-файлов для проверки."
   exit 0
 fi
 
@@ -28,8 +28,8 @@ while IFS= read -r file; do
       if ! pnpm exec prettier --write "$file" || ! git add "$file"; then
         failed=1
         echo ""
-        echo "❌ Prettier could not format or stage: $file"
-        echo "   Check the error above, fix the file manually, stage it, then commit again."
+        echo "❌ Prettier не смог отформатировать или добавить файл: $file"
+        echo "   Проверь ошибку выше, поправь файл вручную, добавь его в stage и повтори commit."
         echo ""
       fi
       ;;
@@ -43,8 +43,8 @@ while IFS= read -r file; do
       if ! pnpm exec eslint --fix "$file" || ! git add "$file"; then
         failed=1
         echo ""
-        echo "❌ ESLint could not fix or stage: $file"
-        echo "   Some issues need a manual code change. Fix them, stage the file, and commit again."
+        echo "❌ ESLint не смог исправить или добавить файл: $file"
+        echo "   Часть ошибок требует ручной правки. Исправь файл, добавь его в stage и повтори commit."
         echo ""
       fi
       ;;
@@ -58,8 +58,8 @@ while IFS= read -r file; do
       if ! pnpm exec stylelint --fix "$file" || ! git add "$file"; then
         failed=1
         echo ""
-        echo "❌ Stylelint could not fix or stage: $file"
-        echo "   Some style issues need a manual change. Fix them, stage the file, and commit again."
+        echo "❌ Stylelint не смог исправить или добавить файл: $file"
+        echo "   Часть ошибок требует ручной правки. Исправь файл, добавь его в stage и повтори commit."
         echo ""
       fi
       ;;
@@ -67,14 +67,15 @@ while IFS= read -r file; do
 done < "$files_file"
 
 if [ "$fixed" -eq 0 ]; then
-  echo "✅ No staged files need autofix."
+  echo "✅ Staged-файлы не требуют автоисправлений."
   exit 0
 fi
 
 if [ "$failed" -ne 0 ]; then
-  echo "🚫 Commit blocked."
-  echo "   Fix the issues above, stage the changes, and commit again."
+  echo "🚫 Commit остановлен."
+  echo "   Исправь ошибки выше, добавь изменения в stage и повтори commit."
   exit 1
 fi
 
-echo "✅ Pre-commit passed: staged files were autofixed and staged."
+echo "✅ Pre-commit пройден: staged-файлы исправлены и добавлены обратно."
+echo "🎉 Commit можно завершать."
