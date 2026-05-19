@@ -41,7 +41,6 @@
     "@graphql-codegen/cli": "^7.0.0",
     "@graphql-codegen/typescript": "^6.0.1",
     "@graphql-codegen/typescript-operations": "^6.0.1",
-    "@tailwindcss/postcss": "^4",
     "@types/graphql": "^14.5.0",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -54,7 +53,6 @@
     "stylelint": "^17.11.1",
     "stylelint-config-clean-order": "^8.0.1",
     "stylelint-config-standard-scss": "^17.0.0",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }
