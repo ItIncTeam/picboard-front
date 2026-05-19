@@ -6,7 +6,7 @@ console.log('🚀 Pre-push: проверяю ветку перед отправ�
 console.log('   Хук строгий: ветка сейчас будет отправлена на сервер.')
 console.log('')
 
-const result = spawnSync('pnpm', ['check'], {
+const result = spawnSync('pnpm', ['check:verify'], {
   shell: process.platform === 'win32',
   stdio: 'inherit',
 })

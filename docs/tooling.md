@@ -20,6 +20,7 @@ pnpm format:check
 pnpm typecheck
 pnpm build
 pnpm check
+pnpm check:verify
 pnpm hooks:install
 pnpm check:pre-commit
 pnpm check:pre-push
@@ -35,11 +36,25 @@ pnpm check
 
 Она последовательно запускает:
 
-1. ESLint.
-2. Stylelint.
-3. Prettier check.
-4. TypeScript check.
-5. Next.js production build.
+1. Prettier write для форматирования проекта.
+2. ESLint `--fix` для автоисправления TypeScript/React-кода.
+3. Stylelint `--fix` для автоисправления CSS/SCSS.
+4. ESLint check для оставшихся ошибок.
+5. Stylelint check для оставшихся CSS/SCSS-ошибок.
+6. Prettier check.
+7. TypeScript check.
+8. Next.js production build.
+
+`pnpm check` может менять файлы в рабочем дереве. После запуска проверьте diff перед commit.
+
+Для CI и pre-push используется read-only вариант:
+
+```bash
+pnpm check:verify
+```
+
+Он запускает только проверки без автоисправлений, чтобы push не уходил с незакоммиченными
+локальными изменениями.
 
 ## Git Hooks
 
@@ -61,7 +76,7 @@ Prettier, ESLint `--fix` и Stylelint `--fix`. Исправленные файл
 
 Hook не проверяет весь проект, чтобы не блокировать маленькие рабочие коммиты старыми ошибками.
 
-`pre-push` — строгая проверка перед отправкой ветки на сервер. Она запускает:
+`pre-push` — строгая read-only проверка перед отправкой ветки на сервер. Она запускает:
 
 1. ESLint.
 2. Stylelint.

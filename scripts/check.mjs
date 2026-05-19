@@ -8,7 +8,27 @@ const runPnpm = (args) =>
     stdio: 'inherit',
   })
 
-const steps = [
+const verifyOnly = process.argv.includes('--verify-only')
+
+const fixSteps = [
+  {
+    name: 'Prettier fix',
+    args: ['format'],
+    hint: 'Prettier не смог отформатировать проект. Проверь ошибку выше.',
+  },
+  {
+    name: 'ESLint fix',
+    args: ['lint:fix'],
+    hint: 'ESLint не смог автоматически исправить часть файлов. Проверь ошибку выше.',
+  },
+  {
+    name: 'Stylelint fix',
+    args: ['lint:styles:fix'],
+    hint: 'Stylelint не смог автоматически исправить CSS/SCSS. Проверь ошибку выше.',
+  },
+]
+
+const verifySteps = [
   {
     name: 'ESLint',
     args: ['lint'],
@@ -57,10 +77,20 @@ const runStep = ({ name, args, hint }) => {
   process.exit(result.status ?? 1)
 }
 
-console.log('🚀 Check: запускаю полную проверку проекта')
+console.log(verifyOnly ? '🚀 Check: проверяю проект' : '🚀 Check: автоисправляю и проверяю проект')
 console.log('')
 
-steps.forEach(runStep)
+if (!verifyOnly) {
+  console.log('🛠 Автоисправления')
+  console.log('')
+
+  fixSteps.forEach(runStep)
+}
+
+console.log('🔎 Проверки')
+console.log('')
+
+verifySteps.forEach(runStep)
 
 console.log('✅ Check пройден: проект готов к отправке.')
 console.log('🎉 Все проверки завершились успешно.')
