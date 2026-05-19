@@ -17,8 +17,8 @@
     "lint:styles:fix": "stylelint \"**/*.{css,scss}\" --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
-    "check": "pnpm lint && pnpm lint:styles && pnpm format:check && pnpm typecheck && pnpm build"
+    "typecheck": "rm -rf .next/dev/types && next typegen && tsc --noEmit",
+    "check": "sh scripts/check.sh"
   },
   "dependencies": {
     "@apollo/client": "^4.1.9",
