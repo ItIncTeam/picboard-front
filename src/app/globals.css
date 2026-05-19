@@ -1,28 +1,23 @@
-@import 'tailwindcss';
+@import '../shared/styles/colors.css';
+@import '../shared/styles/typography.css';
 
-:root {
-  --background: #fff;
-  --foreground: #171717;
-  --font-family-sans: arial, helvetica, sans-serif;
-  --font-family-mono: 'SFMono-Regular', consolas, 'Liberation Mono', monospace;
-}
+html {
+  height: 100%;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-family-sans);
-  --font-mono: var(--font-family-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: var(--font-family-sans);
-  color: var(--foreground);
-  background: var(--background);
+  display: flex;
+  flex-direction: column;
+
+  min-height: 100%;
+
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text-primary);
+
+  background: var(--color-background);
 }
