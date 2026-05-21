@@ -1,0 +1,23 @@
+@import '../shared/styles/colors.css';
+@import '../shared/styles/typography.css';
+
+html {
+  height: 100%;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 100%;
+
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text-primary);
+
+  background: var(--color-background);
+}

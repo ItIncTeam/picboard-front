@@ -1,0 +1,180 @@
+.root {
+  --checkbox-size: 18px;
+  --hover-size: 36px;
+
+  cursor: pointer;
+
+  position: relative;
+
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* =========================================================
+   HOVER LAYER
+   ========================================================= */
+
+.root::before {
+  pointer-events: none;
+  content: '';
+
+  position: absolute;
+  top: 50%;
+  left: calc(var(--checkbox-size) / 2);
+  transform: translate(-50%, -50%);
+
+  width: var(--hover-size);
+  height: var(--hover-size);
+  border-radius: 50%;
+
+  opacity: 0;
+  background: transparent;
+
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+}
+
+/* =========================================================
+   CONTROL
+   ========================================================= */
+
+.control {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
+  padding: 0;
+  border: 2px solid var(--color-light-100);
+  border-radius: 4px;
+
+  background: transparent;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+/* =========================================================
+   UNCHECKED
+   ========================================================= */
+
+.control[data-state='unchecked']:not([data-disabled]) {
+  border-color: var(--color-light-100);
+  background: transparent;
+}
+
+/* =========================================================
+   CHECKED
+   ========================================================= */
+
+.control[data-state='checked']:not([data-disabled]) {
+  border-color: var(--color-light-100);
+  background: var(--color-light-100);
+}
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+.root:hover:has(.control:not([data-disabled]))::before {
+  opacity: 1;
+  background: var(--color-dark-300);
+}
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+.root:has(.control:focus-visible:not([data-disabled]))::before {
+  opacity: 1;
+  background: var(--color-dark-500);
+}
+
+/* =========================================================
+   ACTIVE
+   ========================================================= */
+
+.root:active:has(.control:not([data-disabled]))::before {
+  opacity: 1;
+  background: var(--color-dark-100);
+}
+
+/* =========================================================
+   DISABLED
+   ========================================================= */
+
+.root:has(.control[data-disabled]) {
+  cursor: not-allowed;
+}
+
+.control[data-state='unchecked'][data-disabled] {
+  border-color: var(--color-light-900);
+  background: transparent;
+}
+
+.control[data-state='checked'][data-disabled] {
+  border-color: var(--color-light-700);
+  background: var(--color-light-700);
+}
+
+/* =========================================================
+   INDICATOR
+   ========================================================= */
+
+.indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+}
+
+/* =========================================================
+   ICON
+   ========================================================= */
+
+.checkIcon {
+  display: block;
+  flex-shrink: 0;
+
+  width: 18px;
+  height: 18px;
+
+  color: var(--color-background);
+}
+
+.control[data-state='checked'][data-disabled] .checkIcon {
+  color: var(--color-dark-100);
+}
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+.label {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  color: var(--color-light-100);
+}
+
+.root:has(.control[data-disabled]) .label {
+  color: var(--color-light-900);
+}
+
+/* =========================================================
+   REMOVE DEFAULT OUTLINE
+   ========================================================= */
+
+.control:focus-visible {
+  outline: none;
+}

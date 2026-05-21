@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Stronger safety net before code leaves the machine.
+# Runs the same checks reviewers and CI expect before accepting a branch.
+pnpm check:pre-push
