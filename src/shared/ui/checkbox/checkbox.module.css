@@ -2,10 +2,7 @@
   --checkbox-size: 18px;
   --hover-size: 36px;
 
-  cursor: pointer;
-
   position: relative;
-
   display: inline-flex;
   gap: 12px;
   align-items: center;
@@ -109,12 +106,28 @@
 }
 
 /* =========================================================
-   DISABLED
+   CURSOR
    ========================================================= */
+
+.root:has(.control:not([data-disabled])) {
+  cursor: pointer;
+}
+
+.root:has(.control:not([data-disabled])) .control {
+  cursor: pointer;
+}
 
 .root:has(.control[data-disabled]) {
   cursor: not-allowed;
 }
+
+.control[data-disabled] {
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   DISABLED
+   ========================================================= */
 
 .control[data-state='unchecked'][data-disabled] {
   border-color: var(--color-light-900);
