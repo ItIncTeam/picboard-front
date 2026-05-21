@@ -67,8 +67,9 @@ pnpm hooks:install
 Что проверяется:
 
 - `pre-commit` — легкая проверка: автофикс Prettier, ESLint и Stylelint только для staged-файлов.
-- `pre-push` — строгая проверка перед отправкой на сервер: ESLint, Stylelint, Prettier,
-  TypeScript и production build.
+- `pre-push` — строгая проверка перед отправкой на сервер: сначала Prettier форматирует проект и
+  останавливает push, если появились изменения, затем запускаются ESLint, Stylelint, Prettier
+  check, TypeScript и production build.
 
 ## Документация
 

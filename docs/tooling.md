@@ -76,13 +76,16 @@ Prettier, ESLint `--fix` и Stylelint `--fix`. Исправленные файл
 
 Hook не проверяет весь проект, чтобы не блокировать маленькие рабочие коммиты старыми ошибками.
 
-`pre-push` — строгая read-only проверка перед отправкой ветки на сервер. Она запускает:
+`pre-push` — строгая проверка перед отправкой ветки на сервер. Она запускает:
 
-1. ESLint.
-2. Stylelint.
-3. Prettier check.
-4. TypeScript check.
-5. Next.js production build.
+1. Prettier write для форматирования проекта.
+2. Diff check: если Prettier изменил файлы, push останавливается, чтобы форматирование попало в
+   commit.
+3. ESLint.
+4. Stylelint.
+5. Prettier check.
+6. TypeScript check.
+7. Next.js production build.
 
 Если hook падает, в выводе есть команда, причина остановки и короткая подсказка, что исправить.
 
