@@ -1,0 +1,249 @@
+.root {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  width: 300px;
+
+  color: var(--color-light-100);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  line-height: 24px;
+  color: var(--color-light-900);
+}
+
+.input {
+  all: unset;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-dark-300);
+  border-radius: 2px;
+
+  font-size: var(--font-size-md);
+  line-height: 24px;
+  color: var(--color-light-100);
+
+  background-color: var(--color-dark-500);
+
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-dark-100);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-accent-500);
+  }
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    cursor: default;
+    color: var(--color-light-900);
+    background-color: var(--color-dark-500);
+  }
+}
+
+.inputError {
+  border-color: var(--color-danger-500);
+}
+
+.inputIcon {
+  width: 24px;
+  height: 24px;
+  color: currentcolor;
+}
+
+.errorMessage {
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  line-height: 16px;
+  color: var(--color-danger-300);
+}
+
+.popup {
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  box-sizing: border-box;
+  width: 300px;
+  padding: 16px 24px;
+  border: 1px solid var(--color-dark-300);
+  border-radius: 2px;
+
+  background-color: var(--color-dark-500);
+}
+
+.header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  padding-left: 8px;
+}
+
+.monthTitle {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  line-height: 24px;
+  color: var(--color-light-100);
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+}
+
+.navigationButton {
+  all: unset;
+
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  color: var(--color-light-100);
+
+  background-color: var(--color-dark-100);
+
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--color-dark-300);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-500);
+    outline-offset: 2px;
+  }
+}
+
+.weekDays,
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  width: 100%;
+}
+
+.weekDay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px;
+
+  font-size: var(--font-size-md);
+  line-height: 24px;
+  color: var(--color-light-900);
+}
+
+.dayCell {
+  all: unset;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 36px;
+  padding: 4px;
+  border-radius: 18px;
+
+  color: var(--color-light-100);
+
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover .day {
+    background-color: var(--color-dark-100);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-500);
+    outline-offset: -2px;
+  }
+}
+
+.day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+
+  font-size: var(--font-size-md);
+  line-height: 24px;
+  color: var(--color-light-100);
+  text-align: center;
+}
+
+.weekend {
+  color: var(--color-danger-300);
+}
+
+.otherMonth {
+  color: var(--color-light-900);
+}
+
+.today {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent-500);
+}
+
+.selectedDay .day {
+  color: var(--color-light-100);
+  background-color: var(--color-accent-900);
+}
+
+.rangeStart {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  background-color: var(--color-accent-900);
+}
+
+.rangeMiddle {
+  border-radius: 0;
+  background-color: var(--color-accent-900);
+}
+
+.rangeEnd {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  background-color: var(--color-accent-900);
+}
+
+.rangeStart .day,
+.rangeEnd .day {
+  color: var(--color-light-100);
+  background-color: var(--color-accent-500);
+}
