@@ -1,0 +1,17 @@
+name: Main PR Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  enforce-pr-from-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR source branch
+        run: |
+          if [[ "${GITHUB_HEAD_REF}" != "dev" ]]; then
+            echo "PR into main must come from 'dev' branch only."
+            exit 1
+          fi
