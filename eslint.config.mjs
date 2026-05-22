@@ -36,7 +36,7 @@ export const eslintConfig = defineConfig([
       'no-console': 'off',
     },
   },
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'storybook-static/**', 'next-env.d.ts']),
   prettier,
   ...storybook.configs['flat/recommended'],
 ])

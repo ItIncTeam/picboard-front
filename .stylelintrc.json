@@ -1,6 +1,13 @@
 {
   "extends": ["stylelint-config-standard-scss", "stylelint-config-clean-order"],
-  "ignoreFiles": [".next/**", "build/**", "coverage/**", "node_modules/**", "out/**"],
+  "ignoreFiles": [
+    ".next/**",
+    "build/**",
+    "coverage/**",
+    "node_modules/**",
+    "out/**",
+    "storybook-static/**"
+  ],
   "rules": {
     "custom-property-pattern": null,
     "selector-class-pattern": null,

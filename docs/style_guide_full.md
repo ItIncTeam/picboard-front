@@ -13,6 +13,7 @@
 - [Project Brief](./project-brief.md) — цели проекта, scope, ограничения, lifecycle и milestones.
 - [Code Style](./code-style.md) — naming, TypeScript, React, imports/exports, комментарии.
 - [Architecture](./architecture.md) — FSD-подход, структура модулей, shared-код.
+- [Figma Workflow](./figma-workflow.md) — порядок работы с Figma-макетами и Storybook-сверкой.
 - [Tooling](./tooling.md) — ESLint, Prettier, Stylelint, TypeScript и команды проверки.
 - [Git Flow](./git-flow.md) — ветки, commits, rebase, push.
 - [Pull Request](./pull-request.md) — требования перед PR и checklist.
