@@ -7,7 +7,6 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 #Копируем lock-файл и манифест пакетов
 COPY pnpm-lock.yaml package.json ./
-
 #Устанавливаем зависимости (prod + dev для билда)
 RUN pnpm install --frozen-lockfile
 
