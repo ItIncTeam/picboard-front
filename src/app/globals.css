@@ -1,11 +1,32 @@
 @import '../shared/styles/colors.css';
 @import '../shared/styles/typography.css';
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   height: 100%;
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
 }
 
 body {
@@ -20,4 +41,39 @@ body {
   color: var(--color-text-primary);
 
   background: var(--color-background);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+picture,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

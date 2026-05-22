@@ -1,4 +1,4 @@
-.root {
+.datePicker {
   position: relative;
 
   display: flex;
@@ -10,13 +10,17 @@
   color: var(--color-light-100);
 }
 
-.label {
+.datePicker__label {
   font-size: var(--font-size-sm);
   line-height: 24px;
   color: var(--color-light-900);
 }
 
-.input {
+.datePicker__label_disabled {
+  color: var(--color-dark-100);
+}
+
+.datePicker__input {
   all: unset;
 
   cursor: pointer;
@@ -42,40 +46,44 @@
     border-color 0.15s ease,
     color 0.15s ease;
 
-  &:hover {
+  &:hover,
+  &.datePicker__input_hover {
     border-color: var(--color-dark-100);
   }
 
-  &:focus-visible {
-    border-color: var(--color-accent-500);
-  }
-
-  &:disabled,
-  &[aria-disabled='true'] {
-    cursor: default;
-    color: var(--color-light-900);
-    background-color: var(--color-dark-500);
+  &:focus-visible,
+  &.datePicker__input_focus {
+    padding: 5px 11px;
+    border: 2px solid var(--color-accent-700);
   }
 }
 
-.inputError {
+.datePicker__input_error {
   border-color: var(--color-danger-500);
+  color: var(--color-danger-500);
 }
 
-.inputIcon {
+.datePicker__input_disabled {
+  cursor: default;
+  border-color: var(--color-dark-300);
+  color: var(--color-light-900);
+  background-color: var(--color-dark-500);
+}
+
+.datePicker__inputIcon {
   width: 24px;
   height: 24px;
   color: currentcolor;
 }
 
-.errorMessage {
+.datePicker__errorMessage {
   margin-top: 2px;
   font-size: var(--font-size-xs);
   line-height: 16px;
   color: var(--color-danger-300);
 }
 
-.popup {
+.datePicker__popup {
   z-index: 1;
 
   display: flex;
@@ -91,7 +99,7 @@
   background-color: var(--color-dark-500);
 }
 
-.header {
+.datePicker__header {
   display: flex;
   gap: 16px;
   align-items: center;
@@ -101,19 +109,19 @@
   padding-left: 8px;
 }
 
-.monthTitle {
+.datePicker__monthTitle {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
   line-height: 24px;
   color: var(--color-light-100);
 }
 
-.navigation {
+.datePicker__navigation {
   display: flex;
   align-items: center;
 }
 
-.navigationButton {
+.datePicker__navigationButton {
   all: unset;
 
   cursor: pointer;
@@ -142,14 +150,14 @@
   }
 }
 
-.weekDays,
-.calendarGrid {
+.datePicker__weekDays,
+.datePicker__calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   width: 100%;
 }
 
-.weekDay {
+.datePicker__weekDay {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +169,7 @@
   color: var(--color-light-900);
 }
 
-.dayCell {
+.datePicker__dayCell {
   all: unset;
 
   cursor: pointer;
@@ -182,17 +190,24 @@
     background-color 0.15s ease,
     color 0.15s ease;
 
-  &:hover .day {
-    background-color: var(--color-dark-100);
+  &:hover,
+  &.datePicker__dayCell_hover {
+    background-color: var(--color-accent-700);
   }
 
-  &:focus-visible {
-    outline: 2px solid var(--color-accent-500);
-    outline-offset: -2px;
+  &:active,
+  &.datePicker__dayCell_active {
+    background-color: var(--color-accent-900);
+  }
+
+  &:focus-visible,
+  &.datePicker__dayCell_focus {
+    padding: 2px;
+    border: 2px solid var(--color-accent-300);
   }
 }
 
-.day {
+.datePicker__day {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,43 +222,54 @@
   text-align: center;
 }
 
-.weekend {
+.datePicker__day_weekend {
   color: var(--color-danger-300);
 }
 
-.otherMonth {
+.datePicker__day_otherMonth {
   color: var(--color-light-900);
 }
 
-.today {
+.datePicker__day_today {
   font-weight: var(--font-weight-bold);
   color: var(--color-accent-500);
 }
 
-.selectedDay .day {
+.datePicker__dayCell_hover .datePicker__day_today,
+.datePicker__dayCell:hover .datePicker__day_today {
+  color: var(--color-accent-100);
+}
+
+.datePicker__dayCell_active .datePicker__day,
+.datePicker__dayCell_selected .datePicker__day {
   color: var(--color-light-100);
   background-color: var(--color-accent-900);
 }
 
-.rangeStart {
+.datePicker__dayCell_rangeStart {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   background-color: var(--color-accent-900);
 }
 
-.rangeMiddle {
+.datePicker__dayCell_rangeMiddle {
   border-radius: 0;
   background-color: var(--color-accent-900);
 }
 
-.rangeEnd {
+.datePicker__dayCell_rangeEnd {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   background-color: var(--color-accent-900);
 }
 
-.rangeStart .day,
-.rangeEnd .day {
+.datePicker__dayCell_rangeStart .datePicker__day,
+.datePicker__dayCell_rangeEnd .datePicker__day {
   color: var(--color-light-100);
   background-color: var(--color-accent-500);
+}
+
+.datePicker__dayCell_rangeMiddle.datePicker__dayCell_focus {
+  border-color: var(--color-accent-300);
+  background-color: var(--color-accent-900);
 }

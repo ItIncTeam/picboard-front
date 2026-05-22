@@ -7,20 +7,32 @@ import { ComponentPropsWithoutRef, useMemo, useState } from 'react'
 import s from './date-picker.module.css'
 
 type DatePickerMode = 'single' | 'range'
+type DatePickerState = 'default' | 'hover' | 'focus' | 'error' | 'disabled'
+type DatePickerDayState = 'default' | 'selected' | 'hover' | 'active' | 'focus'
+type DatePickerRangeState = 'none' | 'start' | 'middle' | 'end'
 
 type DateRangeValue = {
   from: Date | null
   to: Date | null
 }
 
+type DatePickerDayOverride = {
+  date: Date
+  state?: DatePickerDayState
+  range?: DatePickerRangeState
+}
+
 type Props = {
   label?: string
   mode?: DatePickerMode
+  state?: DatePickerState
   value?: Date | DateRangeValue | null
   defaultValue?: Date | DateRangeValue | null
   defaultOpen?: boolean
   disabled?: boolean
   errorMessage?: string
+  today?: Date
+  dayOverrides?: DatePickerDayOverride[]
   onValueChange?: (value: Date | DateRangeValue) => void
 } & Omit<ComponentPropsWithoutRef<'div'>, 'defaultValue' | 'onChange'>
 
@@ -41,18 +53,34 @@ const defaultRangeValue: DateRangeValue = {
   to: new Date(2023, 10, 10),
 }
 
+/**
+ * Используй как контролируемое поле формы с `value` и `onValueChange`.
+ *
+ * В одиночном режиме возвращает `Date`. В режиме диапазона возвращает
+ * `{ from: Date | null; to: Date | null }`.
+ * Преобразуй выбранные даты в ISO-строки перед отправкой на API.
+ *
+ * `state`, `today` и `dayOverrides` используются в основном для визуальных
+ * состояний, Storybook и дизайн-ревью.
+ */
+
 export const DatePicker = ({
   label,
   mode = 'single',
+  state = 'default',
   value,
   defaultValue,
   defaultOpen = false,
   disabled = false,
   errorMessage,
+  today = new Date(),
+  dayOverrides = [],
   onValueChange,
   className,
   ...rest
 }: Props) => {
+  const isDisabled = disabled || state === 'disabled'
+  const isError = Boolean(errorMessage) || state === 'error'
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const fallbackValue = mode === 'range' ? defaultRangeValue : defaultSingleDate
   const [uncontrolledValue, setUncontrolledValue] = useState<Date | DateRangeValue | null>(
@@ -62,9 +90,11 @@ export const DatePicker = ({
   const monthDate = getMonthDate(selectedValue)
   const [visibleMonth, setVisibleMonth] = useState(monthDate)
 
-  const calendarDays = useMemo(() => getCalendarDays(visibleMonth), [visibleMonth])
+  const calendarDays = useMemo(() => getCalendarDays(visibleMonth, today), [today, visibleMonth])
   const displayValue = getDisplayValue(selectedValue, mode)
   const resolvedLabel = label ?? (mode === 'range' ? 'Date range' : 'Date')
+  const resolvedErrorMessage =
+    errorMessage ?? (state === 'error' ? getDefaultErrorMessage(mode) : '')
 
   const handlePreviousMonth = (): void => {
     setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))
@@ -85,28 +115,38 @@ export const DatePicker = ({
   }
 
   return (
-    <div className={clsx(s.root, className)} {...rest}>
-      <label className={s.label}>{resolvedLabel}</label>
+    <div className={clsx(s.datePicker, className)} {...rest}>
+      <label className={clsx(s.datePicker__label, isDisabled && s.datePicker__label_disabled)}>
+        {resolvedLabel}
+      </label>
       <button
-        className={clsx(s.input, errorMessage && s.inputError)}
-        disabled={disabled}
+        className={clsx(
+          s.datePicker__input,
+          state === 'hover' && s.datePicker__input_hover,
+          state === 'focus' && s.datePicker__input_focus,
+          isError && s.datePicker__input_error,
+          isDisabled && s.datePicker__input_disabled,
+        )}
+        disabled={isDisabled}
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
       >
         <span>{displayValue}</span>
-        <CalendarIcon className={s.inputIcon} />
+        <CalendarIcon className={s.datePicker__inputIcon} />
       </button>
 
-      {errorMessage && <span className={s.errorMessage}>{errorMessage}</span>}
+      {resolvedErrorMessage && (
+        <span className={s.datePicker__errorMessage}>{resolvedErrorMessage}</span>
+      )}
 
       {isOpen && (
-        <div className={s.popup}>
-          <div className={s.header}>
-            <span className={s.monthTitle}>{formatMonthTitle(visibleMonth)}</span>
-            <div className={s.navigation}>
+        <div className={s.datePicker__popup}>
+          <div className={s.datePicker__header}>
+            <span className={s.datePicker__monthTitle}>{formatMonthTitle(visibleMonth)}</span>
+            <div className={s.datePicker__navigation}>
               <button
                 aria-label="Previous month"
-                className={s.navigationButton}
+                className={s.datePicker__navigationButton}
                 type="button"
                 onClick={handlePreviousMonth}
               >
@@ -114,7 +154,7 @@ export const DatePicker = ({
               </button>
               <button
                 aria-label="Next month"
-                className={s.navigationButton}
+                className={s.datePicker__navigationButton}
                 type="button"
                 onClick={handleNextMonth}
               >
@@ -123,27 +163,34 @@ export const DatePicker = ({
             </div>
           </div>
 
-          <div className={s.weekDays}>
+          <div className={s.datePicker__weekDays}>
             {weekDays.map((weekDay) => (
-              <span className={s.weekDay} key={weekDay}>
+              <span className={s.datePicker__weekDay} key={weekDay}>
                 {weekDay}
               </span>
             ))}
           </div>
 
-          <div className={s.calendarGrid}>
+          <div className={s.datePicker__calendarGrid}>
             {calendarDays.map((calendarDay) => {
-              const rangeState = getRangeState(calendarDay.date, selectedValue, mode)
-              const isSelected = isSelectedDay(calendarDay.date, selectedValue, mode)
+              const dayOverride = getDayOverride(calendarDay.date, dayOverrides)
+              const rangeState =
+                dayOverride?.range ?? getRangeState(calendarDay.date, selectedValue, mode)
+              const dayState =
+                dayOverride?.state ??
+                (isSelectedDay(calendarDay.date, selectedValue, mode) ? 'selected' : 'default')
 
               return (
                 <button
                   className={clsx(
-                    s.dayCell,
-                    rangeState === 'start' && s.rangeStart,
-                    rangeState === 'middle' && s.rangeMiddle,
-                    rangeState === 'end' && s.rangeEnd,
-                    isSelected && s.selectedDay,
+                    s.datePicker__dayCell,
+                    rangeState === 'start' && s.datePicker__dayCell_rangeStart,
+                    rangeState === 'middle' && s.datePicker__dayCell_rangeMiddle,
+                    rangeState === 'end' && s.datePicker__dayCell_rangeEnd,
+                    dayState === 'selected' && s.datePicker__dayCell_selected,
+                    dayState === 'hover' && s.datePicker__dayCell_hover,
+                    dayState === 'active' && s.datePicker__dayCell_active,
+                    dayState === 'focus' && s.datePicker__dayCell_focus,
                   )}
                   key={calendarDay.date.toISOString()}
                   type="button"
@@ -151,10 +198,10 @@ export const DatePicker = ({
                 >
                   <span
                     className={clsx(
-                      s.day,
-                      calendarDay.isWeekend && s.weekend,
-                      !calendarDay.isCurrentMonth && s.otherMonth,
-                      calendarDay.isToday && s.today,
+                      s.datePicker__day,
+                      calendarDay.isWeekend && s.datePicker__day_weekend,
+                      !calendarDay.isCurrentMonth && s.datePicker__day_otherMonth,
+                      calendarDay.isToday && s.datePicker__day_today,
                     )}
                   >
                     {calendarDay.dayOfMonth}
@@ -169,7 +216,7 @@ export const DatePicker = ({
   )
 }
 
-const getCalendarDays = (monthDate: Date): CalendarDay[] => {
+const getCalendarDays = (monthDate: Date, today: Date): CalendarDay[] => {
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
   const firstDayOfMonth = new Date(year, month, 1)
@@ -184,7 +231,7 @@ const getCalendarDays = (monthDate: Date): CalendarDay[] => {
       date,
       dayOfMonth: date.getDate(),
       isCurrentMonth: date.getMonth() === month,
-      isToday: isSameDay(date, new Date()),
+      isToday: isSameDay(date, today),
       isWeekend: date.getDay() === 0 || date.getDay() === 6,
     }
   })
@@ -223,9 +270,9 @@ const getRangeState = (
   date: Date,
   value: Date | DateRangeValue | null,
   mode: DatePickerMode,
-): 'start' | 'middle' | 'end' | null => {
+): DatePickerRangeState => {
   if (!value || mode !== 'range' || value instanceof Date || !value.from || !value.to) {
-    return null
+    return 'none'
   }
 
   if (isSameDay(date, value.from)) {
@@ -236,7 +283,7 @@ const getRangeState = (
     return 'end'
   }
 
-  return date > value.from && date < value.to ? 'middle' : null
+  return date > value.from && date < value.to ? 'middle' : 'none'
 }
 
 const isSelectedDay = (
@@ -261,6 +308,13 @@ const isSelectedDay = (
   )
 }
 
+const getDayOverride = (
+  date: Date,
+  dayOverrides: DatePickerDayOverride[],
+): DatePickerDayOverride | undefined => {
+  return dayOverrides.find((dayOverride) => isSameDay(dayOverride.date, date))
+}
+
 const getNextValue = (
   date: Date,
   value: Date | DateRangeValue | null,
@@ -279,6 +333,10 @@ const getNextValue = (
   }
 
   return { from: value.from, to: date }
+}
+
+const getDefaultErrorMessage = (mode: DatePickerMode): string => {
+  return mode === 'range' ? 'Error, select current month or last month' : 'Error!'
 }
 
 const addMonths = (date: Date, months: number): Date => {
