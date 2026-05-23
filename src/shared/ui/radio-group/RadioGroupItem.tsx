@@ -1,7 +1,9 @@
 'use client'
 
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
-import { useId, type ComponentPropsWithoutRef } from 'react'
+import { forwardRef, useId, type ComponentPropsWithoutRef } from 'react'
+
+import { cn } from '@/shared/lib/cn'
 
 import styles from './radio-group.module.css'
 
@@ -11,42 +13,36 @@ export type RadioGroupItemProps = {
   labelClassName?: string
 } & ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
 
-const joinClassNames = (...classNames: Array<string | undefined>) => {
-  return classNames.filter(Boolean).join(' ')
-}
+export const RadioGroupItem = forwardRef<HTMLButtonElement, RadioGroupItemProps>(
+  ({ label, className, labelClassName, id, disabled, ...props }, ref) => {
+    const generatedId = useId()
+    const itemId = id ?? generatedId
 
-export const RadioGroupItem = ({
-  label,
-  className,
-  labelClassName,
-  id,
-  disabled,
-  value,
-  ...props
-}: RadioGroupItemProps) => {
-  const generatedId = useId()
-  const itemId = id ?? generatedId
-  const rootClassName = joinClassNames(styles.root, className)
-  const control = (
-    <RadioGroupPrimitive.Item
-      id={itemId}
-      className={styles.control}
-      disabled={disabled}
-      value={value}
-      {...props}
-    >
-      <RadioGroupPrimitive.Indicator className={styles.indicator} />
-    </RadioGroupPrimitive.Item>
-  )
+    const rootClassName = cn(styles.root, disabled && styles.rootDisabled, className)
 
-  if (!label) {
-    return <div className={rootClassName}>{control}</div>
-  }
+    const control = (
+      <RadioGroupPrimitive.Item
+        ref={ref}
+        id={itemId}
+        className={styles.control}
+        disabled={disabled}
+        {...props}
+      >
+        <RadioGroupPrimitive.Indicator className={styles.indicator} />
+      </RadioGroupPrimitive.Item>
+    )
 
-  return (
-    <label className={rootClassName} htmlFor={itemId}>
-      {control}
-      <span className={joinClassNames(styles.label, labelClassName)}>{label}</span>
-    </label>
-  )
-}
+    if (!label) {
+      return <div className={rootClassName}>{control}</div>
+    }
+
+    return (
+      <label className={rootClassName}>
+        {control}
+        <span className={cn(styles.label, labelClassName)}>{label}</span>
+      </label>
+    )
+  },
+)
+
+RadioGroupItem.displayName = 'RadioGroupItem'

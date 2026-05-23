@@ -82,7 +82,7 @@
    HOVER
    ========================================================= */
 
-.root:hover:has(.control:not([data-disabled]))::before {
+.root:not(.rootDisabled):hover::before {
   opacity: 1;
   background: var(--color-dark-300);
 }
@@ -91,7 +91,7 @@
    FOCUS
    ========================================================= */
 
-.root:has(.control:focus-visible:not([data-disabled]))::before {
+.root:not(.rootDisabled):focus-within::before {
   opacity: 1;
   background: var(--color-dark-500);
 }
@@ -100,7 +100,7 @@
    ACTIVE
    ========================================================= */
 
-.root:active:has(.control:not([data-disabled]))::before {
+.root:not(.rootDisabled):active::before {
   opacity: 1;
   background: var(--color-dark-100);
 }
@@ -109,16 +109,16 @@
    CURSOR
    ========================================================= */
 
-.root:has(.control:not([data-disabled])) {
+label.root:not(.rootDisabled) {
   cursor: pointer;
 }
 
-.root:has(.control:not([data-disabled])) .control {
-  cursor: pointer;
-}
-
-.root:has(.control[data-disabled]) {
+.rootDisabled {
   cursor: not-allowed;
+}
+
+.control:not([data-disabled]) {
+  cursor: pointer;
 }
 
 .control[data-disabled] {
@@ -180,7 +180,7 @@
   color: var(--color-light-100);
 }
 
-.root:has(.control[data-disabled]) .label {
+.rootDisabled .label {
   color: var(--color-light-900);
 }
 
