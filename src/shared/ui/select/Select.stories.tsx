@@ -4,9 +4,8 @@ import { expect, userEvent, within } from 'storybook/test'
 
 import '@/app/globals.css'
 
-import { selectHeaderRootClassName } from './index'
+import { selectHeaderRootClassName, SelectItem } from './index'
 import { Select } from './Select'
-import { SelectItem } from './SelectItem'
 
 const darkBackgroundDecorator = (Story: () => ReactNode) => (
   <div
