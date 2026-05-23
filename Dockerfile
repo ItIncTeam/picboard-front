@@ -12,7 +12,7 @@ COPY pnpm-lock.yaml package.json ./
 COPY scripts ./scripts
 
 #Устанавливаем зависимости (prod + dev для билда)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 #Билдим приложение
 FROM node:22-alpine AS builder
