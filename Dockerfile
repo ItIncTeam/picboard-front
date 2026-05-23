@@ -1,5 +1,5 @@
 #Устанавливаем зависимости
-FROM node:20.11-alpine AS dependencies
+FROM node:20-alpine AS dependencies
 WORKDIR /app
 
 #Включаем corepack и устанавливаем pnpm
@@ -11,7 +11,7 @@ COPY pnpm-lock.yaml package.json ./
 RUN pnpm install --frozen-lockfile
 
 #Билдим приложение
-FROM node:20.11-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -23,7 +23,7 @@ COPY --from=dependencies /app/node_modules ./node_modules
 RUN pnpm build:production
 
 #Стейдж запуска
-FROM node:20.11-alpine AS runner
+FROM node:20-alpine AS runner
 USER node
 WORKDIR /app
 ENV NODE_ENV=production
