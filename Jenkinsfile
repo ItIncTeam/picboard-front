@@ -4,7 +4,7 @@ pipeline {
     agent any
     environment {
         ENV_TYPE = "production"
-        PORT = 4310
+        PORT = 3000
         NAMESPACE = "picboard-space"
         REGISTRY_HOSTNAME = "itinc"
         REGISTRY = "registry.hub.docker.com"
@@ -63,7 +63,8 @@ pipeline {
                  withKubeConfig([credentialsId: 'prod-kubernetes']) {
                     sh 'kubectl apply -f deployment.yaml'
                     sh "kubectl rollout status deployment/${env.DEPLOYMENT_NAME} --namespace=${env.NAMESPACE}"
-                    sh "kubectl get services -o wide"
+                    sh "kubectl get services -n ${env.NAMESPACE} -o wide"
+                    sh "kubectl get endpoints -n ${env.NAMESPACE}"
                  }
              }
         }
