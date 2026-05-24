@@ -1,3 +1,5 @@
+import { MainSectionPage } from '@/views/main-section-page'
+
 export default function Page() {
-  return <h1>settings / notifications</h1>
+  return <MainSectionPage section="notifications-settings" />
 }

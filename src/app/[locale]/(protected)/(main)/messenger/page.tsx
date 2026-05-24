@@ -1,3 +1,5 @@
+import { MessengerPage } from '@/views/messenger-page'
+
 export default function Page() {
-  return <h1>messenger</h1>
+  return <MessengerPage />
 }

@@ -1,3 +1,5 @@
+import { MainSectionPage } from '@/views/main-section-page'
+
 export default function Page() {
-  return <h1>search</h1>
+  return <MainSectionPage section="search" />
 }

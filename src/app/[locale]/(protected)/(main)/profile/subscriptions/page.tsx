@@ -1,3 +1,5 @@
+import { ProfilePage } from '@/views/profile-page'
+
 export default function Page() {
-  return <h1>profile / subscriptions</h1>
+  return <ProfilePage />
 }

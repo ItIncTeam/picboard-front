@@ -1,5 +1,5 @@
 import { MainSectionPage } from '@/views/main-section-page'
 
 export default function Page() {
-  return <MainSectionPage section="account-settings" />
+  return <MainSectionPage section="settings-devices" />
 }

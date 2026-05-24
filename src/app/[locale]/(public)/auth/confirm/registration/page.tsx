@@ -1,3 +1,5 @@
+import { AuthPage } from '@/views/auth-page'
+
 export default function Page() {
-  return <h1>Confirm registration</h1>
+  return <AuthPage screen="confirm-registration" />
 }
