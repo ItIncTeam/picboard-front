@@ -1,6 +1,7 @@
 export * from './checkbox'
 export * from './date-picker'
 export * from './radio-group'
+export * from './recaptcha'
 export * from './tabs'
 export * from './typography'
 export * from './select'
