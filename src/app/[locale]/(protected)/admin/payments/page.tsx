@@ -1,3 +1,5 @@
+import { AdminPage } from '@/views/admin-page'
+
 export default function Page() {
-  return <h1>admin / payments</h1>
+  return <AdminPage screen="payments" />
 }

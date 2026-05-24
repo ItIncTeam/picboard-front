@@ -1,3 +1,5 @@
+import { AdminUsersPage } from '@/views/admin-users-page'
+
 export default function Page() {
-  return <h1>admin / users</h1>
+  return <AdminUsersPage />
 }

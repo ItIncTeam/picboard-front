@@ -1,3 +1,5 @@
+import { AuthPage } from '@/views/auth-page'
+
 export default function Page() {
-  return <h1>sign-in</h1>
+  return <AuthPage screen="sign-in" />
 }
