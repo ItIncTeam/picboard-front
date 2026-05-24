@@ -1,0 +1,208 @@
+.recaptcha {
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.recaptcha--error {
+  padding: 7px 6px 13px;
+  border: 1px solid red;
+}
+
+.recaptcha__legend {
+  position: absolute;
+
+  overflow: hidden;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+
+  white-space: nowrap;
+
+  clip-path: inset(50%);
+}
+
+.recaptcha__card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 300px;
+  height: 79px;
+  padding: 12px 20px;
+  border: 1px solid var(--color-dark-300);
+  border-radius: 2px;
+
+  color: var(--color-light-100);
+
+  background: var(--color-dark-500);
+}
+
+.recaptcha__card--hover {
+  background: var(--color-dark-500);
+}
+
+.recaptcha__verification {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.recaptcha__input {
+  position: absolute;
+
+  overflow: hidden;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+
+  white-space: nowrap;
+
+  clip-path: inset(50%);
+}
+
+.recaptcha__control {
+  position: relative;
+
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 20px;
+  height: 20px;
+  margin-right: 13px;
+  border: 1px solid #b7b7b7;
+  border-radius: 1px;
+
+  background: var(--color-light-100);
+}
+
+.recaptcha__input:not(:disabled) + .recaptcha__control,
+.recaptcha__input:not(:disabled) ~ .recaptcha__label-group .recaptcha__label {
+  cursor: pointer;
+}
+
+.recaptcha__input:focus-visible + .recaptcha__control {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.recaptcha__input:checked + .recaptcha__control,
+.recaptcha__input[aria-busy='true'] + .recaptcha__control {
+  border-color: transparent;
+  background: transparent;
+}
+
+.recaptcha__check {
+  display: none;
+  width: 25px;
+  height: 19px;
+}
+
+.recaptcha__input:checked + .recaptcha__control .recaptcha__check {
+  display: block;
+}
+
+.recaptcha__input[aria-busy='true'] + .recaptcha__control .recaptcha__check {
+  display: none;
+}
+
+.recaptcha__spinner {
+  width: 20px;
+  height: 20px;
+  color: #4d8df4;
+  animation: recaptcha-spin 0.8s linear infinite;
+}
+
+.recaptcha__spinner-track {
+  opacity: 0;
+  stroke-width: 4;
+}
+
+.recaptcha__spinner-arc {
+  stroke-dasharray: 16 44;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.recaptcha__label-group {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recaptcha__label {
+  overflow: hidden;
+
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+  color: var(--color-light-100);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recaptcha__label--disabled {
+  cursor: default;
+}
+
+.recaptcha__expired {
+  max-width: 205px;
+  margin: 0 0 2px;
+
+  font-size: 10px;
+  line-height: normal;
+  color: red;
+}
+
+.recaptcha__brand {
+  display: grid;
+  justify-items: center;
+
+  width: 49px;
+
+  font-size: 6px;
+  font-weight: var(--font-weight-medium);
+  line-height: normal;
+  color: var(--color-light-100);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.recaptcha__logo {
+  width: 30px;
+  height: 31px;
+  margin-bottom: 6px;
+}
+
+.recaptcha__brand-name {
+  margin-bottom: 2px;
+  font-size: 8px;
+}
+
+.recaptcha__brand-links {
+  font-size: 6px;
+}
+
+.recaptcha__error {
+  margin: 11px 0 0;
+
+  font-size: 10px;
+  line-height: normal;
+  color: red;
+  white-space: nowrap;
+}
+
+@keyframes recaptcha-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
