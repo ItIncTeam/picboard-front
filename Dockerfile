@@ -1,35 +1,39 @@
-#Устанавливаем зависимости
+# Устанавливаем зависимости
 FROM node:22-alpine AS dependencies
 WORKDIR /app
 
-#Включаем corepack и устанавливаем pnpm
+# Включаем corepack и устанавливаем pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-#Копируем lock-файл и манифест пакетов
+# Копируем lock-файл и манифест пакетов
 COPY pnpm-lock.yaml package.json ./
 
-#Копируем scripts для prepare lifecycle
+# Копируем scripts для prepare lifecycle
 COPY scripts ./scripts
 
-#Устанавливаем зависимости (prod + dev для билда)
+# Устанавливаем зависимости (prod + dev для билда)
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
-#Билдим приложение
+# Билдим приложение
 FROM node:22-alpine AS builder
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-#Копируем исходники и установленные зависимости
+# Копируем исходники и установленные зависимости
 COPY . .
 COPY --from=dependencies /app/node_modules ./node_modules
 
 RUN pnpm build:production
 
-#Стейдж запуска
+# Стейдж запуска
 FROM node:22-alpine AS runner
-USER node
 WORKDIR /app
+
+# Включаем pnpm в runtime image, иначе CMD ["pnpm", "start"] падает
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+USER node
 
 ENV NODE_ENV=production
 
