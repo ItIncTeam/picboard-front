@@ -3,6 +3,9 @@
 Основной источник правил: [Picboard Frontend Style Guide](./style_guide_full.md). Этот файл
 расшифровывает архитектурные правила и не должен им противоречить.
 
+Для App Router routing structure, route groups, layouts, modal strategy и этапов реализации
+используйте [App Router Roadmap](./app-router-roadmap.md) как источник правды.
+
 ## Main Approach
 
 Проект следует feature-first подходу, близкому к FSD. Цель — держать доменную логику рядом с
