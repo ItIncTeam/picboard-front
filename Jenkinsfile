@@ -59,16 +59,16 @@ pipeline {
 
         }
         stage('Deploy to Kubernetes') {
-            steps {
-                withKubeConfig([credentialsId: 'prod-kubernetes']) {
-                    sh 'kubectl apply -f deployment.yaml'
-                    sh "kubectl rollout status deployment/${env.DEPLOYMENT_NAME} --namespace=${env.NAMESPACE}"
-                    sh "kubectl get services -n ${env.NAMESPACE} -o wide"
-                    sh "kubectl get endpoints -n ${env.NAMESPACE}"
-                    sh "kubectl get ingress -n ${env.NAMESPACE}"
-                    sh "kubectl describe ingress -n ${env.NAMESPACE}"
-                }
-            }
-        }
+             steps {
+                 withKubeConfig([credentialsId: 'prod-kubernetes']) {
+                     sh 'kubectl apply -f deployment.yaml'
+                     sh "kubectl rollout status deployment/${env.DEPLOYMENT_NAME} --namespace=${env.NAMESPACE}"
+                     sh "kubectl get services -n ${env.NAMESPACE} -o wide"
+                     sh "kubectl get endpoints -n ${env.NAMESPACE}"
+                     sh "kubectl get ingress -n ${env.NAMESPACE}"
+                     sh "kubectl describe ingress -n ${env.NAMESPACE}"
+                 }
+             }
+         }
     }
 }
