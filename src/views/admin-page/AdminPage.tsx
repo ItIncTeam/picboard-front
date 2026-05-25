@@ -1,9 +1,8 @@
 import { RoutePlaceholder } from '@/views/route-placeholder'
 
-type AdminScreen = 'moderation' | 'payments' | 'posts' | 'statistics'
+type AdminScreen = 'payments' | 'posts' | 'statistics'
 
 const adminScreenTitles: Record<AdminScreen, string> = {
-  moderation: 'Admin moderation',
   payments: 'Admin payments',
   posts: 'Admin posts',
   statistics: 'Admin statistics',
@@ -24,7 +23,6 @@ export function AdminPage({ screen }: AdminPageProps) {
         '/[locale]/admin/statistics',
         '/[locale]/admin/payments',
         '/[locale]/admin/posts',
-        '/[locale]/admin/moderation',
       ]}
     />
   )

@@ -22,6 +22,7 @@ git pull origin dev# Рабочие инструкции
 - Не добавляйте зависимости без явной необходимости.
 - Не делайте unrelated refactoring.
 - Если решение неочевидное, кратко зафиксируйте trade-off перед изменением.
+- Перед изменением routing/layout architecture обязательно прочитайте docs/app-router-roadmap.md.
 
 ## Во время изменений
 
