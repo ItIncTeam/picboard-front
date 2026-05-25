@@ -2,6 +2,7 @@ def app
 
 pipeline {
     agent any
+
     environment {
         ENV_TYPE = "production"
         PORT = 3000
@@ -20,61 +21,70 @@ pipeline {
                 checkout scm
             }
         }
+
         stage('Build docker image') {
             steps {
                 echo "Build image started..."
-                    script {
-                        app = docker.build("${env.DOCKER_BUILD_NAME}")
-                    }
+                script {
+                    app = docker.build("${env.DOCKER_BUILD_NAME}")
+                }
                 echo "Build image finished..."
             }
         }
+
         stage('Push docker image') {
-             steps {
-                 echo "Push image started..."
-                     script {
-                          docker.withRegistry("https://${env.REGISTRY}", 'picboard-space') {
-                            app.push("${env.IMAGE_NAME}")
-                        }
-                     }
-                 echo "Push image finished..."
-             }
-       }
-       stage('Delete image local') {
-             steps {
-                 script {
+            steps {
+                echo "Push image started..."
+                script {
+                    docker.withRegistry("https://${env.REGISTRY}", 'picboard-space') {
+                        app.push("${env.IMAGE_NAME}")
+                    }
+                }
+                echo "Push image finished..."
+            }
+        }
+
+        stage('Delete image local') {
+            steps {
+                script {
                     sh "docker rmi -f ${env.DOCKER_BUILD_NAME}"
-                 }
-             }
+                }
+            }
         }
+
         stage('Preparing deployment') {
-             steps {
-                 echo "Preparing started..."
-                     sh 'ls -ltr'
-                     sh 'pwd'
-                     sh "chmod +x preparingDeploy.sh"
-                     sh "./preparingDeploy.sh ${env.REGISTRY_HOSTNAME} ${env.PROJECT} ${env.IMAGE_NAME} ${env.DEPLOYMENT_NAME} ${env.PORT} ${env.NAMESPACE}"
-                     sh "cat deployment.yaml"
-             }
-
+            steps {
+                echo "Preparing started..."
+                sh 'ls -ltr'
+                sh 'pwd'
+                sh "chmod +x preparingDeploy.sh"
+                sh "./preparingDeploy.sh ${env.REGISTRY_HOSTNAME} ${env.PROJECT} ${env.IMAGE_NAME} ${env.DEPLOYMENT_NAME} ${env.PORT} ${env.NAMESPACE}"
+                sh "cat deployment.yaml"
+            }
         }
-stage('Deploy to Kubernetes') {
-    steps {
-        withKubeConfig([credentialsId: 'prod-kubernetes']) {
-            sh 'kubectl apply -f deployment.yaml'
-            sh "kubectl rollout status deployment/${env.DEPLOYMENT_NAME} --namespace=${env.NAMESPACE}"
 
-            sh "kubectl get services -n ${env.NAMESPACE} -o wide"
-            sh "kubectl get endpoints -n ${env.NAMESPACE}"
+        stage('Deploy to Kubernetes') {
+            steps {
+                withKubeConfig([credentialsId: 'prod-kubernetes']) {
+                    sh 'kubectl apply -f deployment.yaml'
+                    sh "kubectl rollout status deployment/${env.DEPLOYMENT_NAME} --namespace=${env.NAMESPACE}"
 
-            sh "kubectl get ingress -n ${env.NAMESPACE}"
-            sh "kubectl describe ingress -n ${env.NAMESPACE}"
+                    sh "kubectl get services -n ${env.NAMESPACE} -o wide"
+                    sh "kubectl get endpoints -n ${env.NAMESPACE}"
 
-            sh "kubectl get pods -n ${env.NAMESPACE} -o wide"
-            sh "kubectl describe pods -n ${env.NAMESPACE} -l project=${env.PROJECT}"
-            sh "kubectl logs deployment/${env.DEPLOYMENT_NAME} -n ${env.NAMESPACE} --tail=100"
+                    sh "kubectl get ingress -n ${env.NAMESPACE}"
+                    sh "kubectl describe ingress -n ${env.NAMESPACE}"
+
+                    sh "kubectl get pods -n ${env.NAMESPACE} -o wide"
+                    sh "kubectl describe pods -n ${env.NAMESPACE} -l project=${env.PROJECT}"
+                    sh "kubectl logs deployment/${env.DEPLOYMENT_NAME} -n ${env.NAMESPACE} --tail=100"
+
+                    sh "kubectl get certificate -n ${env.NAMESPACE}"
+                    sh "kubectl describe certificate -n ${env.NAMESPACE}"
+                    sh "kubectl get secret -n ${env.NAMESPACE}"
+                    sh "kubectl run curl-test --rm -i --restart=Never --image=curlimages/curl -- curl -v http://picboard-frontend-service.${env.NAMESPACE}.svc.cluster.local:4310"
+                }
+            }
         }
-    }
-}
     }
 }
