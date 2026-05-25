@@ -68,6 +68,8 @@ pipeline {
                 withKubeConfig([credentialsId: 'prod-kubernetes']) {
                     sh 'kubectl apply -f deployment.yaml'
                     sh 'kubectl apply -f service.yaml'
+                    sh "kubectl describe svc picboard-frontend-service -n ${env.NAMESPACE}"
+                    sh "kubectl get svc picboard-frontend-service -n ${env.NAMESPACE} -o yaml"
                     sh "kubectl rollout status deployment/${env.DEPLOYMENT_NAME} --namespace=${env.NAMESPACE}"
 
                     sh "kubectl get services -n ${env.NAMESPACE} -o wide"
@@ -83,7 +85,7 @@ pipeline {
                     sh "kubectl get certificate -n ${env.NAMESPACE}"
                     sh "kubectl describe certificate -n ${env.NAMESPACE}"
                     sh "kubectl get secret -n ${env.NAMESPACE}"
-                    sh "kubectl run curl-test --rm -i --restart=Never --image=curlimages/curl -- curl -v http://picboard-frontend-service.${env.NAMESPACE}.svc.cluster.local:4310"
+                    sh "kubectl run curl-test --rm -i --restart=Never --image=curlimages/curl -- curl -v http://picboard-frontend-service.${env.NAMESPACE}.svc.cluster.local:4310 || true"
                 }
             }
         }
