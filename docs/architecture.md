@@ -6,6 +6,9 @@
 Для App Router routing structure, route groups, layouts, modal strategy и этапов реализации
 используйте [App Router Roadmap](./app-router-roadmap.md) как источник правды.
 
+Локализация работает на frontend через i18n library и не влияет на routing structure. App Router не
+содержит locale segment, locale validation и locale-based redirects.
+
 ## Main Approach
 
 Проект следует feature-first подходу, близкому к FSD. Цель — держать доменную логику рядом с
