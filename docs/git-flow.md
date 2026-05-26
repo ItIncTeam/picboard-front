@@ -124,9 +124,7 @@ git push --force-with-lease
 4. Если `dev` обновился:
 
 ```bash
-git fetch origin
-git rebase origin/dev
-git push --force-with-lease
+
 ```
 
 ---
