@@ -6,7 +6,7 @@ export function MessengerPage() {
       title="Messenger"
       description="Protected messenger route with dialog list and conversation area."
       figmaNode="1:12"
-      routes={['/[locale]/messenger', '/[locale]/messenger/[dialogId]']}
+      routes={['/messenger', '/messenger/[dialogId]']}
     />
   )
 }

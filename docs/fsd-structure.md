@@ -19,7 +19,7 @@ src/
 routing (роутинг)
 layouts (макеты страниц)
 route groups (группы маршрутов)
-locale routing (i18n)
+frontend-only localization не влияет на routing
 metadata (SEO, head)
 error / loading pages
 

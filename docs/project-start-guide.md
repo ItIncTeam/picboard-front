@@ -17,17 +17,19 @@ Picboard — социальное web-приложение на Next.js App Rout
 - protected user app pages;
 - отдельные admin pages;
 - много будущих modal flows.
+- frontend-only localization без locale segment в URL.
 
 ## Где Мы Сейчас
 
-Мы завершаем:
+Мы находимся на:
 
 ```txt
-ЭТАП 1 — Routing Foundation
+ЭТАП 2 — Auth Foundation
 ```
 
-Сейчас главное — аккуратно расставить route и layout boundaries. Реальный UI, auth, API и business
-logic не трогаем до следующего этапа.
+Routing Foundation уже зафиксировал route и layout boundaries. Сейчас главное — не менять routing
+architecture без причины и готовить auth, не добавляя преждевременные providers, middleware или
+business logic.
 
 ## Главная Мысль
 
@@ -35,6 +37,10 @@ logic не трогаем до следующего этапа.
 
 `app/` нужен для routing infrastructure. Всё, что похоже на настоящую сборку экрана, уходит в
 `views`.
+
+Локализация работает на frontend через i18n library и не влияет на routing structure.
+
+App Router не содержит `[locale]`, `/ru/*`, `/en/*` и locale validation.
 
 ## Слои
 
@@ -75,7 +81,7 @@ export default function Page() {
 ```tsx
 import { ProfilePage } from '@/views/profile-page'
 
-export default async function Page({ params }: PageProps<'/[locale]/profile/[userId]'>) {
+export default async function Page({ params }: PageProps<'/profile/[userId]'>) {
   const { userId } = await params
 
   return <ProfilePage userId={userId} />
@@ -128,6 +134,7 @@ headers, sidebars, auth checks и modal containers без большого refac
 - Держи `app/` thin.
 - По умолчанию используй Server Components.
 - Не добавляй providers, пока они реально не нужны.
+- Не добавляй i18n provider или translation loading до отдельной задачи.
 - Не дублируй app shells внутри pages.
 - Используй query params только для filters, search, sorting и pagination.
 - Используй route-based modals только для shareable entity content.

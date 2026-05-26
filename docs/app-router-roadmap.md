@@ -34,6 +34,16 @@
 
 # Архитектурные Принципы
 
+## Routing не зависит от локализации
+
+URL не содержит язык: не используем `/ru/*`, `/en/*` и route segment `[locale]`.
+
+Локализация работает на frontend через i18n library и не влияет на routing structure.
+
+App Router не отвечает за locale validation, default locale redirects или загрузку переводов.
+
+---
+
 ## App layer держим thin
 
 `src/app` отвечает за:
@@ -78,59 +88,56 @@ src/app/
   page.tsx
   not-found.tsx
 
-  [locale]/
+  (public)/
+    layout.tsx
+    page.tsx
+
+    auth/
+      sign-in/
+      sign-up/
+      forgot-password/
+      privacy-policy/
+      terms/
+
+  (protected)/
     layout.tsx
 
-    (public)/
-      layout.tsx
-      page.tsx
-
-      auth/
-        sign-in/
-        sign-up/
-        forgot-password/
-        privacy-policy/
-        terms/
-
-    (protected)/
+    (main)/
       layout.tsx
 
-      (main)/
+      @modal/
+        default.tsx
+        [...catchAll]/page.tsx
+
+      main/
+      feed/
+      messenger/
+      search/
+      favorites/
+      statistics/
+
+      profile/
+        [userId]/
+          followers/
+          subscriptions/
+
+      settings/
         layout.tsx
-
-        @modal/
-          default.tsx
-          [...catchAll]/page.tsx
-
-        main/
-        feed/
-        messenger/
-        search/
-        favorites/
-        statistics/
-
         profile/
-          [userId]/
-            followers/
-            subscriptions/
+        account/
+        devices/
+        notifications/
 
-        settings/
-          layout.tsx
-          profile/
-          account/
-          devices/
-          notifications/
+      posts/
+        create/
+        [postId]/
 
-        posts/
-          create/
-          [postId]/
-
-      admin/
-        layout.tsx
-        users/
-        statistics/
-        payments/
-        posts/
+    admin/
+      layout.tsx
+      users/
+      statistics/
+      payments/
+      posts/
 ```
 
 ---
@@ -148,12 +155,11 @@ src/app/
 Создать:
 
 ```txt
-src/app/[locale]/layout.tsx
-src/app/[locale]/(public)/layout.tsx
-src/app/[locale]/(protected)/layout.tsx
-src/app/[locale]/(protected)/(main)/layout.tsx
-src/app/[locale]/(protected)/(main)/settings/layout.tsx
-src/app/[locale]/(protected)/admin/layout.tsx
+src/app/(public)/layout.tsx
+src/app/(protected)/layout.tsx
+src/app/(protected)/(main)/layout.tsx
+src/app/(protected)/(main)/settings/layout.tsx
+src/app/(protected)/admin/layout.tsx
 ```
 
 На этом этапе layouts могут быть placeholder-only. Это нормально.
@@ -173,8 +179,8 @@ export default function Layout({ children }: Props) {
 Создать:
 
 ```txt
-src/app/[locale]/(protected)/(main)/@modal/default.tsx
-src/app/[locale]/(protected)/(main)/@modal/[...catchAll]/page.tsx
+src/app/(protected)/(main)/@modal/default.tsx
+src/app/(protected)/(main)/@modal/[...catchAll]/page.tsx
 ```
 
 На этом этапе modals ещё не реализуем.
@@ -194,13 +200,13 @@ src/app/[locale]/(protected)/(main)/@modal/[...catchAll]/page.tsx
 
 ---
 
-### 4. Зафиксировать locale strategy
+### 4. Зафиксировать locale-free routing
 
 Определить:
 
-- supported locales;
-- default locale;
-- behavior для unknown locale.
+- App Router не содержит `[locale]`;
+- language switching происходит на клиенте;
+- i18n library не влияет на route structure.
 
 ---
 
@@ -479,12 +485,6 @@ Providers подключаем максимально deep.
 Providers подключаем только там, где они реально нужны.
 
 Например:
-
-```txt
-[locale]/layout.tsx
-```
-
-- i18n provider.
 
 ```txt
 (protected)/layout.tsx
