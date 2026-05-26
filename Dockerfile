@@ -2,7 +2,7 @@
 FROM node:22.11-alpine as dependencies
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm install --ignore-scripts
 
 #Билдим приложение
 #Кэширование зависимостей — если файлы в проекте изменились,
