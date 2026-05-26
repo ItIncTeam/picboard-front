@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "build:production": "pnpm build",
-    "start": "next start",
+    "start": "next start --port 4310",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:styles": "stylelint \"**/*.{css,scss}\"",
