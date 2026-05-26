@@ -19,5 +19,5 @@ USER node
 WORKDIR /app
 ENV NODE_ENV production
 COPY --from=builder /app/ ./
-EXPOSE 3000
+EXPOSE 4310
 CMD ["npm", "start"]
