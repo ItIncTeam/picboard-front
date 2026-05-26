@@ -6,7 +6,7 @@ export function MainPage() {
       title="Main"
       description="Authorized main page with registered users counter and public post cards."
       figmaNode="1:12"
-      routes={['/[locale]/main', '/[locale]/feed']}
+      routes={['/main', '/feed']}
     />
   )
 }

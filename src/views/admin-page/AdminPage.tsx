@@ -18,12 +18,7 @@ export function AdminPage({ screen }: AdminPageProps) {
       title={adminScreenTitles[screen]}
       description="Protected SuperAdmin workspace route from the WebApp / UI / SuperAdmin Figma section."
       figmaNode="376:8092"
-      routes={[
-        '/[locale]/admin/users',
-        '/[locale]/admin/statistics',
-        '/[locale]/admin/payments',
-        '/[locale]/admin/posts',
-      ]}
+      routes={['/admin/users', '/admin/statistics', '/admin/payments', '/admin/posts']}
     />
   )
 }

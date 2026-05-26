@@ -34,14 +34,14 @@ export function MainSectionPage({ section }: MainSectionPageProps) {
       description="Protected application route from the WebApp / UI Figma section."
       figmaNode="1:12"
       routes={[
-        '/[locale]/feed',
-        '/[locale]/search',
-        '/[locale]/favorites',
-        '/[locale]/statistics',
-        '/[locale]/settings/profile',
-        '/[locale]/settings/account',
-        '/[locale]/settings/notifications',
-        '/[locale]/settings/devices',
+        '/feed',
+        '/search',
+        '/favorites',
+        '/statistics',
+        '/settings/profile',
+        '/settings/account',
+        '/settings/notifications',
+        '/settings/devices',
       ]}
     />
   )

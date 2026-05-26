@@ -30,13 +30,13 @@ export function AuthPage({ screen }: AuthPageProps) {
       description="Public authentication flow from the WebApp / UI / Auth Figma section."
       figmaNode="301:4851"
       routes={[
-        '/[locale]/auth/sign-in',
-        '/[locale]/auth/sign-up',
-        '/[locale]/auth/forgot-password',
-        '/[locale]/auth/privacy-policy',
-        '/[locale]/auth/terms',
-        '/[locale]/auth/confirm/registration',
-        '/[locale]/auth/confirm/password-recovery',
+        '/auth/sign-in',
+        '/auth/sign-up',
+        '/auth/forgot-password',
+        '/auth/privacy-policy',
+        '/auth/terms',
+        '/auth/confirm/registration',
+        '/auth/confirm/password-recovery',
       ]}
     />
   )

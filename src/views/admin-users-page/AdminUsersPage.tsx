@@ -6,7 +6,7 @@ export function AdminUsersPage() {
       title="Admin users"
       description="SuperAdmin users list route with search, filtering, table actions, and pagination."
       figmaNode="376:8092"
-      routes={['/[locale]/admin/users']}
+      routes={['/admin/users']}
     />
   )
 }
