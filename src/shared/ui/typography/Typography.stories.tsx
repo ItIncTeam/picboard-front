@@ -1,60 +1,83 @@
-import { Meta } from '@storybook/nextjs-vite'
-import { Typography } from '@/shared/ui'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+
+import { Link } from './Link'
+import { Text } from './Text'
+import { Title } from './Title'
 
 const meta = {
   title: 'Shared/Typography',
-  component: Typography.H1,
   tags: ['autodocs'],
-} satisfies Meta<typeof Typography.H1>
+} satisfies Meta
 
 export default meta
 
-export const AllVariants = {
+type Story = StoryObj<typeof meta>
+
+export const AllVariants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <Typography.Large>Large</Typography.Large>
+      <Title level="h1">Title h1</Title>
+      <Title level="h2">Title h2</Title>
+      <Title level="h3">Title h3</Title>
 
-      <Typography.H1>Heading 1</Typography.H1>
-      <Typography.H2>Heading 2</Typography.H2>
-      <Typography.H3>Heading 3</Typography.H3>
+      <Text size="xl" weight="medium">
+        Text xl medium
+      </Text>
 
-      <Typography.RegularText16>Regular Text 16</Typography.RegularText16>
+      <Text size="lg">Text lg regular</Text>
+      <Text size="md">Text md regular</Text>
 
-      <Typography.BoldText16>Bold Text 16</Typography.BoldText16>
+      <Text size="md" weight="bold">
+        Text md bold
+      </Text>
 
-      <Typography.RegularText14>Regular Text 14</Typography.RegularText14>
+      <Text size="sm">Text sm regular</Text>
 
-      <Typography.MediumText14>Medium Text 14</Typography.MediumText14>
+      <Text size="sm" weight="medium">
+        Text sm medium
+      </Text>
 
-      <Typography.BoldText14>Bold Text 14</Typography.BoldText14>
+      <Text size="sm" weight="bold">
+        Text sm bold
+      </Text>
 
-      <Typography.SmallText>Small Text</Typography.SmallText>
+      <Text as="span" size="xs">
+        Text xs regular as span
+      </Text>
 
-      <Typography.SemiBoldSmallText>Semi Bold Small Text</Typography.SemiBoldSmallText>
+      <Link href="#">Link md</Link>
 
-      <Typography.RegularLink href="#">Regular Link</Typography.RegularLink>
+      <Link href="#" size="sm">
+        Link sm
+      </Link>
 
-      <Typography.SmallLink href="#">Small Link</Typography.SmallLink>
+      <Link href="#" size="xs">
+        Link xs
+      </Link>
     </div>
   ),
 }
 
-export const CustomComponent = {
+export const AsProp: Story = {
   render: () => (
-    <Typography.H1 component="a" href="#">
-      H1 as link
-    </Typography.H1>
+    <Text as="span" size="lg" weight="bold">
+      Text rendered as span
+    </Text>
   ),
 }
 
-export const Margins = {
+export const Margins: Story = {
   render: () => (
-    <Typography.H1 ml={10} mt={20}>
+    <Title level="h1" ml={10} mt={20}>
       Heading with margins
-    </Typography.H1>
+    </Title>
   ),
 }
 
-export const Colors = {
-  render: () => <Typography.H2 color="var(--color-primary)">Colored text</Typography.H2>,
+export const Colors: Story = {
+  render: () => (
+    <Text color="var(--color-primary)" size="md">
+      Colored text
+    </Text>
+  ),
 }
