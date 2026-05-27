@@ -1,22 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { expect, userEvent, within } from 'storybook/test'
-
-import '@/app/globals.css'
 
 import { selectHeaderRootClassName, SelectItem } from './index'
 import { Select } from './Select'
-
-const darkBackgroundDecorator = (Story: () => ReactNode) => (
-  <div
-    style={{
-      padding: 24,
-      background: 'var(--color-dark-700)',
-    }}
-  >
-    <Story />
-  </div>
-)
 
 const defaultOptions = (
   <>
@@ -33,7 +20,6 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  decorators: [darkBackgroundDecorator],
   render: (args) => <Select {...args}>{defaultOptions}</Select>,
 } satisfies Meta<typeof Select>
 
