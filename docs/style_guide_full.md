@@ -20,6 +20,7 @@
 - [Рабочие инструкции](./work-instructions.md) — порядок работы для команды и AI-агента.
 - [Project Start Guide](./project-start-guide.md) — короткий onboarding для новых участников.
 - [App Router Roadmap](./app-router-roadmap.md) — этапы реализации App Router architecture, layouts, modal strategy и implementation order.
+- [Границы слоев](./layer-ownership.md) — практические правила владения `app`, `views`, `widgets`, `features` и временными заглушками.
 
 ## Базовые принципы
 

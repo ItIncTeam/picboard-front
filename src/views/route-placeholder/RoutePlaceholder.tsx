@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import styles from './route-placeholder.module.css'
 
 type RoutePlaceholderProps = {
@@ -9,7 +11,7 @@ type RoutePlaceholderProps = {
 
 export function RoutePlaceholder({ description, figmaNode, routes, title }: RoutePlaceholderProps) {
   return (
-    <main className={styles.root}>
+    <div className={styles.root}>
       <section className={styles.content} aria-labelledby="page-title">
         <p className={styles.eyebrow}>Route stub</p>
         <h1 id="page-title" className={styles.title}>
@@ -24,13 +26,19 @@ export function RoutePlaceholder({ description, figmaNode, routes, title }: Rout
         )}
 
         {routes && routes.length > 0 && (
-          <ul className={styles.routes} aria-label="Related routes">
-            {routes.map((route) => (
-              <li key={route}>{route}</li>
-            ))}
-          </ul>
+          <nav aria-label="Related routes">
+            <ul className={styles.routes}>
+              {routes.map((route) => (
+                <li key={route}>
+                  <Link className={styles.routeLink} href={route}>
+                    {route}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         )}
       </section>
-    </main>
+    </div>
   )
 }
