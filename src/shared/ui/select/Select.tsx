@@ -2,32 +2,58 @@
 
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { ChevronDownIcon } from '@radix-ui/react-icons'
-import { forwardRef, useId, type ComponentPropsWithoutRef, type ReactNode } from 'react'
+import { forwardRef, useId, useState, type ComponentPropsWithoutRef, type ReactNode } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 
+import { SelectItem } from './SelectItem'
+import { SelectOptionImage } from './SelectOptionImage'
 import styles from './select.module.css'
 
-export type SelectProps = {
+export type SelectOption = {
+  value: string
+  label: ReactNode
+  image?: string
+  disabled?: boolean
+}
+
+export type SelectSharedProps = {
+  options: ReadonlyArray<SelectOption>
   label?: string
   placeholder?: string
-  startAdornment?: ReactNode
+  errorMessage?: string
   className?: string
   labelClassName?: string
-  controlClassName?: string
-} & ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
+  triggerClassName?: string
+}
+
+export type SelectProps = SelectSharedProps & ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
+
+const findSelectedOption = (
+  options: ReadonlyArray<SelectOption>,
+  value: string | undefined,
+): SelectOption | undefined => {
+  if (!value) {
+    return undefined
+  }
+
+  return options.find((option) => option.value === value)
+}
 
 export const Select = forwardRef<HTMLButtonElement, SelectProps>(
   (
     {
+      options,
       label,
       placeholder,
-      startAdornment,
+      errorMessage,
       className,
       labelClassName,
-      controlClassName,
+      triggerClassName,
       disabled,
-      children,
+      value,
+      defaultValue,
+      onValueChange,
       ...props
     },
     ref,
@@ -35,52 +61,93 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const baseId = useId()
     const triggerId = `${baseId}-trigger`
     const labelId = `${baseId}-label`
+    const errorId = `${baseId}-error`
+    const isError = Boolean(errorMessage)
+    const isControlled = value !== undefined
+    const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue)
+    const currentValue = isControlled ? value : uncontrolledValue
+    const selectedOption = findSelectedOption(options, currentValue)
 
-    const rootClassName = cn(
-      styles.root,
-      label && styles.withLabel,
-      disabled && styles.rootDisabled,
-      className,
-    )
+    const handleValueChange = (nextValue: string): void => {
+      if (!isControlled) {
+        setUncontrolledValue(nextValue)
+      }
 
-    const control = (
-      <SelectPrimitive.Trigger
-        ref={ref}
-        id={triggerId}
-        className={cn(styles.control, controlClassName)}
-        aria-label={label ? undefined : placeholder}
-        aria-labelledby={label ? labelId : undefined}
-      >
-        {startAdornment ? <span className={styles.adornment}>{startAdornment}</span> : null}
-        <SelectPrimitive.Value placeholder={placeholder} className={styles.value} />
-        <SelectPrimitive.Icon asChild>
-          <ChevronDownIcon className={styles.icon} aria-hidden />
-        </SelectPrimitive.Icon>
-      </SelectPrimitive.Trigger>
-    )
+      onValueChange?.(nextValue)
+    }
+
+    const selectClassName = cn(styles.select, disabled && styles.select_disabled, className)
 
     return (
-      <div className={rootClassName}>
+      <div className={selectClassName}>
         {label ? (
-          <label id={labelId} htmlFor={triggerId} className={cn(styles.label, labelClassName)}>
+          <label
+            id={labelId}
+            htmlFor={triggerId}
+            className={cn(styles['select__label'], labelClassName)}
+          >
             {label}
           </label>
         ) : null}
-        <SelectPrimitive.Root disabled={disabled} {...props}>
-          {control}
+        <SelectPrimitive.Root
+          disabled={disabled}
+          value={currentValue}
+          onValueChange={handleValueChange}
+          {...props}
+        >
+          <SelectPrimitive.Trigger
+            ref={ref}
+            id={triggerId}
+            className={cn(
+              styles['select__trigger'],
+              isError && styles['select__trigger_error'],
+              triggerClassName,
+            )}
+            aria-label={label ? undefined : placeholder}
+            aria-invalid={isError || undefined}
+            aria-describedby={isError ? errorId : undefined}
+          >
+            <SelectPrimitive.Value asChild placeholder={placeholder}>
+              <span className={styles['select__value']}>
+                {selectedOption?.image ? (
+                  <span className={styles['select__adornment']}>
+                    <SelectOptionImage src={selectedOption.image} />
+                  </span>
+                ) : null}
+                <span>{selectedOption?.label ?? placeholder}</span>
+              </span>
+            </SelectPrimitive.Value>
+            <SelectPrimitive.Icon asChild>
+              <ChevronDownIcon className={styles['select__icon']} aria-hidden />
+            </SelectPrimitive.Icon>
+          </SelectPrimitive.Trigger>
           <SelectPrimitive.Portal>
             <SelectPrimitive.Content
-              className={styles.content}
+              className={styles['select__content']}
               position="popper"
               sideOffset={0}
               align="start"
             >
-              <SelectPrimitive.Viewport className={styles.viewport}>
-                {children}
+              <SelectPrimitive.Viewport className={styles['select__viewport']}>
+                {options.map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    disabled={option.disabled}
+                    image={option.image}
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectPrimitive.Viewport>
             </SelectPrimitive.Content>
           </SelectPrimitive.Portal>
         </SelectPrimitive.Root>
+        {errorMessage ? (
+          <span id={errorId} className={styles['select__errorMessage']} role="alert">
+            {errorMessage}
+          </span>
+        ) : null}
       </div>
     )
   },

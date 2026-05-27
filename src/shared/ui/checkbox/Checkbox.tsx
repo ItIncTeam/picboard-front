@@ -10,40 +10,62 @@ import styles from './checkbox.module.css'
 
 export type CheckboxProps = {
   label?: string
+  errorMessage?: string
   className?: string
   labelClassName?: string
+  controlClassName?: string
 } & ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 
 export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
-  ({ label, className, labelClassName, id, disabled, ...props }, ref) => {
-    const generatedId = useId()
-    const checkboxId = id ?? generatedId
-
-    const rootClassName = cn(styles.root, disabled && styles.rootDisabled, className)
+  (
+    { label, errorMessage, className, labelClassName, controlClassName, id, disabled, ...props },
+    ref,
+  ) => {
+    const baseId = useId()
+    const checkboxId = id ?? `${baseId}-control`
+    const errorId = `${baseId}-error`
+    const isError = Boolean(errorMessage)
 
     const control = (
       <CheckboxPrimitive.Root
         ref={ref}
         id={checkboxId}
-        className={styles.control}
+        className={cn(
+          styles.checkbox__control,
+          isError && styles.checkbox__control_error,
+          controlClassName,
+        )}
         disabled={disabled}
+        aria-invalid={isError || undefined}
+        aria-describedby={isError ? errorId : undefined}
         {...props}
       >
-        <CheckboxPrimitive.Indicator className={styles.indicator}>
-          <CheckIcon className={styles.checkIcon} aria-hidden />
+        <CheckboxPrimitive.Indicator className={styles.checkbox__indicator}>
+          <CheckIcon className={styles.checkbox__checkIcon} aria-hidden />
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
     )
 
-    if (!label) {
-      return <div className={rootClassName}>{control}</div>
-    }
+    const fieldClassName = cn(styles.checkbox__field, disabled && styles.checkbox_disabled)
+
+    const field = label ? (
+      <label className={fieldClassName}>
+        {control}
+        <span className={cn(styles.checkbox__label, labelClassName)}>{label}</span>
+      </label>
+    ) : (
+      <div className={fieldClassName}>{control}</div>
+    )
 
     return (
-      <label className={rootClassName}>
-        {control}
-        <span className={cn(styles.label, labelClassName)}>{label}</span>
-      </label>
+      <div className={cn(styles.checkbox, className)}>
+        {field}
+        {errorMessage ? (
+          <span id={errorId} className={styles.checkbox__errorMessage} role="alert">
+            {errorMessage}
+          </span>
+        ) : null}
+      </div>
     )
   },
 )

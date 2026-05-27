@@ -1,47 +1,36 @@
-.root {
-  --select-width: 210px;
+.select {
+  --select-width: 100%;
   --select-height: 36px;
   --select-icon-size: 24px;
 
   display: flex;
   flex-direction: column;
   gap: 0;
+
   width: var(--select-width);
+  min-width: 0;
 }
 
-/* Figma Language in header (163×36). Use via selectHeaderRootClassName */
-.rootHeader {
-  --select-width: 163px;
+.select_disabled .select__label {
+  color: var(--color-light-900);
 }
 
-/* =========================================================
-   LABEL
-   ========================================================= */
-
-.label {
-  cursor: pointer;
+.select__label {
   font-size: var(--font-size-sm);
   line-height: var(--line-height-base);
   color: var(--color-light-900);
 }
 
-.rootDisabled .label {
-  cursor: not-allowed;
-  color: var(--color-light-900);
-}
-
-/* =========================================================
-   CONTROL
-   ========================================================= */
-
-.control {
-  display: inline-flex;
+.select__trigger {
+  overflow: hidden;
+  display: flex;
   gap: 8px;
   align-items: center;
   justify-content: space-between;
 
   box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   height: var(--select-height);
   padding: 6px 12px;
   border: 1px solid var(--color-dark-100);
@@ -50,104 +39,84 @@
   font-family: inherit;
   font-size: var(--font-size-md);
   line-height: var(--line-height-md);
+  color: var(--color-light-100);
 
   background: transparent;
 
   transition:
     border-color 0.15s ease,
-    border-width 0.15s ease,
     background-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-/* =========================================================
-   DEFAULT (WITHOUT LABEL)
-   ========================================================= */
-
-.root:not(.withLabel, .rootHeader) .control:not([data-disabled]) {
-  color: var(--color-light-900);
-}
-
-.root:not(.withLabel, .rootHeader) .value[data-placeholder] {
-  color: var(--color-light-900);
-}
-
-/* =========================================================
-   LIGHT VALUE (WITH LABEL, HEADER LANGUAGE)
-   ========================================================= */
-
-.withLabel .control:not([data-disabled], [data-state='open']),
-.rootHeader .control:not([data-disabled], [data-state='open']) {
+.select__trigger:not([data-disabled])[data-placeholder] .select__value,
+.select__trigger:not([data-disabled])[data-placeholder] .select__value > span {
   color: var(--color-light-100);
 }
 
-.withLabel .value[data-placeholder],
-.rootHeader .value[data-placeholder] {
-  color: var(--color-light-100);
-}
-
-/* =========================================================
-   HOVER
-   ========================================================= */
-
-.control:not([data-disabled]):hover {
+.select__trigger:not([data-disabled]):hover {
   border-color: var(--color-light-900);
 }
 
-/* =========================================================
-   FOCUS
-   ========================================================= */
-
-.control:focus-visible:not([data-disabled]) {
-  padding: 5px 11px;
+.select__trigger:focus-visible:not([data-disabled]) {
   border-color: var(--color-accent-500);
-  border-width: 2px;
   outline: none;
+  box-shadow: 0 0 0 1px var(--color-accent-500);
 }
 
-/* =========================================================
-   OPEN
-   ========================================================= */
-
-.control[data-state='open']:not([data-disabled]) {
+.select__trigger[data-state='open']:not([data-disabled]) {
   border-color: var(--color-light-100);
   border-radius: 2px 2px 0 0;
   color: var(--color-light-100);
   background: var(--color-dark-500);
 }
 
-.control[data-state='open']:not([data-disabled]) .value,
-.control[data-state='open']:not([data-disabled]) .value[data-placeholder] {
+.select__trigger[data-state='open']:not([data-disabled]) .select__value,
+.select__trigger[data-state='open']:not([data-disabled]) .select__value > span {
   color: var(--color-light-100);
 }
 
-/* =========================================================
-   DISABLED
-   ========================================================= */
-
-.control[data-disabled] {
+.select__trigger[data-disabled] {
   cursor: not-allowed;
   color: var(--color-dark-100);
 }
 
-.control[data-disabled] .value,
-.control[data-disabled] .value[data-placeholder] {
+.select__trigger[data-disabled] .select__value,
+.select__trigger[data-disabled] .select__value > span {
   color: var(--color-dark-100);
 }
 
-.control[data-disabled] .icon {
+.select__trigger[data-disabled] .select__icon {
   color: var(--color-dark-100);
 }
 
-.control:not([data-disabled]) {
+.select__trigger:not([data-disabled]) {
   cursor: pointer;
 }
 
-/* =========================================================
-   START ADORNMENT
-   ========================================================= */
+.select__trigger_error:not([data-disabled]) {
+  border-color: var(--color-danger-500);
+  color: var(--color-danger-500);
+}
 
-.adornment {
+.select__trigger_error:not([data-disabled]) .select__value,
+.select__trigger_error:not([data-disabled]) .select__value > span {
+  color: var(--color-danger-500);
+}
+
+.select__trigger_error:not([data-disabled]) .select__icon {
+  color: var(--color-danger-500);
+}
+
+.select__errorMessage {
+  margin-top: 10px;
+  font-size: var(--font-size-xs);
+  line-height: 16px;
+  color: var(--color-danger-300);
+}
+
+.select__adornment {
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -157,20 +126,63 @@
   height: var(--select-icon-size);
 }
 
-/* =========================================================
-   VALUE & ICON
-   ========================================================= */
+.select__image {
+  display: block;
+  flex-shrink: 0;
 
-.value {
+  width: 24px;
+  max-width: none;
+  height: 16px;
+  border-radius: 2px;
+
+  object-fit: cover;
+}
+
+.select__itemContent {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.select__itemText {
   overflow: hidden;
   flex: 1;
 
-  text-align: left;
+  min-width: 0;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.icon {
+.select__value {
+  overflow: hidden;
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  align-items: center;
+
+  min-width: 0;
+
+  text-align: left;
+}
+
+.select__value > .select__adornment {
+  flex-shrink: 0;
+}
+
+.select__value > span:not(.select__adornment) {
+  overflow: hidden;
+  display: block;
+  flex: 1;
+
+  min-width: 0;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select__icon {
   display: block;
   flex-shrink: 0;
 
@@ -182,17 +194,13 @@
   transition: transform 0.15s ease;
 }
 
-.control[data-state='open'] .icon {
+.select__trigger[data-state='open'] .select__icon {
   transform: rotate(180deg);
 }
 
-/* =========================================================
-   CONTENT (DROPDOWN)
-   ========================================================= */
-
-.content {
-  --radix-select-trigger-width: var(--select-width);
+.select__content {
   --radix-select-content-transform-origin: top;
+  --radix-select-trigger-width: 100%;
 
   z-index: 50;
   transform-origin: var(--radix-select-content-transform-origin);
@@ -201,6 +209,7 @@
 
   box-sizing: border-box;
   width: var(--radix-select-trigger-width);
+  min-width: var(--radix-select-trigger-width);
   border: 1px solid var(--color-light-100);
   border-top: none;
   border-radius: 0 0 2px 2px;
@@ -211,11 +220,11 @@
     1px 1px 2px 0 rgb(0 0 0 / 10%);
 }
 
-.content[data-state='open'] {
+.select__content[data-state='open'] {
   animation: select-content-show 0.15s ease-out;
 }
 
-.content[data-state='closed'] {
+.select__content[data-state='closed'] {
   animation: select-content-hide 0.1s ease-in;
 }
 
@@ -243,7 +252,7 @@
   }
 }
 
-.viewport {
+.select__viewport {
   --select-viewport-max-rows: 6;
 
   scrollbar-color: var(--color-dark-100) var(--color-dark-500);
@@ -255,33 +264,26 @@
   padding: 0;
 }
 
-.viewport::-webkit-scrollbar {
+.select__viewport::-webkit-scrollbar {
   width: 6px;
 }
 
-.viewport::-webkit-scrollbar-track {
+.select__viewport::-webkit-scrollbar-track {
   background: var(--color-dark-500);
 }
 
-.viewport::-webkit-scrollbar-thumb {
+.select__viewport::-webkit-scrollbar-thumb {
   border-radius: 2px;
   background: var(--color-dark-100);
 }
 
-.viewport::-webkit-scrollbar-thumb:hover {
+.select__viewport::-webkit-scrollbar-thumb:hover {
   background: var(--color-light-900);
 }
 
-/* =========================================================
-   ITEM
-   ========================================================= */
-
-.item {
+.select__item {
   cursor: pointer;
   user-select: none;
-
-  display: flex;
-  align-items: center;
 
   height: var(--select-height);
   padding: 6px 12px;
@@ -293,16 +295,16 @@
   outline: none;
 }
 
-.item[data-highlighted]:not([data-disabled]) {
+.select__item[data-highlighted]:not([data-disabled]) {
   color: var(--color-accent-500);
-  background: color-mix(in srgb, var(--color-dark-300) 60%, var(--color-dark-500));
+  background: var(--color-dark-300);
 }
 
-.item[data-state='checked'] {
+.select__item[data-state='checked'] {
   color: var(--color-light-100);
 }
 
-.item[data-disabled] {
+.select__item[data-disabled] {
   pointer-events: none;
   color: var(--color-dark-100);
 }

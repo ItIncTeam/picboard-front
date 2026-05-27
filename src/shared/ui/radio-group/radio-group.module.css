@@ -1,10 +1,23 @@
-.group {
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.radioGroup__label {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  color: var(--color-light-900);
+}
+
+.radioGroup__group {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.root {
+.radioGroup__field {
   --radio-size: 20px;
   --hover-size: 36px;
 
@@ -14,11 +27,7 @@
   align-items: center;
 }
 
-/* =========================================================
-   HOVER LAYER
-   ========================================================= */
-
-.root::before {
+.radioGroup__field::before {
   pointer-events: none;
   content: '';
 
@@ -39,11 +48,7 @@
     background-color 0.15s ease;
 }
 
-/* =========================================================
-   CONTROL
-   ========================================================= */
-
-.control {
+.radioGroup__control {
   position: relative;
   z-index: 1;
 
@@ -66,90 +71,66 @@
     border-color 0.15s ease;
 }
 
-/* =========================================================
-   UNCHECKED
-   ========================================================= */
-
-.control[data-state='unchecked']:not([data-disabled]) {
+.radioGroup__control[data-state='unchecked']:not([data-disabled]) {
   border-color: var(--color-light-100);
   background: transparent;
 }
 
-/* =========================================================
-   CHECKED
-   ========================================================= */
-
-.control[data-state='checked']:not([data-disabled]) {
+.radioGroup__control[data-state='checked']:not([data-disabled]) {
   border-color: var(--color-light-100);
   background: transparent;
 }
 
-/* =========================================================
-   HOVER
-   ========================================================= */
+.radioGroup__group_error .radioGroup__control:not([data-disabled]) {
+  border-color: var(--color-danger-500);
+}
 
-.root:not(.rootDisabled):hover::before {
+.radioGroup__group_error .radioGroup__indicator {
+  background: var(--color-danger-500);
+}
+
+.radioGroup__field:not(.radioGroup_disabled):hover::before {
   opacity: 1;
   background: var(--color-dark-300);
 }
 
-/* =========================================================
-   FOCUS
-   ========================================================= */
-
-.root:not(.rootDisabled):focus-within::before {
+.radioGroup__field:not(.radioGroup_disabled):focus-within::before {
   opacity: 1;
   background: var(--color-dark-500);
 }
 
-/* =========================================================
-   ACTIVE
-   ========================================================= */
-
-.root:not(.rootDisabled):active::before {
+.radioGroup__field:not(.radioGroup_disabled):active::before {
   opacity: 1;
   background: var(--color-dark-100);
 }
 
-/* =========================================================
-   CURSOR
-   ========================================================= */
-
-label.root:not(.rootDisabled) {
+label.radioGroup__field:not(.radioGroup_disabled) {
   cursor: pointer;
 }
 
-.rootDisabled {
+.radioGroup_disabled {
   cursor: not-allowed;
 }
 
-.control:not([data-disabled]) {
+.radioGroup__control:not([data-disabled]) {
   cursor: pointer;
 }
 
-.control[data-disabled] {
+.radioGroup__control[data-disabled] {
   cursor: not-allowed;
 }
 
-/* =========================================================
-   DISABLED
-   ========================================================= */
-
-.control[data-state='unchecked'][data-disabled] {
+.radioGroup__control[data-state='unchecked'][data-disabled] {
   border-color: var(--color-light-900);
   background: transparent;
 }
 
-.control[data-state='checked'][data-disabled] {
+.radioGroup__control[data-state='checked'][data-disabled] {
   border-color: var(--color-light-700);
   background: transparent;
 }
 
-/* =========================================================
-   INDICATOR
-   ========================================================= */
-
-.indicator {
+.radioGroup__indicator {
   display: block;
   flex-shrink: 0;
 
@@ -160,28 +141,27 @@ label.root:not(.rootDisabled) {
   background: var(--color-light-100);
 }
 
-.control[data-state='checked'][data-disabled] .indicator {
+.radioGroup__control[data-state='checked'][data-disabled] .radioGroup__indicator {
   background: var(--color-light-700);
 }
 
-/* =========================================================
-   LABEL
-   ========================================================= */
-
-.label {
+.radioGroup__itemLabel {
   font-size: var(--font-size-sm);
   line-height: var(--line-height-base);
   color: var(--color-light-100);
 }
 
-.rootDisabled .label {
+.radioGroup_disabled .radioGroup__itemLabel {
   color: var(--color-light-900);
 }
 
-/* =========================================================
-   REMOVE DEFAULT OUTLINE
-   ========================================================= */
-
-.control:focus-visible {
+.radioGroup__control:focus-visible {
   outline: none;
+}
+
+.radioGroup__errorMessage {
+  margin-top: 10px;
+  font-size: var(--font-size-xs);
+  line-height: 16px;
+  color: var(--color-danger-300);
 }
