@@ -1,5 +1,5 @@
-import { AuthPage } from '@/views/auth-page'
+import { SignUpPage } from '@/views/sign-up-page'
 
 export default function Page() {
-  return <AuthPage screen="sign-up" />
+  return <SignUpPage />
 }
