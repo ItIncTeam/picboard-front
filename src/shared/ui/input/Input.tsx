@@ -1,12 +1,13 @@
-import { useId, type ComponentPropsWithoutRef, type ComponentType } from 'react'
+import React, { ComponentPropsWithoutRef, useId } from 'react'
 import s from './Input.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
-import { SearchIcon } from '@/shared/assets'
+import SearchIcon from '@/shared/assets/icon/search.svg'
+import Image from 'next/image'
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'
-  Icon?: ComponentType<ComponentPropsWithoutRef<'svg'>>
+  icon?: string
   label?: string | null
   error?: string | null
   classNameLabel?: string
@@ -18,7 +19,7 @@ type Props = {
 
 export const Input = ({
   variant = 'default',
-  Icon,
+  icon,
   asChild,
   className,
   label,
@@ -46,13 +47,15 @@ export const Input = ({
       {variant === 'search' && (
         <div className={s.searchWrapper}>
           {inputComponent}
-          <SearchIcon className={s.searchIcn} />
+          <Image className={s.searchIcn} src={SearchIcon} alt="Search" />
         </div>
       )}
       {variant === 'defaultIcon' && (
         <div className={s.inputWrapper}>
           {inputComponent}
-          {Icon && <Icon role="button" onClick={onClick} className={s.defaultIcn} />}
+          {icon && (
+            <Image role="button" onClick={onClick} className={s.defaultIcn} src={icon} alt="Eye" />
+          )}
         </div>
       )}
       {variant === 'default' && inputComponent}

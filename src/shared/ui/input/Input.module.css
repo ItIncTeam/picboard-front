@@ -15,7 +15,7 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 171%;
-  color: var(--color-text-disabled);
+  color: var(--color-light-900);
 }
 
 .input {
@@ -24,31 +24,31 @@
   box-sizing: border-box;
   min-width: 280px;
   padding: 6px 12px;
-  border: 1px solid var(--color-text-secondary);
+  border: 1px solid var(--color-dark-100);
   border-radius: 2px;
 
-  color: var(--color-text-disabled);
+  color: var(--color-light-900);
 
   &:focus {
-    border: 1px solid var(--color-surface-primary);
-    color: var(--color-surface-primary);
-    background-color: var(--color-text-primary);
+    border: 1px solid var(--color-light-100);
+    color: var(--color-light-100);
+    background-color: var(--color-dark-500);
   }
 
   &:hover {
-    border: 1px solid var(--color-text-disabled);
-    color: var(--color-text-disabled);
+    border: 1px solid var(--color-light-900);
+    color: var(--color-light-900);
   }
 
   &:active {
     border: transparent;
-    color: var(--color-text-disabled);
-    outline: 2px solid var(--color-primary);
+    color: var(--color-light-900);
+    outline: 2px solid var(--color-accent-500);
   }
 
   &:disabled {
-    border: 1px solid var(--color-text-secondary);
-    color: var(--color-text-secondary);
+    border: 1px solid var(--color-dark-100);
+    color: var(--color-dark-100);
   }
 }
 
@@ -61,7 +61,7 @@
   max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .defaultIcn {
-    fill: var(--color-text-secondary);
+    filter: invert(28%) sepia(0%) saturate(1%) brightness(98%) contrast(84%);
   }
 
   & .defaultIcn {
@@ -72,7 +72,7 @@
     right: 12px; /* Отступ справа внутри input */
     transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-    fill: var(--color-surface-primary);
+    filter: brightness(0) invert(1);
   }
 }
 
@@ -85,7 +85,7 @@
   max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .searchIcn {
-    fill: var(--color-text-secondary);
+    filter: invert(28%) sepia(0%) saturate(1%) brightness(98%) contrast(84%);
   }
 
   & input {
@@ -113,14 +113,14 @@
     left: 12px; /* Отступ справа внутри input */
     transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-    fill: var(--color-text-disabled);
+    filter: invert(63%) sepia(3%) saturate(237%) brightness(93%) contrast(87%);
 
     transition: opacity 0.2s ease;
   }
 }
 
 .error {
-  border: 1px solid var(--color-status-danger);
+  border: 1px solid var(--color-danger-500);
 }
 
 .textError {
@@ -128,10 +128,10 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 171%;
-  color: var(--color-status-danger);
+  color: var(--color-danger-500);
 }
 
 .active {
-  border: 1px solid var(--color-text-secondary);
-  color: var(--color-text-disabled);
+  border: 1px solid var(--color-dark-100);
+  color: var(--color-light-900);
 }

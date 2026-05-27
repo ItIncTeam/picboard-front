@@ -1,6 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
+import { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Input } from '@/shared/ui/input/Input'
+import openEye from '@/shared/assets/icon/openEye.svg'
+import closeEye from '@/shared/assets/icon/closeEye.svg'
 
 const meta = {
   title: 'Shared/Input',
@@ -18,7 +19,7 @@ export const ErrorInput: Story = {
     type: 'password',
     label: 'label',
     error: 'error',
-    Icon: CloseEyeIcon,
+    icon: closeEye,
   },
 }
 
@@ -28,7 +29,7 @@ export const DefaultIcon: Story = {
     placeholder: 'DefaultIcon',
     type: 'text',
     label: 'label',
-    Icon: OpenEyeIcon,
+    icon: openEye,
   },
 }
 
