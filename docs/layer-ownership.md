@@ -1,57 +1,160 @@
-# Границы слоев и временные заглушки
+# Границы слоев
 
-Короткое правило: сначала собираем маршруты и точки интеграции, потом добавляем реальные фичи.
+Этот документ отвечает на вопрос: куда класть новый код.
 
 ## app/
 
-Здесь живут только маршруты Next.js: `layout.tsx`, `page.tsx`, route groups, modal slots, metadata.
-Файлы `page.tsx` должны быть тонкими адаптерами: импортировать view и вернуть его.
+Кладем:
 
-В `app/` не пишем формы, API-запросы, состояние, проверки авторизации и бизнес-логику.
+- route groups;
+- `layout.tsx`;
+- `page.tsx`;
+- `not-found.tsx`;
+- modal slots;
+- metadata.
+
+Не кладем:
+
+- формы;
+- API calls;
+- Zustand stores;
+- бизнес-логику;
+- reusable UI.
+
+Пример route adapter:
+
+```tsx
+import { SignInPage } from '@/views/sign-in-page'
+
+export default function Page() {
+  return <SignInPage />
+}
+```
 
 ## views/
 
-View собирает страницу из widgets и features. Это уровень композиции страницы.
+Кладем сборку страницы.
 
-Пример: `sign-in-page` подключает общий `PublicAuthShell`, а позже внутрь него будет вставлена
-фича формы входа.
+Пример auth page:
+
+```tsx
+import { PublicAuthShell } from '@/widgets/public-auth-shell'
+
+export function SignInPage() {
+  return <PublicAuthShell title="Sign In" />
+}
+```
+
+Когда появится форма, view подключит feature:
+
+```tsx
+<PublicAuthShell title="Sign In">
+  <SignInForm />
+</PublicAuthShell>
+```
 
 ## widgets/
 
-Widget — крупная визуальная или layout-граница: header, sidebar, auth shell, feed block.
+Кладем крупные композиционные блоки:
 
-Layout-компоненты для публичной зоны лежат в `widgets/`, если они переиспользуются между страницами.
-Widget не должен знать про токены, сессию, API и правила доступа.
+- headers;
+- sidebars;
+- shells;
+- feeds;
+- profile blocks.
+
+Примеры сейчас:
+
+- `widgets/public-header`;
+- `widgets/public-auth-shell`.
+
+Widget не должен знать про session, token storage и API.
+
+Header живет в `widgets/`, если это часть shell.
+
+Shell живет в `widgets/`, если он переиспользуется между несколькими views.
 
 ## features/
 
-Здесь будут пользовательские действия: форма входа, регистрация, восстановление пароля, отправка
-поста. Будущие auth-формы должны жить в `features/auth` или в более точной auth-feature папке,
-если команда так разделит задачи.
+Кладем действия пользователя:
+
+- sign in;
+- sign up;
+- forgot password;
+- create post;
+- follow user.
+
+Будущие auth forms должны жить в `features/auth`.
+
+## entities/
+
+Кладем бизнес-сущности:
+
+- user;
+- post;
+- message;
+- payment.
+
+Entity описывает данные и базовые правила сущности.
 
 ## shared/ui
 
-Только примитивы дизайн-системы: Button, Input, Select, Checkbox, Typography.
+Кладем только примитивы:
 
-Не кладем сюда auth shell, headers, page layouts и компоненты, которые нужны только одному разделу.
+- Button;
+- Input;
+- Select;
+- Checkbox;
+- Typography.
 
-## Как работать с заглушками
+Не кладем:
 
-Оставляем только заглушки, которые держат архитектурную границу или маршрут.
+- `PublicAuthShell`;
+- `PublicHeader`;
+- page layouts;
+- auth-specific UI.
 
-Не создаем временные fake-кнопки, fake-инпуты, dropdown-поведение, Zustand stores, API-слой,
-middleware, auth redirects и placeholder business logic.
+## Layout components
 
-Если нужен экран без готовой фичи, делаем короткий placeholder во view или используем существующий
-`RoutePlaceholder`. Когда реальный компонент готов, заменяем заглушку в одном месте.
+Если layout нужен нескольким страницам, он обычно живет в `widgets/`.
+
+Если layout нужен только конкретному route segment, он может остаться в `app/.../layout.tsx`.
+
+## Placeholders
+
+Заглушка нужна только для маршрута или integration point.
+
+Можно использовать `RoutePlaceholder`, если экран еще не готов.
+
+Не создаем временные кнопки, инпуты, dropdown behavior, stores и API mocks.
+
+Когда реальный компонент готов, заменяем заглушку в одном view.
+
+## Modals
+
+Route-based modal живет в `app/.../@modal`, если у него должен быть URL.
+
+Local modal живет рядом с feature или widget, если это обычный UI dialog.
+
+Пример route-based места:
+
+```txt
+src/app/(protected)/(main)/@modal
+```
+
+Пример local места:
+
+```txt
+features/create-post/ui
+widgets/profile-header
+```
 
 ## Параллельная работа
 
-Разработчик маршрута создает тонкий `page.tsx` и view.
+Разработчик маршрута создает `page.tsx` и view.
 
-Разработчик layout создает widget-границу и подключает ее во view или layout.
+Разработчик layout создает widget shell.
 
-Разработчик feature делает компонент в `features/` и отдает его во view для интеграции.
+Разработчик feature создает компонент в `features/`.
 
-Перед созданием нового компонента проверьте `widgets/`, `features/` и `shared/ui`, чтобы не сделать
-дубликат.
+Перед созданием нового компонента проверьте `views/`, `widgets/`, `features/` и `shared/ui`.

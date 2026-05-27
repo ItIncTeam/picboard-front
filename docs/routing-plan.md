@@ -1,12 +1,9 @@
-# Routing Plan Archive
+# Routing Plan
 
-This document is archived.
+Этот документ архивный.
 
-The routing plan was replaced by the App Router roadmap because the old plan contained outdated
-route groups and temporary routes from the initial skeleton.
+Актуальная структура маршрутов находится здесь:
 
-Use this document instead:
+- [App Router](./app-router-roadmap.md)
 
-- [App Router Roadmap](./app-router-roadmap.md)
-
-Do not use this file as an architecture reference.
+Не используйте этот файл как источник архитектурных решений.
