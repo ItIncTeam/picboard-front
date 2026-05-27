@@ -1,5 +1,5 @@
-import { AuthPage } from '@/views/auth-page'
+import { SignInPage } from '@/views/sign-in-page'
 
 export default function Page() {
-  return <AuthPage screen="sign-in" />
+  return <SignInPage />
 }

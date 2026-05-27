@@ -56,3 +56,13 @@
   line-height: var(--line-height-md);
   color: var(--color-text-primary);
 }
+
+.routeLink {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.routeLink:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}

@@ -1,0 +1,11 @@
+.root {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.content {
+  min-width: 0;
+  min-height: 0;
+}

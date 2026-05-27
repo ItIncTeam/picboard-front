@@ -1,5 +1,5 @@
-import { AuthPage } from '@/views/auth-page'
+import { ForgotPasswordPage } from '@/views/forgot-password-page'
 
 export default function Page() {
-  return <AuthPage screen="forgot-password" />
+  return <ForgotPasswordPage />
 }
