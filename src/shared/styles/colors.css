@@ -30,6 +30,10 @@
   --color-light-500: #edf3fa;
   --color-light-700: #d5dae0;
   --color-light-900: #8d9094;
+}
+
+:root,
+[data-theme='light'] {
   --color-background: var(--color-light-100);
   --color-foreground: var(--color-dark-500);
   --color-surface-primary: var(--color-light-100);
@@ -52,8 +56,31 @@
   --color-overlay: rgb(0 0 0 / 60%);
 }
 
+[data-theme='dark'] {
+  --color-background: var(--color-dark-900);
+  --color-foreground: var(--color-light-100);
+  --color-surface-primary: var(--color-dark-700);
+  --color-surface-secondary: var(--color-dark-500);
+  --color-surface-elevated: var(--color-dark-300);
+  --color-text-primary: var(--color-light-100);
+  --color-text-secondary: var(--color-light-900);
+  --color-text-disabled: var(--color-dark-100);
+  --color-text-inverse: var(--color-dark-900);
+  --color-border-primary: var(--color-dark-300);
+  --color-border-secondary: var(--color-dark-100);
+  --color-primary: var(--color-accent-500);
+  --color-primary-hover: var(--color-accent-300);
+  --color-primary-active: var(--color-accent-100);
+  --color-primary-disabled: var(--color-accent-900);
+  --color-status-success: var(--color-success-300);
+  --color-status-danger: var(--color-danger-300);
+  --color-status-warning: var(--color-warning-300);
+  --color-focus: var(--color-accent-300);
+  --color-overlay: rgb(0 0 0 / 70%);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --color-background: var(--color-dark-900);
     --color-foreground: var(--color-light-100);
     --color-surface-primary: var(--color-dark-700);

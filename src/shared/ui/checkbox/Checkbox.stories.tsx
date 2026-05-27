@@ -1,7 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
-import '@/app/globals.css'
-
 import { Checkbox } from './Checkbox'
 
 const meta = {
@@ -11,18 +9,6 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  decorators: [
-    (Story) => (
-      <div
-        style={{
-          padding: 24,
-          background: 'var(--color-dark-700)',
-        }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 } satisfies Meta<typeof Checkbox>
 
 export default meta
