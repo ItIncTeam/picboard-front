@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { useState } from 'react'
+import { expect, userEvent, within } from 'storybook/test'
 
 import { Checkbox } from './Checkbox'
 
@@ -47,5 +49,48 @@ export const DisabledWithLabel: Story = {
     label: 'Disabled option',
     disabled: true,
     defaultChecked: true,
+  },
+}
+
+export const Controlled: Story = {
+  render: () => {
+    const [checked, setChecked] = useState(false)
+
+    return (
+      <Checkbox
+        label="I agree to the Terms of Service"
+        checked={checked}
+        onCheckedChange={(next) => setChecked(next === true)}
+      />
+    )
+  },
+}
+
+export const KeyboardToggle: Story = {
+  args: {
+    label: 'I agree to the Terms of Service',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const checkbox = canvas.getByRole('checkbox')
+
+    checkbox.focus()
+    await userEvent.keyboard(' ')
+
+    await expect(checkbox).toBeChecked()
+  },
+}
+
+export const WithError: Story = {
+  args: {
+    label: 'I agree to the Terms of Service',
+    errorMessage: 'You must accept the terms',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const checkbox = canvas.getByRole('checkbox')
+
+    await expect(checkbox).toHaveAttribute('aria-invalid', 'true')
+    await expect(canvas.getByRole('alert')).toHaveTextContent('You must accept the terms')
   },
 }

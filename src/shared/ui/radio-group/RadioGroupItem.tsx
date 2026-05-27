@@ -18,28 +18,32 @@ export const RadioGroupItem = forwardRef<HTMLButtonElement, RadioGroupItemProps>
     const generatedId = useId()
     const itemId = id ?? generatedId
 
-    const rootClassName = cn(styles.root, disabled && styles.rootDisabled, className)
+    const fieldClassName = cn(
+      styles.radioGroup__field,
+      disabled && styles.radioGroup_disabled,
+      className,
+    )
 
     const control = (
       <RadioGroupPrimitive.Item
         ref={ref}
         id={itemId}
-        className={styles.control}
+        className={styles.radioGroup__control}
         disabled={disabled}
         {...props}
       >
-        <RadioGroupPrimitive.Indicator className={styles.indicator} />
+        <RadioGroupPrimitive.Indicator className={styles.radioGroup__indicator} />
       </RadioGroupPrimitive.Item>
     )
 
     if (!label) {
-      return <div className={rootClassName}>{control}</div>
+      return <div className={fieldClassName}>{control}</div>
     }
 
     return (
-      <label className={rootClassName}>
+      <label className={fieldClassName}>
         {control}
-        <span className={cn(styles.label, labelClassName)}>{label}</span>
+        <span className={cn(styles.radioGroup__itemLabel, labelClassName)}>{label}</span>
       </label>
     )
   },
