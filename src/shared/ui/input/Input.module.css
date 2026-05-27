@@ -1,0 +1,133 @@
+.root {
+  --select-width: 210px;
+  --select-icon-size: 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: flex-start;
+}
+
+.label {
+  cursor: pointer;
+
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 171%;
+  color: var(--color-light-900);
+}
+
+.input {
+  all: unset;
+
+  box-sizing: border-box;
+  min-width: 280px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-dark-100);
+  border-radius: 2px;
+
+  color: var(--color-light-900);
+
+  &:focus {
+    border: 1px solid var(--color-light-100);
+    color: var(--color-light-100);
+  }
+
+  &:hover {
+    border: 1px solid var(--color-light-900);
+    color: var(--color-light-900);
+  }
+
+  &:active {
+    border: 1px solid var(--color-accent-500);
+    color: var(--color-light-900);
+  }
+
+  &:disabled {
+    border: 1px solid var(--color-dark-100);
+    color: var(--color-dark-100);
+  }
+}
+
+.inputWrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 280px; /* Задайте нужную ширину */
+}
+
+/* Стили для самого поля ввода */
+.inputWrapper input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 12px; /* Важно: правый padding должен быть больше ширины иконки */
+  border: 1px solid var(--color-light-900);
+  border-radius: 2px;
+
+  color: var(--color-light-900);
+}
+
+.inputWrapper .defaultIcn {
+  pointer-events: none; /* Чтобы клик по иконке проходил сквозь нее на сам инпут */
+
+  position: absolute;
+  top: 50%;
+  right: 12px; /* Отступ справа внутри input */
+  transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
+
+  color: var(
+    --color-light-900
+  ); /* Цвет иконки (также наследуется, если в SVG есть fill="currentColor") */
+}
+
+/* Стилизация searchInput */
+
+.searchWrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 280px; /* Задайте нужную ширину */
+}
+
+/* Стили для самого поля ввода */
+.searchWrapper input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 12px 6px 41px; /* Важно: правый padding должен быть больше ширины иконки */
+  border: 1px solid var(--color-light-900);
+  border-radius: 2px;
+
+  color: var(--color-light-900);
+}
+
+/* Позиционирование SVG-иконки */
+.searchWrapper .searchIcn {
+  pointer-events: none; /* Чтобы клик по иконке проходил сквозь нее на сам инпут */
+
+  position: absolute;
+  top: 50%;
+  left: 12px; /* Отступ справа внутри input */
+  transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
+
+  color: var(
+    --color-light-900
+  ); /* Цвет иконки (также наследуется, если в SVG есть fill="currentColor") */
+}
+
+.error {
+  border: 1px solid var(--color-danger-500);
+}
+
+.textError {
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 171%;
+  color: var(--color-danger-500);
+}
+
+.active {
+  border: 1px solid var(--color-dark-100);
+  color: var(--color-light-900);
+}
