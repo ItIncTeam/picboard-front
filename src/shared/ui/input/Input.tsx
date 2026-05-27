@@ -4,7 +4,6 @@ import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
 import SearchIcon from '@/shared/assets/icon/search.svg'
 import Image from 'next/image'
-// import path from 'path'
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'

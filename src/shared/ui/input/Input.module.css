@@ -32,6 +32,7 @@
   &:focus {
     border: 1px solid var(--color-light-100);
     color: var(--color-light-100);
+    background-color: var(--color-dark-500);
   }
 
   &:hover {
@@ -40,8 +41,9 @@
   }
 
   &:active {
-    border: 1px solid var(--color-accent-500);
+    border: transparent;
     color: var(--color-light-900);
+    outline: 2px solid var(--color-accent-500);
   }
 
   &:disabled {
@@ -50,35 +52,28 @@
   }
 }
 
+/* Стилизация defaultInput */
+
 .inputWrapper {
   position: relative;
   display: inline-block;
   width: 100%;
   max-width: 280px; /* Задайте нужную ширину */
-}
 
-/* Стили для самого поля ввода */
-.inputWrapper input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 6px 12px; /* Важно: правый padding должен быть больше ширины иконки */
-  border: 1px solid var(--color-light-900);
-  border-radius: 2px;
+  input:disabled + .defaultIcn {
+    filter: invert(28%) sepia(0%) saturate(1%) brightness(98%) contrast(84%);
+  }
 
-  color: var(--color-light-900);
-}
+  & .defaultIcn {
+    cursor: pointer;
 
-.inputWrapper .defaultIcn {
-  pointer-events: none; /* Чтобы клик по иконке проходил сквозь нее на сам инпут */
+    position: absolute;
+    top: 50%;
+    right: 12px; /* Отступ справа внутри input */
+    transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-  position: absolute;
-  top: 50%;
-  right: 12px; /* Отступ справа внутри input */
-  transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
-
-  color: var(
-    --color-light-900
-  ); /* Цвет иконки (также наследуется, если в SVG есть fill="currentColor") */
+    filter: brightness(0) invert(1);
+  }
 }
 
 /* Стилизация searchInput */
@@ -88,31 +83,40 @@
   display: inline-block;
   width: 100%;
   max-width: 280px; /* Задайте нужную ширину */
-}
 
-/* Стили для самого поля ввода */
-.searchWrapper input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 6px 12px 6px 41px; /* Важно: правый padding должен быть больше ширины иконки */
-  border: 1px solid var(--color-light-900);
-  border-radius: 2px;
+  input:disabled + .searchIcn {
+    filter: invert(28%) sepia(0%) saturate(1%) brightness(98%) contrast(84%);
+  }
 
-  color: var(--color-light-900);
-}
+  & input {
+    width: 100%;
+    padding: 6px 12px 6px 41px; /* Важно: правый padding должен быть больше ширины иконки */
+    transition: padding 0.3s ease;
+  }
 
-/* Позиционирование SVG-иконки */
-.searchWrapper .searchIcn {
-  pointer-events: none; /* Чтобы клик по иконке проходил сквозь нее на сам инпут */
+  & input:focus + .searchIcn,
+  & input:not(:placeholder-shown) + .searchIcn {
+    visibility: hidden;
+    opacity: 0;
+  }
 
-  position: absolute;
-  top: 50%;
-  left: 12px; /* Отступ справа внутри input */
-  transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
+  & input:not(:placeholder-shown),
+  & input:focus {
+    padding-left: 12px;
+  }
 
-  color: var(
-    --color-light-900
-  ); /* Цвет иконки (также наследуется, если в SVG есть fill="currentColor") */
+  & .searchIcn {
+    pointer-events: none; /* Чтобы клик по иконке проходил сквозь нее на сам инпут */
+
+    position: absolute;
+    top: 50%;
+    left: 12px; /* Отступ справа внутри input */
+    transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
+
+    filter: invert(63%) sepia(3%) saturate(237%) brightness(93%) contrast(87%);
+
+    transition: opacity 0.2s ease;
+  }
 }
 
 .error {

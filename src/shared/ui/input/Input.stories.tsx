@@ -1,5 +1,7 @@
 import { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Input } from '@/shared/ui/input/Input'
+import openEye from '@/shared/assets/icon/openEye.svg'
+import closeEye from '@/shared/assets/icon/closeEye.svg'
 
 const meta = {
   title: 'Shared/Input',
@@ -10,8 +12,30 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof Input>
 
-export const Default: Story = {
+export const ErrorInput: Story = {
+  args: {
+    variant: 'defaultIcon',
+    placeholder: 'errorInput',
+    type: 'password',
+    label: 'label',
+    error: 'error',
+    icon: closeEye,
+  },
+}
+
+export const DefaultIcon: Story = {
+  args: {
+    variant: 'defaultIcon',
+    placeholder: 'DefaultIcon',
+    type: 'text',
+    label: 'label',
+    icon: openEye,
+  },
+}
+
+export const DefaultInput: Story = {
   args: {
     variant: 'default',
+    placeholder: 'defaultInput',
   },
 }
