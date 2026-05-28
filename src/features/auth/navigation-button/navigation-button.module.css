@@ -1,0 +1,22 @@
+.root {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.loginLink {
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  color: var(--color-primary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.loginLink:hover {
+  color: var(--color-primary-hover);
+}
+
+.loginLink:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

@@ -1,3 +1,4 @@
+import { Header } from '@/widgets/header/Header'
 export default function MainLayout({
   children,
   modal,
@@ -7,6 +8,7 @@ export default function MainLayout({
 }>) {
   return (
     <>
+      <Header />
       {children}
       {modal}
     </>

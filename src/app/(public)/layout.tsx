@@ -1,4 +1,4 @@
-import { PublicHeader } from '@/widgets/public-header'
+import { Header } from '@/widgets/header'
 
 import styles from './public-layout.module.css'
 
@@ -9,7 +9,7 @@ type PublicLayoutProps = Readonly<{
 export default function PublicLayout({ children }: PublicLayoutProps) {
   return (
     <div className={styles.root}>
-      <PublicHeader />
+      <Header isRegistered={false} />
       <main className={styles.content}>{children}</main>
     </div>
   )
