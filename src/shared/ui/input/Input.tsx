@@ -3,7 +3,6 @@ import s from './Input.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
 import SearchIcon from '@/shared/assets/icon/search.svg'
-import Image from 'next/image'
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'
@@ -28,6 +27,7 @@ export const Input = ({
   ...rest
 }: Props) => {
   const baseId = useId()
+  console.log({ Icon })
 
   const Component = asChild ? Slot : 'input'
   const inputComponent = (
