@@ -25,7 +25,7 @@ export function Header({ isRegistered = true, messageCount = 0, role = 'user' }:
   return (
     <header className={styles.root}>
       <div className={styles.inner}>
-        <Logo href={logoHref[role]} label="Inctagram" suffix={logoSuffix} />
+        <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix} />
         <div className={styles.actions}>
           {hasMessages && (
             <IconButton
