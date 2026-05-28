@@ -61,7 +61,7 @@
   max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .defaultIcn {
-    filter: invert(28%) sepia(0%) saturate(1%) brightness(98%) contrast(84%);
+    fill: var(--color-dark-100);
   }
 
   & .defaultIcn {
@@ -72,7 +72,7 @@
     right: 12px; /* Отступ справа внутри input */
     transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-    filter: brightness(0) invert(1);
+    fill: var(--color-light-100);
   }
 }
 
@@ -85,7 +85,7 @@
   max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .searchIcn {
-    filter: invert(28%) sepia(0%) saturate(1%) brightness(98%) contrast(84%);
+    fill: var(--color-dark-100);
   }
 
   & input {
@@ -113,7 +113,7 @@
     left: 12px; /* Отступ справа внутри input */
     transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-    filter: invert(63%) sepia(3%) saturate(237%) brightness(93%) contrast(87%);
+    fill: var(--color-light-900);
 
     transition: opacity 0.2s ease;
   }

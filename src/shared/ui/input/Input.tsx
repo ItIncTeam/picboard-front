@@ -7,7 +7,7 @@ import Image from 'next/image'
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'
-  icon?: string
+  Icon?: React.FC<React.SVGProps<SVGSVGElement>>
   label?: string | null
   error?: string | null
   classNameLabel?: string
@@ -19,7 +19,7 @@ type Props = {
 
 export const Input = ({
   variant = 'default',
-  icon,
+  Icon,
   asChild,
   className,
   label,
@@ -47,15 +47,13 @@ export const Input = ({
       {variant === 'search' && (
         <div className={s.searchWrapper}>
           {inputComponent}
-          <Image className={s.searchIcn} src={SearchIcon} alt="Search" />
+          <SearchIcon className={s.searchIcn} />
         </div>
       )}
       {variant === 'defaultIcon' && (
         <div className={s.inputWrapper}>
           {inputComponent}
-          {icon && (
-            <Image role="button" onClick={onClick} className={s.defaultIcn} src={icon} alt="Eye" />
-          )}
+          {Icon && <Icon role="button" onClick={onClick} className={s.defaultIcn} />}
         </div>
       )}
       {variant === 'default' && inputComponent}

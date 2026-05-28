@@ -19,7 +19,7 @@ export const ErrorInput: Story = {
     type: 'password',
     label: 'label',
     error: 'error',
-    icon: closeEye,
+    Icon: closeEye,
   },
 }
 
@@ -29,7 +29,7 @@ export const DefaultIcon: Story = {
     placeholder: 'DefaultIcon',
     type: 'text',
     label: 'label',
-    icon: openEye,
+    Icon: openEye,
   },
 }
 
