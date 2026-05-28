@@ -15,7 +15,7 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 171%;
-  color: var(--color-light-900);
+  color: var(--color-text-disabled);
 }
 
 .input {
@@ -24,31 +24,31 @@
   box-sizing: border-box;
   min-width: 280px;
   padding: 6px 12px;
-  border: 1px solid var(--color-dark-100);
+  border: 1px solid var(--color-text-secondary);
   border-radius: 2px;
 
-  color: var(--color-light-900);
+  color: var(--color-text-disabled);
 
   &:focus {
-    border: 1px solid var(--color-light-100);
-    color: var(--color-light-100);
-    background-color: var(--color-dark-500);
+    border: 1px solid var(--color-surface-primary);
+    color: var(--color-surface-primary);
+    background-color: var(--color-text-primary);
   }
 
   &:hover {
-    border: 1px solid var(--color-light-900);
-    color: var(--color-light-900);
+    border: 1px solid var(--color-text-disabled);
+    color: var(--color-text-disabled);
   }
 
   &:active {
     border: transparent;
-    color: var(--color-light-900);
-    outline: 2px solid var(--color-accent-500);
+    color: var(--color-text-disabled);
+    outline: 2px solid var(--color-primary);
   }
 
   &:disabled {
-    border: 1px solid var(--color-dark-100);
-    color: var(--color-dark-100);
+    border: 1px solid var(--color-text-secondary);
+    color: var(--color-text-secondary);
   }
 }
 
@@ -61,7 +61,7 @@
   max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .defaultIcn {
-    fill: var(--color-dark-100);
+    fill: var(--color-text-secondary);
   }
 
   & .defaultIcn {
@@ -72,7 +72,7 @@
     right: 12px; /* Отступ справа внутри input */
     transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-    fill: var(--color-light-100);
+    fill: var(--color-surface-primary);
   }
 }
 
@@ -85,7 +85,7 @@
   max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .searchIcn {
-    fill: var(--color-dark-100);
+    fill: var(--color-text-secondary);
   }
 
   & input {
@@ -113,14 +113,14 @@
     left: 12px; /* Отступ справа внутри input */
     transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-    fill: var(--color-light-900);
+    fill: var(--color-text-disabled);
 
     transition: opacity 0.2s ease;
   }
 }
 
 .error {
-  border: 1px solid var(--color-danger-500);
+  border: 1px solid var(--color-status-danger);
 }
 
 .textError {
@@ -128,10 +128,10 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 171%;
-  color: var(--color-danger-500);
+  color: var(--color-status-danger);
 }
 
 .active {
-  border: 1px solid var(--color-dark-100);
-  color: var(--color-light-900);
+  border: 1px solid var(--color-text-secondary);
+  color: var(--color-text-disabled);
 }
