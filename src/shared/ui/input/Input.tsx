@@ -3,12 +3,10 @@ import s from './Input.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
 import SearchIcon from '@/shared/assets/icon/search.svg'
-import Image from 'next/image'
-// import path from 'path'
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'
-  icon?: string
+  Icon?: React.FC<React.SVGProps<SVGSVGElement>>
   label?: string | null
   error?: string | null
   classNameLabel?: string
@@ -20,7 +18,7 @@ type Props = {
 
 export const Input = ({
   variant = 'default',
-  icon,
+  Icon,
   asChild,
   className,
   label,
@@ -29,6 +27,7 @@ export const Input = ({
   ...rest
 }: Props) => {
   const baseId = useId()
+  console.log({ Icon })
 
   const Component = asChild ? Slot : 'input'
   const inputComponent = (
@@ -48,15 +47,13 @@ export const Input = ({
       {variant === 'search' && (
         <div className={s.searchWrapper}>
           {inputComponent}
-          <Image className={s.searchIcn} src={SearchIcon} alt="Search" />
+          <SearchIcon className={s.searchIcn} />
         </div>
       )}
       {variant === 'defaultIcon' && (
         <div className={s.inputWrapper}>
           {inputComponent}
-          {icon && (
-            <Image role="button" onClick={onClick} className={s.defaultIcn} src={icon} alt="Eye" />
-          )}
+          {Icon && <Icon role="button" onClick={onClick} className={s.defaultIcn} />}
         </div>
       )}
       {variant === 'default' && inputComponent}
