@@ -1,42 +1,50 @@
 import { NavigationButton } from '@/features/auth'
+import { BellIcon } from '@/shared/assets/icon/BellIcon'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { Logo } from '@/shared/ui/logo'
 
-import styles from './header.module.css'
+import styles from './Header.module.css'
 
-type HeaderRole = 'user' | 'superAdmin'
+type HeaderRole = 'guest' | 'user' | 'admin' | 'superAdmin'
 
 type HeaderProps = {
-  isRegistered?: boolean
-  messageCount?: number
+  notificationsCount?: number
   role?: HeaderRole
 }
 
 const logoHref: Record<HeaderRole, string> = {
+  guest: '/',
   user: '/main',
+  admin: '/admin/users',
   superAdmin: '/admin/users',
 }
 
-export function Header({ isRegistered = true, messageCount = 0, role = 'user' }: HeaderProps) {
-  const hasMessages = messageCount > 0
-  const logoSuffix = role === 'superAdmin' ? 'SuperAdmin' : undefined
+const logoSuffix: Partial<Record<HeaderRole, string>> = {
+  admin: 'Admin',
+  superAdmin: 'SuperAdmin',
+}
+
+export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
+  const hasNotifications = notificationsCount > 0
+  const isAuthenticated = role !== 'guest'
+  const showAuthActions = !isAuthenticated
 
   return (
     <header className={styles.root}>
       <div className={styles.inner}>
-        <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix} />
+        <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix[role]} />
         <div className={styles.actions}>
-          {hasMessages && (
-            <IconButton
-              indicatorCount={messageCount}
-              label={`${messageCount} unread messages`}
-              src="/bell.svg"
-            />
-          )}
+          <IconButton
+            icon={BellIcon}
+            indicatorCount={notificationsCount}
+            label={
+              hasNotifications ? `${notificationsCount} unread notifications` : 'Notifications'
+            }
+          />
 
           <LanguageSwitcher />
-          {!isRegistered && <NavigationButton />}
+          {showAuthActions && <NavigationButton />}
         </div>
       </div>
     </header>

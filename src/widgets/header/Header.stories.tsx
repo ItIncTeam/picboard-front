@@ -17,26 +17,25 @@ type Story = StoryObj<typeof Header>
 
 export const Public: Story = {
   args: {
-    isRegistered: false,
+    role: 'guest',
   },
 }
 
-export const Registered: Story = {
+export const User: Story = {
   args: {
-    isRegistered: true,
+    role: 'user',
   },
 }
 
-export const WithMessages: Story = {
+export const WithNotifications: Story = {
   args: {
-    isRegistered: true,
-    messageCount: 3,
+    role: 'user',
+    notificationsCount: 3,
   },
 }
 
 export const SuperAdmin: Story = {
   args: {
-    isRegistered: true,
     role: 'superAdmin',
   },
 }
