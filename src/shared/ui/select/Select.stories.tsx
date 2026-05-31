@@ -4,8 +4,7 @@ import { expect, userEvent, within } from 'storybook/test'
 
 import '@/app/globals.css'
 
-import enFlag from '@/shared/assets/flags/en.png'
-import ruFlag from '@/shared/assets/flags/ru.png'
+import { EnFlagImage, RuFlagImage } from '@/shared/assets'
 
 import type { SelectOption } from './Select'
 import { Select } from './index'
@@ -129,9 +128,9 @@ const languageOptions: SelectOption[] = [
   {
     value: 'en',
     label: 'English11111111111111111111111111111111111111111',
-    image: enFlag.src,
+    image: EnFlagImage.src,
   },
-  { value: 'ru', label: 'Russian', image: ruFlag.src },
+  { value: 'ru', label: 'Russian', image: RuFlagImage.src },
 ]
 
 /** Header i18n: options с image, controlled, ширина через родителя */
