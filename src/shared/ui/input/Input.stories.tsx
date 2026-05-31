@@ -1,5 +1,5 @@
 import React from 'react'
-import { Meta, StoryObj } from '@storybook/nextjs-vite'
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Input } from '@/shared/ui/input/Input'
 // import openEye from './next.svg'
 // import closeEye from './next.svg'

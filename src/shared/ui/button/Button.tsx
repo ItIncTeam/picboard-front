@@ -1,4 +1,4 @@
-import { ComponentPropsWithoutRef } from 'react'
+import type { ComponentPropsWithoutRef } from 'react'
 import s from './button.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'

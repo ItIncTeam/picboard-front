@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/nextjs-vite'
+import type { Meta } from '@storybook/nextjs-vite'
 
 import { TabContent, Tabs } from './Tabs'
 

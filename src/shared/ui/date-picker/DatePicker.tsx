@@ -2,7 +2,8 @@
 
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
-import { ComponentPropsWithoutRef, useMemo, useState } from 'react'
+import type { ComponentPropsWithoutRef } from 'react'
+import { useMemo, useState } from 'react'
 
 import s from './date-picker.module.css'
 

@@ -1,6 +1,7 @@
 'use client'
 
-import React, { ComponentPropsWithoutRef, useId, useState } from 'react'
+import type { ComponentPropsWithoutRef } from 'react'
+import React, { useId, useState } from 'react'
 import s from './Input.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
