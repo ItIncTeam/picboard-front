@@ -27,7 +27,6 @@ export const Input = ({
   ...rest
 }: Props) => {
   const baseId = useId()
-  console.log({ Icon })
 
   const Component = asChild ? Slot : 'input'
   const inputComponent = (

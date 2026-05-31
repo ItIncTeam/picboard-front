@@ -19,36 +19,47 @@
 }
 
 .input {
-  all: unset;
-
   box-sizing: border-box;
-  min-width: 280px;
+  width: 100%;
   padding: 6px 12px;
-  border: 1px solid var(--color-text-secondary);
+  border: 1px solid var(--color-text-disabled);
   border-radius: 2px;
 
-  color: var(--color-text-disabled);
+  font: inherit;
+  color: var(--color-foreground);
 
-  &:focus {
-    border: 1px solid var(--color-surface-primary);
-    color: var(--color-surface-primary);
-    background-color: var(--color-text-primary);
+  background: transparent;
+
+  &:focus:placeholder-shown {
+    border: transparent;
+    outline: 2px solid var(--color-primary);
+  }
+
+  &:focus:not(:placeholder-shown) {
+    border: 1px solid var(--color-foreground);
+    background-color: var(--color-surface-secondary);
+    outline: none;
   }
 
   &:hover {
+    border: 1px solid var(--color-text-secondary);
+    color: var(--color-text-secondary);
+  }
+
+  &:disabled {
     border: 1px solid var(--color-text-disabled);
     color: var(--color-text-disabled);
   }
 
-  &:active {
-    border: transparent;
-    color: var(--color-text-disabled);
-    outline: 2px solid var(--color-primary);
-  }
+  &.error {
+    border: 1px solid var(--color-status-danger);
 
-  &:disabled {
-    border: 1px solid var(--color-text-secondary);
-    color: var(--color-text-secondary);
+    &:focus:placeholder-shown,
+    &:focus:not(:placeholder-shown),
+    &:hover {
+      border-color: var(--color-status-danger);
+      outline-color: var(--color-status-danger);
+    }
   }
 }
 
@@ -58,10 +69,9 @@
   position: relative;
   display: inline-block;
   width: 100%;
-  max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .defaultIcn {
-    fill: var(--color-text-secondary);
+    fill: var(--color-text-disabled);
   }
 
   & .defaultIcn {
@@ -72,36 +82,31 @@
     right: 12px; /* Отступ справа внутри input */
     transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
 
-    fill: var(--color-surface-primary);
+    fill: var(--color-foreground);
   }
 }
-
-/* Стилизация searchInput */
 
 .searchWrapper {
   position: relative;
   display: inline-block;
   width: 100%;
-  max-width: 280px; /* Задайте нужную ширину */
 
   input:disabled + .searchIcn {
-    fill: var(--color-text-secondary);
+    fill: var(--color-text-disabled);
   }
 
   & input {
     width: 100%;
-    padding: 6px 12px 6px 41px; /* Важно: правый padding должен быть больше ширины иконки */
+    padding: 6px 12px 6px 41px;
     transition: padding 0.3s ease;
   }
 
-  & input:focus + .searchIcn,
   & input:not(:placeholder-shown) + .searchIcn {
     visibility: hidden;
     opacity: 0;
   }
 
-  & input:not(:placeholder-shown),
-  & input:focus {
+  & input:not(:placeholder-shown) {
     padding-left: 12px;
   }
 
@@ -110,17 +115,15 @@
 
     position: absolute;
     top: 50%;
-    left: 12px; /* Отступ справа внутри input */
-    transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
+    left: 12px;
+    transform: translateY(-50%);
 
-    fill: var(--color-text-disabled);
+    opacity: 1;
+
+    fill: var(--color-text-secondary);
 
     transition: opacity 0.2s ease;
   }
-}
-
-.error {
-  border: 1px solid var(--color-status-danger);
 }
 
 .textError {
@@ -129,9 +132,4 @@
   font-weight: 400;
   line-height: 171%;
   color: var(--color-status-danger);
-}
-
-.active {
-  border: 1px solid var(--color-text-secondary);
-  color: var(--color-text-disabled);
 }
