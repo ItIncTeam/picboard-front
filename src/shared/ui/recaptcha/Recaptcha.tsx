@@ -77,10 +77,10 @@ export function Recaptcha({
             type="checkbox"
           />
 
-          <span className={styles.recaptcha__control} aria-hidden>
+          <label className={styles.recaptcha__control} htmlFor={controlId}>
             <RecaptchaCheckIcon />
             {isLoading && <RecaptchaSpinner />}
-          </span>
+          </label>
 
           <div className={styles['recaptcha__label-group']}>
             {isExpired && (
