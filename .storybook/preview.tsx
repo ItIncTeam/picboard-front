@@ -15,9 +15,11 @@ const preview: Preview = {
       },
     },
   },
+
   initialGlobals: {
     theme: 'dark',
   },
+
   decorators: [
     (Story, context) => {
       const theme = context.globals.theme === 'light' ? 'light' : 'dark'
@@ -30,10 +32,9 @@ const preview: Preview = {
         <div
           data-theme={theme}
           style={{
-            minHeight: '100vh',
             padding: 24,
-            color: 'var(--color-text-primary)',
             background: 'var(--color-background)',
+            color: 'var(--color-text-primary)',
           }}
         >
           <Story />
@@ -41,8 +42,20 @@ const preview: Preview = {
       )
     },
   ],
+
   parameters: {
-    layout: 'fullscreen',
+    layout: 'padded',
+
+    docs: {
+      source: {
+        state: 'open',
+      },
+    },
+
+    actions: {
+      argTypesRegex: '^on.*',
+    },
+
     controls: {
       matchers: {
         color: /(background|color)$/i,
@@ -51,9 +64,6 @@ const preview: Preview = {
     },
 
     a11y: {
-      // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
-      // 'off' - skip a11y checks entirely
       test: 'todo',
     },
   },
