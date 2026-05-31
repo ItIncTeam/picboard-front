@@ -4,7 +4,7 @@ import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { Logo } from '@/shared/ui/logo'
 
-import styles from './Header.module.css'
+import styles from './header.module.css'
 
 type HeaderRole = 'guest' | 'user' | 'admin' | 'superAdmin'
 
