@@ -1,0 +1,51 @@
+.button {
+  all: unset;
+
+  cursor: pointer;
+
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+  border-radius: 2px;
+
+  color: var(--color-text-primary);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 2px solid var(--color-surface-primary);
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  color: var(--color-light-100);
+
+  background: var(--color-status-danger);
+}
