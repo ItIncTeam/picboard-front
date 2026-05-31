@@ -1,9 +1,10 @@
+import React from 'react'
 import { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { Input } from '@/shared/ui/input/Input'
 // import openEye from './next.svg'
 // import closeEye from './next.svg'
 
-const openEye = () => {
+const openEye = (props: React.SVGProps<SVGSVGElement>) => {
   return (
     <svg
       fill="currentColor"
@@ -11,6 +12,7 @@ const openEye = () => {
       width="24"
       height="24"
       viewBox="0 0 24 24"
+      {...props}
     >
       <path
         fill="currentColor"
@@ -24,7 +26,7 @@ const openEye = () => {
   )
 }
 
-const closeEye = () => {
+const closeEye = (props: React.SVGProps<SVGSVGElement>) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -32,6 +34,7 @@ const closeEye = () => {
       height="24"
       viewBox="0 0 24 24"
       fill="currentColor"
+      {...props}
     >
       <path
         fill="currentColor"
