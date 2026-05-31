@@ -31,14 +31,27 @@
   background: transparent;
 
   &:focus:placeholder-shown {
-    border: transparent;
-    outline: 2px solid var(--color-primary);
+    border: 1px solid transparent;
+    outline: none;
   }
 
   &:focus:not(:placeholder-shown) {
     border: 1px solid var(--color-foreground);
     background-color: var(--color-surface-secondary);
     outline: none;
+  }
+
+  /* НОВАЯ СЕКЦИЯ: Фокус только при навигации с клавиатуры (через JS-класс) */
+  &.keyboardFocused:focus {
+    border: 1px solid transparent;
+    outline: 2px solid var(--color-primary);
+
+    /* Если при клавиатурном фокусе плейсхолдер скрыт,
+       сохраняем ваши кастомные стили фона и границ */
+    &:not(:placeholder-shown) {
+      border: 1px solid var(--color-foreground);
+      background-color: var(--color-surface-secondary);
+    }
   }
 
   &:hover {

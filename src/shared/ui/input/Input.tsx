@@ -1,4 +1,6 @@
-import React, { ComponentPropsWithoutRef, useId } from 'react'
+'use client'
+
+import React, { ComponentPropsWithoutRef, useId, useState } from 'react'
 import s from './Input.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
@@ -24,16 +26,40 @@ export const Input = ({
   label,
   error,
   onClick,
+  onKeyUp,
+  onMouseDown,
+  onBlur,
   ...rest
 }: Props) => {
   const baseId = useId()
+  const [isKeyboardUsed, setIsKeyboardUsed] = useState(false)
 
   const Component = asChild ? Slot : 'input'
   const inputComponent = (
     <Component
-      className={clsx(s.input, s[variant], error && s.error, className)}
+      className={clsx(
+        s.input,
+        s[variant],
+        error && s.error,
+        isKeyboardUsed && s.keyboardFocused,
+        className,
+      )}
       {...rest}
       id={baseId}
+      onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Tab') {
+          setIsKeyboardUsed(true)
+        }
+        onKeyUp?.(e) // Вызов внешнего onKeyUp, если он передан компоненту
+      }}
+      onMouseDown={(e: React.MouseEvent<HTMLInputElement>) => {
+        setIsKeyboardUsed(false)
+        onMouseDown?.(e) // Вызов внешнего onMouseDown, если он передан
+      }}
+      onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+        setIsKeyboardUsed(false)
+        onBlur?.(e) // Вызов внешнего onBlur, если он передан
+      }}
     />
   )
   return (
