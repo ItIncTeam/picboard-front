@@ -85,8 +85,15 @@
   display: inline-block;
   width: 100%;
 
-  input:disabled + .defaultIcn {
-    fill: var(--color-text-disabled);
+  & :disabled {
+    cursor: not-allowed;
+  }
+
+  &.disabled {
+    .defaultIcn {
+      cursor: not-allowed;
+      fill: var(--color-text-disabled);
+    }
   }
 
   & .defaultIcn {
@@ -106,8 +113,15 @@
   display: inline-block;
   width: 100%;
 
-  input:disabled + .searchIcn {
-    fill: var(--color-text-disabled);
+  & :disabled {
+    cursor: not-allowed;
+  }
+
+  &.disabled {
+    .searchIcn {
+      cursor: not-allowed;
+      fill: var(--color-text-disabled);
+    }
   }
 
   & input {

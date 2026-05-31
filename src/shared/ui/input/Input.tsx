@@ -29,6 +29,8 @@ export const Input = ({
   onKeyUp,
   onMouseDown,
   onBlur,
+  disabled,
+  placeholder = ' ',
   ...rest
 }: Props) => {
   const baseId = useId()
@@ -37,6 +39,8 @@ export const Input = ({
   const Component = asChild ? Slot : 'input'
   const inputComponent = (
     <Component
+      disabled={disabled}
+      placeholder={placeholder}
       className={clsx(
         s.input,
         s[variant],
@@ -76,7 +80,7 @@ export const Input = ({
         </div>
       )}
       {variant === 'defaultIcon' && (
-        <div className={s.inputWrapper}>
+        <div className={clsx(s.inputWrapper, disabled && s.disabled)}>
           {inputComponent}
           {Icon && <Icon role="button" onClick={onClick} className={s.defaultIcn} />}
         </div>
