@@ -1,12 +1,12 @@
-import React, { ComponentPropsWithoutRef, useId } from 'react'
+import { useId, type ComponentPropsWithoutRef, type ComponentType } from 'react'
 import s from './Input.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
-import SearchIcon from '@/shared/assets/icon/search.svg'
+import { SearchIcon } from '@/shared/assets'
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'
-  Icon?: React.FC<React.SVGProps<SVGSVGElement>>
+  Icon?: ComponentType<ComponentPropsWithoutRef<'svg'>>
   label?: string | null
   error?: string | null
   classNameLabel?: string
@@ -27,7 +27,6 @@ export const Input = ({
   ...rest
 }: Props) => {
   const baseId = useId()
-  console.log({ Icon })
 
   const Component = asChild ? Slot : 'input'
   const inputComponent = (
