@@ -5,10 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
-import GithubIcon from '@/shared/assets/icon/social/github.svg'
-import GoogleIcon from '@/shared/assets/icon/social/google.svg'
-import CloseEyeIcon from '@/shared/assets/icon/closeEye.svg'
-import OpenEyeIcon from '@/shared/assets/icon/openEye.svg'
+import { CloseEyeIcon, GithubIcon, GoogleIcon, OpenEyeIcon } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input/Input'
@@ -39,7 +36,8 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
     formState: { isSubmitting, isValid },
   } = useForm<SignUpFormValues>({
     defaultValues,
-    mode: 'onChange',
+    mode: 'onTouched',
+    reValidateMode: 'onBlur',
     resolver: zodResolver(signUpSchema),
   })
 
@@ -149,6 +147,7 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
                 errorMessage={fieldState.error?.message}
                 onCheckedChange={(checked) => {
                   field.onChange(checked === true)
+                  field.onBlur()
                 }}
               />
 

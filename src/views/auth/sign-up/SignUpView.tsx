@@ -19,7 +19,7 @@ function SignUpViewContent() {
   return (
     <PublicAuthLayout>
       {mode === 'form' && (
-        <AuthCard gap={13} className={styles.formState}>
+        <AuthCard className={styles.formState}>
           <Title level="h1" className={styles.cardTitleCenter}>
             Sign Up
           </Title>

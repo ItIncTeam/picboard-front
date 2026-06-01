@@ -24,6 +24,12 @@
   background: transparent;
 }
 
+.oauthIconButton svg {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+
 .fields {
   display: flex;
   flex-direction: column;
@@ -66,7 +72,7 @@
 .signInFooter {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
   align-items: center;
 
   margin-top: 18px;
