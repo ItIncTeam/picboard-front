@@ -23,7 +23,6 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
   ) => {
     const baseId = useId()
     const checkboxId = id ?? `${baseId}-control`
-    const errorId = `${baseId}-error`
     const isError = Boolean(errorMessage)
 
     const control = (
@@ -37,7 +36,6 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
         )}
         disabled={disabled}
         aria-invalid={isError || undefined}
-        aria-describedby={isError ? errorId : undefined}
         {...props}
       >
         <CheckboxPrimitive.Indicator className={styles.checkbox__indicator}>
@@ -57,16 +55,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
       <div className={fieldClassName}>{control}</div>
     )
 
-    return (
-      <div className={cn(styles.checkbox, className)}>
-        {field}
-        {errorMessage ? (
-          <span id={errorId} className={styles.checkbox__errorMessage} role="alert">
-            {errorMessage}
-          </span>
-        ) : null}
-      </div>
-    )
+    return <div className={cn(styles.checkbox, className)}>{field}</div>
   },
 )
 

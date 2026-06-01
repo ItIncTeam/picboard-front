@@ -91,6 +91,5 @@ export const WithError: Story = {
     const checkbox = canvas.getByRole('checkbox')
 
     await expect(checkbox).toHaveAttribute('aria-invalid', 'true')
-    await expect(canvas.getByRole('alert')).toHaveTextContent('You must accept the terms')
   },
 }
