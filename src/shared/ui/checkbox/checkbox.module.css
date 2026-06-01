@@ -74,10 +74,6 @@
   border-color: var(--color-danger-500);
 }
 
-.checkbox__control_error[data-state='checked']:not([data-disabled]) {
-  background: var(--color-danger-500);
-}
-
 .checkbox__field:not(.checkbox_disabled):hover::before {
   opacity: 1;
   background: var(--color-dark-300);
@@ -154,11 +150,4 @@ label.checkbox__field:not(.checkbox_disabled) {
 
 .checkbox__control:focus-visible {
   outline: none;
-}
-
-.checkbox__errorMessage {
-  margin-top: 10px;
-  font-size: var(--font-size-xs);
-  line-height: 16px;
-  color: var(--color-danger-300);
 }

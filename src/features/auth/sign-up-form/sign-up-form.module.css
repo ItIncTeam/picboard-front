@@ -1,0 +1,90 @@
+.formTop {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.oauthList {
+  display: flex;
+  gap: 60px;
+  align-items: center;
+  justify-content: center;
+}
+
+.oauthIconButton {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.oauthIconButton svg {
+  display: block;
+  width: 36px;
+  height: 36px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.termsField {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.termsCheckbox {
+  flex-shrink: 0;
+  width: fit-content;
+}
+
+.termsCheckboxControl {
+  --checkbox-size: 24px;
+}
+
+.termsLabel {
+  flex: 1;
+  min-width: 0;
+}
+
+.termsLink {
+  color: var(--color-accent-500);
+  text-decoration: underline;
+}
+
+.termsLink:hover {
+  color: var(--color-accent-100);
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.signInFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+
+  margin-top: 18px;
+
+  text-align: center;
+}
+
+.signInLink {
+  color: var(--color-accent-500);
+  text-decoration: none;
+}
+
+.signInLink:hover {
+  color: var(--color-accent-100);
+}
