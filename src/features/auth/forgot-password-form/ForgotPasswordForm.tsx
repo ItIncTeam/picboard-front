@@ -2,17 +2,21 @@
 
 import NextLink from 'next/link'
 import { type SyntheticEvent, useState } from 'react'
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Recaptcha } from '@/shared/ui/recaptcha'
 import { Text } from '@/shared/ui/typography'
 
-import { sendPasswordRecoveryLink } from './api'
+import { passwordReset } from './api'
 import styles from './forgot-password-form.module.css'
+
+const RECAPTCHA_ACTION = 'password_reset'
 
 const MESSAGES = {
   description: 'Enter your email address and we will send you further instructions',
+  recaptchaUnavailable: 'reCAPTCHA is not ready. Please try again.',
   successHint: "If you don't receive an email send link again",
   successTitle: 'The link has been sent by email.',
   userNotFound: "User with this email doesn't exist",
@@ -23,6 +27,7 @@ const isEmailValid = (email: string) => {
 }
 
 export function ForgotPasswordForm() {
+  const { executeRecaptcha } = useGoogleReCaptcha()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [isRecaptchaChecked, setIsRecaptchaChecked] = useState(false)
@@ -47,10 +52,16 @@ export function ForgotPasswordForm() {
     setIsLoading(true)
 
     try {
-      await sendPasswordRecoveryLink({ email: trimmedEmail })
+      if (!executeRecaptcha) {
+        throw new Error(MESSAGES.recaptchaUnavailable)
+      }
+
+      const captchaToken = await executeRecaptcha(RECAPTCHA_ACTION)
+
+      await passwordReset({ captchaToken, email: trimmedEmail })
       setSuccessEmail(trimmedEmail)
-    } catch {
-      setError(MESSAGES.userNotFound)
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : MESSAGES.userNotFound)
       setSuccessEmail('')
       setIsRecaptchaChecked(false)
     } finally {
@@ -60,20 +71,22 @@ export function ForgotPasswordForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <Input
-        autoComplete="email"
-        disabled={isLoading}
-        error={error}
-        label="Email"
-        onChange={(event) => {
-          setEmail(event.target.value)
-          setError('')
-          setSuccessEmail('')
-        }}
-        placeholder="Epam@epam.com"
-        type="email"
-        value={email}
-      />
+      <div role="status" aria-live="polite">
+        <Input
+          autoComplete="email"
+          disabled={isLoading}
+          error={error}
+          label="Email"
+          onChange={(event) => {
+            setEmail(event.target.value)
+            setError('')
+            setSuccessEmail('')
+          }}
+          placeholder="Epam@epam.com"
+          type="email"
+          value={email}
+        />
+      </div>
 
       <Text className={styles.description} size="sm">
         {MESSAGES.description}

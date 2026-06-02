@@ -59,6 +59,9 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      react-google-recaptcha-v3:
+        specifier: ^1.11.0
+        version: 1.11.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react-hook-form:
         specifier: ^7.75.0
         version: 7.75.0(react@19.2.4)
@@ -160,7 +163,7 @@ importers:
         specifier: ^8.0.13
         version: 8.0.13(@types/node@20.19.39)(esbuild@0.27.7)(jiti@2.7.0)(sass@1.99.0)(yaml@2.8.4)
       vite-plugin-svgr:
-        specifier: 5.2.0
+        specifier: ^5.2.0
         version: 5.2.0(typescript@5.9.3)(vite@8.0.13(@types/node@20.19.39)(esbuild@0.27.7)(jiti@2.7.0)(sass@1.99.0)(yaml@2.8.4))
       vitest:
         specifier: ^4.1.7
@@ -4185,6 +4188,9 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
+  hoist-non-react-statics@3.3.2:
+    resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
+
   hookified@1.15.1:
     resolution: {integrity: sha512-MvG/clsADq1GPM2KGo2nyfaWVyn9naPiXrqIe4jYjXNZQt238kWyOGrsyc/DmRAQ+Re6yeo6yX/yoNCG5KAEVg==}
 
@@ -5030,6 +5036,12 @@ packages:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
     peerDependencies:
       react: ^19.2.4
+
+  react-google-recaptcha-v3@1.11.0:
+    resolution: {integrity: sha512-kLQqpz/77m8+trpBwzqcxNtvWZYoZ/YO6Vm2cVTHW8hs80BWUfDpC7RDwuAvpswwtSYApWfaSpIDFWAIBNIYxQ==}
+    peerDependencies:
+      react: ^16.3 || ^17.0 || ^18.0 || ^19.0
+      react-dom: ^17.0 || ^18.0 || ^19.0
 
   react-hook-form@7.75.0:
     resolution: {integrity: sha512-Ovv94H+0p3sJ7B9B5QxPuCP1u8V/cHuVGyH55cSwodYDtoJwK+fqk3vjfIgSX59I2U/bU4z0nRJ9HMLpNiWEmw==}
@@ -10237,6 +10249,10 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
+  hoist-non-react-statics@3.3.2:
+    dependencies:
+      react-is: 16.13.1
+
   hookified@1.15.1: {}
 
   hookified@2.2.0: {}
@@ -11053,6 +11069,12 @@ snapshots:
     dependencies:
       react: 19.2.4
       scheduler: 0.27.0
+
+  react-google-recaptcha-v3@1.11.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      hoist-non-react-statics: 3.3.2
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   react-hook-form@7.75.0(react@19.2.4):
     dependencies:
