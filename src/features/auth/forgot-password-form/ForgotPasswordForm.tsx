@@ -2,7 +2,9 @@
 
 import NextLink from 'next/link'
 import { type SyntheticEvent, useState } from 'react'
+
 import { Button } from '@/shared/ui/button'
+import { Input } from '@/shared/ui/input'
 import { Recaptcha } from '@/shared/ui/recaptcha'
 import { Text } from '@/shared/ui/typography'
 
@@ -30,7 +32,8 @@ export function ForgotPasswordForm() {
 
   const trimmedEmail = email.trim()
   const hasSuccess = Boolean(successEmail)
-  const canSubmit = trimmedEmail.length > 0 && (hasSuccess || isRecaptchaChecked) && !isLoading
+  const isEmailReady = isEmailValid(trimmedEmail)
+  const canSubmit = isEmailReady && (hasSuccess || isRecaptchaChecked) && !isLoading
   const submitButtonText = isLoading ? 'Sending...' : 'Send Link'
   const recoveryButtonText = hasSuccess ? 'Send Link Again' : submitButtonText
 
@@ -56,6 +59,7 @@ export function ForgotPasswordForm() {
     } catch {
       setError(MESSAGES.userNotFound)
       setSuccessEmail('')
+      setIsRecaptchaChecked(false)
     } finally {
       setIsLoading(false)
     }
@@ -63,32 +67,20 @@ export function ForgotPasswordForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <label className={styles.field}>
-        <Text as="span" className={styles.label} size="sm">
-          Email
-        </Text>
-        <input
-          aria-describedby={error ? 'forgot-password-error' : undefined}
-          aria-invalid={Boolean(error)}
-          autoComplete="email"
-          className={styles.input}
-          disabled={isLoading}
-          onChange={(event) => {
-            setEmail(event.target.value)
-            setError('')
-            setSuccessEmail('')
-          }}
-          placeholder="Epam@epam.com"
-          type="email"
-          value={email}
-        />
-      </label>
-
-      {error && (
-        <Text className={styles.error} id="forgot-password-error" size="sm">
-          {error}
-        </Text>
-      )}
+      <Input
+        autoComplete="email"
+        disabled={isLoading}
+        error={error}
+        label="Email"
+        onChange={(event) => {
+          setEmail(event.target.value)
+          setError('')
+          setSuccessEmail('')
+        }}
+        placeholder="Epam@epam.com"
+        type="email"
+        value={email}
+      />
 
       <Text className={styles.description} size="sm">
         {MESSAGES.description}
