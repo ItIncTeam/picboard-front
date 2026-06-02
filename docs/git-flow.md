@@ -24,7 +24,7 @@ git checkout -b chore/SCRUM-17-setup-tooling
 Добавить изменения:
 
 ```bash
-git add -A
+git add .
 git status
 ```
 
