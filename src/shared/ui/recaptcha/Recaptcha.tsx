@@ -25,7 +25,7 @@ export function Recaptcha({
   defaultChecked,
   disabled = false,
   errorMessage = 'Please verify that you are not a robot',
-  expiredMessage = 'Verifiction expired. Check the checkbox again.',
+  expiredMessage = 'Verification expired. Check the checkbox again.',
   onCheckedChange,
   status = 'default',
 }: RecaptchaProps) {
@@ -148,7 +148,7 @@ function RecaptchaCheckIcon() {
   return (
     <svg className={styles.recaptcha__check} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 19">
       <path
-        fill="#19983b"
+        fill="currentColor"
         fillOpacity=".902"
         d="M22.036 0c.775.745 1.533 1.51 2.303 2.262v.001q-8 7.996-16.005 15.988L.014 9.915 0 9.916v-.015c.066.015.065-.11.127-.128.715-.716 1.425-1.437 2.14-2.152q3.035 3.032 6.068 6.066Q15.189 6.847 22.035 0"
       />
