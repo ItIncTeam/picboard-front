@@ -74,32 +74,6 @@ export function ForgotPasswordForm() {
         type="email"
         value={email}
       />
-      <label className={styles.field}>
-        <Text as="span" className={styles.label} size="sm">
-          Email
-        </Text>
-        <input
-          aria-describedby={error ? 'forgot-password-error' : undefined}
-          aria-invalid={Boolean(error)}
-          autoComplete="email"
-          className={styles.input}
-          disabled={isLoading}
-          onChange={(event) => {
-            setEmail(event.target.value)
-            setError('')
-            setSuccessEmail('')
-          }}
-          placeholder="Epam@epam.com"
-          type="email"
-          value={email}
-        />
-      </label>
-
-      {error && (
-        <Text className={styles.error} id="forgot-password-error" size="sm">
-          {error}
-        </Text>
-      )}
 
       <Text className={styles.description} size="sm">
         {MESSAGES.description}
