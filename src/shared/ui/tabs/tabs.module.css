@@ -1,4 +1,12 @@
 .root {
+  --tabs-color-active: var(--color-accent-500);
+  --tabs-color-disabled: var(--color-dark-300);
+  --tabs-border-active: var(--color-accent-500);
+  --tabs-border-muted: var(--color-dark-100);
+  --tabs-background-active: color-mix(in srgb, var(--color-accent-100) 15%, transparent);
+  --tabs-background-hover: color-mix(in srgb, var(--color-accent-900) 15%, transparent);
+  --tabs-border-focus: var(--color-accent-700);
+
   display: flex;
   flex-direction: column;
 }
@@ -20,12 +28,13 @@
   box-sizing: border-box;
   min-height: 36px;
   padding: 6px 24px;
+  border: 2px solid transparent;
 
   font-family: var(--font-family-primary), sans-serif;
   font-size: var(--typography-regular-text-16-font-size);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   line-height: var(--typography-regular-text-16-line-height);
-  color: var(--color-accent-500);
+  color: var(--tabs-color-active);
   text-align: center;
 
   transition:
@@ -43,31 +52,30 @@
 
   height: 2px;
 
-  background-color: var(--color-accent-500);
+  background-color: var(--tabs-border-active);
 }
 
 .trigger[data-state='active'] {
-  background-color: var(--color-accent-100);
+  background-color: var(--tabs-background-active);
 }
 
 .trigger:hover:not([data-disabled]) {
-  background-color: var(--color-accent-900);
+  background-color: var(--tabs-background-hover);
 }
 
 .trigger:focus-visible {
+  border-color: var(--tabs-border-focus);
   border-radius: 2px;
-  background-color: transparent;
-  outline: 2px solid var(--color-accent-700);
-  outline-offset: -2px;
+  outline: none;
 }
 
 .trigger[data-disabled] {
   cursor: default;
-  color: var(--color-dark-300);
+  color: var(--tabs-color-disabled);
 }
 
 .trigger[data-disabled]::after {
-  background-color: var(--color-dark-300);
+  background-color: var(--tabs-border-muted);
 }
 
 .content {
