@@ -13,7 +13,6 @@ import styles from './forgot-password-form.module.css'
 
 const MESSAGES = {
   description: 'Enter your email address and we will send you further instructions',
-  invalidEmail: 'Enter a valid email address',
   successHint: "If you don't receive an email send link again",
   successTitle: 'The link has been sent by email.',
   userNotFound: "User with this email doesn't exist",
@@ -41,12 +40,6 @@ export function ForgotPasswordForm() {
     event.preventDefault()
 
     if (!canSubmit) {
-      return
-    }
-
-    if (!isEmailValid(trimmedEmail)) {
-      setError(MESSAGES.invalidEmail)
-      setSuccessEmail('')
       return
     }
 
@@ -87,7 +80,7 @@ export function ForgotPasswordForm() {
       </Text>
 
       {successEmail && (
-        <div className={styles.success}>
+        <div className={styles.success} role="status" aria-live="polite">
           <Text size="sm">{MESSAGES.successTitle}</Text>
           <Text size="sm">{MESSAGES.successHint}</Text>
         </div>
