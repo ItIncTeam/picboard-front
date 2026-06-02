@@ -51,11 +51,6 @@ const preview: Preview = {
         state: 'open',
       },
     },
-
-    actions: {
-      argTypesRegex: '^on.*',
-    },
-
     controls: {
       matchers: {
         color: /(background|color)$/i,

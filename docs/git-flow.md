@@ -45,22 +45,6 @@ git commit -m "SCRUM-0 feat: title"
 ```bash
 git commit -m "SCRUM-17 feat: add login form"
 git commit -m "SCRUM-17 fix: validate email field"
-git commit -m "SCRUM-17 refactor: split auth hook"
-git commit -m "SCRUM-17 chore: setup eslint"
-```
-
-Типы:
-
-```text
-init
-feat
-fix
-refactor
-test
-docs
-chore
-build
-ci
 ```
 
 ---

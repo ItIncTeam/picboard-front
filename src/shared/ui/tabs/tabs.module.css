@@ -1,18 +1,28 @@
 .root {
-  --tabs-color-active: var(--color-accent-500);
+  --tabs-color-default: var(--color-accent-500);
+  --tabs-color-active: var(--color-accent-100);
   --tabs-color-disabled: var(--color-dark-300);
-  --tabs-border-active: var(--color-accent-500);
-  --tabs-border-muted: var(--color-dark-100);
-  --tabs-background-active: color-mix(in srgb, var(--color-accent-100) 15%, transparent);
-  --tabs-background-hover: color-mix(in srgb, var(--color-accent-900) 15%, transparent);
+  --tabs-color-hover: var(--color-accent-100);
+  --tabs-border-default: var(--color-accent-500);
+  --tabs-border-active: var(--color-accent-100);
+  --tabs-border-disabled: var(--color-dark-100);
+  --tabs-background-active: color-mix(in srgb, var(--color-accent-100) 22%, transparent);
+  --tabs-background-hover: color-mix(in srgb, var(--color-accent-900) 28%, transparent);
   --tabs-border-focus: var(--color-accent-700);
+  --tabs-shadow-focus: color-mix(in srgb, var(--color-accent-700) 25%, transparent);
+  --tabs-radius-focus: 2px;
 
   display: flex;
   flex-direction: column;
 }
 
 .list {
+  scrollbar-color: var(--color-dark-100) transparent;
+  scrollbar-width: thin;
+
+  overflow: auto hidden;
   display: flex;
+
   width: 100%;
 }
 
@@ -23,9 +33,14 @@
 
   position: relative;
 
-  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
 
   box-sizing: border-box;
+  min-width: 85px;
   min-height: 36px;
   padding: 6px 24px;
   border: 2px solid transparent;
@@ -34,11 +49,15 @@
   font-size: var(--typography-regular-text-16-font-size);
   font-weight: var(--font-weight-semibold);
   line-height: var(--typography-regular-text-16-line-height);
-  color: var(--tabs-color-active);
+  color: var(--tabs-color-default);
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   transition:
     background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
     color 0.15s ease;
 }
 
@@ -52,21 +71,35 @@
 
   height: 2px;
 
-  background-color: var(--tabs-border-active);
+  background-color: var(--tabs-border-default);
+
+  transition: background-color 0.15s ease;
 }
 
 .trigger[data-state='active'] {
+  color: var(--tabs-color-active);
   background-color: var(--tabs-background-active);
 }
 
+.trigger[data-state='active']::after {
+  background-color: var(--tabs-border-active);
+}
+
 .trigger:hover:not([data-disabled]) {
+  color: var(--tabs-color-hover);
   background-color: var(--tabs-background-hover);
+}
+
+.trigger[data-state='active']:hover:not([data-disabled]) {
+  color: var(--tabs-color-active);
+  background-color: var(--tabs-background-active);
 }
 
 .trigger:focus-visible {
   border-color: var(--tabs-border-focus);
-  border-radius: 2px;
+  border-radius: var(--tabs-radius-focus);
   outline: none;
+  box-shadow: 0 0 0 2px var(--tabs-shadow-focus);
 }
 
 .trigger[data-disabled] {
@@ -75,9 +108,9 @@
 }
 
 .trigger[data-disabled]::after {
-  background-color: var(--tabs-border-muted);
+  background-color: var(--tabs-border-disabled);
 }
 
 .content {
-  color: var(--color-light-100);
+  color: inherit;
 }
