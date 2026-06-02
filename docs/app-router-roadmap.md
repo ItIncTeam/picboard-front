@@ -116,6 +116,9 @@ export default function Page() {
 
 Auth views используют `PublicAuthShell`. Реальные формы позже должны прийти из `features/auth`.
 
+Подробная карта auth routes, views, features и GraphQL operations находится в
+[Auth Routes](./auth/auth-routes.md).
+
 ## Widgets
 
 Текущие публичные widgets:
