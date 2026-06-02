@@ -5,7 +5,7 @@ import React, { useId, useState } from 'react'
 import s from './Input.module.css'
 import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
-import SearchIcon from '@/shared/assets/icon/search.svg'
+import { SearchIcon } from '@/shared/assets'
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'
