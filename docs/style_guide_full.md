@@ -13,7 +13,6 @@
 - [Project Brief](./project-brief.md) — цели проекта, scope, ограничения, lifecycle и milestones.
 - [Code Style](./code-style.md) — naming, TypeScript, React, imports/exports, комментарии.
 - [Architecture](./architecture.md) — FSD-подход, структура модулей, shared-код.
-- [Figma Workflow](./figma-workflow.md) — порядок работы с Figma-макетами и Storybook-сверкой.
 - [Tooling](./tooling.md) — ESLint, Prettier, Stylelint, TypeScript и команды проверки.
 - [Git Flow](./git-flow.md) — ветки, commits, rebase, push.
 - [Pull Request](./pull-request.md) — требования перед PR и checklist.
@@ -22,6 +21,10 @@
 - [Assets](./assets.md) — правила импорта SVG, иконок и растровых изображений.
 - [App Router](./app-router-roadmap.md) — текущая структура маршрутов, layouts, modals и provider rules.
 - [Границы слоев](./layer-ownership.md) — практические правила владения `app`, `views`, `widgets`, `features` и временными заглушками.
+- [Auth Infrastructure](./auth/auth-infrastructure-plan.md) — FSD-границы, PR roadmap и Apollo/auth integration points.
+- [Auth Session Architecture](./auth/auth-session-architecture.md) — access token, refresh token и session flow.
+- [Auth Backend Contract](./auth/auth-backend-contract.md) — GraphQL queries, mutations, inputs и payloads.
+- [Auth Routes](./auth/auth-routes.md) — `/auth` маршруты, views, features и GraphQL operations.
 
 ## Базовые принципы
 

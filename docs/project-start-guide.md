@@ -41,6 +41,13 @@ export default function Page() {
 
 ## Где писать auth UI
 
+Подробная карта auth flow:
+
+- [Auth Routes](./auth/auth-routes.md)
+- [Auth Infrastructure](./auth/auth-infrastructure-plan.md)
+- [Auth Session Architecture](./auth/auth-session-architecture.md)
+- [Auth Backend Contract](./auth/auth-backend-contract.md)
+
 Route:
 
 ```txt

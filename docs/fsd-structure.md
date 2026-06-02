@@ -1,5 +1,9 @@
 # FSD: кратко
 
+Deprecated: используйте [Architecture](./architecture.md) и
+[Границы слоев](./layer-ownership.md). Этот файл оставлен как временная короткая памятка и должен
+быть удален после merge в основные документы.
+
 Основные правила слоев описаны здесь:
 
 - [Architecture](./architecture.md)
