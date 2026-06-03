@@ -17,12 +17,8 @@
 }
 
 .list {
-  scrollbar-color: var(--color-dark-100) transparent;
-  scrollbar-width: thin;
-
   overflow: auto hidden;
   display: flex;
-
   width: 100%;
 }
 
