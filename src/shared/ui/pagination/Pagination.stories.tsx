@@ -10,10 +10,6 @@ const meta = {
   title: 'Shared/Pagination',
   component: Pagination,
   parameters: {
-    backgrounds: {
-      default: 'dark',
-      values: [{ name: 'dark', value: '#0d0d0d' }],
-    },
     layout: 'centered',
   },
   tags: ['autodocs'],
