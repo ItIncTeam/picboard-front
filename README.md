@@ -26,6 +26,10 @@ Frontend для Picboard — социальной web-платформы для 
 pnpm install
 ```
 
+Настройте `.env.local` по [Project Start Guide](./docs/project-start-guide.md). Для auth и
+forgot-password локально нужны `NEXT_PUBLIC_GRAPHQL_ENDPOINT` и
+`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`.
+
 Запустите dev server:
 
 ```bash
@@ -80,6 +84,7 @@ pnpm hooks:install
 Дополнительные документы:
 
 - `docs/project-brief.md` — цели проекта, scope, out-of-scope, ограничения и milestones.
+- `docs/project-start-guide.md` — локальная настройка, onboarding и базовые FSD-ориентиры.
 - `docs/work-instructions.md` — рабочий порядок для команды и AI-агента.
 - `docs/code-style.md` — naming, TypeScript, React, imports/exports, комментарии.
 - `docs/architecture.md` — архитектурный подход и правила слоев.

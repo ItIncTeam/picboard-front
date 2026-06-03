@@ -41,6 +41,7 @@
     "postcss": "^8.5.14",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-google-recaptcha-v3": "^1.11.0",
     "react-hook-form": "^7.75.0",
     "react-redux": "^9.2.0",
     "sass": "^1.99.0",
