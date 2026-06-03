@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { expect, userEvent, within } from 'storybook/test'
 
 import '@/app/globals.css'
@@ -7,17 +7,6 @@ import '@/app/globals.css'
 import { RadioGroup } from './RadioGroup'
 import { RadioGroupItem } from './RadioGroupItem'
 import type { RadioGroupItemProps } from './RadioGroupItem'
-
-const darkBackgroundDecorator = (Story: () => ReactNode) => (
-  <div
-    style={{
-      padding: 24,
-      background: 'var(--color-dark-700)',
-    }}
-  >
-    <Story />
-  </div>
-)
 
 const renderSingleItem = (defaultValue?: string) => {
   const SingleItemStory = (args: RadioGroupItemProps) => (
@@ -36,7 +25,6 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  decorators: [darkBackgroundDecorator],
 } satisfies Meta<typeof RadioGroupItem>
 
 export default meta

@@ -38,8 +38,9 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
   const onSubmit = async (data: SignInFormValues) => {
     try {
-      // TODO: replace with sign-in API call; remove debug log when wired.
+      // TODO: replace with signIn mutation; call onSuccess only after accessToken is stored.
       console.warn('Sign in form data:', data)
+
       onSuccess?.()
     } catch (error) {
       // TODO: map API errors to form fields or show a global error message.

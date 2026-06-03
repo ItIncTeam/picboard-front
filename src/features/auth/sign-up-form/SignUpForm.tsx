@@ -130,8 +130,6 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
             <div className={styles.termsField}>
               <Checkbox
                 checked={field.value}
-                className={styles.termsCheckbox}
-                controlClassName={styles.termsCheckboxControl}
                 errorMessage={fieldState.error?.message}
                 onCheckedChange={(checked) => {
                   field.onChange(checked === true)
@@ -139,18 +137,16 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
                 }}
               />
 
-              <div className={styles.termsLabel}>
-                <Text as="span" color="var(--color-light-100)" size="xs">
-                  I agree to the{' '}
-                  <Link className={styles.termsLink} href="/terms">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link className={styles.termsLink} href="/privacy-policy">
-                    Privacy Policy
-                  </Link>
-                </Text>
-              </div>
+              <Text className={styles.termsText} size="xs">
+                I agree to the{' '}
+                <Link className={styles.termsLink} href="/terms">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link className={styles.termsLink} href="/privacy-policy">
+                  Privacy Policy
+                </Link>
+              </Text>
             </div>
           )}
         />
@@ -161,7 +157,7 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
       </div>
 
       <div className={styles.signInFooter}>
-        <Text color="var(--color-light-100)">Do you have an account?</Text>
+        <Text>Do you have an account?</Text>
         <Link className={styles.signInLink} href="/auth/sign-in">
           Sign In
         </Link>

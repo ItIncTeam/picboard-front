@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { OAuthProviders, SignInForm } from '@/features/auth'
@@ -10,6 +11,8 @@ import { ViewShell } from '@/widgets/view-shell'
 import styles from './sign-in-view.module.css'
 
 function SignInViewContent() {
+  const router = useRouter()
+
   return (
     <ViewShell>
       <AuthCard>
@@ -18,7 +21,12 @@ function SignInViewContent() {
         </Title>
         <div className={styles.cardBody}>
           <OAuthProviders intent="signIn" />
-          <SignInForm />
+          <SignInForm
+            onSuccess={() => {
+              // TODO: redirect only after signIn mutation succeeds and session is stored.
+              router.push('/main')
+            }}
+          />
         </div>
       </AuthCard>
     </ViewShell>

@@ -2,7 +2,7 @@
 
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { ChevronDownIcon } from '@radix-ui/react-icons'
-import { forwardRef, useId, useState, type ComponentPropsWithoutRef, type ReactNode } from 'react'
+import { forwardRef, useId, useState, type ComponentPropsWithoutRef } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 
@@ -12,8 +12,9 @@ import styles from './select.module.css'
 
 export type SelectOption = {
   value: string
-  label: ReactNode
+  label: string
   image?: string
+  imageAlt?: string
   disabled?: boolean
 }
 
@@ -111,7 +112,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
               <span className={styles['select__value']}>
                 {selectedOption?.image ? (
                   <span className={styles['select__adornment']}>
-                    <SelectOptionImage src={selectedOption.image} />
+                    <SelectOptionImage src={selectedOption.image} alt={selectedOption.imageAlt} />
                   </span>
                 ) : null}
                 <span>{selectedOption?.label ?? placeholder}</span>
@@ -135,9 +136,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     value={option.value}
                     disabled={option.disabled}
                     image={option.image}
-                  >
-                    {option.label}
-                  </SelectItem>
+                    imageAlt={option.imageAlt}
+                    label={option.label}
+                  />
                 ))}
               </SelectPrimitive.Viewport>
             </SelectPrimitive.Content>

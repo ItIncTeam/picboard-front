@@ -13,22 +13,15 @@
 
 .termsField {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: flex-start;
+  justify-content: center;
 }
 
-.termsCheckbox {
-  flex-shrink: 0;
-  width: fit-content;
-}
-
-.termsCheckboxControl {
-  --checkbox-size: 24px;
-}
-
-.termsLabel {
-  flex: 1;
+.termsText {
+  flex: 0 1 auto;
   min-width: 0;
+  text-align: center;
 }
 
 .termsLink {
@@ -37,7 +30,7 @@
 }
 
 .termsLink:hover {
-  color: var(--color-accent-100);
+  color: var(--color-primary-hover);
 }
 
 .submitButton {

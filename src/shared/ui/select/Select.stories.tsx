@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { expect, userEvent, within } from 'storybook/test'
 
 import '@/app/globals.css'
@@ -8,17 +8,6 @@ import { EnFlagImage, RuFlagImage } from '@/shared/assets'
 
 import type { SelectOption } from './Select'
 import { Select } from './index'
-
-const darkBackgroundDecorator = (Story: () => ReactNode) => (
-  <div
-    style={{
-      padding: 24,
-      background: 'var(--color-dark-700)',
-    }}
-  >
-    <Story />
-  </div>
-)
 
 const countryOptions: SelectOption[] = [
   { value: 'ru', label: 'Russia' },
@@ -39,7 +28,6 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  decorators: [darkBackgroundDecorator],
   render: (args) => <Select {...args} />,
 } satisfies Meta<typeof Select>
 
@@ -100,6 +88,32 @@ export const Disabled: Story = {
   },
 }
 
+export const WithDisabledOption: Story = {
+  args: {
+    options: [
+      { value: 'first', label: 'First option' },
+      { value: 'second', label: 'Second option', disabled: true },
+      { value: 'third', label: 'Third option' },
+    ],
+    placeholder: 'Select option',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const trigger = canvas.getByRole('combobox')
+
+    await userEvent.click(trigger)
+
+    const listbox = within(document.body).getByRole('listbox')
+    const disabledOption = within(listbox).getByRole('option', { name: 'Second option' })
+
+    await expect(disabledOption).toHaveAttribute('data-disabled', '')
+    await userEvent.click(disabledOption)
+
+    await expect(trigger).not.toHaveTextContent('Second option')
+    await expect(trigger).toHaveTextContent('Select option')
+  },
+}
+
 export const WithLabel: Story = {
   args: {
     label: 'Country',
@@ -135,7 +149,6 @@ const languageOptions: SelectOption[] = [
 
 /** Header i18n: options с image, controlled, ширина через родителя */
 export const HeaderLanguage: Story = {
-  decorators: [darkBackgroundDecorator],
   render: () => {
     const [locale, setLocale] = useState('en')
 
@@ -148,7 +161,6 @@ export const HeaderLanguage: Story = {
 }
 
 export const UncontrolledWithImage: Story = {
-  decorators: [darkBackgroundDecorator],
   render: () => (
     <div style={{ width: 163 }}>
       <Select defaultValue="ru" options={languageOptions} />

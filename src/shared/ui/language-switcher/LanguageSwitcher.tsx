@@ -27,12 +27,7 @@ export function LanguageSwitcher({
 
   return (
     <div className={styles.root}>
-      <Select
-        options={options}
-        value={language}
-        onValueChange={setLanguage}
-        triggerClassName={styles.trigger}
-      />
+      <Select options={options} value={language} onValueChange={setLanguage} />
     </div>
   )
 }
