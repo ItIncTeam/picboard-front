@@ -1,7 +1,7 @@
 'use client'
 
 import * as SelectPrimitive from '@radix-ui/react-select'
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { ComponentPropsWithoutRef } from 'react'
 
 import { cn } from '@/shared/lib/cn'
 
@@ -11,16 +11,17 @@ import styles from './select.module.css'
 export type SelectItemProps = {
   className?: string
   image?: string
-  children: ReactNode
+  imageAlt?: string
+  label: string
 } & ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 
-export const SelectItem = ({ className, image, children, ...props }: SelectItemProps) => {
+export const SelectItem = ({ className, image, imageAlt, label, ...props }: SelectItemProps) => {
   return (
     <SelectPrimitive.Item className={cn(styles['select__item'], className)} {...props}>
       <span className={styles['select__itemContent']}>
-        {image ? <SelectOptionImage src={image} /> : null}
+        {image ? <SelectOptionImage src={image} alt={imageAlt} /> : null}
         <SelectPrimitive.ItemText className={styles['select__itemText']}>
-          {children}
+          {label}
         </SelectPrimitive.ItemText>
       </span>
     </SelectPrimitive.Item>

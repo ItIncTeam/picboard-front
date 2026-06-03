@@ -3,10 +3,10 @@
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
-import { SignUpForm } from '@/features/auth'
-import { AuthCard } from '@/shared/ui/auth-card'
+import { OAuthProviders, SignUpForm } from '@/features/auth'
+import { AuthFormCard } from '@/views/auth/ui/auth-form-card'
 import { Title } from '@/shared/ui/typography'
-import { PublicAuthLayout } from '@/widgets/public-auth-layout'
+import { AuthViewShell } from '@/widgets/auth-view-shell'
 
 import { selectSignUpMode } from './model/selectMode'
 import styles from './sign-up-view.module.css'
@@ -17,19 +17,22 @@ function SignUpViewContent() {
   const [isEmailSentOpen, setIsEmailSentOpen] = useState(false)
 
   return (
-    <PublicAuthLayout>
+    <AuthViewShell>
       {mode === 'form' && (
-        <AuthCard className={styles.formState}>
+        <AuthFormCard>
           <Title level="h1" className={styles.cardTitleCenter}>
             Sign Up
           </Title>
-          <SignUpForm onSuccess={() => setIsEmailSentOpen(true)} />
-        </AuthCard>
+          <div className={styles.cardBody}>
+            <OAuthProviders intent="signUp" />
+            <SignUpForm onSuccess={() => setIsEmailSentOpen(true)} />
+          </div>
+        </AuthFormCard>
       )}
       {mode === 'confirmed' && <p>SignUpConfirmedState</p>}
       {mode === 'expired' && <p>SignUpExpiredState</p>}
       {isEmailSentOpen && <p>Email sent modal</p>}
-    </PublicAuthLayout>
+    </AuthViewShell>
   )
 }
 

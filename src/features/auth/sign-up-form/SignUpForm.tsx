@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
-import { CloseEyeIcon, GithubIcon, GoogleIcon, OpenEyeIcon } from '@/shared/assets'
+import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input/Input'
@@ -55,83 +55,71 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
 
   return (
     <form noValidate onSubmit={handleSubmit(onSubmit)}>
-      <div className={styles.formTop}>
-        <div className={styles.oauthList}>
-          <button type="button" className={styles.oauthIconButton} aria-label="Sign up with Google">
-            <GoogleIcon aria-hidden />
-          </button>
+      <div className={styles.fields}>
+        <Controller
+          name="username"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              {...field}
+              autoComplete="username"
+              error={fieldState.error?.message}
+              label="Username"
+            />
+          )}
+        />
 
-          <button type="button" className={styles.oauthIconButton} aria-label="Sign up with GitHub">
-            <GithubIcon aria-hidden />
-          </button>
-        </div>
+        <Controller
+          name="email"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              {...field}
+              autoComplete="email"
+              error={fieldState.error?.message}
+              label="Email"
+              type="email"
+            />
+          )}
+        />
 
-        <div className={styles.fields}>
-          <Controller
-            name="username"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Input
-                {...field}
-                autoComplete="username"
-                error={fieldState.error?.message}
-                label="Username"
-              />
-            )}
-          />
+        <Controller
+          name="password"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              {...field}
+              autoComplete="new-password"
+              error={fieldState.error?.message}
+              Icon={isPasswordVisible ? CloseEyeIcon : OpenEyeIcon}
+              label="Password"
+              onClick={() => {
+                setIsPasswordVisible((currentValue) => !currentValue)
+              }}
+              type={isPasswordVisible ? 'text' : 'password'}
+              variant="defaultIcon"
+            />
+          )}
+        />
 
-          <Controller
-            name="email"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Input
-                {...field}
-                autoComplete="email"
-                error={fieldState.error?.message}
-                label="Email"
-                type="email"
-              />
-            )}
-          />
-
-          <Controller
-            name="password"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Input
-                {...field}
-                autoComplete="new-password"
-                error={fieldState.error?.message}
-                Icon={isPasswordVisible ? CloseEyeIcon : OpenEyeIcon}
-                label="Password"
-                onClick={() => {
-                  setIsPasswordVisible((currentValue) => !currentValue)
-                }}
-                type={isPasswordVisible ? 'text' : 'password'}
-                variant="defaultIcon"
-              />
-            )}
-          />
-
-          <Controller
-            name="passwordConfirmation"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Input
-                {...field}
-                autoComplete="new-password"
-                error={fieldState.error?.message}
-                Icon={isPasswordConfirmationVisible ? CloseEyeIcon : OpenEyeIcon}
-                label="Password confirmation"
-                onClick={() => {
-                  setIsPasswordConfirmationVisible((currentValue) => !currentValue)
-                }}
-                type={isPasswordConfirmationVisible ? 'text' : 'password'}
-                variant="defaultIcon"
-              />
-            )}
-          />
-        </div>
+        <Controller
+          name="passwordConfirmation"
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              {...field}
+              autoComplete="new-password"
+              error={fieldState.error?.message}
+              Icon={isPasswordConfirmationVisible ? CloseEyeIcon : OpenEyeIcon}
+              label="Password confirmation"
+              onClick={() => {
+                setIsPasswordConfirmationVisible((currentValue) => !currentValue)
+              }}
+              type={isPasswordConfirmationVisible ? 'text' : 'password'}
+              variant="defaultIcon"
+            />
+          )}
+        />
       </div>
 
       <div className={styles.formActions}>
@@ -142,27 +130,23 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
             <div className={styles.termsField}>
               <Checkbox
                 checked={field.value}
-                className={styles.termsCheckbox}
-                controlClassName={styles.termsCheckboxControl}
-                errorMessage={fieldState.error?.message}
+                errorMessage={fieldState.error ? ' ' : undefined}
                 onCheckedChange={(checked) => {
                   field.onChange(checked === true)
                   field.onBlur()
                 }}
               />
 
-              <div className={styles.termsLabel}>
-                <Text as="span" color="var(--color-light-100)" size="xs">
-                  I agree to the{' '}
-                  <Link className={styles.termsLink} href="/terms">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link className={styles.termsLink} href="/privacy-policy">
-                    Privacy Policy
-                  </Link>
-                </Text>
-              </div>
+              <Text className={styles.termsText} size="xs">
+                I agree to the{' '}
+                <Link className={styles.termsLink} href="/terms">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link className={styles.termsLink} href="/privacy-policy">
+                  Privacy Policy
+                </Link>
+              </Text>
             </div>
           )}
         />
@@ -173,7 +157,7 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
       </div>
 
       <div className={styles.signInFooter}>
-        <Text color="var(--color-light-100)">Do you have an account?</Text>
+        <Text>Do you have an account?</Text>
         <Link className={styles.signInLink} href="/auth/sign-in">
           Sign In
         </Link>
