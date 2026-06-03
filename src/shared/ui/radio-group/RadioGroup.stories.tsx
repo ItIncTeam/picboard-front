@@ -4,9 +4,8 @@ import { expect, userEvent, within } from 'storybook/test'
 
 import '@/app/globals.css'
 
-import { RadioGroup } from './RadioGroup'
-import { RadioGroupItem } from './RadioGroupItem'
-import type { RadioGroupItemProps } from './RadioGroupItem'
+import { RadioGroup, RadioGroupItem } from './index'
+import type { RadioGroupItemProps } from './index'
 
 const renderSingleItem = (defaultValue?: string) => {
   const SingleItemStory = (args: RadioGroupItemProps) => (
