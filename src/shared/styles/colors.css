@@ -54,6 +54,16 @@
   --color-status-warning: var(--color-warning-500);
   --color-focus: var(--color-accent-500);
   --color-overlay: rgb(0 0 0 / 60%);
+  --color-pagination-text: var(--color-text-primary);
+  --color-pagination-text-disabled: var(--color-text-disabled);
+  --color-pagination-item-hover-background: var(--color-light-500);
+  --color-pagination-item-active-text: var(--color-text-inverse);
+  --color-pagination-item-active-background: var(--color-foreground);
+  --color-pagination-select-text: var(--color-text-primary);
+  --color-pagination-select-background: var(--color-surface-primary);
+  --color-pagination-select-border: var(--color-border-primary);
+  --color-pagination-select-border-hover: var(--color-text-secondary);
+  --color-pagination-select-item-hover-background: var(--color-surface-secondary);
 }
 
 [data-theme='dark'] {
@@ -77,6 +87,16 @@
   --color-status-warning: var(--color-warning-300);
   --color-focus: var(--color-accent-300);
   --color-overlay: rgb(0 0 0 / 70%);
+  --color-pagination-text: var(--color-text-primary);
+  --color-pagination-text-disabled: var(--color-text-disabled);
+  --color-pagination-item-hover-background: var(--color-surface-secondary);
+  --color-pagination-item-active-text: var(--color-text-inverse);
+  --color-pagination-item-active-background: var(--color-foreground);
+  --color-pagination-select-text: var(--color-text-primary);
+  --color-pagination-select-background: var(--color-surface-secondary);
+  --color-pagination-select-border: var(--color-border-primary);
+  --color-pagination-select-border-hover: var(--color-border-secondary);
+  --color-pagination-select-item-hover-background: var(--color-border-secondary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -101,5 +121,15 @@
     --color-status-warning: var(--color-warning-300);
     --color-focus: var(--color-accent-300);
     --color-overlay: rgb(0 0 0 / 70%);
+    --color-pagination-text: var(--color-text-primary);
+    --color-pagination-text-disabled: var(--color-text-disabled);
+    --color-pagination-item-hover-background: var(--color-surface-secondary);
+    --color-pagination-item-active-text: var(--color-text-inverse);
+    --color-pagination-item-active-background: var(--color-foreground);
+    --color-pagination-select-text: var(--color-text-primary);
+    --color-pagination-select-background: var(--color-surface-secondary);
+    --color-pagination-select-border: var(--color-border-primary);
+    --color-pagination-select-border-hover: var(--color-border-secondary);
+    --color-pagination-select-item-hover-background: var(--color-border-secondary);
   }
 }
