@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { OAuthProviders, SignInForm } from '@/features/auth'
-import { AuthCard } from '@/shared/ui/auth-card'
+import { AuthFormCard } from '@/views/auth/ui/auth-form-card'
 import { Title } from '@/shared/ui/typography'
-import { ViewShell } from '@/widgets/view-shell'
+import { AuthViewShell } from '@/widgets/auth-view-shell'
 
 import styles from './sign-in-view.module.css'
 
@@ -14,8 +14,8 @@ function SignInViewContent() {
   const router = useRouter()
 
   return (
-    <ViewShell>
-      <AuthCard>
+    <AuthViewShell>
+      <AuthFormCard>
         <Title level="h1" className={styles.cardTitleCenter}>
           Sign In
         </Title>
@@ -28,8 +28,8 @@ function SignInViewContent() {
             }}
           />
         </div>
-      </AuthCard>
-    </ViewShell>
+      </AuthFormCard>
+    </AuthViewShell>
   )
 }
 

@@ -4,9 +4,9 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
 import { OAuthProviders, SignUpForm } from '@/features/auth'
-import { AuthCard } from '@/shared/ui/auth-card'
+import { AuthFormCard } from '@/views/auth/ui/auth-form-card'
 import { Title } from '@/shared/ui/typography'
-import { ViewShell } from '@/widgets/view-shell'
+import { AuthViewShell } from '@/widgets/auth-view-shell'
 
 import { selectSignUpMode } from './model/selectMode'
 import styles from './sign-up-view.module.css'
@@ -17,9 +17,9 @@ function SignUpViewContent() {
   const [isEmailSentOpen, setIsEmailSentOpen] = useState(false)
 
   return (
-    <ViewShell>
+    <AuthViewShell>
       {mode === 'form' && (
-        <AuthCard>
+        <AuthFormCard>
           <Title level="h1" className={styles.cardTitleCenter}>
             Sign Up
           </Title>
@@ -27,12 +27,12 @@ function SignUpViewContent() {
             <OAuthProviders intent="signUp" />
             <SignUpForm onSuccess={() => setIsEmailSentOpen(true)} />
           </div>
-        </AuthCard>
+        </AuthFormCard>
       )}
       {mode === 'confirmed' && <p>SignUpConfirmedState</p>}
       {mode === 'expired' && <p>SignUpExpiredState</p>}
       {isEmailSentOpen && <p>Email sent modal</p>}
-    </ViewShell>
+    </AuthViewShell>
   )
 }
 

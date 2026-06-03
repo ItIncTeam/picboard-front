@@ -130,7 +130,7 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
             <div className={styles.termsField}>
               <Checkbox
                 checked={field.value}
-                errorMessage={fieldState.error?.message}
+                errorMessage={fieldState.error ? ' ' : undefined}
                 onCheckedChange={(checked) => {
                   field.onChange(checked === true)
                   field.onBlur()
