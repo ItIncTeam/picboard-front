@@ -255,30 +255,9 @@
 .select__viewport {
   --select-viewport-max-rows: 6;
 
-  scrollbar-color: var(--color-border-secondary) var(--color-surface-secondary);
-  scrollbar-width: thin;
-
   overflow: hidden auto;
-
   max-height: calc(var(--select-height) * var(--select-viewport-max-rows));
   padding: 0;
-}
-
-.select__viewport::-webkit-scrollbar {
-  width: 6px;
-}
-
-.select__viewport::-webkit-scrollbar-track {
-  background: var(--color-surface-secondary);
-}
-
-.select__viewport::-webkit-scrollbar-thumb {
-  border-radius: 2px;
-  background: var(--color-border-secondary);
-}
-
-.select__viewport::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
 }
 
 .select__item {
