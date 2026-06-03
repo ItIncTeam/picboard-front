@@ -13,17 +13,19 @@
 
 Frontend только получает captcha token и передает его в mutation.
 
----
-
 ## Переменные окружения
 
 ### Frontend
 
 ```env
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 ```
 
-Публичный ключ Google reCAPTCHA.
+`NEXT_PUBLIC_GRAPHQL_ENDPOINT` — публичный URL backend GraphQL API, который использует Apollo
+Client для auth-запросов.
+
+`NEXT_PUBLIC_RECAPTCHA_SITE_KEY` — публичный ключ Google reCAPTCHA.
 
 Используется в браузере и безопасен для передачи на клиент.
 
@@ -43,12 +45,23 @@ RECAPTCHA_SECRET_KEY=
 
 ## Настройка локального окружения
 
-Создайте локальный файл `.env` на основе `.env.example`.
+Основной source of truth для локальной настройки проекта — [Project Start Guide](../project-start-guide.md).
+Этот документ описывает только reCAPTCHA-specific детали.
+
+Создайте локальный файл `.env.local` на основе `.env.example`.
+
+`.env.example` коммитится в репозиторий и содержит только список переменных без реальных значений:
+
+```env
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
+```
 
 Пример:
 
 ```env
-NEXT_PUBLIC_RECAPTCHA_SITE_KEY=YOUR_SITE_KEY
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://users.picboard.space/api/v1
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
 ```
 
 После изменения переменных окружения перезапустите проект:
@@ -56,6 +69,19 @@ NEXT_PUBLIC_RECAPTCHA_SITE_KEY=YOUR_SITE_KEY
 ```bash
 pnpm dev
 ```
+
+Не кладите реальные ключи в `.env.example`.
+
+---
+
+## Production / CI / Docker
+
+`NEXT_PUBLIC_RECAPTCHA_SITE_KEY` и другие `NEXT_PUBLIC_*` переменные используются в клиентском
+bundle, поэтому production-настройка должна учитывать этап сборки frontend.
+
+В этом PR настройка production, CI, Docker и Jenkins не меняется. Любое изменение Dockerfile,
+Jenkinsfile, Kubernetes deployment или runtime env для reCAPTCHA/API должно быть согласовано
+отдельной задачей с DevOps/teamlead.
 
 ---
 
@@ -123,9 +149,11 @@ Backend отправляет token в Google и проверяет:
 Проверьте, что:
 
 - указан `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`;
-- приложение перезапущено после изменения `.env`;
+- указан `NEXT_PUBLIC_GRAPHQL_ENDPOINT`;
+- приложение перезапущено после изменения `.env.local`;
 - Forgot Password успешно отправляет запрос;
-- backend получает `captchaToken`.
+- request уходит на backend GraphQL URL, например `https://users.picboard.space/api/v1`;
+- backend получает `email` и `captchaToken`.
 
 ---
 
@@ -156,7 +184,7 @@ localhost
 
 - подключен `GoogleReCaptchaProvider`;
 - задан `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`;
-- приложение было перезапущено после изменения `.env`.
+- приложение было перезапущено после изменения `.env.local`.
 
 ---
 
