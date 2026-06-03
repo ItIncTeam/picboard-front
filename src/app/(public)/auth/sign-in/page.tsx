@@ -1,5 +1,5 @@
-import { SignInPage } from '@/views/sign-in-page'
+import { SignInView } from '@/views/auth/sign-in'
 
 export default function Page() {
-  return <SignInPage />
+  return <SignInView />
 }

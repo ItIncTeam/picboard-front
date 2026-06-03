@@ -1,33 +1,8 @@
-.formTop {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
 .formActions {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 12px;
-}
-
-.oauthList {
-  display: flex;
-  gap: 60px;
-  align-items: center;
-  justify-content: center;
-}
-
-.oauthIconButton {
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-.oauthIconButton svg {
-  display: block;
-  width: 36px;
-  height: 36px;
 }
 
 .fields {
