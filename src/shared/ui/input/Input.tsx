@@ -1,15 +1,26 @@
 'use client'
 
-import type { ComponentPropsWithoutRef } from 'react'
-import React, { useId, useState } from 'react'
-import s from './Input.module.css'
-import clsx from 'clsx'
 import { Slot } from '@radix-ui/react-slot'
+import clsx from 'clsx'
+import type {
+  ComponentPropsWithoutRef,
+  ComponentType,
+  FocusEvent,
+  KeyboardEvent,
+  MouseEvent,
+  SVGProps,
+} from 'react'
+import { useId, useState } from 'react'
+
 import { SearchIcon } from '@/shared/assets'
+
+import s from './Input.module.css'
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
 
 type Props = {
   variant?: 'default' | 'defaultIcon' | 'search'
-  Icon?: React.FC<React.SVGProps<SVGSVGElement>>
+  Icon?: IconComponent
   label?: string | null
   error?: string | null
   classNameLabel?: string
@@ -26,6 +37,8 @@ export const Input = ({
   className,
   label,
   error,
+  id,
+  classNameLabel,
   onClick,
   onKeyUp,
   onMouseDown,
@@ -34,8 +47,12 @@ export const Input = ({
   placeholder = ' ',
   ...rest
 }: Props) => {
-  const baseId = useId()
+  const generatedId = useId()
   const [isKeyboardUsed, setIsKeyboardUsed] = useState(false)
+  const inputId = id ?? generatedId
+  const helperId = `${inputId}-helper`
+  const hasError = Boolean(error)
+  const describedBy = clsx(rest['aria-describedby'], helperId)
 
   const Component = asChild ? Slot : 'input'
   const inputComponent = (
@@ -50,32 +67,37 @@ export const Input = ({
         className,
       )}
       {...rest}
-      id={baseId}
-      onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
+      id={inputId}
+      aria-describedby={describedBy}
+      aria-invalid={hasError || undefined}
+      onKeyUp={(e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Tab') {
           setIsKeyboardUsed(true)
         }
-        onKeyUp?.(e) // Вызов внешнего onKeyUp, если он передан компоненту
+        onKeyUp?.(e)
       }}
-      onMouseDown={(e: React.MouseEvent<HTMLInputElement>) => {
+      onMouseDown={(e: MouseEvent<HTMLInputElement>) => {
         setIsKeyboardUsed(false)
-        onMouseDown?.(e) // Вызов внешнего onMouseDown, если он передан
+        onMouseDown?.(e)
       }}
-      onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+      onBlur={(e: FocusEvent<HTMLInputElement>) => {
         setIsKeyboardUsed(false)
-        onBlur?.(e) // Вызов внешнего onBlur, если он передан
+        onBlur?.(e)
       }}
     />
   )
   return (
     <div className={s.root}>
       {label && (
-        <label htmlFor={baseId} className={s.label}>
+        <label
+          htmlFor={inputId}
+          className={clsx(s.label, disabled && s.labelDisabled, classNameLabel)}
+        >
           {label}
         </label>
       )}
       {variant === 'search' && (
-        <div className={s.searchWrapper}>
+        <div className={clsx(s.searchWrapper, disabled && s.disabled)}>
           {inputComponent}
           <SearchIcon className={s.searchIcn} />
         </div>
@@ -87,7 +109,14 @@ export const Input = ({
         </div>
       )}
       {variant === 'default' && inputComponent}
-      {error && <span className={s.textError}>{error}</span>}
+      <span
+        id={helperId}
+        className={clsx(s.helperText, hasError && s.helperTextVisible)}
+        role={hasError ? 'alert' : undefined}
+        aria-live="polite"
+      >
+        {error}
+      </span>
     </div>
   )
 }
