@@ -23,10 +23,12 @@ const defaultValues: SignUpFormValues = {
 }
 
 type SignUpFormProps = {
+  onOpenPrivacy: () => void
+  onOpenTerms: () => void
   onSuccess?: () => void
 }
 
-export function SignUpForm({ onSuccess }: SignUpFormProps) {
+export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
 
@@ -139,13 +141,13 @@ export function SignUpForm({ onSuccess }: SignUpFormProps) {
 
               <Text className={styles.termsText} size="xs">
                 I agree to the{' '}
-                <Link className={styles.termsLink} href="/terms">
+                <button className={styles.termsLink} onClick={onOpenTerms} type="button">
                   Terms of Service
-                </Link>{' '}
+                </button>{' '}
                 and{' '}
-                <Link className={styles.termsLink} href="/privacy-policy">
+                <button className={styles.termsLink} onClick={onOpenPrivacy} type="button">
                   Privacy Policy
-                </Link>
+                </button>
               </Text>
             </div>
           )}

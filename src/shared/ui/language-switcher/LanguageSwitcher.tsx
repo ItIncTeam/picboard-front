@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { EnFlagImage, RuFlagImage } from '@/shared/assets'
 import { Select, type SelectOption } from '@/shared/ui/select'
 
 import styles from './language-switcher.module.css'
@@ -15,7 +16,12 @@ const defaultLanguageOptions: SelectOption[] = [
   {
     value: 'en',
     label: 'English',
-    image: '/flag-uk.png',
+    image: EnFlagImage.src,
+  },
+  {
+    value: 'ru',
+    label: 'Russian',
+    image: RuFlagImage.src,
   },
 ]
 

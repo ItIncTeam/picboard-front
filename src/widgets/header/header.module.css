@@ -15,9 +15,9 @@
   justify-content: space-between;
 
   width: min(100%, 1184px);
-  min-height: 64px;
+  min-height: var(--public-header-height);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--public-header-padding-x);
 }
 
 .actions {
@@ -29,8 +29,6 @@
 @media (width <= 760px) {
   .inner {
     gap: 16px;
-    min-height: 56px;
-    padding: 0 16px;
   }
 
   .actions {

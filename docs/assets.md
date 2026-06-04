@@ -26,6 +26,13 @@ export const Example = () => {
 src/shared/assets/icon
 ```
 
+OAuth-иконки и флаги лежат отдельно (не в `icon/`):
+
+```txt
+src/shared/assets/image/social   # github.svg, google.svg → ?react через icon/index.ts
+src/shared/assets/image/flags    # en.png, ru.png → Next Image
+```
+
 После добавления экспортировать иконку через публичный API:
 
 ```ts
