@@ -51,14 +51,9 @@ export const signUpSchema = z
     passwordConfirmation: z.string().min(1, {
       error: 'Confirm your password',
     }),
-    agreedToTerms: z.boolean().refine(
-      (value) => {
-        return value === true
-      },
-      {
-        error: 'You must agree to the Terms of Service and Privacy Policy',
-      },
-    ),
+    agreedToTerms: z.boolean().refine((value) => value, {
+      error: 'You must agree to the Terms of Service and Privacy Policy',
+    }),
   })
   .refine((values) => values.password === values.passwordConfirmation, {
     error: 'The passwords must match',
