@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { SessionProvider } from '@/features/auth/session-management'
 import { ApolloProvider } from '@/shared/api'
 
 import './globals.css'
@@ -31,7 +32,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ApolloProvider>{children}</ApolloProvider>
+        <ApolloProvider>
+          <SessionProvider>{children}</SessionProvider>
+        </ApolloProvider>
       </body>
     </html>
   )

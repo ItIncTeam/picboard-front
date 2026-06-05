@@ -1,1 +1,4 @@
 export { getMe, logout, refreshToken, type CurrentUser, type RefreshTokenPayload } from './api'
+export { SessionProvider } from './model/SessionProvider'
+export { useSession } from './model/useSession'
+export type { SessionContextValue, SessionState, SessionStatus } from './model/types'

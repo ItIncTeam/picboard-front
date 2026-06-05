@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
+import { useSession } from '@/features/auth/session-management'
 import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
 import { setAccessToken } from '@/shared/lib/auth'
 import { Button } from '@/shared/ui/button'
@@ -63,6 +64,7 @@ type SignInFormProps = {
 
 export function SignInForm({ onSuccess }: SignInFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const { authenticateWithCurrentToken } = useSession()
 
   const {
     clearErrors,
@@ -93,6 +95,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
       })
 
       setAccessToken(accessToken)
+      await authenticateWithCurrentToken()
       onSuccess?.()
     } catch (error) {
       const message = isInvalidCredentialsError(error)
