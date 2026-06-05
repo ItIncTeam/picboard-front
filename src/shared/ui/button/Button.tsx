@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, type ComponentPropsWithoutRef, type MouseEvent } from 'react'
+import { cloneElement, isValidElement, type ComponentPropsWithoutRef } from 'react'
 import s from './button.module.css'
 import clsx from 'clsx'
 import { Slot, Slottable } from '@radix-ui/react-slot'
@@ -18,7 +18,6 @@ export const Button = ({
   disabled,
   loading = false,
   loadingText,
-  onClick,
   ...rest
 }: Props) => {
   const Component = asChild ? Slot : 'button'
@@ -36,15 +35,6 @@ export const Button = ({
     loading && loadingText && isValidElement(children)
       ? cloneElement(children, undefined, loadingText)
       : children
-  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    if (isDisabled) {
-      event.preventDefault()
-      event.stopPropagation()
-      return
-    }
-
-    onClick?.(event)
-  }
 
   return (
     <Component
@@ -52,7 +42,6 @@ export const Button = ({
       {...disabledProps}
       aria-busy={loading || undefined}
       className={clsx(s.button, s[variant], className)}
-      onClick={handleClick}
     >
       {loading && <ButtonSpinner />}
       {asChild ? <Slottable>{slottableContent}</Slottable> : content}
