@@ -48,13 +48,16 @@ export function ForgotPasswordForm() {
     }
 
     setError('')
+
+    if (!executeRecaptcha) {
+      setError(MESSAGES.recaptchaUnavailable)
+
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      if (!executeRecaptcha) {
-        throw new Error(MESSAGES.recaptchaUnavailable)
-      }
-
       const captchaToken = await executeRecaptcha(RECAPTCHA_ACTION)
 
       await passwordReset({ captchaToken, email: trimmedEmail })
