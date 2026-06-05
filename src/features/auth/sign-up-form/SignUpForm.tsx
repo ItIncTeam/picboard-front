@@ -11,6 +11,7 @@ import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input/Input'
 import { Text } from '@/shared/ui/typography'
 
+import { signUp, type SignUpInput } from './api'
 import styles from './sign-up-form.module.css'
 import { signUpSchema, type SignUpFormValues } from './signUpSchema'
 
@@ -28,14 +29,102 @@ type SignUpFormProps = {
   onSuccess?: () => void
 }
 
+type BackendFieldError = {
+  field: string
+  message: string
+}
+
+const fallbackErrorMessage = 'Sign up failed. Please try again.'
+
+const fieldMap: Record<string, keyof SignUpFormValues> = {
+  acceptPrivacy: 'agreedToTerms',
+  acceptTerms: 'agreedToTerms',
+  email: 'email',
+  password: 'password',
+  username: 'username',
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null
+}
+
+const isBackendFieldError = (value: unknown): value is BackendFieldError => {
+  return (
+    isRecord(value) &&
+    typeof value.field === 'string' &&
+    typeof value.message === 'string' &&
+    value.message.length > 0
+  )
+}
+
+const collectFieldErrors = (
+  value: unknown,
+  result: BackendFieldError[] = [],
+): BackendFieldError[] => {
+  if (!isRecord(value)) {
+    return result
+  }
+
+  const errors = value.errors
+  const graphQLErrors = value.graphQLErrors
+
+  if (Array.isArray(errors)) {
+    errors.forEach((error) => {
+      if (isBackendFieldError(error)) {
+        result.push(error)
+        return
+      }
+
+      collectFieldErrors(error, result)
+    })
+  }
+
+  if (Array.isArray(graphQLErrors)) {
+    graphQLErrors.forEach((error) => {
+      collectFieldErrors(error, result)
+    })
+  }
+
+  collectFieldErrors(value.extensions, result)
+  collectFieldErrors(value.originalError, result)
+  collectFieldErrors(value.networkError, result)
+  collectFieldErrors(value.result, result)
+
+  return result
+}
+
+const getErrorMessage = (error: unknown): string => {
+  if (isRecord(error) && typeof error.message === 'string' && error.message.length > 0) {
+    return error.message
+  }
+
+  return fallbackErrorMessage
+}
+
+const getFieldFromGenericMessage = (message: string): keyof SignUpFormValues | null => {
+  const normalizedMessage = message.toLowerCase()
+
+  if (normalizedMessage.includes('username')) {
+    return 'username'
+  }
+
+  if (normalizedMessage.includes('email')) {
+    return 'email'
+  }
+
+  return null
+}
+
 export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
 
   const {
+    clearErrors,
     control,
     handleSubmit,
-    formState: { isSubmitting, isValid },
+    setError,
+    formState: { errors, isSubmitting, isValid },
   } = useForm<SignUpFormValues>({
     defaultValues,
     mode: 'onTouched',
@@ -44,14 +133,52 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
   })
 
   const onSubmit = async (data: SignUpFormValues) => {
+    clearErrors('root')
+
     try {
-      // TODO: replace with sign-up API call; remove debug log when wired.
-      console.warn('Sign up form data:', data)
+      const input: SignUpInput = {
+        acceptPrivacy: data.agreedToTerms,
+        acceptTerms: data.agreedToTerms,
+        email: data.email,
+        password: data.password,
+        username: data.username,
+      }
+
+      await signUp(input)
 
       onSuccess?.()
     } catch (error) {
-      // TODO: map API errors to form fields or show a global error message.
-      console.error('Sign up failed:', error)
+      const fieldErrors = collectFieldErrors(error)
+
+      if (fieldErrors.length === 0) {
+        const message = getErrorMessage(error)
+        const formField = getFieldFromGenericMessage(message)
+
+        if (formField) {
+          setError(formField, { message })
+          return
+        }
+
+        setError('root', { message })
+        return
+      }
+
+      let hasUnknownField = false
+
+      fieldErrors.forEach(({ field, message }) => {
+        const formField = fieldMap[field]
+
+        if (!formField) {
+          hasUnknownField = true
+          return
+        }
+
+        setError(formField, { message })
+      })
+
+      if (hasUnknownField) {
+        setError('root', { message: fallbackErrorMessage })
+      }
     }
   }
 
@@ -125,6 +252,12 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
       </div>
 
       <div className={styles.formActions}>
+        {errors.root?.message && (
+          <Text className={styles.formError} role="alert" size="sm">
+            {errors.root.message}
+          </Text>
+        )}
+
         <Controller
           name="agreedToTerms"
           control={control}

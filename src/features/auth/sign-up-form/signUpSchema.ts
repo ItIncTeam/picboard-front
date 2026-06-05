@@ -4,6 +4,9 @@ const passwordComplexityMessage =
   'Password must contain a-z, A-Z, ! " # $ % & \' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~'
 
 const passwordSpecialCharPattern = /[!-\/:-@\[-`{-~]/
+const usernamePattern = /^[A-Za-z_-]+$/
+const usernameValidationMessage =
+  'Username must be 6-30 characters and may include letters, hyphen and underscore'
 
 export const signUpSchema = z
   .object({
@@ -11,8 +14,14 @@ export const signUpSchema = z
       .string()
       .trim()
       .min(1, { error: 'Username is required' })
-      .min(6, { error: 'Minimum number of characters 6' })
-      .max(30, { error: 'Maximum number of characters 30' }),
+      .superRefine((value, context) => {
+        if (value.length < 6 || value.length > 30 || !usernamePattern.test(value)) {
+          context.addIssue({
+            code: 'custom',
+            message: usernameValidationMessage,
+          })
+        }
+      }),
     email: z.string().trim().email({
       error: 'The email must match the format example@example.com',
     }),

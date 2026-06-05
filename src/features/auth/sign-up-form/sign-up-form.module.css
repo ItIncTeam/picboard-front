@@ -5,6 +5,11 @@
   margin-top: 22px;
 }
 
+.formError {
+  color: var(--color-danger-500);
+  text-align: center;
+}
+
 .fields {
   display: flex;
   flex-direction: column;
