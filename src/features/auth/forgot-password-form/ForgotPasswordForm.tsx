@@ -73,7 +73,7 @@ export function ForgotPasswordForm() {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <div role="status" aria-live="polite">
+      <div>
         <Input
           autoComplete="email"
           disabled={isLoading}
