@@ -3,6 +3,11 @@
 
   cursor: pointer;
 
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+
   box-sizing: border-box;
   padding: 6px 24px;
   border-radius: 2px;
@@ -16,6 +21,17 @@
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease;
+}
+
+.button:disabled {
+  cursor: default;
+}
+
+.spinner {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  animation: button-spinner-spin 0.8s linear infinite;
 }
 
 .primary {
@@ -42,6 +58,18 @@
   &:disabled {
     color: var(--color-light-900);
     background-color: var(--color-accent-900);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.8s;
+  }
+}
+
+@keyframes button-spinner-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
