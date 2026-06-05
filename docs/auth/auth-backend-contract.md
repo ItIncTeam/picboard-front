@@ -1,6 +1,12 @@
 # Auth Backend Contract
 
-Source of truth: `/Users/semenkr/Downloads/schema.graphql`.
+Source of truth: backend schema / Playground / actual backend contract.
+
+`docs/schema.graphql` is a local schema source for IDE GraphQL validation only.
+Keep it aligned with the backend contract, but do not treat it as the backend
+source of truth. `docs/introspectionSchema.json` is kept for now, but it is not
+a complete schema source for IDE validation because it does not include
+`Query`/`Mutation` fields.
 
 This document describes only the auth and user GraphQL contract present in the
 current schema. Field names, required fields, and return types are copied from
