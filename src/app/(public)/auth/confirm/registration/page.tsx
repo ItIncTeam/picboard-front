@@ -1,5 +1,5 @@
-import { AuthPage } from '@/views/auth-page'
+import { ConfirmRegistrationView } from '@/views/auth/confirm-registration'
 
 export default function Page() {
-  return <AuthPage screen="confirm-registration" />
+  return <ConfirmRegistrationView />
 }

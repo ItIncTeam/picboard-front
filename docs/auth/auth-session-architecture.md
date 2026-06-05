@@ -8,8 +8,9 @@ Core decisions:
 
 - Frontend stores only `accessToken`.
 - `accessToken` is memory only.
-- Frontend does not store `refreshToken`.
-- If backend returns `refreshToken` in a GraphQL payload, frontend ignores it.
+- `accessToken` comes from GraphQL responses.
+- `refreshToken` is managed by the backend through an `httpOnly` cookie.
+- Frontend does not read, store, or manually send `refreshToken`.
 
 ## Token Strategy
 
@@ -45,18 +46,17 @@ Apollo `errorLink` clears the in-memory access token on `401`, `403`, and `UNAUT
 
 ### Refresh Token
 
-The backend can return `refreshToken` from:
+Backend-confirmed refresh token model:
 
-- `signIn`
-- `refreshToken`
-
-Frontend rules:
-
-- Do not save `refreshToken` in frontend state.
-- Do not save `refreshToken` in `localStorage`.
-- Do not save `refreshToken` in `sessionStorage`.
-- Do not save `refreshToken` in frontend-managed cookies.
-- In production, omit `refreshToken` from mutation/query selection sets when it is not needed.
+- Backend stores and manages `refreshToken` through an `httpOnly` cookie.
+- Frontend has no access to the `refreshToken` value.
+- Frontend does not save `refreshToken` in frontend state.
+- Frontend does not save `refreshToken` in `localStorage`.
+- Frontend does not save `refreshToken` in `sessionStorage`.
+- Frontend does not save `refreshToken` in frontend-managed cookies.
+- Frontend does not manually send `refreshToken`.
+- `refreshToken` mutation uses the cookie automatically.
+- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
 
 Session bootstrap should rely on backend-managed credentials with `credentials: 'include'`.
 
@@ -67,11 +67,9 @@ User submits credentials
   ↓
 signIn mutation
   ↓
-Backend returns accessToken, refreshToken, user
+Backend returns accessToken and user
   ↓
-Frontend stores accessToken in memory
-  ↓
-Frontend ignores refreshToken
+setAccessToken(accessToken)
   ↓
 Redirect to protected route
 ```
@@ -80,8 +78,7 @@ After successful sign-in:
 
 1. Save `accessToken` in memory.
 2. Save `user` in frontend session state if the session model needs it.
-3. Ignore `refreshToken`.
-4. Redirect to the protected entry route.
+3. Redirect to the protected entry route.
 
 Invalid credentials are verified to return:
 
@@ -107,6 +104,28 @@ GraphQL API
 
 If the backend returns `401`, `403`, or `UNAUTHENTICATED`, the frontend clears the in-memory access token and treats the current session as unauthenticated.
 
+## Refresh Flow
+
+Confirmed runtime flow:
+
+```txt
+SignIn
+  ↓
+accessToken
+  ↓
+setAccessToken
+
+401 / UNAUTHENTICATED
+  ↓
+refreshToken mutation
+  ↓
+backend reads refreshToken from httpOnly cookie
+  ↓
+new accessToken
+  ↓
+setAccessToken
+```
+
 ## Application Bootstrap
 
 After a full page reload, the in-memory `accessToken` is empty.
@@ -119,6 +138,8 @@ Page reload
 accessToken missing
   ↓
 refreshToken mutation
+  ↓
+backend reads refreshToken from httpOnly cookie
   ↓
 setAccessToken(returned accessToken)
   ↓
@@ -205,9 +226,19 @@ Verified:
 - `signUp`
 - `emailConfirmation`
 - `signIn`
+- `refreshToken` cookie flow
 
 Available in schema / planned for integration:
 
-- `refreshToken`
 - `logout`
 - password recovery operations
+
+## Backend Confirmed Facts (June 2026)
+
+- `signUp` verified.
+- `emailConfirmation` verified.
+- `me` unauthorized response verified.
+- `accessToken` comes in GraphQL responses and is stored only in memory.
+- `refreshToken` cookie flow confirmed: backend manages it through an
+  `httpOnly` cookie, frontend has no access to it, does not store it, and does
+  not send it manually.

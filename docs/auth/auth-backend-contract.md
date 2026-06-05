@@ -123,17 +123,13 @@ Invalid credentials response:
 Successful credentials return:
 
 - `accessToken`
-- `refreshToken`
 - `user`
 
 Frontend decision:
 
-- Store `accessToken` in memory only.
-- Do not store `refreshToken` on the frontend.
-- Do not write `refreshToken` to `localStorage`, `sessionStorage`, or
-  frontend-managed cookies.
-- In production, the frontend can omit `refreshToken` from the `signIn`
-  selection set.
+- Store only `accessToken` in memory.
+- `refreshToken` is managed by the backend through an `httpOnly` cookie.
+- Frontend does not read, store, or manually send `refreshToken`.
 
 ## Queries
 
@@ -248,6 +244,10 @@ Frontend decision:
 
 ### `RefreshTokenPayload`
 
+Current schema still exposes `refreshToken`, but backend confirmed that the
+frontend does not need this value and plans to remove it from
+`RefreshTokenPayload`.
+
 | Field          | Type      | Required |
 | -------------- | --------- | -------- |
 | `accessToken`  | `String!` | Yes      |
@@ -296,17 +296,15 @@ Frontend storage decision:
 
 ### `refreshToken`
 
-The schema returns `refreshToken: String!` from:
-
-- `signIn`
-- `refreshToken`
-
-Known backend decision:
+Backend-confirmed decision:
 
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
-- The frontend must not read or persist `refreshToken`.
-- The `refreshToken` field is present in the GraphQL payload, but frontend
-  session state must not depend on storing it.
+- Frontend has no access to the `refreshToken` value.
+- Frontend must not read `refreshToken`.
+- Frontend must not store `refreshToken`.
+- Frontend must not manually send `refreshToken`.
+- The `refreshToken` mutation uses the backend-managed cookie automatically.
+- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
 
 ### Bootstrap
 
@@ -314,8 +312,9 @@ After a full page reload, the in-memory `accessToken` is empty. The frontend
 bootstrap flow should call:
 
 1. `refreshToken`
-2. Save returned `accessToken` in memory.
-3. Call `me` to load the current `User`.
+2. Backend reads `refreshToken` from the `httpOnly` cookie.
+3. Save returned `accessToken` in memory.
+4. Call `me` to load the current `User`.
 
 If `refreshToken` fails, the frontend should treat the session as anonymous.
 
@@ -344,9 +343,24 @@ Logout should call:
 ## Known Backend Decisions
 
 - `refreshToken` is stored in an `httpOnly` cookie.
-- The backend may return `refreshToken` in GraphQL payloads, but frontend must
-  not treat it as client-managed session state.
-- `accessToken` is stored only in memory.
+- Frontend does not read, store, or manually send `refreshToken`.
+- `refreshToken` mutation uses the backend-managed cookie automatically.
+- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
+- `accessToken` comes from GraphQL responses and is stored only in memory.
+
+## Backend Confirmed Facts (June 2026)
+
+- `signUp` verified.
+- `emailConfirmation` verified.
+- `me` unauthorized response verified.
+- `accessToken` comes in the GraphQL response and is stored only in memory.
+- `refreshToken` cookie flow confirmed: backend manages it through an
+  `httpOnly` cookie, frontend has no access to it, does not store it, and does
+  not send it manually.
+- Registration confirmation canonical route:
+  `/auth/confirm/registration?code=<CODE>`.
+- The same registration confirmation route is used for confirmation email and
+  resend confirmation email links.
 
 ## Future Auth Extensions
 

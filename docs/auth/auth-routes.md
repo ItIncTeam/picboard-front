@@ -15,6 +15,17 @@ This document maps current `/auth` routes to views, features, and verified Graph
 
 ## Verified Flow
 
+Canonical registration confirmation route:
+
+```txt
+/auth/confirm/registration?code=<CODE>
+```
+
+Used by:
+
+- Confirmation email.
+- Resend confirmation email.
+
 ### `/auth/sign-up`
 
 Frontend flow:
@@ -38,7 +49,7 @@ Notes:
 - The confirmation email can land in spam.
 - Backend validates `username` as 6-30 characters, with lowercase/uppercase letters and `-` or `_`.
 
-### `/auth/confirm/registration?code=...`
+### `/auth/confirm/registration?code=<CODE>`
 
 Frontend flow:
 
@@ -68,7 +79,8 @@ Verified backend response:
 Notes:
 
 - The `code` value comes from the email link query string.
-- The current route path is `/auth/confirm/registration`; the browser URL may include `?code=...`.
+- The canonical browser URL is `/auth/confirm/registration?code=<CODE>`.
+- The same route is used for confirmation email and resend confirmation email.
 
 ### `/auth/sign-in`
 
@@ -76,9 +88,9 @@ Frontend flow:
 
 1. User submits credentials.
 2. Frontend calls `signIn`.
-3. Backend returns `accessToken`, `refreshToken`, and `user`.
+3. Backend returns `accessToken` and `user`.
 4. Frontend stores only `accessToken` in memory.
-5. Frontend ignores `refreshToken` and redirects to the protected entry route.
+5. Frontend redirects to the protected entry route.
 
 Verified invalid credentials error:
 
@@ -92,8 +104,20 @@ Verified invalid credentials error:
 
 Notes:
 
-- `refreshToken` must not be saved in `localStorage`, `sessionStorage`, or frontend cookies.
-- In production, the frontend mutation can omit `refreshToken` from the GraphQL selection set.
+- `refreshToken` is managed by the backend through an `httpOnly` cookie.
+- Frontend does not read, store, or manually send `refreshToken`.
+
+## Backend Confirmed Facts (June 2026)
+
+- `signUp` verified.
+- `emailConfirmation` verified.
+- `me` unauthorized response verified.
+- `accessToken` comes in GraphQL responses and is stored only in memory.
+- `refreshToken` cookie flow confirmed: backend manages it through an
+  `httpOnly` cookie, frontend has no access to it, does not store it, and does
+  not send it manually.
+- `/auth/confirm/registration?code=<CODE>` is the canonical route for
+  confirmation email and resend confirmation email.
 
 ## Shell And Ownership
 

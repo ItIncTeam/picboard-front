@@ -20,9 +20,11 @@ Already in place:
 Current token decision:
 
 - Store `accessToken` in memory only.
-- Do not store `refreshToken` on the frontend.
-- Do not write `refreshToken` to `localStorage`, `sessionStorage`, or frontend-managed cookies.
-- If `signIn` returns `refreshToken` in the payload, frontend ignores it.
+- `accessToken` comes from GraphQL responses.
+- `refreshToken` is managed by the backend through an `httpOnly` cookie.
+- Frontend does not read, store, or manually send `refreshToken`.
+- `refreshToken` mutation uses the backend-managed cookie automatically.
+- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
 
 ## PR Breakdown
 
@@ -59,7 +61,7 @@ Backend facts:
 
 Scope:
 
-- Read `code` from `/auth/confirm/registration?code=...`.
+- Read `code` from `/auth/confirm/registration?code=<CODE>`.
 - Call `emailConfirmation`.
 - Show confirmation result.
 
@@ -67,6 +69,8 @@ Backend facts:
 
 - `emailConfirmation` is verified through Playground.
 - The confirmation code is provided in the email link query string.
+- `/auth/confirm/registration?code=<CODE>` is the canonical route for
+  confirmation email and resend confirmation email.
 
 ### PR 4: Sign In Integration
 
@@ -74,27 +78,28 @@ Scope:
 
 - Connect `/auth/sign-in` to `signIn`.
 - Store returned `accessToken` in memory.
-- Ignore returned `refreshToken`.
 - Redirect after successful sign-in.
 
 Backend facts:
 
 - `signIn` is verified through Playground.
 - Invalid credentials return `UNAUTHENTICATED` with status code `401`.
-- Successful sign-in returns `accessToken`, `refreshToken`, and `user`.
+- Successful sign-in returns `accessToken` and `user`.
+- Backend manages `refreshToken` through an `httpOnly` cookie.
 
 ### PR 5: Session Management
 
 Scope:
 
 - Add session bootstrap.
-- Call `refreshToken`, store the returned `accessToken` in memory, then call `me`.
+- Call `refreshToken`; backend reads `refreshToken` from the `httpOnly` cookie.
+- Store the returned `accessToken` in memory, then call `me`.
 - Treat failed bootstrap as an anonymous session.
 
 Notes:
 
 - `me` without a token is verified to return `UNAUTHENTICATED` with status code `401`.
-- `refreshToken` should rely on backend-managed credentials; frontend must not persist the refresh token value.
+- Frontend must not read, store, or manually send `refreshToken`.
 
 ### PR 6: Protected Boundary
 
@@ -154,3 +159,15 @@ Rules:
 - Middleware.
 - Frontend refresh token storage.
 - `src/*` changes in this docs PR.
+
+## Backend Confirmed Facts (June 2026)
+
+- `signUp` verified.
+- `emailConfirmation` verified.
+- `me` unauthorized response verified.
+- `accessToken` comes in GraphQL responses and is stored only in memory.
+- `refreshToken` cookie flow confirmed: backend manages it through an
+  `httpOnly` cookie, frontend has no access to it, does not store it, and does
+  not send it manually.
+- `/auth/confirm/registration?code=<CODE>` is the canonical route for
+  confirmation email and resend confirmation email.
