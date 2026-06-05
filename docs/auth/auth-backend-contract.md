@@ -6,6 +6,129 @@ This document describes only the auth and user GraphQL contract present in the
 current schema. Field names, required fields, and return types are copied from
 the schema. Frontend route mapping uses the current App Router auth routes.
 
+## Verified Through Playground
+
+### Health Check
+
+Request:
+
+```graphql
+query {
+  __typename
+}
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "__typename": "Query"
+  }
+}
+```
+
+### `me` Without Token
+
+The backend returns an auth error when `me` is called without a token:
+
+```json
+{
+  "message": "Unauthorized",
+  "code": "UNAUTHENTICATED",
+  "statusCode": 401
+}
+```
+
+### `signUp`
+
+Verified success response shape:
+
+```json
+{
+  "data": {
+    "signUp": {
+      "message": "Confirmation email sent",
+      "user": {
+        "id": "...",
+        "email": "...",
+        "username": "...",
+        "isConfirmed": false
+      }
+    }
+  }
+}
+```
+
+Verified `username` validation:
+
+- 6-30 characters.
+- Lowercase and uppercase letters are allowed.
+- `-` and `_` are the only allowed special characters.
+
+Backend field-level validation error shape:
+
+```json
+{
+  "field": "username",
+  "message": "Username must be 6-30 characters..."
+}
+```
+
+Confirmation email is delivered, but can land in spam. The confirmation link
+contains the confirmation `code` in the query string.
+
+### `emailConfirmation`
+
+Request:
+
+```graphql
+mutation EmailConfirmation($input: EmailConfirmationInput!) {
+  emailConfirmation(input: $input) {
+    message
+  }
+}
+```
+
+Verified response:
+
+```json
+{
+  "data": {
+    "emailConfirmation": {
+      "message": "If an account with that email exists, that email was confirmed"
+    }
+  }
+}
+```
+
+### `signIn`
+
+Invalid credentials response:
+
+```json
+{
+  "message": "Invalid credentials",
+  "code": "UNAUTHENTICATED",
+  "statusCode": 401
+}
+```
+
+Successful credentials return:
+
+- `accessToken`
+- `refreshToken`
+- `user`
+
+Frontend decision:
+
+- Store `accessToken` in memory only.
+- Do not store `refreshToken` on the frontend.
+- Do not write `refreshToken` to `localStorage`, `sessionStorage`, or
+  frontend-managed cookies.
+- In production, the frontend can omit `refreshToken` from the `signIn`
+  selection set.
+
 ## Queries
 
 | Query  | Purpose                                 | Arguments     | Required arguments | Return type |
@@ -37,6 +160,12 @@ the schema. Frontend route mapping uses the current App Router auth routes.
 | `password`      | `String!`  | Yes      |
 | `acceptTerms`   | `Boolean!` | Yes      |
 | `acceptPrivacy` | `Boolean!` | Yes      |
+
+`username` validation verified through Playground:
+
+- 6-30 characters.
+- Lowercase and uppercase letters are allowed.
+- `-` and `_` are the only allowed special characters.
 
 ### `EmailConfirmationInput`
 
@@ -209,7 +338,8 @@ Logout should call:
 ## Known Backend Decisions
 
 - `refreshToken` is stored in an `httpOnly` cookie.
-- The frontend does not receive `refreshToken` as client-managed session state.
+- The backend may return `refreshToken` in GraphQL payloads, but frontend must
+  not treat it as client-managed session state.
 - `accessToken` is stored only in memory.
 
 ## Future Auth Extensions

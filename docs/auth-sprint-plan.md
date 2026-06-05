@@ -1,169 +1,156 @@
-# Auth Sprint Plan — Full Document
+# Auth Infrastructure Plan
 
-## 1. Goal
+## Goal
 
-Подготовить инфраструктуру для auth flow на GraphQL + Apollo без дублирования UI и без преждевременной реализации бизнес-логики.
+Prepare auth integration on top of the existing GraphQL + Apollo infrastructure without changing route boundaries or introducing a new auth approach.
 
-Основные задачи спринта:
+This plan is documentation for the auth PR sequence. Implementation PRs should stay small and local.
 
-- Apollo Client setup
-- GraphQL codegen setup
-- User/Session entities
-- Auth features skeletons
-- Session architecture
-- Protected routes foundation
-- Integration points для будущих UI компонентов
+## Current Frontend State
 
-Не создавать новые UI-компоненты, если аналог уже существует или находится в процессе переноса из дизайна. Приоритет — инфраструктура, типизация и архитектурные границы.
+Already in place:
 
----
+- `ApolloProvider` is connected globally in `src/app/layout.tsx`.
+- Apollo Client is composed as `errorLink -> authLink -> httpLink`.
+- `httpLink` uses `process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '/graphql'`.
+- `credentials: 'include'` is enabled for GraphQL requests.
+- `authLink` attaches `Authorization: Bearer <accessToken>` when an access token exists.
+- `errorLink` clears the in-memory access token on `401`, `403`, and `UNAUTHENTICATED`.
 
-## 2. FSD Структура
+Current token decision:
 
-**src/app** — маршруты и layouts
+- Store `accessToken` in memory only.
+- Do not store `refreshToken` on the frontend.
+- Do not write `refreshToken` to `localStorage`, `sessionStorage`, or frontend-managed cookies.
+- If `signIn` returns `refreshToken` in the payload, frontend ignores it.
 
-- `(public)/auth/...` — публичные auth routes
-- `(protected)/layout.tsx` — protected routes + session boundary
-- `layout.tsx` — глобальный Apollo Provider для всего проекта
+## PR Breakdown
 
-**src/views** — сборка страниц
+### PR 1: Auth API Operations
 
-- SignInPage
-- SignUpPage
-- ForgotPasswordPage
-- CreateNewPasswordPage
-- ConfirmRegistrationPage
+Scope:
 
-**src/widgets** — UI shells и primitives
+- Add typed GraphQL operations for verified auth API calls.
+- Keep operations in the proper FSD layer.
+- Preserve existing UI behavior.
 
-- PublicAuthShell — общая рамка для всех auth pages
-- Header, Footer, Sidebar — для разных layouts
+Out of scope:
 
-**src/features/auth** — действия пользователя (Client Components)
+- No UI behavior changes.
+- No redirects.
+- No session boundary.
+- No token persistence changes.
 
-- sign-in, sign-up, confirm-registration, forgot-password, create-new-password, logout, session-management
-- Внутри каждой feature:
-  - `ui/` — React форма с `use client`
-  - `model/` — types + validation schemas (zod)
-  - `api/` — Apollo hooks: useMutation/useQuery
+### PR 2: Sign Up Integration
 
-**src/entities/user, src/entities/session** — доменные типы и helpers
+Scope:
 
-- user: id, email, username, roles, displayName, bio, profilePictureFileId
-- session: accessToken, refreshToken, status, isAuthenticated()
+- Connect `/auth/sign-up` to `signUp`.
+- Handle backend field-level validation errors.
+- Show success state after confirmation email is sent.
 
-**src/shared/api/apollo** — Apollo Client + Provider
+Backend facts:
 
-- client.ts — инициализация Apollo Client
-- provider.tsx — Client Component wrapper с 'use client'
-- links/ — auth link, error link, http link
-- graphql/generated — сгенерированные types/operations
+- `signUp` is verified through Playground.
+- Backend requires `username` to be 6-30 characters with lowercase/uppercase letters, `-`, and `_`.
+- Confirmation email can land in spam.
 
-**src/shared/lib/auth** — общие helpers
+### PR 3: Email Confirmation Integration
 
-- routes.ts — константы маршрутов
-- token-storage.ts — browser token abstraction
+Scope:
 
----
+- Read `code` from `/auth/confirm/registration?code=...`.
+- Call `emailConfirmation`.
+- Show confirmation result.
 
-## 3. Backend Status (на текущий момент)
+Backend facts:
 
-### Query
+- `emailConfirmation` is verified through Playground.
+- The confirmation code is provided in the email link query string.
 
-- me: User!
-- user(id: String!): User
-- \_entities(...): [_Entity]!
-- \_service: \_Service!
+### PR 4: Sign In Integration
 
-### Mutation
+Scope:
 
-- signUp(input: SignUpInput!): SignUpPayload!
-- signIn(input: SignInInput!): SignInPayload!
-- emailConfirmation(input: EmailConfirmationInput!): EmailConfirmationPayload!
+- Connect `/auth/sign-in` to `signIn`.
+- Store returned `accessToken` in memory.
+- Ignore returned `refreshToken`.
+- Redirect after successful sign-in.
 
-### Available Inputs
+Backend facts:
 
-- SignUpInput: email, username, password
-- SignInInput: email, password
-- EmailConfirmationInput: code
+- `signIn` is verified through Playground.
+- Invalid credentials return `UNAUTHENTICATED` with status code `401`.
+- Successful sign-in returns `accessToken`, `refreshToken`, and `user`.
 
-### Available Payloads
+### PR 5: Session Management
 
-- SignUpPayload: user, message
-- SignInPayload: user, accessToken, refreshToken
-- EmailConfirmationPayload: user, message
+Scope:
 
-### Missing Operations (нужны уточнения от backend)
+- Add session bootstrap.
+- Call `refreshToken`, store the returned `accessToken` in memory, then call `me`.
+- Treat failed bootstrap as an anonymous session.
 
-- forgotPassword
-- createNewPassword / passwordRecovery
-- logout
-- refreshToken mutation
-- session / currentUser / me query (для полной сессии)
+Notes:
 
-### Notes
+- `me` without a token is verified to return `UNAUTHENTICATED` with status code `401`.
+- `refreshToken` should rely on backend-managed credentials; frontend must not persist the refresh token value.
 
-- SignInPayload возвращает accessToken и refreshToken — можно использовать для session hook.
-- Query me доступен — можно использовать для session bootstrap.
+### PR 6: Protected Boundary
 
----
+Scope:
 
-## 4. Sprint Tasks
+- Add protected route session boundary under `(protected)`.
+- Redirect anonymous users to `/auth/sign-in`.
+- Keep `page.tsx` files as thin adapters.
 
-### Entities
+### PR 7: Logout
 
-- [ ] Расширить user slice под GraphQL типы.
-- [ ] Добавить чистые helpers: getDisplayName, hasRole, isConfirmed.
-- [ ] Создать сущность session: accessToken, refreshToken, status.
-- [ ] Добавить helpers: isAuthenticated(session).
+Scope:
 
-### Features / Client Components
+- Call `logout`.
+- Clear in-memory `accessToken`.
+- Clear frontend session state.
+- Redirect to `/auth/sign-in`.
 
-- [ ] Создать skeletons для sign-up, sign-in, confirm-registration.
-- [ ] Настроить формы с react-hook-form + zod schemas.
-- [ ] Настроить GraphQL mutations через Apollo hooks.
-- [ ] Обработка form errors и router.push после success.
-- [ ] Session-management: useSession hook, refresh + logout coordination.
+### PR 8: Password Recovery
 
-### Shared / API
+Scope:
 
-- [ ] Создать Apollo Client + auth, error, http links.
-- [ ] Provider wrapper (`use client`) и подключение в root layout.
-- [ ] Настроить graphql/generated и codegen для типов и операций.
-- [ ] Разместить queries в entities, mutations в features.
-- [ ] Token storage abstraction для accessToken / refreshToken.
+- Integrate password recovery operations after backend behavior is verified.
+- Cover `/auth/forgot-password`, `/auth/confirm/password-recovery`, and `/auth/create-new-password`.
 
-### Views
+## FSD Placement
 
-- [ ] Подключить feature forms внутри PublicAuthShell.
-- [ ] Создать отдельные views для ConfirmRegistration и PasswordRecovery.
-- [ ] Page.tsx остаются тонкими адаптерами без state/API.
+```txt
+src/features/auth/
+  sign-up/
+  confirm-registration/
+  sign-in/
+  session-management/
+  logout/
+  password-recovery/
 
-### App / Layouts
+src/entities/session/
+  model/
 
-- [ ] Apollo Provider в `app/layout.tsx`.
-- [ ] Session boundary в `(protected)/layout.tsx` с проверкой токена и redirect на /auth/sign-in.
-- [ ] Проверить публичный shell в `(public)/layout.tsx`.
+src/entities/user/
+  model/
 
-### Routing / Placeholder Checks
+src/shared/api/apollo/
+```
 
-- [ ] Проверить все /auth routes и placeholders.
-- [ ] Добавить states внутри forms: Email sent, validation errors, success, resend link, expired token.
+Rules:
 
-### Backend Check / GraphQL
+- Mutations that represent user actions live in `features/auth`.
+- Session helpers live in `entities/session` only if they are pure domain helpers.
+- Apollo infrastructure stays in `shared/api/apollo`.
+- Widgets and views do not store tokens, call auth APIs directly, or own session state.
 
-- [ ] Сверить introspection schema с feature models.
-- [ ] Подтвердить какие поля возвращают payload types.
-- [ ] Уточнить недостающие operations: forgot-password, create new password, logout, refresh token.
-- [ ] Проверить хранение токенов: httpOnly cookie или frontend-managed token.
+## Out Of Scope
 
----
-
-## 5. Out Of Scope For This Sprint
-
-- Полная реализация Sign In UI / Sign Up UI / Forgot Password UI
-- Pixel perfect верстка
-- Protected redirects / middleware
-- Refresh token automation
-- Error UX states / notifications
-- Любые UI primitives beyond PublicAuthShell
+- New UI primitives.
+- Route restructuring.
+- Middleware.
+- Frontend refresh token storage.
+- `src/*` changes in this docs PR.
