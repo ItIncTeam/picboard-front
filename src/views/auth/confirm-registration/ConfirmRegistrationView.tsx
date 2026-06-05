@@ -136,8 +136,9 @@ function ConfirmRegistrationViewContent() {
           {title}
         </Title>
 
-        <div className={styles.content} aria-live="polite">
+        <div className={styles.content}>
           <Text
+            aria-live="polite"
             className={styles.message}
             color={state.kind === 'error' ? 'var(--color-status-danger)' : undefined}
           >
