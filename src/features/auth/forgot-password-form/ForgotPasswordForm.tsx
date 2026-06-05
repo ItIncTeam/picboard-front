@@ -38,8 +38,7 @@ export function ForgotPasswordForm() {
   const hasSuccess = Boolean(successEmail)
   const isEmailReady = isEmailValid(trimmedEmail)
   const canSubmit = isEmailReady && (hasSuccess || isRecaptchaChecked) && !isLoading
-  const submitButtonText = isLoading ? 'Sending...' : 'Send Link'
-  const recoveryButtonText = hasSuccess ? 'Send Link Again' : submitButtonText
+  const recoveryButtonText = hasSuccess ? 'Send Link Again' : 'Send Link'
 
   const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -100,7 +99,13 @@ export function ForgotPasswordForm() {
       )}
 
       <div className={styles.actions}>
-        <Button className={styles.submitButton} type="submit" disabled={!canSubmit}>
+        <Button
+          className={styles.submitButton}
+          type="submit"
+          disabled={!canSubmit}
+          loading={isLoading}
+          loadingText="Sending..."
+        >
           {recoveryButtonText}
         </Button>
         <Button asChild className={styles.backButton} type="button" variant="textButton">

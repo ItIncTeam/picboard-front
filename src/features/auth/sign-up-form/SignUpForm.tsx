@@ -286,11 +286,14 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
           )}
         />
 
-        <Button className={styles.submitButton} disabled={!isValid || isSubmitting} type="submit">
-          <span className={styles.submitButtonContent}>
-            {isSubmitting && <SubmitSpinner />}
-            {isSubmitting ? 'Creating account...' : 'Sign Up'}
-          </span>
+        <Button
+          className={styles.submitButton}
+          disabled={!isValid}
+          loading={isSubmitting}
+          loadingText="Creating account..."
+          type="submit"
+        >
+          Sign Up
         </Button>
       </div>
 
@@ -301,26 +304,5 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
         </Link>
       </div>
     </form>
-  )
-}
-
-function SubmitSpinner() {
-  return (
-    <svg
-      aria-hidden="true"
-      className={styles.submitSpinner}
-      focusable="false"
-      viewBox="0 0 16 16"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <circle cx="8" cy="8" fill="none" opacity=".25" r="6" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M14 8a6 6 0 0 0-6-6"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="2"
-      />
-    </svg>
   )
 }
