@@ -1,6 +1,18 @@
 @import '../shared/styles/colors.css';
 @import '../shared/styles/typography.css';
 
+:root {
+  --public-header-height: 64px;
+  --public-header-padding-x: 24px;
+}
+
+@media (width <= 760px) {
+  :root {
+    --public-header-height: 56px;
+    --public-header-padding-x: 16px;
+  }
+}
+
 *,
 *::before,
 *::after {

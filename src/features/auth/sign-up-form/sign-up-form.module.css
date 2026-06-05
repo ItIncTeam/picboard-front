@@ -25,8 +25,17 @@
 }
 
 .termsLink {
+  cursor: pointer;
+
+  padding: 0;
+  border: none;
+
+  font: inherit;
   color: var(--color-accent-500);
+  text-align: inherit;
   text-decoration: underline;
+
+  background: none;
 }
 
 .termsLink:hover {

@@ -21,8 +21,6 @@ src/app/
   (public)/
     layout.tsx
     page.tsx
-    privacy-policy/page.tsx
-    terms/page.tsx
     auth/
       sign-in/page.tsx
       sign-up/page.tsx
@@ -107,12 +105,8 @@ export default function Page() {
 /auth/confirm/password-recovery
 ```
 
-Публичные legal pages находятся отдельно:
-
-```txt
-/privacy-policy
-/terms
-```
+Terms of Service и Privacy Policy показываются на `/auth/sign-up` через `widgets/doc-modal`
+(`DocModal`); текст — в `shared/content/legal` (`termsParagraphs`, `privacyParagraphs`, `LegalDocumentBody`).
 
 Auth views используют `PublicAuthShell`. Реальные формы позже должны прийти из `features/auth`.
 

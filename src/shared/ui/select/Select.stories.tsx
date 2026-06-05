@@ -141,7 +141,7 @@ export const WithError: Story = {
 const languageOptions: SelectOption[] = [
   {
     value: 'en',
-    label: 'English11111111111111111111111111111111111111111',
+    label: 'English',
     image: EnFlagImage.src,
   },
   { value: 'ru', label: 'Russian', image: RuFlagImage.src },
@@ -177,12 +177,12 @@ export const UncontrolledWithImage: Story = {
 
     const listbox = within(document.body).getByRole('listbox')
     const englishOption = within(listbox).getByRole('option', {
-      name: /English11111111111111111111111111111111111111111/,
+      name: 'English',
     })
 
     await userEvent.click(englishOption)
 
-    await expect(trigger).toHaveTextContent(/English11111111111111111111111111111111111111111/)
+    await expect(trigger).toHaveTextContent('English')
     await expect(trigger.querySelector('img')).not.toBeNull()
   },
 }

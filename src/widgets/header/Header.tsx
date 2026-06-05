@@ -1,5 +1,5 @@
 import { NavigationButton } from '@/features/auth'
-import { BellIcon } from '@/shared/assets/icon/BellIcon'
+import { BellIcon } from '@/shared/assets'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { Logo } from '@/shared/ui/logo'

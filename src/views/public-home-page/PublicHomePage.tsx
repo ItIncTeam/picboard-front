@@ -5,13 +5,7 @@ export function PublicHomePage() {
     <RoutePlaceholder
       title="Public landing"
       description="Public entry route placeholder for unauthenticated users."
-      routes={[
-        '/auth/sign-in',
-        '/auth/sign-up',
-        '/auth/forgot-password',
-        '/privacy-policy',
-        '/terms',
-      ]}
+      routes={['/auth/sign-in', '/auth/sign-up', '/auth/forgot-password']}
     />
   )
 }

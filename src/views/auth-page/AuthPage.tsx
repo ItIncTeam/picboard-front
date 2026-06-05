@@ -4,19 +4,15 @@ type AuthScreen =
   | 'confirm-password-recovery'
   | 'confirm-registration'
   | 'forgot-password'
-  | 'privacy-policy'
   | 'sign-in'
   | 'sign-up'
-  | 'terms'
 
 const authScreenTitles: Record<AuthScreen, string> = {
   'confirm-password-recovery': 'Password recovery confirmation',
   'confirm-registration': 'Registration confirmation',
   'forgot-password': 'Password recovery',
-  'privacy-policy': 'Privacy Policy',
   'sign-in': 'Sign In',
   'sign-up': 'Sign Up',
-  terms: 'Terms of Service',
 }
 
 type AuthPageProps = {
@@ -33,8 +29,6 @@ export function AuthPage({ screen }: AuthPageProps) {
         '/auth/sign-in',
         '/auth/sign-up',
         '/auth/forgot-password',
-        '/auth/privacy-policy',
-        '/auth/terms',
         '/auth/confirm/registration',
         '/auth/confirm/password-recovery',
       ]}
