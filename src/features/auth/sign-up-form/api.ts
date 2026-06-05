@@ -6,12 +6,6 @@ const signUpMutation = gql`
   mutation SignUp($input: SignUpInput!) {
     signUp(input: $input) {
       message
-      user {
-        id
-        email
-        username
-        isConfirmed
-      }
     }
   }
 `
@@ -24,16 +18,8 @@ export type SignUpInput = {
   username: string
 }
 
-export type SignUpUser = {
-  email: string
-  id: string
-  isConfirmed: boolean
-  username: string
-}
-
 export type SignUpPayload = {
   message: string
-  user: SignUpUser
 }
 
 type SignUpResponse = {
