@@ -23,7 +23,6 @@ function SignInViewContent() {
           <OAuthProviders intent="signIn" />
           <SignInForm
             onSuccess={() => {
-              // TODO: redirect only after signIn mutation succeeds and session is stored.
               router.push('/main')
             }}
           />

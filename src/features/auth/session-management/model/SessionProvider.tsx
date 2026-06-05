@@ -41,6 +41,27 @@ export function SessionProvider({ children }: SessionProviderProps) {
     })
   }, [])
 
+  const authenticateWithCurrentToken = useCallback(async () => {
+    try {
+      const user = await getMe()
+
+      if (!isMountedRef.current) {
+        return
+      }
+
+      setSession({
+        status: 'authenticated',
+        user,
+      })
+    } catch (error) {
+      if (isMountedRef.current) {
+        setAnonymousSession()
+      }
+
+      throw error
+    }
+  }, [setAnonymousSession])
+
   const refreshSession = useCallback(() => {
     if (refreshPromiseRef.current) {
       return refreshPromiseRef.current
@@ -96,12 +117,13 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const value = useMemo<SessionContextValue>(
     () => ({
       ...session,
+      authenticateWithCurrentToken,
       isAuthenticated: session.status === 'authenticated',
       isBootstrapping: session.status === 'bootstrapping',
       refreshSession,
       setAnonymousSession,
     }),
-    [refreshSession, session, setAnonymousSession],
+    [authenticateWithCurrentToken, refreshSession, session, setAnonymousSession],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

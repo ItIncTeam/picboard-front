@@ -8,6 +8,7 @@ export type SessionState = {
 }
 
 export type SessionContextValue = SessionState & {
+  authenticateWithCurrentToken: () => Promise<void>
   isAuthenticated: boolean
   isBootstrapping: boolean
   refreshSession: () => Promise<void>
