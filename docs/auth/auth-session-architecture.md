@@ -1,159 +1,164 @@
-# Session Architecture
+# Auth Session Architecture
 
 ## Goal
 
-Определить архитектуру пользовательской сессии для Picboard.
+Define how Picboard keeps an authenticated frontend session while keeping token handling minimal and aligned with the backend auth contract.
 
-Основной принцип:
+Core decisions:
 
-- Frontend работает только с `accessToken`
-- Backend полностью управляет `refreshToken`
-- `refreshToken` никогда не доступен JavaScript-коду
-
----
+- Frontend stores only `accessToken`.
+- `accessToken` is memory only.
+- Frontend does not store `refreshToken`.
+- If backend returns `refreshToken` in a GraphQL payload, frontend ignores it.
 
 ## Token Strategy
 
 ### Access Token
 
-Используется для авторизации GraphQL запросов.
+`accessToken` authorizes authenticated GraphQL requests.
 
-Хранение:
+Storage:
 
 ```txt
 Memory Only
 ```
 
-Примеры:
+Allowed storage examples:
 
 - React state
 - Zustand store
 - Apollo reactive variable
 
-Access token не сохраняется в:
+Do not persist `accessToken` in:
 
-- localStorage
-- sessionStorage
-- cookies
+- `localStorage`
+- `sessionStorage`
+- frontend-managed cookies
 
----
-
-### Refresh Token
-
-Хранится только на backend.
-
-Backend сохраняет refresh token в:
-
-```txt
-HttpOnly Cookie
-```
-
-Frontend не читает refresh token и не знает его значение.
-
----
-
-## Login Flow
-
-```txt
-User
-  │
-  │ Sign In
-  ▼
-Backend
-  │
-  ├─ Set-Cookie(refreshToken)
-  │
-  └─ accessToken
-        │
-        ▼
-Frontend
-```
-
-После успешного логина:
-
-1. Backend создает accessToken.
-2. Backend создает refreshToken.
-3. Backend кладет refreshToken в httpOnly cookie.
-4. Backend возвращает accessToken.
-5. Frontend сохраняет accessToken в memory.
-
----
-
-## Authorized Requests
-
-Для GraphQL запросов:
+Apollo `authLink` attaches the token to GraphQL requests:
 
 ```http
 Authorization: Bearer <accessToken>
 ```
 
-Apollo добавляет заголовок автоматически через auth link.
+Apollo `errorLink` clears the in-memory access token on `401`, `403`, and `UNAUTHENTICATED`.
 
----
+### Refresh Token
+
+The backend can return `refreshToken` from:
+
+- `signIn`
+- `refreshToken`
+
+Frontend rules:
+
+- Do not save `refreshToken` in frontend state.
+- Do not save `refreshToken` in `localStorage`.
+- Do not save `refreshToken` in `sessionStorage`.
+- Do not save `refreshToken` in frontend-managed cookies.
+- In production, omit `refreshToken` from mutation/query selection sets when it is not needed.
+
+Session bootstrap should rely on backend-managed credentials with `credentials: 'include'`.
+
+## Sign In Flow
+
+```txt
+User submits credentials
+  ↓
+signIn mutation
+  ↓
+Backend returns accessToken, refreshToken, user
+  ↓
+Frontend stores accessToken in memory
+  ↓
+Frontend ignores refreshToken
+  ↓
+Redirect to protected route
+```
+
+After successful sign-in:
+
+1. Save `accessToken` in memory.
+2. Save `user` in frontend session state if the session model needs it.
+3. Ignore `refreshToken`.
+4. Redirect to the protected entry route.
+
+Invalid credentials are verified to return:
+
+```json
+{
+  "message": "Invalid credentials",
+  "code": "UNAUTHENTICATED",
+  "statusCode": 401
+}
+```
+
+## Authorized Requests
+
+For authenticated GraphQL requests:
+
+```txt
+accessToken in memory
+  ↓
+authLink adds Authorization header
+  ↓
+GraphQL API
+```
+
+If the backend returns `401`, `403`, or `UNAUTHENTICATED`, the frontend clears the in-memory access token and treats the current session as unauthenticated.
 
 ## Application Bootstrap
 
-После обновления страницы:
+After a full page reload, the in-memory `accessToken` is empty.
+
+Bootstrap flow:
 
 ```txt
-F5
- ↓
-accessToken отсутствует
- ↓
-Frontend запрашивает session
- ↓
-Backend читает refreshToken cookie
- ↓
-Backend выдает новый accessToken
- ↓
-Frontend сохраняет accessToken
- ↓
+Page reload
+  ↓
+accessToken missing
+  ↓
+refreshToken mutation
+  ↓
+setAccessToken(returned accessToken)
+  ↓
 me query
- ↓
-User loaded
+  ↓
+session user loaded
 ```
 
-Пользователь остается авторизованным.
+If `refreshToken` fails, the frontend keeps an anonymous session.
 
----
+`me` without a token is verified to return:
 
-## Session Flow
-
-```txt
-Frontend
-    │
-    ├─ accessToken
-    │
-    ▼
- GraphQL API
-    │
-    ├─ refreshToken (HttpOnly Cookie)
-    ▼
- Backend
+```json
+{
+  "message": "Unauthorized",
+  "code": "UNAUTHENTICATED",
+  "statusCode": 401
+}
 ```
-
----
 
 ## Logout Flow
 
 ```txt
-Frontend
-   │ logout
-   ▼
-Backend
-   │
-   ├─ invalidate refreshToken
-   ├─ clear cookie
-   └─ success
+User logs out
+  ↓
+logout mutation
+  ↓
+clear accessToken
+  ↓
+clear session state
+  ↓
+redirect to /auth/sign-in
 ```
 
-Frontend:
+Frontend sequence:
 
-1. Удаляет accessToken из памяти.
-2. Сбрасывает session state.
-3. Перенаправляет пользователя на `/auth/sign-in`.
-
----
+1. Call `logout`.
+2. Clear the in-memory `accessToken`.
+3. Clear frontend session state.
+4. Redirect the user to `/auth/sign-in`.
 
 ## FSD Structure
 
@@ -161,76 +166,48 @@ Frontend:
 
 ```txt
 src/entities/session/
-
   model/
     types.ts
     session.ts
-
   index.ts
 ```
 
-Ответственность:
+Responsibilities:
 
 - Session types
 - Session helpers
-- isAuthenticated()
+- `isAuthenticated()`
 
----
+Session state must not include a client-managed `refreshToken`.
 
 ### Feature
 
 ```txt
 src/features/auth/session-management/
-
   api/
   model/
-
   index.ts
 ```
 
-Ответственность:
+Responsibilities:
 
-- useSession()
-- bootstrap session
-- logout logic
-- integration with Apollo
-
----
+- `useSession()`
+- Session bootstrap
+- Logout coordination
+- Apollo integration
 
 ## Current Backend Status
 
-Available:
+Verified:
 
-### Query
+- Health check through `query { __typename }`
+- `me` unauthorized response
+- `signUp`
+- `emailConfirmation`
+- `signIn`
 
-```graphql
-me
-user
-```
+Available in schema / planned for integration:
 
-### Mutation
-
-```graphql
-signUp
-signIn
-emailConfirmation
-```
-
-Planned:
-
-```graphql
-refreshToken
-logout
-forgotPassword
-createNewPassword
-```
-
----
-
-## Advantages
-
-- Refresh token недоступен JavaScript.
-- Защита от XSS.
-- Frontend проще.
-- Стандартный web authentication flow.
-- Простая интеграция с Apollo.
+- `refreshToken`
+- `logout`
+- password recovery operations
