@@ -22,6 +22,11 @@
   margin-top: 24px;
 }
 
+.formError {
+  color: var(--color-danger-500);
+  text-align: center;
+}
+
 .submitButton {
   width: 100%;
 }

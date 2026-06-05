@@ -38,6 +38,23 @@ export const TextButton: Story = {
   },
 }
 
+export const Loading: Story = {
+  args: {
+    variant: 'primary',
+    loading: true,
+    children: 'Primary Button',
+  },
+}
+
+export const LoadingWithText: Story = {
+  args: {
+    variant: 'primary',
+    loading: true,
+    loadingText: 'Saving...',
+    children: 'Primary Button',
+  },
+}
+
 export const ButtonAsLink: Story = {
   args: {
     variant: 'primary',

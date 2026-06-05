@@ -51,20 +51,6 @@
   width: 100%;
 }
 
-.submitButtonContent {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-}
-
-.submitSpinner {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  animation: submit-spinner-spin 0.8s linear infinite;
-}
-
 .signInFooter {
   display: flex;
   flex-direction: column;
@@ -83,16 +69,4 @@
 
 .signInLink:hover {
   color: var(--color-accent-100);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .submitSpinner {
-    animation-duration: 1.8s;
-  }
-}
-
-@keyframes submit-spinner-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
