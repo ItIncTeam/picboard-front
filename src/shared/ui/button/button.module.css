@@ -23,7 +23,8 @@
     border-color 0.15s ease;
 }
 
-.button:disabled {
+.button:disabled,
+.button[aria-disabled='true'] {
   cursor: default;
 }
 
@@ -55,7 +56,8 @@
     background-color: var(--color-accent-500);
   }
 
-  &:disabled {
+  &:disabled,
+  &[aria-disabled='true'] {
     color: var(--color-light-900);
     background-color: var(--color-accent-900);
   }
@@ -94,7 +96,8 @@
     background-color: var(--color-dark-300);
   }
 
-  &:disabled {
+  &:disabled,
+  &[aria-disabled='true'] {
     color: var(--color-light-900);
     background-color: var(--color-dark-500);
   }
@@ -120,7 +123,8 @@
     color: var(--color-accent-700);
   }
 
-  &:disabled {
+  &:disabled,
+  &[aria-disabled='true'] {
     border: 1px solid var(--color-accent-900);
     color: var(--color-accent-900);
   }
@@ -144,7 +148,8 @@
     color: var(--color-accent-500);
   }
 
-  &:disabled {
+  &:disabled,
+  &[aria-disabled='true'] {
     color: var(--color-accent-900);
   }
 }

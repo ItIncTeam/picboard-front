@@ -19,10 +19,12 @@ Already in place:
 
 Current token decision:
 
-- Store `accessToken` in memory only.
-- Do not store `refreshToken` on the frontend.
-- Do not write `refreshToken` to `localStorage`, `sessionStorage`, or frontend-managed cookies.
-- If `signIn` returns `refreshToken` in the payload, frontend ignores it.
+- `accessToken` comes from GraphQL response bodies.
+- Store only `accessToken` in memory.
+- `refreshToken` is managed by the backend through an `httpOnly` cookie.
+- Frontend does not read, store, or manually send `refreshToken`.
+- `refreshToken` mutation uses the backend-managed cookie automatically.
+- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
 
 ## PR Breakdown
 
@@ -74,27 +76,39 @@ Scope:
 
 - Connect `/auth/sign-in` to `signIn`.
 - Store returned `accessToken` in memory.
-- Ignore returned `refreshToken`.
 - Redirect after successful sign-in.
 
 Backend facts:
 
 - `signIn` is verified through Playground.
 - Invalid credentials return `UNAUTHENTICATED` with status code `401`.
-- Successful sign-in returns `accessToken`, `refreshToken`, and `user`.
+- Successful sign-in returns `accessToken` and `user`.
+- Backend sets and manages `refreshToken` through an `httpOnly` cookie.
+- Frontend stores only `accessToken` in memory.
 
 ### PR 5: Session Management
 
 Scope:
 
 - Add session bootstrap.
-- Call `refreshToken`, store the returned `accessToken` in memory, then call `me`.
+- Call `refreshToken`; backend reads `refreshToken` from the `httpOnly` cookie.
+- Store the returned `accessToken` in memory, then call `me`.
 - Treat failed bootstrap as an anonymous session.
 
 Notes:
 
 - `me` without a token is verified to return `UNAUTHENTICATED` with status code `401`.
-- `refreshToken` should rely on backend-managed credentials; frontend must not persist the refresh token value.
+- Frontend must not read, store, or manually send `refreshToken`.
+
+Session bootstrap flow:
+
+1. App starts.
+2. Frontend calls `refreshToken` mutation.
+3. Backend reads `refreshToken` from the `httpOnly` cookie.
+4. Backend returns a new `accessToken`.
+5. Frontend calls `setAccessToken(accessToken)`.
+6. Frontend calls `me`.
+7. If `refreshToken` fails, keep an anonymous session.
 
 ### PR 6: Protected Boundary
 

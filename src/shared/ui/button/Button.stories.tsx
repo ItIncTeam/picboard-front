@@ -62,3 +62,13 @@ export const ButtonAsLink: Story = {
     children: <a href={'https://it-incubator.io'}>it-incubator</a>,
   },
 }
+
+export const LoadingAsLink: Story = {
+  args: {
+    variant: 'primary',
+    asChild: true,
+    loading: true,
+    loadingText: 'Opening...',
+    children: <a href={'https://it-incubator.io'}>it-incubator</a>,
+  },
+}
