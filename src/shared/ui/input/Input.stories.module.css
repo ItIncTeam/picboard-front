@@ -1,0 +1,16 @@
+.activeInput {
+  border-color: var(--color-foreground);
+  color: var(--color-foreground);
+  background-color: var(--color-surface-secondary);
+}
+
+.hoverInput {
+  border-color: var(--color-text-secondary);
+  color: var(--color-text-secondary);
+}
+
+.focusInput {
+  padding: 5px 11px;
+  border: 2px solid var(--color-primary);
+  outline: none;
+}
