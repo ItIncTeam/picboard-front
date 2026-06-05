@@ -58,6 +58,7 @@ type LogoutResponse = {
 
 export const getMe = async (): Promise<CurrentUser> => {
   const response = await apolloClient.query<MeResponse>({
+    fetchPolicy: 'network-only',
     query: meQuery,
   })
 
