@@ -11,11 +11,18 @@ This plan is documentation for the auth PR sequence. Implementation PRs should s
 Already in place:
 
 - `ApolloProvider` is connected globally in `src/app/layout.tsx`.
+- `SessionProvider` is connected inside `ApolloProvider` in `src/app/layout.tsx`.
 - Apollo Client is composed as `errorLink -> authLink -> httpLink`.
 - `httpLink` uses `process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '/graphql'`.
 - `credentials: 'include'` is enabled for GraphQL requests.
 - `authLink` attaches `Authorization: Bearer <accessToken>` when an access token exists.
-- `errorLink` clears the in-memory access token on `401`, `403`, and `UNAUTHENTICATED`.
+- `errorLink` clears the in-memory access token on `401`, `403`, and `UNAUTHENTICATED`, then emits
+  a shared auth session expired event.
+- `SessionProvider` subscribes to the shared auth session expired event and moves the session to
+  `anonymous`.
+- `src/app/(protected)/layout.tsx` wraps children in `ProtectedRouteBoundary`.
+- `ProtectedRouteBoundary` shows loading while bootstrapping, redirects anonymous users to
+  `/auth/sign-in`, and renders children for authenticated users.
 
 Current token decision:
 
@@ -24,11 +31,10 @@ Current token decision:
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
 - `refreshToken` mutation uses the backend-managed cookie automatically.
-- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
 
 ## PR Breakdown
 
-### PR 1: Auth API Operations
+### PR 1: Auth API Operations — Done
 
 Scope:
 
@@ -43,13 +49,13 @@ Out of scope:
 - No session boundary.
 - No token persistence changes.
 
-### PR 2: Sign Up Integration
+### PR 2: Sign Up Integration — Done
 
 Scope:
 
 - Connect `/auth/sign-up` to `signUp`.
 - Handle backend field-level validation errors.
-- Show success state after confirmation email is sent.
+- Trigger the current email-sent placeholder after confirmation email is sent.
 
 Backend facts:
 
@@ -57,7 +63,11 @@ Backend facts:
 - Backend requires `username` to be 6-30 characters with lowercase/uppercase letters, `-`, and `_`.
 - Confirmation email can land in spam.
 
-### PR 3: Email Confirmation Integration
+Follow-up:
+
+- Replace the email-sent placeholder with the final modal UI.
+
+### PR 3: Email Confirmation Integration — Done
 
 Scope:
 
@@ -72,12 +82,14 @@ Backend facts:
 - `/auth/confirm/registration?code=<CODE>` is the canonical route for
   confirmation email and resend confirmation email.
 
-### PR 4: Sign In Integration
+### PR 4: Sign In Integration — Done
 
 Scope:
 
 - Connect `/auth/sign-in` to `signIn`.
 - Store returned `accessToken` in memory.
+- Call `authenticateWithCurrentToken`, which calls `me` and moves session state to
+  `authenticated`.
 - Redirect after successful sign-in.
 
 Backend facts:
@@ -86,8 +98,9 @@ Backend facts:
 - Invalid credentials return `UNAUTHENTICATED` with status code `401`.
 - Successful sign-in returns `accessToken` and `user`.
 - Backend manages `refreshToken` through an `httpOnly` cookie.
+- Sign-in does not call `refreshToken`; refresh is only used for bootstrap/session restore.
 
-### PR 5: Session Management
+### PR 5: Session Management — Done
 
 Scope:
 
@@ -95,13 +108,18 @@ Scope:
 - Call `refreshToken`; backend reads `refreshToken` from the `httpOnly` cookie.
 - Store the returned `accessToken` in memory, then call `me`.
 - Treat failed bootstrap as an anonymous session.
+- Deduplicate concurrent `refreshSession` calls.
+- Prevent stale bootstrap results from overwriting newer sign-in state.
+- Invalidate session after Apollo auth errors through the shared auth session expired event.
 
 Notes:
 
 - `me` without a token is verified to return `UNAUTHENTICATED` with status code `401`.
 - Frontend must not read, store, or manually send `refreshToken`.
+- Localhost with the production backend cannot fully verify F5 restore because the production
+  refresh cookie uses `SameSite=Lax`.
 
-### PR 6: Protected Boundary
+### PR 6: Protected Boundary — Done
 
 Scope:
 
@@ -109,7 +127,7 @@ Scope:
 - Redirect anonymous users to `/auth/sign-in`.
 - Keep `page.tsx` files as thin adapters.
 
-### PR 7: Logout
+### PR 7: Logout — Pending
 
 Scope:
 
@@ -118,12 +136,36 @@ Scope:
 - Clear frontend session state.
 - Redirect to `/auth/sign-in`.
 
-### PR 8: Password Recovery
+### PR 8: Password Recovery — Pending / Partial
 
 Scope:
 
 - Integrate password recovery operations after backend behavior is verified.
 - Cover `/auth/forgot-password`, `/auth/confirm/password-recovery`, and `/auth/create-new-password`.
+
+Current status:
+
+- Forgot password UI and API helper exist.
+- Password recovery contract verification/completion is still pending.
+- Create new password and password recovery confirmation remain placeholders.
+
+### Shared UI: Button Loading API — Done
+
+Scope:
+
+- `Button` supports `loading` and `loadingText`.
+- Auth submit buttons use loading state during async submission.
+
+### Follow-ups
+
+- Logout flow.
+- `returnTo` after protected redirect.
+- Password recovery contract verification/completion.
+- Final SignUp email-sent modal UI.
+- Password visibility accessibility cleanup in shared `Input`.
+- OAuth placeholder decision.
+- Optional GraphQL Code Generator.
+- Optional Apollo refresh-on-401 retry queue.
 
 ## FSD Placement
 
@@ -158,7 +200,9 @@ Rules:
 - Route restructuring.
 - Middleware.
 - Frontend refresh token storage.
-- `src/*` changes in this docs PR.
+- Role-based access.
+- Refresh-on-401 retry queue.
+- GraphQL Code Generator.
 
 ## Backend Confirmed Facts (June 2026)
 

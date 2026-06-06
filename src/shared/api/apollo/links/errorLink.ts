@@ -1,7 +1,7 @@
 import { CombinedGraphQLErrors, ServerError } from '@apollo/client/errors'
 import { ErrorLink } from '@apollo/client/link/error'
 
-import { clearAccessToken } from '@/shared/lib/auth'
+import { clearAccessToken, notifyAuthSessionExpired } from '@/shared/lib/auth'
 
 const authErrorCodes = new Set(['UNAUTHENTICATED', 'FORBIDDEN'])
 
@@ -24,5 +24,6 @@ const hasAuthNetworkError = (error: unknown): boolean => {
 export const errorLink = new ErrorLink(({ error }) => {
   if (hasAuthGraphQLError(error) || hasAuthNetworkError(error)) {
     clearAccessToken()
+    notifyAuthSessionExpired()
   }
 })

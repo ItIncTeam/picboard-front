@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react'
 
-import { clearAccessToken, setAccessToken } from '@/shared/lib/auth'
+import { clearAccessToken, setAccessToken, subscribeAuthSessionExpired } from '@/shared/lib/auth'
 
 import { getMe, refreshToken } from '../api'
 import type { SessionContextValue, SessionState } from './types'
@@ -31,6 +31,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const didBootstrapRef = useRef(false)
   const isMountedRef = useRef(false)
   const refreshPromiseRef = useRef<Promise<void> | null>(null)
+  const sessionRequestIdRef = useRef(0)
 
   const setAnonymousSession = useCallback(() => {
     clearAccessToken()
@@ -42,10 +43,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
   }, [])
 
   const authenticateWithCurrentToken = useCallback(async () => {
+    const requestId = ++sessionRequestIdRef.current
+
     try {
       const user = await getMe()
 
-      if (!isMountedRef.current) {
+      if (!isMountedRef.current || sessionRequestIdRef.current !== requestId) {
         return
       }
 
@@ -54,7 +57,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         user,
       })
     } catch (error) {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && sessionRequestIdRef.current === requestId) {
         setAnonymousSession()
       }
 
@@ -67,11 +70,13 @@ export function SessionProvider({ children }: SessionProviderProps) {
       return refreshPromiseRef.current
     }
 
+    const requestId = ++sessionRequestIdRef.current
+
     refreshPromiseRef.current = (async () => {
       try {
         const { accessToken } = await refreshToken()
 
-        if (!isMountedRef.current) {
+        if (!isMountedRef.current || sessionRequestIdRef.current !== requestId) {
           return
         }
 
@@ -79,7 +84,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
         const user = await getMe()
 
-        if (!isMountedRef.current) {
+        if (!isMountedRef.current || sessionRequestIdRef.current !== requestId) {
           return
         }
 
@@ -88,7 +93,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
           user,
         })
       } catch {
-        if (!isMountedRef.current) {
+        if (!isMountedRef.current || sessionRequestIdRef.current !== requestId) {
           return
         }
 
@@ -99,6 +104,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
     })()
 
     return refreshPromiseRef.current
+  }, [setAnonymousSession])
+
+  useEffect(() => {
+    return subscribeAuthSessionExpired(() => {
+      setAnonymousSession()
+    })
   }, [setAnonymousSession])
 
   useEffect(() => {

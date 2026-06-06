@@ -4,14 +4,14 @@ This document maps current `/auth` routes to views, features, and verified Graph
 
 ## Route Map
 
-| Route                             | Page file                                                  | View                           | GraphQL operation       | Status                    |
-| --------------------------------- | ---------------------------------------------------------- | ------------------------------ | ----------------------- | ------------------------- |
-| `/auth/sign-up`                   | `src/app/(public)/auth/sign-up/page.tsx`                   | `SignUpPage`                   | `signUp`                | Backend verified          |
-| `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationPage`      | `emailConfirmation`     | Backend verified          |
-| `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInPage`                   | `signIn`                | Backend verified          |
-| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordPage`           | `passwordReset`         | Schema only / not checked |
-| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`        | `setNewPassword`        | Schema only / not checked |
-| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | Password recovery confirm view | No standalone operation | Planned                   |
+| Route                             | Page file                                                  | View / page                   | GraphQL operation       | Status                        |
+| --------------------------------- | ---------------------------------------------------------- | ----------------------------- | ----------------------- | ----------------------------- |
+| `/auth/sign-up`                   | `src/app/(public)/auth/sign-up/page.tsx`                   | `SignUpView`                  | `signUp`                | Integrated / backend verified |
+| `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationView`     | `emailConfirmation`     | Integrated / backend verified |
+| `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInView`                  | `signIn`, `me`          | Integrated / backend verified |
+| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`         | Contract verification pending |
+| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`        | Placeholder / pending         |
+| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | Password recovery placeholder | No standalone operation | Placeholder / pending         |
 
 ## Verified Flow
 
@@ -34,7 +34,7 @@ Frontend flow:
 2. Frontend calls `signUp`.
 3. Backend creates an unconfirmed user.
 4. Backend sends a confirmation email.
-5. Frontend shows the success state.
+5. Frontend opens the current email-sent placeholder state.
 
 Verified backend success message:
 
@@ -48,6 +48,7 @@ Notes:
 
 - The confirmation email can land in spam.
 - Backend validates `username` as 6-30 characters, with lowercase/uppercase letters and `-` or `_`.
+- Final email-sent modal UI is still a follow-up; the mutation and success transition are wired.
 
 ### `/auth/confirm/registration?code=<CODE>`
 
@@ -90,7 +91,9 @@ Frontend flow:
 2. Frontend calls `signIn`.
 3. Backend returns `accessToken` and `user`.
 4. Frontend stores only `accessToken` in memory.
-5. Frontend redirects to the protected entry route.
+5. Frontend calls `authenticateWithCurrentToken`.
+6. `authenticateWithCurrentToken` calls `me` and moves session state to `authenticated`.
+7. Frontend redirects to the protected entry route.
 
 Verified invalid credentials error:
 
@@ -104,8 +107,54 @@ Verified invalid credentials error:
 
 Notes:
 
+- Sign-in does not call `refreshToken`; refresh is only used for bootstrap/session restore.
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
+
+## Session And Protected Routes
+
+Root layout wraps the app with `ApolloProvider`, then `SessionProvider`.
+`SessionProvider` owns client session state and starts bootstrap on app start.
+
+Bootstrap flow:
+
+```txt
+app start
+  ↓
+refreshSession()
+  ↓
+refreshToken
+  ↓
+setAccessToken
+  ↓
+me
+  ↓
+authenticated
+```
+
+If bootstrap fails, the frontend clears the in-memory access token and sets the session to
+`anonymous`.
+
+`refreshSession` deduplicates concurrent calls. The session provider also guards stale flows so an
+older bootstrap result cannot overwrite a newer sign-in result.
+
+`src/app/(protected)/layout.tsx` wraps protected route children in `ProtectedRouteBoundary`:
+
+- `bootstrapping` shows a loading state;
+- `anonymous` redirects to `/auth/sign-in`;
+- `authenticated` renders `children`.
+
+Auth error invalidation:
+
+1. Apollo `errorLink` handles `401`, `403`, and `UNAUTHENTICATED`.
+2. It clears the in-memory access token.
+3. It emits a shared auth session expired event from `shared/lib/auth`.
+4. `SessionProvider` subscribes to that event and moves session state to `anonymous`.
+5. `ProtectedRouteBoundary` redirects anonymous users from protected pages.
+
+Current limitation: localhost with the production backend cannot fully verify F5 session restore
+because the production refresh cookie uses `SameSite=Lax`. Full refresh-cookie restore requires a
+staging/dev environment or same-site frontend/backend setup.
 
 ## Backend Confirmed Facts (June 2026)
 
@@ -123,6 +172,7 @@ Notes:
 
 - Auth pages are public routes under `src/app/(public)/auth`.
 - `page.tsx` files stay thin and import views.
-- Views assemble page-level composition through `PublicAuthShell`.
-- User actions and GraphQL hooks belong in `features/auth`.
+- Views assemble implemented auth flows through `AuthViewShell` and form/features from
+  `features/auth`.
+- User actions and GraphQL helpers belong in `features/auth`.
 - Session bootstrap and logout coordination belong in `features/auth/session-management`.
