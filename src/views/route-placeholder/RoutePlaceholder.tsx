@@ -9,6 +9,8 @@ type RoutePlaceholderProps = {
   title: string
 }
 
+const isDynamicRouteTemplate = (route: string) => route.includes('[') || route.includes(']')
+
 export function RoutePlaceholder({ description, figmaNode, routes, title }: RoutePlaceholderProps) {
   return (
     <div className={styles.root}>
@@ -28,13 +30,21 @@ export function RoutePlaceholder({ description, figmaNode, routes, title }: Rout
         {routes && routes.length > 0 && (
           <nav aria-label="Related routes">
             <ul className={styles.routes}>
-              {routes.map((route) => (
-                <li key={route}>
-                  <Link className={styles.routeLink} href={route}>
-                    {route}
-                  </Link>
-                </li>
-              ))}
+              {routes.map((route) => {
+                const isDynamicRoute = isDynamicRouteTemplate(route)
+
+                return (
+                  <li key={route}>
+                    {isDynamicRoute ? (
+                      <span className={styles.routeLink}>{route}</span>
+                    ) : (
+                      <Link className={styles.routeLink} href={route}>
+                        {route}
+                      </Link>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </nav>
         )}
