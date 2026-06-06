@@ -1,3 +1,5 @@
+import { AppHeader } from '@/widgets/app-header'
+
 export default function MainLayout({
   children,
   modal,
@@ -7,6 +9,7 @@ export default function MainLayout({
 }>) {
   return (
     <>
+      <AppHeader />
       {children}
       {modal}
     </>

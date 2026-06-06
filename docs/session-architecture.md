@@ -188,14 +188,17 @@ not call backend APIs directly.
 
 ## Logout Flow
 
-Logout is pending.
+Logout is implemented through `features/auth/session-management` and a feature-level logout button
+rendered by protected headers.
 
-Planned sequence:
+Sequence:
 
 1. Call `logout`.
 2. Clear the in-memory `accessToken`.
 3. Clear frontend session state.
 4. Redirect the user to `/auth/sign-in`.
+
+The frontend still does not persist tokens and does not run a refresh-on-401 queue.
 
 ## Localhost Restore Limitation
 

@@ -350,11 +350,12 @@ This implementation does not include refresh-on-401 retry.
 
 ### Logout
 
-Logout should call:
+Logout calls:
 
 1. `logout`
 2. Clear the in-memory `accessToken`.
 3. Clear frontend session state for the current `User`.
+4. Redirect to `/auth/sign-in`.
 
 ## Frontend Mapping
 
@@ -368,7 +369,7 @@ Logout should call:
 | `/auth/create-new-password`       | Pending create new password integration     | `setNewPassword`                  |
 | Global session bootstrap          | `features/auth/session-management`          | `refreshToken`, `me`              |
 | Protected route boundary          | `features/auth/session-management`          | Client session state              |
-| Global logout action              | Pending                                     | `logout`                          |
+| Global logout action              | `features/auth/logout-button`               | `logout`                          |
 | Resend confirmation action        | Pending resend confirmation action          | `emailConfirmationResending`      |
 
 ## Known Backend Decisions
