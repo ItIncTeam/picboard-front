@@ -206,13 +206,19 @@ older bootstrap result cannot overwrite a newer sign-in result.
 - `anonymous` redirects to `/auth/sign-in`;
 - `authenticated` renders `children`.
 
-Auth error invalidation:
+Auth error refresh and invalidation:
 
 1. Apollo `errorLink` handles `401`, `403`, and `UNAUTHENTICATED`.
-2. It clears the in-memory access token.
-3. It emits a shared auth session expired event from `shared/lib/auth`.
-4. `SessionProvider` subscribes to that event and moves session state to `anonymous`.
-5. `ProtectedRouteBoundary` redirects anonymous users from protected pages.
+2. Eligible `401` / `UNAUTHENTICATED` errors on authenticated operations silently call
+   `refreshToken`.
+3. Concurrent `401` responses share one in-flight refresh request.
+4. Refresh success stores the new memory-only access token and retries the failed operation once.
+5. Refresh failure, ineligible operations, and `403` / `FORBIDDEN` errors clear the in-memory access
+   token and emit a shared auth session expired event from `shared/lib/auth`.
+6. `SessionProvider` subscribes to that event and moves session state to `anonymous`.
+7. `ProtectedRouteBoundary` redirects anonymous users from protected pages.
+
+The token store uses a version guard so an in-flight refresh cannot restore the token after logout.
 
 Current limitation: localhost with the production backend cannot fully verify F5 session restore
 because the production refresh cookie uses `SameSite=Lax`. Full refresh-cookie restore requires a
@@ -225,7 +231,7 @@ Logout:
 3. `SessionProvider` clears the memory-only access token and moves session state to `anonymous`.
 4. The action redirects to `/auth/sign-in`.
 
-The frontend does not persist tokens and does not run refresh-on-401 retry.
+The frontend does not persist tokens and does not read, store, or manually send the refresh token.
 
 ## Backend Confirmed Facts (June 2026)
 
