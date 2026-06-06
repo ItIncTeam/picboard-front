@@ -190,9 +190,10 @@ Frontend decision:
 
 ### `PasswordResetInput`
 
-| Field   | Type      | Required |
-| ------- | --------- | -------- |
-| `email` | `String!` | Yes      |
+| Field          | Type      | Required |
+| -------------- | --------- | -------- |
+| `email`        | `String!` | Yes      |
+| `captchaToken` | `String!` | Yes      |
 
 ### `SetNewPasswordInput`
 
@@ -243,6 +244,21 @@ Frontend sign-in integration requests `accessToken` and `user`.
 | Field     | Type      | Required |
 | --------- | --------- | -------- |
 | `message` | `String!` | Yes      |
+
+## Password Recovery
+
+Verified through live schema introspection on June 6, 2026:
+
+- `passwordReset(input: { email: String!, captchaToken: String! }): { message: String! }`
+- `setNewPassword(input: { code: String!, password: String! }): { message: String! }`
+- Captcha is required for `passwordReset`.
+- `setNewPassword` has no captcha field.
+- Recovery link format is assumed, but not verified from a real recovery email:
+  `/auth/confirm/password-recovery?code=<CODE>`.
+- Both payloads return only `message`; they do not return `accessToken` or
+  `user`, so frontend must not assume auto-login after setting a new password.
+- Invalid captcha was observed as `Captcha verification failed`.
+- Invalid recovery code was observed as `Invalid confirmation code`.
 
 ### `RefreshTokenPayload`
 
@@ -394,6 +410,8 @@ Logout calls:
   `/auth/confirm/registration?code=<CODE>`.
 - The same registration confirmation route is used for confirmation email and
   resend confirmation email links.
+- Password recovery schema verified: `passwordReset` requires `email` and
+  `captchaToken`; `setNewPassword` requires `code` and `password`.
 
 ## Future Auth Extensions
 

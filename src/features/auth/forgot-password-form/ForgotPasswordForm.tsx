@@ -8,8 +8,8 @@ import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Recaptcha } from '@/shared/ui/recaptcha'
 import { Text } from '@/shared/ui/typography'
+import { passwordReset } from '@/features/auth/api/passwordRecoveryApi'
 
-import { passwordReset } from './api'
 import styles from './forgot-password-form.module.css'
 
 const RECAPTCHA_ACTION = 'password_reset'
