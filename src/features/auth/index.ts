@@ -4,3 +4,4 @@ export { OAuthProviders, type OAuthIntent, type OAuthProvider } from './oauth-pr
 export { NavigationButton } from './navigation-button'
 export { ForgotPasswordForm } from './forgot-password-form'
 export { LogoutButton } from './logout-button'
+export { CreateNewPasswordForm } from './create-new-password-form'

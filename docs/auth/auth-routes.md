@@ -10,16 +10,16 @@ This document maps current `/auth` routes to views, features, and verified Graph
 | `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationView`     | `emailConfirmation`     | Integrated / backend verified |
 | `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInView`                  | `signIn`, `me`          | Integrated / backend verified |
 | `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`         | Existing / contract verified  |
-| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`        | Placeholder / pending         |
-| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | Password recovery placeholder | No standalone operation | Placeholder / pending         |
+| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`        | Implemented                   |
+| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | `ConfirmPasswordRecoveryView` | No standalone operation | Implemented / bridge redirect |
 
 ## Password Recovery Routes
 
-| Route                             | Page                          | Access | Status               |
-| --------------------------------- | ----------------------------- | ------ | -------------------- |
-| `/auth/forgot-password`           | `ForgotPasswordPage`          | Public | Existing             |
-| `/auth/confirm/password-recovery` | `PasswordRecoveryConfirmPage` | Public | Needs implementation |
-| `/auth/create-new-password`       | `CreateNewPasswordPage`       | Public | Needs implementation |
+| Route                             | Page                          | Access | Status             |
+| --------------------------------- | ----------------------------- | ------ | ------------------ |
+| `/auth/forgot-password`           | `ForgotPasswordPage`          | Public | Existing           |
+| `/auth/confirm/password-recovery` | `PasswordRecoveryConfirmPage` | Public | Implemented bridge |
+| `/auth/create-new-password`       | `CreateNewPasswordPage`       | Public | Implemented        |
 
 ## Verified Flow
 

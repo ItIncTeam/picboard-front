@@ -1,5 +1,11 @@
-import { AuthPage } from '@/views/auth-page'
+import { Suspense } from 'react'
 
-export default function Page() {
-  return <AuthPage screen="confirm-password-recovery" />
+import { ConfirmPasswordRecoveryView } from '@/views/auth/confirm-password-recovery'
+
+export default function ConfirmPasswordRecoveryPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ConfirmPasswordRecoveryView />
+    </Suspense>
+  )
 }
