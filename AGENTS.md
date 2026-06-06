@@ -11,8 +11,27 @@ Before changing code:
 4. Keep changes small, local, and consistent with the existing module.
 5. Prefer named exports, strict TypeScript, and no `React.FC`.
 6. Do not add dependencies, refactors, or formatting-only changes unless the task needs them.
-7. After changes, run the relevant check. Before PR, default to `pnpm check`.
-8. In the final summary, state what changed, what was checked, and any remaining risk.
+7. Do not run build, test, lint, typecheck, or Storybook build commands during implementation unless explicitly requested or required to diagnose an issue.
+8. In the final summary:
+   - state what changed;
+   - state what was checked;
+   - state any remaining risk;
+   - reference the relevant docs used for the implementation or review;
+   - clearly distinguish documented requirements from personal recommendations.
+
+When reviewing code:
+
+- validate findings against docs first;
+- do not report architecture violations without referencing the relevant document;
+- mark subjective suggestions as recommendations;
+- run verification commands only if explicitly requested or if source review reveals a concrete risk;
+- when a verification command fails, include the exact failing command, root cause, and whether the failure is a real regression, flaky test, or environment issue.
+
+When updating architecture or behavior:
+
+- update the relevant docs in the same task;
+- keep implementation status in docs synchronized with the actual code;
+- if implementation changes make a documented "planned" feature complete, update the documentation from pending/planned to implemented/done.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

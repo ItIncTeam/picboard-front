@@ -36,10 +36,13 @@ export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
         <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix[role]} />
         <div className={styles.actions}>
           <IconButton
+            disabled
             icon={BellIcon}
             indicatorCount={notificationsCount}
             label={
-              hasNotifications ? `${notificationsCount} unread notifications` : 'Notifications'
+              hasNotifications
+                ? `${notificationsCount} unread notifications. Notifications are not available yet.`
+                : 'Notifications are not available yet.'
             }
           />
 

@@ -127,14 +127,9 @@ Scope:
 - Redirect anonymous users to `/auth/sign-in`.
 - Keep `page.tsx` files as thin adapters.
 
-### PR 7: Logout — Pending
+### PR 7: Logout — Done
 
-Scope:
-
-- Call `logout`.
-- Clear in-memory `accessToken`.
-- Clear frontend session state.
-- Redirect to `/auth/sign-in`.
+Follow-ups: Logout flow
 
 ### PR 8: Password Recovery — Pending / Partial
 
