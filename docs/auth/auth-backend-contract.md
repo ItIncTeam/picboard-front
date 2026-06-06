@@ -212,6 +212,8 @@ Frontend decision:
 
 ### `SignInPayload`
 
+Frontend sign-in integration requests `accessToken` and `user`.
+
 | Field          | Type      | Required |
 | -------------- | --------- | -------- |
 | `user`         | `User!`   | Yes      |
@@ -244,9 +246,7 @@ Frontend decision:
 
 ### `RefreshTokenPayload`
 
-Current schema still exposes `refreshToken`, but backend confirmed that the
-frontend does not need this value and plans to remove it from
-`RefreshTokenPayload`.
+Frontend session bootstrap requests only `accessToken` from `refreshToken`.
 
 | Field          | Type      | Required |
 | -------------- | --------- | -------- |
@@ -304,19 +304,49 @@ Backend-confirmed decision:
 - Frontend must not store `refreshToken`.
 - Frontend must not manually send `refreshToken`.
 - The `refreshToken` mutation uses the backend-managed cookie automatically.
-- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
 
 ### Bootstrap
 
 After a full page reload, the in-memory `accessToken` is empty. The frontend
-bootstrap flow should call:
+bootstrap flow calls:
 
 1. `refreshToken`
 2. Backend reads `refreshToken` from the `httpOnly` cookie.
-3. Save returned `accessToken` in memory.
+3. Save `accessToken` in memory.
 4. Call `me` to load the current `User`.
 
-If `refreshToken` fails, the frontend should treat the session as anonymous.
+If `refreshToken` or `me` fails, the frontend clears the in-memory `accessToken` and treats the
+session as anonymous.
+
+Current frontend details:
+
+- `SessionProvider` starts bootstrap on app start through `refreshSession()`.
+- `refreshSession` deduplicates concurrent calls.
+- A stale session-flow guard prevents an old bootstrap result from overwriting newer sign-in state.
+
+### Sign-in session sync
+
+Sign-in flow:
+
+1. `signIn`
+2. Save `accessToken` in memory.
+3. Call `authenticateWithCurrentToken`.
+4. `authenticateWithCurrentToken` calls `me`.
+5. Session moves to `authenticated`.
+6. The sign-in view redirects to the protected entry route.
+
+Sign-in does not call `refreshToken`. `refreshToken` is only used for bootstrap/session restore.
+
+### Auth error invalidation
+
+Apollo `errorLink` handles `401`, `403`, and `UNAUTHENTICATED`:
+
+1. Clear the in-memory `accessToken`.
+2. Emit a shared auth session expired event from `shared/lib/auth`.
+3. `SessionProvider` receives the event and moves session state to `anonymous`.
+4. `ProtectedRouteBoundary` redirects anonymous users from protected pages.
+
+This implementation does not include refresh-on-401 retry.
 
 ### Logout
 
@@ -328,25 +358,27 @@ Logout should call:
 
 ## Frontend Mapping
 
-| Route                             | Feature                                                    | GraphQL Operation                 |
-| --------------------------------- | ---------------------------------------------------------- | --------------------------------- |
-| `/auth/sign-up`                   | `features/auth/sign-up-form`                               | `signUp`                          |
-| `/auth/confirm/registration`      | Confirm Registration feature not implemented yet           | `emailConfirmation`               |
-| `/auth/sign-in`                   | Sign In feature not implemented yet                        | `signIn`                          |
-| `/auth/forgot-password`           | Forgot Password feature not implemented yet                | `passwordReset`                   |
-| `/auth/confirm/password-recovery` | Password Recovery confirmation feature not implemented yet | No standalone operation in schema |
-| `/auth/create-new-password`       | Create New Password feature not implemented yet            | `setNewPassword`                  |
-| Global session bootstrap          | Session Management feature not implemented yet             | `refreshToken`, `me`              |
-| Global logout action              | Session Management feature not implemented yet             | `logout`                          |
-| Resend confirmation action        | Confirm Registration feature not implemented yet           | `emailConfirmationResending`      |
+| Route                             | Feature                                     | GraphQL Operation                 |
+| --------------------------------- | ------------------------------------------- | --------------------------------- |
+| `/auth/sign-up`                   | `features/auth/sign-up-form`                | `signUp`                          |
+| `/auth/confirm/registration`      | `features/auth/confirm-registration`        | `emailConfirmation`               |
+| `/auth/sign-in`                   | `features/auth/sign-in-form`                | `signIn`, `me`                    |
+| `/auth/forgot-password`           | `features/auth/forgot-password-form`        | `passwordReset`                   |
+| `/auth/confirm/password-recovery` | Pending password recovery confirmation view | No standalone operation in schema |
+| `/auth/create-new-password`       | Pending create new password integration     | `setNewPassword`                  |
+| Global session bootstrap          | `features/auth/session-management`          | `refreshToken`, `me`              |
+| Protected route boundary          | `features/auth/session-management`          | Client session state              |
+| Global logout action              | Pending                                     | `logout`                          |
+| Resend confirmation action        | Pending resend confirmation action          | `emailConfirmationResending`      |
 
 ## Known Backend Decisions
 
 - `refreshToken` is stored in an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
 - `refreshToken` mutation uses the backend-managed cookie automatically.
-- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
 - `accessToken` comes from GraphQL responses and is stored only in memory.
+- Localhost with the production backend cannot fully verify F5 session restore because the
+  production refresh cookie uses `SameSite=Lax`.
 
 ## Backend Confirmed Facts (June 2026)
 

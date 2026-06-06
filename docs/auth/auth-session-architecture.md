@@ -2,7 +2,8 @@
 
 ## Goal
 
-Define how Picboard keeps an authenticated frontend session while keeping token handling minimal and aligned with the backend auth contract.
+Define the current frontend auth session model for Picboard while keeping token handling minimal and
+aligned with the backend auth contract.
 
 Core decisions:
 
@@ -11,6 +12,20 @@ Core decisions:
 - `accessToken` comes from GraphQL responses.
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
+- Frontend does not persist auth tokens in `localStorage` or `sessionStorage`.
+
+## Root Providers
+
+`src/app/layout.tsx` wraps the app with:
+
+```txt
+ApolloProvider
+  SessionProvider
+    app routes
+```
+
+`ApolloProvider` provides the shared Apollo Client. `SessionProvider` is a client session state
+provider responsible for bootstrap, sign-in synchronization, and auth error invalidation.
 
 ## Token Strategy
 
@@ -21,14 +36,8 @@ Core decisions:
 Storage:
 
 ```txt
-Memory Only
+Memory only
 ```
-
-Allowed storage examples:
-
-- React state
-- Zustand store
-- Apollo reactive variable
 
 Do not persist `accessToken` in:
 
@@ -42,8 +51,6 @@ Apollo `authLink` attaches the token to GraphQL requests:
 Authorization: Bearer <accessToken>
 ```
 
-Apollo `errorLink` clears the in-memory access token on `401`, `403`, and `UNAUTHENTICATED`.
-
 ### Refresh Token
 
 Backend-confirmed refresh token model:
@@ -55,190 +62,153 @@ Backend-confirmed refresh token model:
 - Frontend does not save `refreshToken` in `sessionStorage`.
 - Frontend does not save `refreshToken` in frontend-managed cookies.
 - Frontend does not manually send `refreshToken`.
-- `refreshToken` mutation uses the cookie automatically.
-- Backend plans to remove `refreshToken` from `RefreshTokenPayload`.
+- `refreshToken` mutation uses the backend-managed cookie automatically through
+  `credentials: include`.
 
-Session bootstrap should rely on backend-managed credentials with `credentials: 'include'`.
+Session state must not include a client-managed `refreshToken`.
 
-## Sign In Flow
+## Session State
 
-```txt
-User submits credentials
-  ↓
-signIn mutation
-  ↓
-Backend returns accessToken and user
-  ↓
-setAccessToken(accessToken)
-  ↓
-Redirect to protected route
-```
-
-After successful sign-in:
-
-1. Save `accessToken` in memory.
-2. Save `user` in frontend session state if the session model needs it.
-3. Redirect to the protected entry route.
-
-Invalid credentials are verified to return:
-
-```json
-{
-  "message": "Invalid credentials",
-  "code": "UNAUTHENTICATED",
-  "statusCode": 401
-}
-```
-
-## Authorized Requests
-
-For authenticated GraphQL requests:
+`SessionProvider` owns client session state:
 
 ```txt
-accessToken in memory
-  ↓
-authLink adds Authorization header
-  ↓
-GraphQL API
+bootstrapping | authenticated | anonymous
 ```
 
-If the backend returns `401`, `403`, or `UNAUTHENTICATED`, the frontend clears the in-memory access token and treats the current session as unauthenticated.
-
-## Refresh Flow
-
-Confirmed runtime flow:
-
-```txt
-SignIn
-  ↓
-accessToken
-  ↓
-setAccessToken
-
-401 / UNAUTHENTICATED
-  ↓
-refreshToken mutation
-  ↓
-backend reads refreshToken from httpOnly cookie
-  ↓
-new accessToken
-  ↓
-setAccessToken
-```
+- `bootstrapping`: initial app state while session restore is being attempted.
+- `authenticated`: `me` has loaded the current user.
+- `anonymous`: restore failed, sign-in failed after token sync, or auth was invalidated.
 
 ## Application Bootstrap
 
-After a full page reload, the in-memory `accessToken` is empty.
+On app start, `SessionProvider` calls `refreshSession()`.
 
 Bootstrap flow:
 
 ```txt
-Page reload
+app start
   ↓
-accessToken missing
+refreshSession()
   ↓
-refreshToken mutation
+refreshToken
   ↓
-backend reads refreshToken from httpOnly cookie
+setAccessToken
   ↓
-setAccessToken(returned accessToken)
+getMe
   ↓
-me query
-  ↓
-session user loaded
+authenticated
 ```
 
-If `refreshToken` fails, the frontend keeps an anonymous session.
+Failure flow:
 
-`me` without a token is verified to return:
-
-```json
-{
-  "message": "Unauthorized",
-  "code": "UNAUTHENTICATED",
-  "statusCode": 401
-}
+```txt
+refreshToken or getMe fails
+  ↓
+clearAccessToken
+  ↓
+anonymous
 ```
+
+`refreshSession` deduplicates concurrent calls through a shared in-flight promise.
+
+The session flow also has a stale request guard: older bootstrap results cannot overwrite newer
+session transitions, such as a user signing in while bootstrap is still in flight.
+
+## Sign In Session Sync
+
+Sign-in does not call `refreshToken`.
+
+Sign-in flow:
+
+```txt
+signIn
+  ↓
+setAccessToken
+  ↓
+authenticateWithCurrentToken
+  ↓
+getMe
+  ↓
+authenticated
+  ↓
+redirect to protected entry route
+```
+
+`refreshToken` is only used for bootstrap/session restore.
+
+Invalid credentials are normalized in the sign-in form to:
+
+```txt
+Incorrect email or password
+```
+
+## Auth Error Invalidation
+
+Apollo `errorLink` handles:
+
+- `401`
+- `403`
+- `UNAUTHENTICATED`
+
+Invalidation flow:
+
+```txt
+Apollo auth error
+  ↓
+clearAccessToken
+  ↓
+notifyAuthSessionExpired
+  ↓
+SessionProvider receives event
+  ↓
+anonymous
+```
+
+The shared event channel lives in `shared/lib/auth`. Apollo does not import `SessionProvider`,
+`useSession`, or any feature/session-management module.
+
+This implementation does not do refresh-on-401 retry. Retry queues and automatic refresh after
+request failures are optional follow-ups.
+
+## Protected Routes
+
+`src/app/(protected)/layout.tsx` wraps `children` in `ProtectedRouteBoundary`.
+
+`ProtectedRouteBoundary` is a client component and reads session state:
+
+- `bootstrapping` shows a loading state;
+- `anonymous` redirects to `/auth/sign-in`;
+- `authenticated` renders `children`.
+
+Redirect behavior stays in `ProtectedRouteBoundary`; protected layouts do not read cookies and do
+not call backend APIs directly.
 
 ## Logout Flow
 
-```txt
-User logs out
-  ↓
-logout mutation
-  ↓
-clear accessToken
-  ↓
-clear session state
-  ↓
-redirect to /auth/sign-in
-```
+Logout is pending.
 
-Frontend sequence:
+Planned sequence:
 
 1. Call `logout`.
 2. Clear the in-memory `accessToken`.
 3. Clear frontend session state.
 4. Redirect the user to `/auth/sign-in`.
 
-## FSD Structure
+## Localhost Restore Limitation
 
-### Entity
+The production backend sets the refresh cookie with `SameSite=Lax`. Because of that, localhost
+cannot fully verify F5 session restore against the production backend.
 
-```txt
-src/entities/session/
-  model/
-    types.ts
-    session.ts
-  index.ts
-```
+Full refresh-cookie restore verification requires a staging/dev environment or same-site
+frontend/backend setup.
 
-Responsibilities:
-
-- Session types
-- Session helpers
-- `isAuthenticated()`
-
-Session state must not include a client-managed `refreshToken`.
-
-### Feature
-
-```txt
-src/features/auth/session-management/
-  api/
-  model/
-  index.ts
-```
-
-Responsibilities:
-
-- `useSession()`
-- Session bootstrap
-- Logout coordination
-- Apollo integration
-
-## Current Backend Status
-
-Verified:
-
-- Health check through `query { __typename }`
-- `me` unauthorized response
-- `signUp`
-- `emailConfirmation`
-- `signIn`
-- `refreshToken` cookie flow
-
-Available in schema / planned for integration:
-
-- `logout`
-- password recovery operations
-
-## Backend Confirmed Facts (June 2026)
+## Backend Confirmed Facts
 
 - `signUp` verified.
 - `emailConfirmation` verified.
+- `signIn` verified.
 - `me` unauthorized response verified.
+- `refreshToken` cookie flow confirmed.
 - `accessToken` comes in GraphQL responses and is stored only in memory.
-- `refreshToken` cookie flow confirmed: backend manages it through an
-  `httpOnly` cookie, frontend has no access to it, does not store it, and does
-  not send it manually.
+- `refreshToken` is backend-managed through an `httpOnly` cookie; frontend does not read, store, or
+  manually send it.

@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react'
 
-import { clearAccessToken, setAccessToken } from '@/shared/lib/auth'
+import { clearAccessToken, setAccessToken, subscribeAuthSessionExpired } from '@/shared/lib/auth'
 
 import { getMe, refreshToken } from '../api'
 import type { SessionContextValue, SessionState } from './types'
@@ -104,6 +104,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
     })()
 
     return refreshPromiseRef.current
+  }, [setAnonymousSession])
+
+  useEffect(() => {
+    return subscribeAuthSessionExpired(() => {
+      setAnonymousSession()
+    })
   }, [setAnonymousSession])
 
   useEffect(() => {

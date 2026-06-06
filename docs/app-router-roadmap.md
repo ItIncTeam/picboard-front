@@ -65,13 +65,25 @@ Route groups `(public)` и `(protected)` не попадают в URL. Они н
 
 ## Ответственность layouts
 
-`src/app/layout.tsx` содержит только `html`, `body`, metadata и глобальные стили.
+`src/app/layout.tsx` содержит `html`, `body`, metadata, глобальные стили и глобальные providers:
+
+- `ApolloProvider` для GraphQL client context;
+- `SessionProvider` для client session state и session bootstrap.
+
+Root layout не содержит route-specific UI, redirects, role checks или бизнес-логику страниц.
 
 `src/app/(public)/layout.tsx` содержит публичный визуальный shell: `PublicHeader` и общий `<main>`.
 Здесь нет auth-логики.
 
-`src/app/(protected)/layout.tsx` сейчас только пропускает `children`. Позже здесь появится session
-boundary. Пока не добавляем redirects, middleware и чтение токенов.
+`src/app/(protected)/layout.tsx` оборачивает `children` в `ProtectedRouteBoundary`.
+`ProtectedRouteBoundary` использует client session state из `SessionProvider`:
+
+- `bootstrapping` показывает loading state;
+- `anonymous` делает client redirect на `/auth/sign-in`;
+- `authenticated` рендерит protected content.
+
+Protected layout не читает cookies, не вызывает backend напрямую, не реализует role-based access и
+не заменяет middleware.
 
 `src/app/(protected)/(main)/layout.tsx` держит основной protected segment и slot `@modal`.
 
@@ -108,7 +120,9 @@ export default function Page() {
 Terms of Service и Privacy Policy показываются на `/auth/sign-up` через `widgets/doc-modal`
 (`DocModal`); текст — в `shared/content/legal` (`termsParagraphs`, `privacyParagraphs`, `LegalDocumentBody`).
 
-Auth views используют `PublicAuthShell`. Реальные формы позже должны прийти из `features/auth`.
+Auth views используют `AuthViewShell` и собирают реальные формы из `features/auth` для
+реализованных auth flows. Временные placeholder views остаются только для еще не завершенных
+маршрутов вроде password recovery confirmation.
 
 Подробная карта auth routes, views, features и GraphQL operations находится в
 [Auth Routes](./auth/auth-routes.md).
@@ -124,7 +138,8 @@ widgets/public-auth-shell
 
 `PublicHeader` — верхняя визуальная панель. Пока без dropdown и логики языка.
 
-`PublicAuthShell` — общая рамка auth pages. Без page-specific условий.
+`PublicAuthShell` — старая легкая рамка для placeholder auth boundaries. Реализованные auth views
+используют `AuthViewShell`.
 
 ## Modals
 
@@ -139,19 +154,36 @@ Local UI modals живут рядом с feature или widget. Это confirmat
 
 Не создаем общий provider на весь проект без причины.
 
-Provider добавляется только там, где он реально нужен:
+Текущие providers:
 
-- глобальный provider — в root layout;
-- auth/session provider — в protected boundary;
+- `ApolloProvider` — глобально в root layout, потому что auth/session и будущие feature-запросы
+  используют общий Apollo client;
+- `SessionProvider` — глобально в root layout, чтобы публичные auth views могли синхронизировать
+  sign-in с текущей session state, а protected boundary мог читать тот же session context.
+
+Новые providers добавляются только там, где они реально нужны:
+
+- глобальный provider — в root layout, если context нужен across route groups;
+- segment provider — в ближайший layout соответствующего route segment;
 - локальный provider — рядом с feature или widget.
 
 Если provider пока не нужен, его не добавляем.
 
+## Auth session limitations
+
+Session bootstrap использует `refreshToken` mutation и backend-managed `httpOnly` cookie через
+`credentials: include`.
+
+Известное ограничение локальной проверки: production backend выставляет refresh cookie с
+`SameSite=Lax`, поэтому localhost не может полноценно проверить F5 restore с production backend.
+Полная проверка restore после reload нужна в staging/dev environment на совместимом домене.
+
 ## Что не делаем сейчас
 
 - middleware;
-- auth redirects;
-- token handling;
+- cookie reads в App Router layouts;
+- role-based access;
+- refresh-on-401 retry;
 - API calls в layouts;
 - формы и validation в `app/`;
 - Zustand stores без готового сценария;
