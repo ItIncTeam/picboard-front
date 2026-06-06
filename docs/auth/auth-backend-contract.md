@@ -353,16 +353,23 @@ Sign-in flow:
 
 Sign-in does not call `refreshToken`. `refreshToken` is only used for bootstrap/session restore.
 
-### Auth error invalidation
+### Auth error refresh and invalidation
 
 Apollo `errorLink` handles `401`, `403`, and `UNAUTHENTICATED`:
 
-1. Clear the in-memory `accessToken`.
-2. Emit a shared auth session expired event from `shared/lib/auth`.
-3. `SessionProvider` receives the event and moves session state to `anonymous`.
-4. `ProtectedRouteBoundary` redirects anonymous users from protected pages.
+1. Eligible `401` / `UNAUTHENTICATED` errors on authenticated operations attempt `refreshToken`.
+2. Concurrent `401` responses share one in-flight refresh request.
+3. If refresh succeeds, the frontend stores the new memory-only `accessToken` and retries the
+   original operation once.
+4. If refresh fails, or the operation is not eligible for refresh, the frontend clears the in-memory
+   `accessToken`, emits a shared auth session expired event, and `ProtectedRouteBoundary` redirects
+   anonymous protected routes.
 
-This implementation does not include refresh-on-401 retry.
+Refresh is skipped for anonymous requests, `SignIn`, `Logout`, `RefreshToken`, already retried
+operations, and `403` / `FORBIDDEN` errors.
+
+The token store uses a version guard so an in-flight refresh cannot restore an access token after
+logout or another local session invalidation.
 
 ### Logout
 
