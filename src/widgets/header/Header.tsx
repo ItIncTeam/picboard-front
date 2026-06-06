@@ -1,4 +1,4 @@
-import { NavigationButton } from '@/features/auth'
+import { LogoutButton, NavigationButton } from '@/features/auth'
 import { BellIcon } from '@/shared/assets'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
@@ -45,6 +45,7 @@ export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
 
           <LanguageSwitcher />
           {showAuthActions && <NavigationButton />}
+          {isAuthenticated && <LogoutButton />}
         </div>
       </div>
     </header>

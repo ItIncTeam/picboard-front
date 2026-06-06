@@ -12,7 +12,7 @@ import {
 
 import { clearAccessToken, setAccessToken, subscribeAuthSessionExpired } from '@/shared/lib/auth'
 
-import { getMe, refreshToken } from '../api'
+import { getMe, logout as requestLogout, refreshToken } from '../api'
 import type { SessionContextValue, SessionState } from './types'
 
 type SessionProviderProps = Readonly<{
@@ -106,6 +106,20 @@ export function SessionProvider({ children }: SessionProviderProps) {
     return refreshPromiseRef.current
   }, [setAnonymousSession])
 
+  const logout = useCallback(async () => {
+    const requestId = ++sessionRequestIdRef.current
+
+    try {
+      await requestLogout()
+    } catch {
+      // Local logout must still clear memory-only auth state if the backend call fails.
+    } finally {
+      if (isMountedRef.current && sessionRequestIdRef.current === requestId) {
+        setAnonymousSession()
+      }
+    }
+  }, [setAnonymousSession])
+
   useEffect(() => {
     return subscribeAuthSessionExpired(() => {
       setAnonymousSession()
@@ -131,10 +145,11 @@ export function SessionProvider({ children }: SessionProviderProps) {
       authenticateWithCurrentToken,
       isAuthenticated: session.status === 'authenticated',
       isBootstrapping: session.status === 'bootstrapping',
+      logout,
       refreshSession,
       setAnonymousSession,
     }),
-    [authenticateWithCurrentToken, refreshSession, session, setAnonymousSession],
+    [authenticateWithCurrentToken, logout, refreshSession, session, setAnonymousSession],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

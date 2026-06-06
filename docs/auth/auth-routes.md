@@ -156,6 +156,15 @@ Current limitation: localhost with the production backend cannot fully verify F5
 because the production refresh cookie uses `SameSite=Lax`. Full refresh-cookie restore requires a
 staging/dev environment or same-site frontend/backend setup.
 
+Logout:
+
+1. The protected header renders the feature-level logout action.
+2. The action calls `logout`.
+3. `SessionProvider` clears the memory-only access token and moves session state to `anonymous`.
+4. The action redirects to `/auth/sign-in`.
+
+The frontend does not persist tokens and does not run refresh-on-401 retry.
+
 ## Backend Confirmed Facts (June 2026)
 
 - `signUp` verified.

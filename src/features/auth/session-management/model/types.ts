@@ -11,6 +11,7 @@ export type SessionContextValue = SessionState & {
   authenticateWithCurrentToken: () => Promise<void>
   isAuthenticated: boolean
   isBootstrapping: boolean
+  logout: () => Promise<void>
   refreshSession: () => Promise<void>
   setAnonymousSession: () => void
 }
