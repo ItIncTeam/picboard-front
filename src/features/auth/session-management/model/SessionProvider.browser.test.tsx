@@ -2,7 +2,7 @@ import { act, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { LogoutButton } from '@/features/auth'
+import { LogoutButton } from '@/features/auth/logout-button'
 import { authRoutes, clearAccessToken, getAccessToken, setAccessToken } from '@/shared/lib/auth'
 
 import { SessionProvider } from './SessionProvider'

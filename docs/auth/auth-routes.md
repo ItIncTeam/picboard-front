@@ -9,9 +9,17 @@ This document maps current `/auth` routes to views, features, and verified Graph
 | `/auth/sign-up`                   | `src/app/(public)/auth/sign-up/page.tsx`                   | `SignUpView`                  | `signUp`                | Integrated / backend verified |
 | `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationView`     | `emailConfirmation`     | Integrated / backend verified |
 | `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInView`                  | `signIn`, `me`          | Integrated / backend verified |
-| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`         | Contract verification pending |
-| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`        | Placeholder / pending         |
-| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | Password recovery placeholder | No standalone operation | Placeholder / pending         |
+| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`         | Existing / contract verified  |
+| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`        | Implemented                   |
+| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | `ConfirmPasswordRecoveryView` | No standalone operation | Implemented / bridge redirect |
+
+## Password Recovery Routes
+
+| Route                             | Page                          | Access | Status             |
+| --------------------------------- | ----------------------------- | ------ | ------------------ |
+| `/auth/forgot-password`           | `ForgotPasswordPage`          | Public | Existing           |
+| `/auth/confirm/password-recovery` | `PasswordRecoveryConfirmPage` | Public | Implemented bridge |
+| `/auth/create-new-password`       | `CreateNewPasswordPage`       | Public | Implemented        |
 
 ## Verified Flow
 
@@ -111,6 +119,60 @@ Notes:
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
 
+### `/auth/forgot-password`
+
+Frontend flow:
+
+1. User enters an email address.
+2. Frontend executes reCAPTCHA with `password_reset`.
+3. Frontend calls `passwordReset` with `email` and `captchaToken`.
+4. Backend verifies captcha and starts password recovery.
+5. Frontend shows an email-sent state.
+
+Verified mutation shape:
+
+```graphql
+mutation PasswordReset($input: PasswordResetInput!) {
+  passwordReset(input: $input) {
+    message
+  }
+}
+```
+
+Notes:
+
+- `captchaToken` is required by the live backend schema.
+- The backend response payload only contains `message`.
+- The frontend must not read, store, or send refresh tokens during this flow.
+
+### `/auth/confirm/password-recovery?code=<CODE>`
+
+Expected frontend flow:
+
+1. Route reads `code` from the query string.
+2. Frontend carries that code into the create-new-password flow.
+3. User enters a new password.
+4. Frontend calls `setNewPassword` with `code` and `password`.
+5. Frontend sends the user to sign in after success.
+
+Verified mutation shape:
+
+```graphql
+mutation SetNewPassword($input: SetNewPasswordInput!) {
+  setNewPassword(input: $input) {
+    message
+  }
+}
+```
+
+Notes:
+
+- The assumed recovery link format is
+  `/auth/confirm/password-recovery?code=<CODE>`.
+- The route format is not verified from a real recovery email yet.
+- `setNewPassword` returns only `message`; it does not return `accessToken` or
+  `user`, so the frontend must not assume auto-login.
+
 ## Session And Protected Routes
 
 Root layout wraps the app with `ApolloProvider`, then `SessionProvider`.
@@ -176,6 +238,9 @@ The frontend does not persist tokens and does not run refresh-on-401 retry.
   not send it manually.
 - `/auth/confirm/registration?code=<CODE>` is the canonical route for
   confirmation email and resend confirmation email.
+- Password recovery contract is verified, but the real recovery email link
+  format is still unverified. Expected route:
+  `/auth/confirm/password-recovery?code=<CODE>`.
 
 ## Shell And Ownership
 
