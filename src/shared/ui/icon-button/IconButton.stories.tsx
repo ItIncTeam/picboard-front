@@ -4,7 +4,7 @@ import { expect, userEvent, within } from 'storybook/test'
 
 import { BellIcon } from '@/shared/assets'
 
-import { IconButton } from './IconButton'
+import { IconButton } from '@/shared/ui'
 import styles from './icon-button.stories.module.css'
 
 const meta = {
