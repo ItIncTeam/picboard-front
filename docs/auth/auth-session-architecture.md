@@ -185,15 +185,29 @@ not call backend APIs directly.
 
 ## Logout Flow
 
-Logout is implemented through `features/auth/session-management` and a feature-level logout button
-rendered by protected headers.
+Logout is implemented.
 
-Sequence:
+Current sequence:
 
 1. Call `logout`.
 2. Clear the in-memory `accessToken`.
 3. Clear frontend session state.
-4. Redirect the user to `/auth/sign-in`.
+4. Move session state to `anonymous`.
+5. Redirect the user to `/auth/sign-in`.
+
+Intentional behavior:
+
+If the logout mutation fails, the frontend still:
+
+- clears the in-memory `accessToken`;
+- clears local session state;
+- redirects to `/auth/sign-in`.
+
+This prioritizes local logout consistency over blocking logout because of a network or backend error.
+
+Known limitation:
+
+If the backend logout request fails and the refresh cookie remains valid, a future session bootstrap may restore the session through `refreshToken`.
 
 The frontend still does not persist tokens and does not run a refresh-on-401 queue.
 

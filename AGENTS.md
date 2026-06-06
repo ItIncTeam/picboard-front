@@ -27,6 +27,12 @@ When reviewing code:
 - run verification commands only if explicitly requested or if source review reveals a concrete risk;
 - when a verification command fails, include the exact failing command, root cause, and whether the failure is a real regression, flaky test, or environment issue.
 
+When updating architecture or behavior:
+
+- update the relevant docs in the same task;
+- keep implementation status in docs synchronized with the actual code;
+- if implementation changes make a documented "planned" feature complete, update the documentation from pending/planned to implemented/done.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
