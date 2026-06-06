@@ -1,11 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
-import {
-  clearAccessToken,
-  getAccessToken,
-  getTokenVersion,
-  setAccessToken,
-} from './accessTokenStore'
+import { clearAccessToken, getAccessToken, getTokenVersion, setAccessToken } from '@/shared/lib'
 
 describe('accessTokenStore', () => {
   afterEach(() => {
