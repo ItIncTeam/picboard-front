@@ -1,0 +1,206 @@
+.root {
+  --select-width: 210px;
+  --select-icon-size: 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: flex-start;
+}
+
+.label {
+  cursor: pointer;
+
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 171%;
+  color: var(--color-text-secondary);
+}
+
+.labelDisabled {
+  color: var(--color-text-disabled);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 12px;
+  border: 1px solid var(--color-text-disabled);
+  border-radius: 2px;
+
+  font: inherit;
+  font-size: 16px;
+  line-height: 150%;
+  color: var(--color-foreground);
+
+  background: transparent;
+
+  transition:
+    border-color 0.2s ease-in-out,
+    outline-color 0.2s ease-in-out,
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+
+  &::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 1;
+  }
+
+  &:focus:placeholder-shown {
+    border: 1px solid var(--color-foreground);
+    outline: none;
+  }
+
+  &:focus:not(:placeholder-shown) {
+    border: 1px solid var(--color-foreground);
+    background-color: var(--color-surface-secondary);
+    outline: none;
+  }
+
+  /* НОВАЯ СЕКЦИЯ: Фокус только при навигации с клавиатуры (через JS-класс) */
+  &.keyboardFocused:focus {
+    border: 1px solid transparent;
+    outline: 2px solid var(--color-primary);
+
+    /* Если при клавиатурном фокусе плейсхолдер скрыт,
+       сохраняем ваши кастомные стили фона и границ */
+    &:not(:placeholder-shown) {
+      border: 1px solid var(--color-foreground);
+      background-color: var(--color-surface-secondary);
+      outline: none;
+    }
+  }
+
+  &:hover {
+    border: 1px solid var(--color-text-secondary);
+    color: var(--color-text-secondary);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    border: 1px solid var(--color-text-disabled);
+    color: var(--color-text-disabled);
+
+    &::placeholder {
+      color: var(--color-text-disabled);
+    }
+  }
+
+  &.error {
+    border: 1px solid var(--color-status-danger);
+
+    &:focus:placeholder-shown,
+    &:focus:not(:placeholder-shown),
+    &:hover {
+      border-color: var(--color-status-danger);
+      outline-color: var(--color-status-danger);
+    }
+  }
+}
+
+.inputWrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+
+  & :disabled {
+    cursor: not-allowed;
+  }
+
+  &.disabled {
+    .defaultIcn {
+      cursor: not-allowed;
+      color: var(--color-text-disabled);
+    }
+  }
+
+  & .defaultIcn {
+    cursor: pointer;
+
+    position: absolute;
+    top: 50%;
+    right: 12px; /* Отступ справа внутри input */
+    transform: translateY(-50%); /* Центрирование иконки строго по вертикали */
+
+    color: var(--color-foreground);
+  }
+}
+
+.searchWrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+
+  & :disabled {
+    cursor: not-allowed;
+  }
+
+  &.disabled {
+    .searchIcn {
+      cursor: not-allowed;
+      color: var(--color-text-disabled);
+    }
+  }
+
+  & input {
+    width: 100%;
+    padding: 6px 12px 6px 41px;
+    transition: padding 0.3s ease;
+  }
+
+  & input:not(:placeholder-shown) + .searchIcn {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  & input:not(:placeholder-shown) {
+    padding-left: 12px;
+  }
+
+  & .searchIcn {
+    pointer-events: none; /* Чтобы клик по иконке проходил сквозь нее на сам инпут */
+
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+
+    color: var(--color-text-secondary);
+
+    opacity: 1;
+
+    transition: opacity 0.2s ease;
+  }
+}
+
+.helperText {
+  transform: translateY(-2px);
+
+  width: 100%;
+  min-height: 24px;
+
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 171%;
+  color: var(--color-status-danger);
+  overflow-wrap: break-word;
+
+  opacity: 0;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.helperTextVisible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .helperText {
+    transition: none;
+  }
+}

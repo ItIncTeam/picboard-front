@@ -30,11 +30,20 @@ const getExtension = (file) => {
   return dotIndex === -1 ? '' : normalizedFile.slice(dotIndex)
 }
 
-const run = (command, args) =>
-  spawnSync(command, args, {
-    shell: process.platform === 'win32' && command === 'pnpm',
+const quoteCommandArg = (arg) => `"${arg.replace(/"/g, '\\"')}"`
+
+const run = (command, args) => {
+  if (process.platform === 'win32' && (command === 'git' || command === 'pnpm')) {
+    return spawnSync(`${command} ${args.map(quoteCommandArg).join(' ')}`, {
+      shell: true,
+      stdio: 'inherit',
+    })
+  }
+
+  return spawnSync(command, args, {
     stdio: 'inherit',
   })
+}
 
 const addFile = (file) => run('git', ['add', file])
 
@@ -42,14 +51,17 @@ console.log('🔎 Pre-commit: проверяю staged-файлы')
 console.log('   Хук легкий: запускает автоисправления только для файлов текущего коммита.')
 console.log('')
 
-const stagedFilesResult = spawnSync(
-  'git',
-  ['diff', '--cached', '--name-only', '--diff-filter=ACMR'],
-  {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'inherit'],
-  },
-)
+const stagedFilesResult =
+  process.platform === 'win32'
+    ? spawnSync('git "diff" "--cached" "--name-only" "--diff-filter=ACMR"', {
+        encoding: 'utf8',
+        shell: true,
+        stdio: ['ignore', 'pipe', 'inherit'],
+      })
+    : spawnSync('git', ['diff', '--cached', '--name-only', '--diff-filter=ACMR'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'inherit'],
+      })
 
 if (stagedFilesResult.status !== 0) {
   process.exit(stagedFilesResult.status ?? 1)

@@ -2,52 +2,61 @@
 
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox'
 import { CheckIcon } from '@radix-ui/react-icons'
-import { useId, type ComponentPropsWithoutRef } from 'react'
+import { forwardRef, useId, type ComponentPropsWithoutRef } from 'react'
+
+import { cn } from '@/shared/lib/cn'
 
 import styles from './checkbox.module.css'
 
 export type CheckboxProps = {
   label?: string
+  errorMessage?: string
   className?: string
   labelClassName?: string
+  controlClassName?: string
 } & ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
 
-const joinClassNames = (...classNames: Array<string | undefined>) => {
-  return classNames.filter(Boolean).join(' ')
-}
+export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
+  (
+    { label, errorMessage, className, labelClassName, controlClassName, id, disabled, ...props },
+    ref,
+  ) => {
+    const baseId = useId()
+    const checkboxId = id ?? `${baseId}-control`
+    const isError = Boolean(errorMessage)
 
-export const Checkbox = ({
-  label,
-  className,
-  labelClassName,
-  id,
-  disabled,
-  ...props
-}: CheckboxProps) => {
-  const generatedId = useId()
-  const checkboxId = id ?? generatedId
-  const rootClassName = joinClassNames(styles.root, className)
-  const control = (
-    <CheckboxPrimitive.Root
-      id={checkboxId}
-      className={styles.control}
-      disabled={disabled}
-      {...props}
-    >
-      <CheckboxPrimitive.Indicator className={styles.indicator}>
-        <CheckIcon className={styles.checkIcon} aria-hidden />
-      </CheckboxPrimitive.Indicator>
-    </CheckboxPrimitive.Root>
-  )
+    const control = (
+      <CheckboxPrimitive.Root
+        ref={ref}
+        id={checkboxId}
+        className={cn(
+          styles.checkbox__control,
+          isError && styles.checkbox__control_error,
+          controlClassName,
+        )}
+        disabled={disabled}
+        aria-invalid={isError || undefined}
+        {...props}
+      >
+        <CheckboxPrimitive.Indicator className={styles.checkbox__indicator}>
+          <CheckIcon className={styles.checkbox__checkIcon} aria-hidden />
+        </CheckboxPrimitive.Indicator>
+      </CheckboxPrimitive.Root>
+    )
 
-  if (!label) {
-    return <div className={rootClassName}>{control}</div>
-  }
+    const fieldClassName = cn(styles.checkbox__field, disabled && styles.checkbox_disabled)
 
-  return (
-    <label className={rootClassName} htmlFor={checkboxId}>
-      {control}
-      <span className={joinClassNames(styles.label, labelClassName)}>{label}</span>
-    </label>
-  )
-}
+    const field = label ? (
+      <label className={fieldClassName}>
+        {control}
+        <span className={cn(styles.checkbox__label, labelClassName)}>{label}</span>
+      </label>
+    ) : (
+      <div className={fieldClassName}>{control}</div>
+    )
+
+    return <div className={cn(styles.checkbox, className)}>{field}</div>
+  },
+)
+
+Checkbox.displayName = 'Checkbox'

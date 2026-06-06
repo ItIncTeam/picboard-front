@@ -1,0 +1,4 @@
+.accentButton {
+  color: var(--color-accent-500);
+  background-color: var(--color-surface-secondary);
+}

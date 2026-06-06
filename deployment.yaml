@@ -23,4 +23,4 @@ spec:
             runAsNonRoot: true # опционально, но хорошая практика
             runAsUser: 1000 # опционально
           ports:
-            - containerPort: PORT_CONTAINER
+            - containerPort: 4310

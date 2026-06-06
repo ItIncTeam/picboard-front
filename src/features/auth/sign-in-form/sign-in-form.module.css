@@ -1,0 +1,52 @@
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.forgotPasswordRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 36px;
+}
+
+.forgotPasswordLink {
+  text-align: center;
+  text-decoration: none;
+}
+
+.formActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.formError {
+  color: var(--color-danger-500);
+  text-align: center;
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.signUpFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+
+  margin-top: 18px;
+
+  text-align: center;
+}
+
+.signUpLink {
+  color: var(--color-accent-500);
+  text-decoration: none;
+}
+
+.signUpLink:hover {
+  color: var(--color-accent-100);
+}

@@ -1,0 +1,72 @@
+.formActions {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 22px;
+}
+
+.formError {
+  color: var(--color-danger-500);
+  text-align: center;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.termsField {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.termsText {
+  flex: 0 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.termsLink {
+  cursor: pointer;
+
+  padding: 0;
+  border: none;
+
+  font: inherit;
+  color: var(--color-accent-500);
+  text-align: inherit;
+  text-decoration: underline;
+
+  background: none;
+}
+
+.termsLink:hover {
+  color: var(--color-primary-hover);
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.signInFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+
+  margin-top: 18px;
+
+  text-align: center;
+}
+
+.signInLink {
+  color: var(--color-accent-500);
+  text-decoration: none;
+}
+
+.signInLink:hover {
+  color: var(--color-accent-100);
+}

@@ -1,50 +1,107 @@
 @font-face {
-  font-family: 'Helvetica Neue';
-  font-weight: 400;
+  font-family: Inter;
+  font-weight: 100 900;
   font-style: normal;
 
   font-display: swap;
-  src:
-    local('Helvetica Neue'),
-    local('HelveticaNeue'),
-    url('/fonts/HelveticaNeueCyr-Roman.woff2') format('woff2');
+  src: url('/fonts/Inter-cyrillic-ext.woff2') format('woff2');
+
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
 }
 
 @font-face {
-  font-family: 'Helvetica Neue';
-  font-weight: 500;
+  font-family: Inter;
+  font-weight: 100 900;
   font-style: normal;
 
   font-display: swap;
-  src:
-    local('Helvetica Neue Medium'),
-    local('HelveticaNeue-Medium'),
-    url('/fonts/HelveticaNeueCyr-Medium.woff2') format('woff2');
+  src: url('/fonts/Inter-cyrillic.woff2') format('woff2');
+
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 @font-face {
-  font-family: 'Helvetica Neue';
-  font-weight: 700;
+  font-family: Inter;
+  font-weight: 100 900;
   font-style: normal;
 
   font-display: swap;
-  src:
-    local('Helvetica Neue Bold'),
-    local('HelveticaNeue-Bold'),
-    url('/fonts/HelveticaNeueCyr-Bold.woff2') format('woff2');
+  src: url('/fonts/Inter-latin-ext.woff2') format('woff2');
+
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+@font-face {
+  font-family: Inter;
+  font-weight: 100 900;
+  font-style: normal;
+
+  font-display: swap;
+  src: url('/fonts/Inter-latin.woff2') format('woff2');
+
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
-  --font-family-primary: 'Helvetica Neue', arial, sans-serif;
+  --font-family-primary: 'Inter', arial, sans-serif;
   --font-family-mono: 'SFMono-Regular', consolas, 'Liberation Mono', monospace;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.625rem;
+  --line-height-sm: 1rem;
+  --line-height-md: 1.5rem;
+  --line-height-lg: 2.25rem;
   --line-height-tight: 1.25;
   --line-height-base: 1.5;
+  --typography-large-font-size: var(--font-size-2xl);
+  --typography-large-font-weight: var(--font-weight-semibold);
+  --typography-large-line-height: var(--line-height-lg);
+  --typography-h1-font-size: var(--font-size-xl);
+  --typography-h1-font-weight: var(--font-weight-bold);
+  --typography-h1-line-height: var(--line-height-lg);
+  --typography-h2-font-size: var(--font-size-lg);
+  --typography-h2-font-weight: var(--font-weight-bold);
+  --typography-h2-line-height: var(--line-height-md);
+  --typography-h3-font-size: var(--font-size-md);
+  --typography-h3-font-weight: var(--font-weight-semibold);
+  --typography-h3-line-height: var(--line-height-md);
+  --typography-regular-text-16-font-size: var(--font-size-md);
+  --typography-regular-text-16-font-weight: var(--font-weight-regular);
+  --typography-regular-text-16-line-height: var(--line-height-md);
+  --typography-bold-text-16-font-size: var(--font-size-md);
+  --typography-bold-text-16-font-weight: var(--font-weight-bold);
+  --typography-bold-text-16-line-height: var(--line-height-md);
+  --typography-regular-text-14-font-size: var(--font-size-sm);
+  --typography-regular-text-14-font-weight: var(--font-weight-regular);
+  --typography-regular-text-14-line-height: var(--line-height-md);
+  --typography-medium-text-14-font-size: var(--font-size-sm);
+  --typography-medium-text-14-font-weight: var(--font-weight-medium);
+  --typography-medium-text-14-line-height: var(--line-height-md);
+  --typography-bold-text-14-font-size: var(--font-size-sm);
+  --typography-bold-text-14-font-weight: var(--font-weight-bold);
+  --typography-bold-text-14-line-height: var(--line-height-md);
+  --typography-small-text-font-size: var(--font-size-xs);
+  --typography-small-text-font-weight: var(--font-weight-regular);
+  --typography-small-text-line-height: var(--line-height-sm);
+  --typography-semibold-small-text-font-size: var(--font-size-xs);
+  --typography-semibold-small-text-font-weight: var(--font-weight-semibold);
+  --typography-semibold-small-text-line-height: var(--line-height-sm);
+  --typography-regular-link-font-size: var(--font-size-sm);
+  --typography-regular-link-font-weight: var(--font-weight-regular);
+  --typography-regular-link-line-height: var(--line-height-md);
+  --typography-small-link-font-size: var(--font-size-xs);
+  --typography-small-link-font-weight: var(--font-weight-regular);
+  --typography-small-link-line-height: var(--line-height-sm);
 }

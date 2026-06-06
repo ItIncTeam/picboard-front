@@ -17,6 +17,14 @@
 - [Git Flow](./git-flow.md) — ветки, commits, rebase, push.
 - [Pull Request](./pull-request.md) — требования перед PR и checklist.
 - [Рабочие инструкции](./work-instructions.md) — порядок работы для команды и AI-агента.
+- [Project Start Guide](./project-start-guide.md) — короткий onboarding для новых участников.
+- [Assets](./assets.md) — правила импорта SVG, иконок и растровых изображений.
+- [App Router](./app-router-roadmap.md) — текущая структура маршрутов, layouts, modals и provider rules.
+- [Границы слоев](./layer-ownership.md) — практические правила владения `app`, `views`, `widgets`, `features` и временными заглушками.
+- [Auth Infrastructure](./auth/auth-infrastructure-plan.md) — FSD-границы, PR roadmap и Apollo/auth integration points.
+- [Auth Session Architecture](./auth/auth-session-architecture.md) — access token, refresh token и session flow.
+- [Auth Backend Contract](./auth/auth-backend-contract.md) — GraphQL queries, mutations, inputs и payloads.
+- [Auth Routes](./auth/auth-routes.md) — `/auth` маршруты, views, features и GraphQL operations.
 
 ## Базовые принципы
 

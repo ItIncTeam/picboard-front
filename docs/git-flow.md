@@ -1,19 +1,17 @@
 # Git Flow
 
-Основной источник правил: [Picboard Frontend Style Guide](./style_guide_full.md). Этот файл
-описывает полный рабочий процесс с ветками, коммитами, актуализацией и мержем.
-
-## Branches
-
-Одна задача — одна ветка.
+## 1. Начать задачу
 
 ```bash
 git checkout dev
 git pull origin dev
-git checkout -b feature/SCRUM-17-login-form
 ```
 
-Для технических задач:
+```bash
+git checkout -b SCRUM-0-title
+```
+
+Техническая задача:
 
 ```bash
 git checkout -b chore/SCRUM-17-setup-tooling
@@ -21,59 +19,57 @@ git checkout -b chore/SCRUM-17-setup-tooling
 
 ---
 
-## Commits
+## 2. Работа и commit
 
-Формат:
+Добавить изменения:
+
+```bash
+git add .
+git status
+```
+
+Commit:
+
+```bash
+git commit -m "SCRUM-0 feat: title"
+```
+
+Формат commit:
 
 ```text
 <JIRA-ID> <type>: <description>
 ```
 
-Пример:
+Примеры:
 
-```text
-SCRUM-17 feat: add login form
+```bash
+git commit -m "SCRUM-17 feat: add login form"
+git commit -m "SCRUM-17 fix: validate email field"
 ```
-
-Разрешенные типы:
-
-- `init`
-- `feat`
-- `fix`
-- `refactor`
-- `test`
-- `docs`
-- `chore`
-- `build`
-- `ci`
 
 ---
 
-## Rebase (регулярная актуализация ветки)
-
-Обновляйте ветку от `dev` регулярно в процессе разработки, а не только перед мержем.
-Это минимизирует конфликты и упрощает финальную сборку.
+## 3. Обновить ветку через rebase
 
 ```bash
 git fetch origin
 git rebase origin/dev
 ```
 
-Если есть конфликт — разрешить его в IDE, затем:
+Если конфликт:
 
 ```bash
 git add .
 git rebase --continue
 ```
 
-Отмена rebase в случае проблем:
+Отмена rebase:
 
 ```bash
 git rebase --abort
 ```
 
-**Важно:** после любого успешного rebase история вашей ветки переписана,
-поэтому следующий push должен быть принудительным, но безопасным:
+После rebase:
 
 ```bash
 git push --force-with-lease
@@ -81,132 +77,81 @@ git push --force-with-lease
 
 ---
 
-## Before Push (подготовка к созданию Pull Request)
-
-Перед тем как отдать код на ревью, выполните финальную актуализацию и проверки.
-
-### 1. Финальный rebase на актуальный `dev`
-
-```bash
-git fetch origin
-git rebase origin/dev
-# если были конфликты — разрешить и завершить rebase
-```
-
-### 2. Запуск проверок
+## 4. Проверка перед PR
 
 ```bash
 pnpm check
 ```
 
-### 3. Push ветки
+---
 
-Первый push ветки:
+## 5. Push ветки
+
+Первый push:
 
 ```bash
 git push -u origin feature/SCRUM-17-login-form
 ```
 
-После rebase (если ветка уже пушилась ранее):
+После rebase:
 
 ```bash
 git push --force-with-lease
 ```
 
-**Запрещено использовать:**
+---
+
+## 6. Pull Request
+
+1. Создать PR → `dev`
+2. Дождаться CI
+3. Получить approve
+4. Если `dev` обновился:
+
+```bash
+
+```
+
+---
+
+## 7. Merge
+
+Разрешено:
+
+- Rebase and Merge
+- Squash and Merge
+
+После merge:
+
+- удалить branch
+
+---
+
+# Правила
+
+- Не пушить напрямую в `main` и `dev`
+- Одна задача = одна branch
+- Один PR = одна задача
+- Перед PR всегда:
+  - `git rebase origin/dev`
+  - `pnpm check`
+
+- Не смешивать:
+  - feature
+  - refactor
+  - formatting
+
+- После rebase использовать только:
+
+```bash
+git push --force-with-lease
+```
+
+Запрещено:
 
 ```bash
 git push --force
+git merge
 ```
 
----
-
-## Pull Request (обязательный этап)
-
-Вся работа попадает в `dev` только через Pull Request. Прямые пуши в `dev` или `main` запрещены.
-
-1. Создать Pull Request из вашей ветки в `dev`.
-2. Дождаться прохождения CI (автоматические проверки на сервере).
-3. Пройти код-ревью и получить approve от коллег.
-4. Если получены замечания:
-   - внести правки локально, сделать коммиты и запушить;
-   - **если за время ревью в `dev` появились новые изменения — снова выполнить rebase на `origin/dev`**.
-5. После получения approve и успешного CI — выполнить мерж.
-
----
-
-## Merge в dev (завершение задачи)
-
-Используется **Rebase and Merge** или **Squash and Merge** через интерфейс GitHub/GitLab.
-
-- **Rebase and Merge** (рекомендуется):
-  накладывает коммиты ветки поверх `dev` без создания мерж-коммита.
-  История остается линейной и чистой.
-
-- **Squash and Merge** (допустимо):
-  все коммиты ветки сжимаются в один с итоговым сообщением вида
-  `SCRUM-17 feat: add login form`. Просто, но теряется детализация коммитов.
-
-**Запрещено:** выполнять `git merge` локально и пушить мерж-коммит напрямую.
-Это создает расходящуюся историю и сводит на нет преимущества rebase.
-
----
-
-## Полный алгоритм от начала до мержа
-
-### Этап 1: Начало задачи
-
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b feature/SCRUM-17-login-form
-```
-
-### Этап 2: Разработка
-
-- Регулярно коммитить в формате `SCRUM-17 feat: add login form`.
-- Периодически обновлять ветку через rebase:
-
-  ```bash
-  git fetch origin
-  git rebase origin/dev
-  ```
-
-- После rebase пушить с `--force-with-lease`:
-
-  ```bash
-  git push --force-with-lease
-  ```
-
-### Этап 3: Подготовка к PR
-
-```bash
-git fetch origin
-git rebase origin/dev
-pnpm check
-git push --force-with-lease   # если ветка уже была на сервере
-```
-
-### Этап 4: Pull Request
-
-- Создать PR в `dev`.
-- Дождаться CI и код-ревью.
-- При замечаниях — поправить, при необходимости снова сделать rebase на `dev`.
-
-### Этап 5: Мерж
-
-- Выполнить **Rebase and Merge** через интерфейс.
-- Удалить ветку на сервере после успешного мержа.
-
----
-
-## Rules
-
-- Не пушьте напрямую в `main` или `dev`.
-- Вся работа в `dev` попадает только через Pull Request.
-- Перед созданием PR обязательно делайте финальный rebase и `pnpm check`.
-- Не смешивайте feature, refactor и formatting в одном PR без необходимости.
-- Не держите большие PR.
-- Не меняйте `shared/ui` без согласования, если изменение влияет на другие команды.
-- После rebase используйте только `git push --force-with-lease`.
-  Использование `git push --force` запрещено.
+Основано на внутренних docs проекта.

@@ -1,0 +1,171 @@
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.radioGroup__label {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  color: var(--color-text-secondary);
+}
+
+.radioGroup__group {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.radioGroup__field {
+  --radio-size: 20px;
+  --hover-size: 36px;
+  --radio-border: var(--color-foreground);
+  --radio-dot: var(--color-foreground);
+  --radio-label: var(--color-text-primary);
+  --radio-hover-ring: color-mix(in srgb, var(--color-foreground) 12%, transparent);
+
+  position: relative;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.radioGroup__field::before {
+  pointer-events: none;
+  content: '';
+
+  position: absolute;
+  top: 50%;
+  left: calc(var(--radio-size) / 2);
+  transform: translate(-50%, -50%);
+
+  width: var(--hover-size);
+  height: var(--hover-size);
+  border-radius: 50%;
+
+  opacity: 0;
+  background: transparent;
+
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.radioGroup__control {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+  width: var(--radio-size);
+  height: var(--radio-size);
+  padding: 0;
+  border: 2px solid var(--radio-border);
+  border-radius: 50%;
+
+  background: transparent;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.radioGroup__control[data-state='unchecked']:not([data-disabled]) {
+  border-color: var(--radio-border);
+  background: transparent;
+}
+
+.radioGroup__control[data-state='checked']:not([data-disabled]) {
+  border-color: var(--radio-border);
+  background: transparent;
+}
+
+.radioGroup__group_error .radioGroup__control:not([data-disabled]) {
+  border-color: var(--color-status-danger);
+}
+
+.radioGroup__group_error .radioGroup__indicator {
+  background: var(--color-status-danger);
+}
+
+.radioGroup__field:not(.radioGroup_disabled):hover::before {
+  opacity: 1;
+  background: var(--radio-hover-ring);
+}
+
+.radioGroup__field:not(.radioGroup_disabled):focus-within::before {
+  opacity: 1;
+  background: color-mix(in srgb, var(--color-foreground) 20%, transparent);
+}
+
+.radioGroup__field:not(.radioGroup_disabled):active::before {
+  opacity: 1;
+  background: color-mix(in srgb, var(--color-foreground) 28%, transparent);
+}
+
+label.radioGroup__field:not(.radioGroup_disabled) {
+  cursor: pointer;
+}
+
+.radioGroup_disabled {
+  cursor: not-allowed;
+}
+
+.radioGroup__control:not([data-disabled]) {
+  cursor: pointer;
+}
+
+.radioGroup__control[data-disabled] {
+  cursor: not-allowed;
+}
+
+.radioGroup__control[data-state='unchecked'][data-disabled] {
+  border-color: var(--color-border-primary);
+  background: transparent;
+}
+
+.radioGroup__control[data-state='checked'][data-disabled] {
+  border-color: var(--color-text-disabled);
+  background: transparent;
+}
+
+.radioGroup__indicator {
+  display: block;
+  flex-shrink: 0;
+
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+
+  background: var(--radio-dot);
+}
+
+.radioGroup__control[data-state='checked'][data-disabled] .radioGroup__indicator {
+  background: var(--color-text-disabled);
+}
+
+.radioGroup__itemLabel {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  color: var(--radio-label);
+}
+
+.radioGroup_disabled .radioGroup__itemLabel {
+  color: var(--color-text-disabled);
+}
+
+.radioGroup__control:focus-visible {
+  outline: none;
+}
+
+.radioGroup__errorMessage {
+  margin-top: 10px;
+  font-size: var(--font-size-xs);
+  line-height: 16px;
+  color: var(--color-status-danger);
+}

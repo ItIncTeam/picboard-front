@@ -9,6 +9,7 @@ import prettier from 'eslint-config-prettier/flat'
 export const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+
   {
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],
@@ -18,6 +19,7 @@ export const eslintConfig = defineConfig([
       'no-nested-ternary': 'error',
 
       '@typescript-eslint/no-explicit-any': 'warn',
+
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -26,18 +28,48 @@ export const eslintConfig = defineConfig([
         },
       ],
 
+      '@typescript-eslint/consistent-type-imports': [
+        'warn',
+        {
+          prefer: 'type-imports',
+        },
+      ],
+
       'react/button-has-type': 'error',
       'react/prop-types': 'off',
     },
   },
+
+  // SVG React components must be imported only through shared assets API.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/shared/assets/**/*'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['*.svg?react'],
+              message: 'Import SVG React components only through "@/shared/assets".',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
   {
     files: ['**/*.stories.tsx'],
     rules: {
       'no-console': 'off',
     },
   },
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+
+  globalIgnores(['.next/**', 'out/**', 'build/**', 'storybook-static/**', 'next-env.d.ts']),
+
   prettier,
+
   ...storybook.configs['flat/recommended'],
 ])
 

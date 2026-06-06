@@ -1,21 +1,28 @@
-.root {
+.checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  width: fit-content;
+  max-width: 100%;
+}
+
+.checkbox__field {
   --checkbox-size: 18px;
   --hover-size: 36px;
-
-  cursor: pointer;
+  --checkbox-border: var(--color-foreground);
+  --checkbox-fill: var(--color-foreground);
+  --checkbox-icon: var(--color-background);
+  --checkbox-label: var(--color-text-primary);
+  --checkbox-hover-ring: color-mix(in srgb, var(--color-foreground) 12%, transparent);
 
   position: relative;
-
   display: inline-flex;
   gap: 12px;
   align-items: center;
 }
 
-/* =========================================================
-   HOVER LAYER
-   ========================================================= */
-
-.root::before {
+.checkbox__field::before {
   pointer-events: none;
   content: '';
 
@@ -36,11 +43,7 @@
     background-color 0.15s ease;
 }
 
-/* =========================================================
-   CONTROL
-   ========================================================= */
-
-.control {
+.checkbox__control {
   position: relative;
   z-index: 1;
 
@@ -53,7 +56,7 @@
   width: var(--checkbox-size);
   height: var(--checkbox-size);
   padding: 0;
-  border: 2px solid var(--color-light-100);
+  border: 2px solid var(--checkbox-border);
   border-radius: 4px;
 
   background: transparent;
@@ -63,74 +66,63 @@
     border-color 0.15s ease;
 }
 
-/* =========================================================
-   UNCHECKED
-   ========================================================= */
-
-.control[data-state='unchecked']:not([data-disabled]) {
-  border-color: var(--color-light-100);
+.checkbox__control[data-state='unchecked']:not([data-disabled]) {
+  border-color: var(--checkbox-border);
   background: transparent;
 }
 
-/* =========================================================
-   CHECKED
-   ========================================================= */
-
-.control[data-state='checked']:not([data-disabled]) {
-  border-color: var(--color-light-100);
-  background: var(--color-light-100);
+.checkbox__control[data-state='checked']:not([data-disabled]) {
+  border-color: var(--checkbox-fill);
+  background: var(--checkbox-fill);
 }
 
-/* =========================================================
-   HOVER
-   ========================================================= */
+.checkbox__control_error[data-state='unchecked']:not([data-disabled]),
+.checkbox__control_error[data-state='checked']:not([data-disabled]) {
+  border-color: var(--color-status-danger);
+}
 
-.root:hover:has(.control:not([data-disabled]))::before {
+.checkbox__field:not(.checkbox_disabled):hover::before {
   opacity: 1;
-  background: var(--color-dark-300);
+  background: var(--checkbox-hover-ring);
 }
 
-/* =========================================================
-   FOCUS
-   ========================================================= */
-
-.root:has(.control:focus-visible:not([data-disabled]))::before {
+.checkbox__field:not(.checkbox_disabled):focus-within::before {
   opacity: 1;
-  background: var(--color-dark-500);
+  background: color-mix(in srgb, var(--color-foreground) 20%, transparent);
 }
 
-/* =========================================================
-   ACTIVE
-   ========================================================= */
-
-.root:active:has(.control:not([data-disabled]))::before {
+.checkbox__field:not(.checkbox_disabled):active::before {
   opacity: 1;
-  background: var(--color-dark-100);
+  background: color-mix(in srgb, var(--color-foreground) 28%, transparent);
 }
 
-/* =========================================================
-   DISABLED
-   ========================================================= */
+label.checkbox__field:not(.checkbox_disabled) {
+  cursor: pointer;
+}
 
-.root:has(.control[data-disabled]) {
+.checkbox_disabled {
   cursor: not-allowed;
 }
 
-.control[data-state='unchecked'][data-disabled] {
-  border-color: var(--color-light-900);
+.checkbox__control:not([data-disabled]) {
+  cursor: pointer;
+}
+
+.checkbox__control[data-disabled] {
+  cursor: not-allowed;
+}
+
+.checkbox__control[data-state='unchecked'][data-disabled] {
+  border-color: var(--color-border-primary);
   background: transparent;
 }
 
-.control[data-state='checked'][data-disabled] {
-  border-color: var(--color-light-700);
-  background: var(--color-light-700);
+.checkbox__control[data-state='checked'][data-disabled] {
+  border-color: var(--color-text-disabled);
+  background: var(--color-text-disabled);
 }
 
-/* =========================================================
-   INDICATOR
-   ========================================================= */
-
-.indicator {
+.checkbox__indicator {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,42 +131,30 @@
   height: 100%;
 }
 
-/* =========================================================
-   ICON
-   ========================================================= */
-
-.checkIcon {
+.checkbox__checkIcon {
   display: block;
   flex-shrink: 0;
 
   width: 18px;
   height: 18px;
 
-  color: var(--color-background);
+  color: var(--checkbox-icon);
 }
 
-.control[data-state='checked'][data-disabled] .checkIcon {
-  color: var(--color-dark-100);
+.checkbox__control[data-state='checked'][data-disabled] .checkbox__checkIcon {
+  color: var(--color-surface-primary);
 }
 
-/* =========================================================
-   LABEL
-   ========================================================= */
-
-.label {
+.checkbox__label {
   font-size: var(--font-size-sm);
   line-height: var(--line-height-base);
-  color: var(--color-light-100);
+  color: var(--checkbox-label);
 }
 
-.root:has(.control[data-disabled]) .label {
-  color: var(--color-light-900);
+.checkbox_disabled .checkbox__label {
+  color: var(--color-text-disabled);
 }
 
-/* =========================================================
-   REMOVE DEFAULT OUTLINE
-   ========================================================= */
-
-.control:focus-visible {
+.checkbox__control:focus-visible {
   outline: none;
 }

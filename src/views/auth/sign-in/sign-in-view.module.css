@@ -1,0 +1,10 @@
+.cardTitleCenter {
+  width: 100%;
+  text-align: center;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

@@ -1,0 +1,88 @@
+.overlay {
+  position: fixed;
+  z-index: 50;
+  inset: var(--public-header-height) 0 0 0;
+
+  overflow-y: auto;
+
+  padding: 24px 0;
+
+  background: var(--color-background);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  width: min(100%, 1184px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 0 var(--public-header-padding-x);
+}
+
+.backLink {
+  cursor: pointer;
+
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  align-self: flex-start;
+
+  width: fit-content;
+  padding: 0;
+  border: none;
+
+  color: var(--color-text-primary);
+
+  appearance: none;
+  background: transparent;
+}
+
+.backLink:hover {
+  color: var(--color-primary-hover);
+}
+
+.backLink:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.backIcon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.backLabel {
+  font-family: var(--font-family-primary), sans-serif;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+}
+
+.docColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  width: min(100%, 958px);
+  margin: 0 auto;
+}
+
+.title {
+  text-align: center;
+}
+
+.body {
+  overflow-y: auto;
+  text-align: center;
+}
+
+@media (width <= 760px) {
+  .title,
+  .body {
+    text-align: left;
+  }
+}

@@ -1,0 +1,98 @@
+scalar DateTime
+
+type User {
+  id: ID!
+  email: String!
+  username: String!
+  confirmationCode: String
+  confirmationCodeExpDate: DateTime
+  isConfirmed: Boolean!
+  displayName: String
+  bio: String
+  profilePictureFileId: ID
+}
+
+type UserOutput {
+  id: String!
+  email: String!
+  username: String!
+  isConfirmed: Boolean!
+}
+
+type Query {
+  me: User!
+  user(id: String!): User
+}
+
+type Mutation {
+  signUp(input: SignUpInput!): SignUpPayload!
+  emailConfirmation(input: EmailConfirmationInput!): EmailConfirmationPayload!
+  emailConfirmationResending(input: ResendEmailInput!): EmailResendConfirmationPayload!
+  signIn(input: SignInInput!): SignInPayload!
+  logout: String!
+  refreshToken: RefreshTokenPayload!
+  passwordReset(input: PasswordResetInput!): PasswordResetPayload!
+  setNewPassword(input: SetNewPasswordInput!): SetNewPasswordPayload!
+}
+
+input SignUpInput {
+  email: String!
+  username: String!
+  password: String!
+  acceptTerms: Boolean!
+  acceptPrivacy: Boolean!
+}
+
+input EmailConfirmationInput {
+  code: String!
+}
+
+input ResendEmailInput {
+  email: String!
+}
+
+input SignInInput {
+  email: String!
+  password: String!
+}
+
+input PasswordResetInput {
+  email: String!
+}
+
+input SetNewPasswordInput {
+  code: String!
+  password: String!
+}
+
+type SignUpPayload {
+  user: UserOutput!
+  message: String!
+}
+
+type SignInPayload {
+  user: User!
+  accessToken: String!
+  refreshToken: String!
+}
+
+type EmailConfirmationPayload {
+  message: String!
+}
+
+type EmailResendConfirmationPayload {
+  message: String!
+}
+
+type PasswordResetPayload {
+  message: String!
+}
+
+type SetNewPasswordPayload {
+  message: String!
+}
+
+type RefreshTokenPayload {
+  accessToken: String!
+  refreshToken: String!
+}
