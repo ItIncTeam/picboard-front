@@ -29,7 +29,6 @@ export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
   const hasNotifications = notificationsCount > 0
   const isAuthenticated = role !== 'guest'
   const showAuthActions = !isAuthenticated
-  const showLogoutAction = isAuthenticated
 
   return (
     <header className={styles.root}>
@@ -46,7 +45,7 @@ export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
 
           <LanguageSwitcher />
           {showAuthActions && <NavigationButton />}
-          {showLogoutAction && <LogoutButton />}
+          {isAuthenticated && <LogoutButton />}
         </div>
       </div>
     </header>
