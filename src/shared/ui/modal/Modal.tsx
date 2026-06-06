@@ -5,10 +5,13 @@ import type { ComponentProps } from 'react'
 import clsx from 'clsx'
 
 type Props = ComponentProps<'div'> & {
+  /** The controlled open state of the Modal */
   open: boolean
+  /** Close modal handler */
   onClose: () => void
+  /** Modal title */
   modalTitle: string
-  className?: string
+  // className?: string
 }
 
 export const Modal = ({ open, onClose, modalTitle, className, ...rest }: Props) => (
