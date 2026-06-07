@@ -1,21 +1,23 @@
 .overlay {
-  position: absolute;
+  position: fixed;
+  z-index: 50;
   inset: 0;
-  opacity: 0.6;
-  background: var(--color-dark-900);
+  background: var(--color-overlay);
 }
 
 .content {
   position: fixed;
+  z-index: 51;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 
   width: fit-content;
-  border: 1px solid var(--color-dark-100);
+  max-width: calc(100vw - 32px);
+  border: 1px solid var(--color-border-primary);
   border-radius: 2px;
 
-  background-color: var(--color-dark-300);
+  background-color: var(--color-surface-elevated);
 }
 
 .modalHeader {
@@ -28,20 +30,7 @@
   height: 60px;
   padding-right: 24px;
   padding-left: 24px;
-  border-bottom: 1px solid #e0e0e0;
-
-  & button {
-    all: unset;
-
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 24px;
-    height: 24px;
-  }
+  border-bottom: 1px solid var(--color-border-primary);
 }
 
 .title {
@@ -51,17 +40,31 @@
   font-size: var(--typography-font-size);
   font-weight: var(--typography-h1-font-weight);
   line-height: var(--typography-line-height);
-  color: var(--color-light-100);
+  color: var(--color-text-primary);
+}
+
+.closeButton {
+  all: unset;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+
+  color: var(--color-text-primary);
+}
+
+.closeButton:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .closeIcon {
   width: 14px;
   height: 14px;
-  background: none;
-
-  /* position: absolute; */
-
-  /* top: 15px; */
-
-  /* right: 15px; */
 }

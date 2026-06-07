@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { Modal } from '@/shared/ui/modal/Modal'
 import { useState } from 'react'
+
 import { Button } from '@/shared/ui/button'
-import { ModalEmailSent } from '@/shared/ui/modal/modal-email-send/Modal-email-sent'
+import { Text } from '@/shared/ui/typography'
+
+import { Modal } from './Modal'
 
 const meta = {
   title: 'Shared/Modal',
@@ -13,14 +15,9 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof Modal>
 
-// open: boolean
-// onClose: () => void
-//   modalTitle: string
-// className?: string
-
-export const EmailSendModal: Story = {
+export const Basic: Story = {
   args: {
-    modalTitle: 'Email sent',
+    modalTitle: 'Modal title',
   },
   render: (args) => {
     const [showModal, setShowModal] = useState(false)
@@ -37,7 +34,10 @@ export const EmailSendModal: Story = {
       <>
         <Button onClick={openModalHandler}>Open modal</Button>
         <Modal {...args} open={showModal} onClose={closeModalHandler}>
-          <ModalEmailSent open={showModal} onClose={closeModalHandler} />
+          <div style={{ width: 378, padding: '24px' }}>
+            <Text mb={24}>Modal content goes here.</Text>
+            <Button onClick={closeModalHandler}>OK</Button>
+          </div>
         </Modal>
       </>
     )

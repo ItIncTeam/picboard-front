@@ -1,35 +1,41 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { Close } from '@/shared/assets'
-import styles from './modal.module.css'
-import type { ComponentProps } from 'react'
 import clsx from 'clsx'
+import type { ReactNode } from 'react'
 
-type Props = ComponentProps<'div'> & {
-  /** The controlled open state of the Modal */
+import { Close } from '@/shared/assets'
+
+import styles from './modal.module.css'
+
+type ModalProps = {
+  children: ReactNode
+  className?: string
   open: boolean
-  /** Close modal handler */
   onClose: () => void
-  /** Modal title */
   modalTitle: string
-  // className?: string
 }
 
-export const Modal = ({ open, onClose, modalTitle, className, ...rest }: Props) => (
-  <Dialog.Root open={open} onOpenChange={onClose} {...rest}>
-    <Dialog.Portal>
-      <Dialog.Overlay className={styles.overlay} />
-      <Dialog.Content className={clsx(styles.content, className)}>
-        <div className={styles.modalHeader}>
-          <Dialog.Title className={styles.Title}> {modalTitle} </Dialog.Title>
-          <button type="button" className={styles.IconButton} aria-label="Close" onClick={onClose}>
-            <Close />
-          </button>
-        </div>
+export function Modal({ children, className, modalTitle, onClose, open }: ModalProps) {
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      onClose()
+    }
+  }
 
-        {rest.children}
+  return (
+    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className={styles.overlay} />
+        <Dialog.Content className={clsx(styles.content, className)}>
+          <div className={styles.modalHeader}>
+            <Dialog.Title className={styles.title}>{modalTitle}</Dialog.Title>
+            <Dialog.Close className={styles.closeButton} aria-label="Close">
+              <Close aria-hidden className={styles.closeIcon} />
+            </Dialog.Close>
+          </div>
 
-        <Dialog.Close asChild></Dialog.Close>
-      </Dialog.Content>
-    </Dialog.Portal>
-  </Dialog.Root>
-)
+          {children}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  )
+}

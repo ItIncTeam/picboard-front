@@ -26,7 +26,7 @@ const defaultValues: SignUpFormValues = {
 type SignUpFormProps = {
   onOpenPrivacy: () => void
   onOpenTerms: () => void
-  onSuccess?: () => void
+  onSuccess?: (email: string) => void
 }
 
 type BackendFieldError = {
@@ -146,7 +146,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
 
       await signUp(input)
 
-      onSuccess?.()
+      onSuccess?.(input.email)
     } catch (error) {
       const fieldErrors = collectFieldErrors(error)
 
