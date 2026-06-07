@@ -1,4 +1,4 @@
-import { type MouseEventHandler, type ReactNode, type SVGProps } from 'react'
+import { forwardRef, type MouseEventHandler, type ReactNode, type SVGProps } from 'react'
 
 import clsx from 'clsx'
 import Image from 'next/image'
@@ -39,20 +39,23 @@ function getIconElement(props: IconButtonProps): ReactNode {
   return <Image className={styles.icon} src={props.src} alt="" width={24} height={24} aria-hidden />
 }
 
-export function IconButton(props: IconButtonProps) {
-  const { className, disabled, indicatorCount = 0, label, onClick } = props
-  const hasIndicator = indicatorCount > 0
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  function IconButton(props, ref) {
+    const { className, disabled, indicatorCount = 0, label, onClick } = props
+    const hasIndicator = indicatorCount > 0
 
-  return (
-    <button
-      className={clsx(styles.button, className)}
-      disabled={disabled}
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-    >
-      {getIconElement(props)}
-      {hasIndicator && <span className={styles.indicator}>{indicatorCount}</span>}
-    </button>
-  )
-}
+    return (
+      <button
+        ref={ref}
+        className={clsx(styles.button, className)}
+        disabled={disabled}
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+      >
+        {getIconElement(props)}
+        {hasIndicator && <span className={styles.indicator}>{indicatorCount}</span>}
+      </button>
+    )
+  },
+)

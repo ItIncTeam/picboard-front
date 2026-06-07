@@ -1,0 +1,28 @@
+.title {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.success {
+  margin: 0;
+  color: var(--color-status-success);
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.signInButton {
+  justify-self: center;
+}
