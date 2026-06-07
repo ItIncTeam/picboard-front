@@ -1,8 +1,7 @@
 .content {
   display: grid;
   gap: 18px;
-  width: min(378px, calc(100vw - 32px));
-  padding: 30px 24px 36px;
+  width: min(330px, calc(100vw - 80px));
 }
 
 .message {

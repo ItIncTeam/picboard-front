@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import type { ReactNode } from 'react'
 
 import { Close } from '@/shared/assets'
+import { IconButton } from '@/shared/ui/icon-button'
 
 import styles from './modal.module.css'
 
@@ -26,14 +27,15 @@ export function Modal({ children, className, modalTitle, onClose, open }: ModalP
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
         <Dialog.Content className={clsx(styles.content, className)}>
+          <Dialog.Close asChild>
+            <IconButton className={styles.closeButton} icon={Close} label="Close" />
+          </Dialog.Close>
+
           <div className={styles.modalHeader}>
             <Dialog.Title className={styles.title}>{modalTitle}</Dialog.Title>
-            <Dialog.Close className={styles.closeButton} aria-label="Close">
-              <Close aria-hidden className={styles.closeIcon} />
-            </Dialog.Close>
           </div>
 
-          {children}
+          <div className={styles.body}>{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
