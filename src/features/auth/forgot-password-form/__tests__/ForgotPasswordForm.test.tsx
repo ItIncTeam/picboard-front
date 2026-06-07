@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ForgotPasswordForm } from '../ForgotPasswordForm'
+import { ForgotPasswordForm } from '@/features/auth'
 
 const apiMocks = vi.hoisted(() => ({
   passwordReset: vi.fn(),

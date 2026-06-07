@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { NavigationButton } from '../NavigationButton'
+import { NavigationButton } from '@/features/auth'
 
 vi.mock('next/link', () => ({
   __esModule: true,
