@@ -1,21 +1,9 @@
-.title {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  align-items: center;
-
-  text-align: center;
-}
-
-.message {
-  margin: 0;
-}
-
 .signInButton {
-  width: 100%;
+  width: 182px;
+  margin-top: 54px;
+}
+
+.illustration {
+  display: block;
+  margin-top: 72px;
 }

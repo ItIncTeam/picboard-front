@@ -1,28 +1,21 @@
-.title {
-  margin-bottom: 24px;
-  text-align: center;
-}
-
 .form {
-  display: grid;
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: 100%;
+  margin-top: 30px;
 }
 
-.description {
-  margin: 0;
-  color: var(--color-text-secondary);
-  text-align: center;
-}
-
-.success {
-  margin: 0;
-  color: var(--color-status-success);
+.inputField {
+  width: 230px;
 }
 
 .submitButton {
-  width: 100%;
+  width: 230px;
 }
 
-.signInButton {
-  justify-self: center;
+.illustration {
+  display: block;
+  margin-top: 36px;
 }
