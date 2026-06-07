@@ -1,5 +1,5 @@
-import { LogoutButton, NavigationButton } from '@/features/auth'
-import { BellIcon } from '@/shared/assets'
+import { NavigationButton } from '@/features/auth'
+import { BellIcon, MenuIcon } from '@/shared/assets'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { Logo } from '@/shared/ui/logo'
@@ -9,7 +9,9 @@ import styles from './header.module.css'
 type HeaderRole = 'guest' | 'user' | 'admin' | 'superAdmin'
 
 type HeaderProps = {
+  isSidebarOpen?: boolean
   notificationsCount?: number
+  onOpenSidebar?: () => void
   role?: HeaderRole
 }
 
@@ -25,14 +27,28 @@ const logoSuffix: Partial<Record<HeaderRole, string>> = {
   superAdmin: 'SuperAdmin',
 }
 
-export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
+export function Header({
+  isSidebarOpen = false,
+  notificationsCount = 0,
+  onOpenSidebar,
+  role = 'user',
+}: HeaderProps) {
   const hasNotifications = notificationsCount > 0
   const isAuthenticated = role !== 'guest'
   const showAuthActions = !isAuthenticated
+  const showSidebarTrigger = isAuthenticated && onOpenSidebar
 
   return (
     <header className={styles.root}>
       <div className={styles.inner}>
+        {showSidebarTrigger && (
+          <IconButton
+            className={styles.sidebarTrigger}
+            icon={MenuIcon}
+            label={isSidebarOpen ? 'Sidebar navigation is open' : 'Open sidebar navigation'}
+            onClick={onOpenSidebar}
+          />
+        )}
         <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix[role]} />
         <div className={styles.actions}>
           <IconButton
@@ -48,7 +64,6 @@ export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
 
           <LanguageSwitcher />
           {showAuthActions && <NavigationButton />}
-          {isAuthenticated && <LogoutButton />}
         </div>
       </div>
     </header>

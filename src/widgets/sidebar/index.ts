@@ -1,1 +1,1 @@
-// Placeholder - not implemented yet
+export { Sidebar } from './Sidebar'

@@ -19,6 +19,17 @@ const navigationMocks = vi.hoisted(() => ({
   replace: vi.fn(),
 }))
 
+const assetMocks = vi.hoisted(() => {
+  const IconStub = () => <span />
+
+  return {
+    BellIcon: IconStub,
+    Close: IconStub,
+    LogOutIcon: IconStub,
+    MenuIcon: IconStub,
+  }
+})
+
 vi.mock('../api', () => ({
   getMe: apiMocks.getMe,
   logout: apiMocks.logout,
@@ -34,6 +45,8 @@ vi.mock('next/navigation', () => ({
 vi.mock('next/image', () => ({
   default: () => null,
 }))
+
+vi.mock('@/shared/assets', () => assetMocks)
 
 const user = {
   bio: null,
