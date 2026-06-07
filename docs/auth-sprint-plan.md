@@ -55,7 +55,7 @@ Scope:
 
 - Connect `/auth/sign-up` to `signUp`.
 - Handle backend field-level validation errors.
-- Trigger the current email-sent placeholder after confirmation email is sent.
+- Trigger the email-sent modal after confirmation email is sent.
 
 Backend facts:
 
@@ -63,9 +63,9 @@ Backend facts:
 - Backend requires `username` to be 6-30 characters with lowercase/uppercase letters, `-`, and `_`.
 - Confirmation email can land in spam.
 
-Follow-up:
+Completed follow-up:
 
-- Replace the email-sent placeholder with the final modal UI.
+- Replaced the email-sent placeholder with the final modal UI.
 
 ### PR 3: Email Confirmation Integration — Done
 
@@ -168,8 +168,8 @@ Scope:
 1. OAuth placeholder fix — disable or hide visible provider buttons until the backend OAuth contract
    is verified.
 2. `returnTo` after protected redirect.
-3. Final SignUp email-sent modal UI.
-4. Email confirmation resend UI.
+3. Final SignUp email-sent modal UI — Done.
+4. Email confirmation resend UI — Done.
 5. OAuth implementation after backend contract and provider configuration are confirmed.
 6. Password visibility accessibility cleanup in shared `Input`.
 7. GraphQL Code Generator setup.
