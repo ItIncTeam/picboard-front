@@ -12,14 +12,12 @@ type EmailSentModalProps = {
 
 export function EmailSentModal({ email, onClose, open }: EmailSentModalProps) {
   return (
-    <Modal modalTitle="Email sent" open={open} onClose={onClose}>
+    <Modal className={styles.modal} modalTitle="Email sent" open={open} onClose={onClose}>
       <div className={styles.content}>
         <Text className={styles.message}>We have sent a link to confirm your email to {email}</Text>
-        <div className={styles.actions}>
-          <Button className={styles.button} onClick={onClose}>
-            OK
-          </Button>
-        </div>
+        <Button className={styles.button} onClick={onClose}>
+          OK
+        </Button>
       </div>
     </Modal>
   )

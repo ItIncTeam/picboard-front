@@ -1,16 +1,16 @@
 'use client'
 
-import NextLink from 'next/link'
+import Image from 'next/image'
 import { type SyntheticEvent, useState } from 'react'
 
 import { emailConfirmationResending } from '@/features/auth/confirm-registration'
-import { AuthFormCard } from '@/views/auth/ui/auth-form-card'
-import { authRoutes } from '@/shared/lib/auth'
+import { ExpiredSignUpImage } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Text, Title } from '@/shared/ui/typography'
 import { AuthViewShell } from '@/widgets/auth-view-shell'
 
+import layoutStyles from './sign-up-state-layout.module.css'
 import styles from './email-expired.module.css'
 
 type EmailExpiredProps = {
@@ -55,51 +55,61 @@ export function EmailExpired({ email }: EmailExpiredProps) {
 
   return (
     <AuthViewShell>
-      <AuthFormCard>
-        <Title level="h1" className={styles.title}>
-          Email verification link expired
-        </Title>
+      <section className={layoutStyles.root}>
+        <div className={layoutStyles.content}>
+          <div className={layoutStyles.header}>
+            <Title level="h1">Email verification link expired</Title>
 
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          <Text className={styles.description}>
-            Looks like the verification link has expired. Not to worry, we can send the link again
-          </Text>
-
-          <Input
-            autoComplete="email"
-            disabled={isLoading}
-            error={error}
-            label="Email"
-            onChange={(event) => {
-              setEmailValue(event.target.value)
-              setError('')
-              setSuccessMessage('')
-            }}
-            type="email"
-            value={emailValue}
-          />
-
-          {successMessage && (
-            <Text aria-live="polite" className={styles.success} role="status" size="sm">
-              {successMessage}
+            <Text>
+              Looks like the verification link has expired. Not to worry, we can send the link again
             </Text>
-          )}
+          </div>
 
-          <Button
-            className={styles.submitButton}
-            disabled={!canSubmit}
-            loading={isLoading}
-            loadingText="Sending..."
-            type="submit"
-          >
-            Resend verification link
-          </Button>
+          <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            <div className={styles.inputField}>
+              <Input
+                autoComplete="email"
+                disabled={isLoading}
+                error={error}
+                label="Email"
+                onChange={(event) => {
+                  setEmailValue(event.target.value)
+                  setError('')
+                  setSuccessMessage('')
+                }}
+                placeholder="Epam@epam.com"
+                type="email"
+                value={emailValue}
+              />
+            </div>
 
-          <Button asChild className={styles.signInButton} type="button" variant="textButton">
-            <NextLink href={authRoutes.signIn}>Sign In</NextLink>
-          </Button>
-        </form>
-      </AuthFormCard>
+            {successMessage && (
+              <Text aria-live="polite" color="var(--color-status-success)" role="status" size="sm">
+                {successMessage}
+              </Text>
+            )}
+
+            <Button
+              className={styles.submitButton}
+              disabled={!canSubmit}
+              loading={isLoading}
+              loadingText="Sending..."
+              type="submit"
+            >
+              Resend verification link
+            </Button>
+          </form>
+        </div>
+
+        <Image
+          alt="Verification link expired illustration"
+          className={styles.illustration}
+          height={352}
+          sizes="474px"
+          src={ExpiredSignUpImage}
+          width={474}
+        />
+      </section>
     </AuthViewShell>
   )
 }

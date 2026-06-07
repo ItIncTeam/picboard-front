@@ -1,16 +1,18 @@
+.modal {
+  width: min(378px, calc(100vw - 32px));
+}
+
 .content {
-  display: grid;
-  gap: 18px;
-  width: min(330px, calc(100vw - 80px));
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: flex-end;
+
+  width: 100%;
 }
 
 .message {
-  margin: 0;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
+  align-self: stretch;
 }
 
 .button {
