@@ -16,8 +16,8 @@ Already in place:
 - `httpLink` uses `process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '/graphql'`.
 - `credentials: 'include'` is enabled for GraphQL requests.
 - `authLink` attaches `Authorization: Bearer <accessToken>` when an access token exists.
-- `errorLink` clears the in-memory access token on `401`, `403`, and `UNAUTHENTICATED`, then emits
-  a shared auth session expired event.
+- `errorLink` silently refreshes eligible `401` / `UNAUTHENTICATED` failures, retries the failed
+  operation once, and falls back to the shared auth session expired event when refresh fails.
 - `SessionProvider` subscribes to the shared auth session expired event and moves the session to
   `anonymous`.
 - `src/app/(protected)/layout.tsx` wraps children in `ProtectedRouteBoundary`.
@@ -131,7 +131,7 @@ Scope:
 
 Follow-ups: Logout flow
 
-### PR 8: Password Recovery — Pending / Partial
+### PR 8: Password Recovery — Done
 
 Scope:
 
@@ -140,9 +140,21 @@ Scope:
 
 Current status:
 
-- Forgot password UI and API helper exist.
-- Password recovery contract verification/completion is still pending.
-- Create new password and password recovery confirmation remain placeholders.
+- Password recovery schema was verified.
+- Forgot password calls `passwordReset`.
+- Password recovery confirmation bridges to create-new-password.
+- Create new password calls `setNewPassword`.
+- Recovery code stays URL-only and is not persisted.
+
+### PR 9: Refresh-on-401 Queue — Done
+
+Scope:
+
+- Refresh eligible authenticated `401` / `UNAUTHENTICATED` failures through `refreshToken`.
+- Queue concurrent failures behind one in-flight refresh request.
+- Retry the failed operation once with the refreshed memory-only `accessToken`.
+- Fall back to session invalidation when refresh fails.
+- Guard logout/session-clear races with an access-token version counter.
 
 ### Shared UI: Button Loading API — Done
 
@@ -151,16 +163,16 @@ Scope:
 - `Button` supports `loading` and `loadingText`.
 - Auth submit buttons use loading state during async submission.
 
-### Follow-ups
+### Remaining Priorities
 
-- Logout flow.
-- `returnTo` after protected redirect.
-- Password recovery contract verification/completion.
-- Final SignUp email-sent modal UI.
-- Password visibility accessibility cleanup in shared `Input`.
-- OAuth placeholder decision.
-- Optional GraphQL Code Generator.
-- Optional Apollo refresh-on-401 retry queue.
+1. OAuth placeholder fix — disable or hide visible provider buttons until the backend OAuth contract
+   is verified.
+2. `returnTo` after protected redirect.
+3. Final SignUp email-sent modal UI.
+4. Email confirmation resend UI.
+5. OAuth implementation after backend contract and provider configuration are confirmed.
+6. Password visibility accessibility cleanup in shared `Input`.
+7. GraphQL Code Generator setup.
 
 ## FSD Placement
 
@@ -189,15 +201,13 @@ Rules:
 - Apollo infrastructure stays in `shared/api/apollo`.
 - Widgets and views do not store tokens, call auth APIs directly, or own session state.
 
-## Out Of Scope
+## Out Of Scope For Completed Auth Infrastructure PRs
 
 - New UI primitives.
 - Route restructuring.
 - Middleware.
 - Frontend refresh token storage.
 - Role-based access.
-- Refresh-on-401 retry queue.
-- GraphQL Code Generator.
 
 ## Backend Confirmed Facts (June 2026)
 
