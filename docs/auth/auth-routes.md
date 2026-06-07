@@ -42,7 +42,7 @@ Frontend flow:
 2. Frontend calls `signUp`.
 3. Backend creates an unconfirmed user.
 4. Backend sends a confirmation email.
-5. Frontend opens the current email-sent placeholder state.
+5. Frontend opens `EmailSentModal` with the submitted email and redirects to sign in after close.
 
 Verified backend success message:
 
@@ -56,7 +56,7 @@ Notes:
 
 - The confirmation email can land in spam.
 - Backend validates `username` as 6-30 characters, with lowercase/uppercase letters and `-` or `_`.
-- Final email-sent modal UI is still a follow-up; the mutation and success transition are wired.
+- The email-sent modal UI and success transition are wired.
 
 ### `/auth/confirm/registration?code=<CODE>`
 

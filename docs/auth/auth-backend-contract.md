@@ -382,18 +382,18 @@ Logout calls:
 
 ## Frontend Mapping
 
-| Route                             | Feature                                     | GraphQL Operation                 |
-| --------------------------------- | ------------------------------------------- | --------------------------------- |
-| `/auth/sign-up`                   | `features/auth/sign-up-form`                | `signUp`                          |
-| `/auth/confirm/registration`      | `features/auth/confirm-registration`        | `emailConfirmation`               |
-| `/auth/sign-in`                   | `features/auth/sign-in-form`                | `signIn`, `me`                    |
-| `/auth/forgot-password`           | `features/auth/forgot-password-form`        | `passwordReset`                   |
-| `/auth/confirm/password-recovery` | Pending password recovery confirmation view | No standalone operation in schema |
-| `/auth/create-new-password`       | Pending create new password integration     | `setNewPassword`                  |
-| Global session bootstrap          | `features/auth/session-management`          | `refreshToken`, `me`              |
-| Protected route boundary          | `features/auth/session-management`          | Client session state              |
-| Global logout action              | `features/auth/logout-button`               | `logout`                          |
-| Resend confirmation action        | Pending resend confirmation action          | `emailConfirmationResending`      |
+| Route                             | Feature                                  | GraphQL Operation                 |
+| --------------------------------- | ---------------------------------------- | --------------------------------- |
+| `/auth/sign-up`                   | `features/auth/sign-up-form`             | `signUp`                          |
+| `/auth/confirm/registration`      | `features/auth/confirm-registration`     | `emailConfirmation`               |
+| `/auth/sign-in`                   | `features/auth/sign-in-form`             | `signIn`, `me`                    |
+| `/auth/forgot-password`           | `features/auth/forgot-password-form`     | `passwordReset`                   |
+| `/auth/confirm/password-recovery` | `views/auth/confirm-password-recovery`   | No standalone operation in schema |
+| `/auth/create-new-password`       | `features/auth/create-new-password-form` | `setNewPassword`                  |
+| Global session bootstrap          | `features/auth/session-management`       | `refreshToken`, `me`              |
+| Protected route boundary          | `features/auth/session-management`       | Client session state              |
+| Global logout action              | `features/auth/logout-button`            | `logout`                          |
+| Resend confirmation action        | `features/auth/confirm-registration`     | `emailConfirmationResending`      |
 
 ## Known Backend Decisions
 
