@@ -1,0 +1,17 @@
+.shell {
+  overflow: hidden;
+  height: calc(100svh - var(--public-header-height));
+}
+
+.content {
+  overflow-y: auto;
+  height: calc(100svh - var(--public-header-height));
+  padding: 24px 16px;
+}
+
+@media (width >= 768px) {
+  .content {
+    margin-left: 220px;
+    padding: 24px;
+  }
+}

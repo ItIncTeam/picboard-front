@@ -215,11 +215,13 @@ Frontend decision:
 
 Frontend sign-in integration requests `accessToken` and `user`.
 
-| Field          | Type      | Required |
-| -------------- | --------- | -------- |
-| `user`         | `User!`   | Yes      |
-| `accessToken`  | `String!` | Yes      |
-| `refreshToken` | `String!` | Yes      |
+| Field         | Type      | Required |
+| ------------- | --------- | -------- |
+| `user`        | `User!`   | Yes      |
+| `accessToken` | `String!` | Yes      |
+
+The backend no longer returns `refreshToken` in the `signIn` response. It is managed only through
+the backend-set `httpOnly` cookie.
 
 ### `EmailConfirmationPayload`
 
