@@ -183,7 +183,6 @@ Session bootstrap использует `refreshToken` mutation и backend-manage
 - middleware;
 - cookie reads в App Router layouts;
 - role-based access;
-- refresh-on-401 retry;
 - API calls в layouts;
 - формы и validation в `app/`;
 - Zustand stores без готового сценария;

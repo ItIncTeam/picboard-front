@@ -6,13 +6,6 @@
 }
 
 .iconButton {
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-.iconButton svg {
-  display: block;
   width: 36px;
   height: 36px;
 }

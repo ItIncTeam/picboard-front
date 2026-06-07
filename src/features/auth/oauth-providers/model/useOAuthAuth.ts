@@ -5,9 +5,8 @@ type UseOAuthAuthArgs = {
 }
 
 export function useOAuthAuth({ intent }: UseOAuthAuthArgs) {
-  const signInWithProvider = async (provider: OAuthProvider) => {
-    // TODO: implement OAuth flow (redirect/popup + callback exchange)
-    console.warn('OAuth auth:', { provider, intent })
+  const signInWithProvider = async (_provider: OAuthProvider) => {
+    void intent
   }
 
   return { signInWithProvider }

@@ -145,7 +145,7 @@ Invalid credentials are normalized in the sign-in form to:
 Incorrect email or password
 ```
 
-## Auth Error Invalidation
+## Auth Error Refresh And Invalidation
 
 Apollo `errorLink` handles:
 
@@ -153,10 +153,28 @@ Apollo `errorLink` handles:
 - `403`
 - `UNAUTHENTICATED`
 
-Invalidation flow:
+Refresh-on-401 flow:
 
 ```txt
-Apollo auth error
+authenticated GraphQL request
+  ↓
+401 or UNAUTHENTICATED
+  ↓
+refreshToken
+  ↓
+setAccessToken(new accessToken)
+  ↓
+retry original operation once
+```
+
+Concurrent `401` responses share one in-flight refresh promise. Refresh is skipped for anonymous
+requests, `SignIn`, `Logout`, `RefreshToken`, already retried operations, and `403` / `FORBIDDEN`
+errors.
+
+Refresh failure falls back to invalidation:
+
+```txt
+refreshToken fails or returns no accessToken
   ↓
 clearAccessToken
   ↓
@@ -170,8 +188,8 @@ anonymous
 The shared event channel lives in `shared/lib/auth`. Apollo does not import `SessionProvider`,
 `useSession`, or any feature/session-management module.
 
-This implementation does not do refresh-on-401 retry. Retry queues and automatic refresh after
-request failures are optional follow-ups.
+`accessTokenStore` keeps a token version counter. Clearing/replacing the token invalidates stale
+in-flight refreshes, so logout cannot be undone by a late refresh response.
 
 ## Protected Routes
 
@@ -198,7 +216,7 @@ Sequence:
 3. Clear frontend session state.
 4. Redirect the user to `/auth/sign-in`.
 
-The frontend still does not persist tokens and does not run a refresh-on-401 queue.
+The frontend still does not persist tokens or read/store the backend-managed refresh cookie.
 
 ## Localhost Restore Limitation
 

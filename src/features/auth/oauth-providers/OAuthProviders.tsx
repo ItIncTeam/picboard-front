@@ -1,9 +1,9 @@
 'use client'
 
 import { GithubIcon, GoogleIcon } from '@/shared/assets'
+import { IconButton } from '@/shared/ui/icon-button'
 
 import styles from './oauth-providers.module.css'
-import { useOAuthAuth } from './model/useOAuthAuth'
 import type { OAuthIntent } from './model/types'
 
 type OAuthProvidersProps = {
@@ -11,27 +11,23 @@ type OAuthProvidersProps = {
 }
 
 export function OAuthProviders({ intent }: OAuthProvidersProps) {
-  const { signInWithProvider } = useOAuthAuth({ intent })
+  const actionLabel = intent === 'signIn' ? 'sign-in' : 'sign-up'
 
   return (
     <div className={styles.list}>
-      <button
-        type="button"
+      <IconButton
         className={styles.iconButton}
-        aria-label={`${intent === 'signIn' ? 'Sign in' : 'Sign up'} with Google`}
-        onClick={() => void signInWithProvider('google')}
-      >
-        <GoogleIcon aria-hidden />
-      </button>
+        disabled
+        icon={GoogleIcon}
+        label={`Google ${actionLabel} is not available yet`}
+      />
 
-      <button
-        type="button"
+      <IconButton
         className={styles.iconButton}
-        aria-label={`${intent === 'signIn' ? 'Sign in' : 'Sign up'} with GitHub`}
-        onClick={() => void signInWithProvider('github')}
-      >
-        <GithubIcon aria-hidden />
-      </button>
+        disabled
+        icon={GithubIcon}
+        label={`GitHub ${actionLabel} is not available yet`}
+      />
     </div>
   )
 }
