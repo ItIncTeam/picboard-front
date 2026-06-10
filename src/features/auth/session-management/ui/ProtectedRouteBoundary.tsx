@@ -3,6 +3,8 @@
 import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 
+import { getSignInHrefWithReturnTo } from '@/shared/lib/auth'
+
 import { useSession } from '../model/useSession'
 import styles from './protected-route-boundary.module.css'
 
@@ -24,7 +26,9 @@ export function ProtectedRouteBoundary({ children }: ProtectedRouteBoundaryProps
 
   useEffect(() => {
     if (status === 'anonymous') {
-      router.replace('/auth/sign-in')
+      const returnTo = `${window.location.pathname}${window.location.search}`
+
+      router.replace(getSignInHrefWithReturnTo(returnTo))
     }
   }, [router, status])
 

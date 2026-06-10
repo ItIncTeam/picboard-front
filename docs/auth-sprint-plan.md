@@ -167,7 +167,7 @@ Scope:
 
 1. OAuth placeholder fix — disable or hide visible provider buttons until the backend OAuth contract
    is verified.
-2. `returnTo` after protected redirect.
+2. `returnTo` after protected redirect — Done.
 3. Final SignUp email-sent modal UI — Done.
 4. Email confirmation resend UI — Done.
 5. OAuth implementation after backend contract and provider configuration are confirmed.

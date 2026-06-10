@@ -79,11 +79,15 @@ Root layout не содержит route-specific UI, redirects, role checks ил
 `ProtectedRouteBoundary` использует client session state из `SessionProvider`:
 
 - `bootstrapping` показывает loading state;
-- `anonymous` делает client redirect на `/auth/sign-in`;
+- `anonymous` делает client redirect на `/auth/sign-in?returnTo=<encoded protected path>`;
 - `authenticated` рендерит protected content.
 
 Protected layout не читает cookies, не вызывает backend напрямую, не реализует role-based access и
 не заменяет middleware.
+
+`returnTo` сохраняет same-app relative path текущего protected route, включая query string. После
+входа `/auth/sign-in` валидирует `returnTo`: значение должно начинаться с `/`, не начинаться с `//`
+и не начинаться с `/auth`. Небезопасные значения fallback-ятся на `/main`.
 
 `src/app/(protected)/(main)/layout.tsx` держит основной protected segment и slot `@modal`.
 

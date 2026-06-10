@@ -69,6 +69,7 @@ describe('ProtectedRouteBoundary', () => {
     mountedRoots.length = 0
     navigationMocks.replace.mockReset()
     sessionMocks.status = 'bootstrapping'
+    window.history.pushState({}, '', '/')
   })
 
   it('shows loading state while bootstrapping', () => {
@@ -83,6 +84,7 @@ describe('ProtectedRouteBoundary', () => {
   })
 
   it('redirects anonymous users to sign in', () => {
+    window.history.pushState({}, '', '/feed')
     sessionMocks.status = 'anonymous'
 
     const view = renderProtectedRouteBoundary()
@@ -90,6 +92,19 @@ describe('ProtectedRouteBoundary', () => {
     mountedRoots.push(view)
 
     expect(view.container.textContent).toContain('Redirecting to sign in...')
-    expect(navigationMocks.replace).toHaveBeenCalledWith('/auth/sign-in')
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/auth/sign-in?returnTo=%2Ffeed')
+  })
+
+  it('preserves protected route query params in returnTo', () => {
+    window.history.pushState({}, '', '/search?term=user&sort=recent')
+    sessionMocks.status = 'anonymous'
+
+    const view = renderProtectedRouteBoundary()
+
+    mountedRoots.push(view)
+
+    expect(navigationMocks.replace).toHaveBeenCalledWith(
+      '/auth/sign-in?returnTo=%2Fsearch%3Fterm%3Duser%26sort%3Drecent',
+    )
   })
 })

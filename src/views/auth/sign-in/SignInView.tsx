@@ -1,9 +1,10 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { OAuthProviders, SignInForm } from '@/features/auth'
+import { getSafeReturnToPath } from '@/shared/lib/auth'
 import { AuthFormCard } from '@/views/auth/ui/auth-form-card'
 import { Title } from '@/shared/ui/typography'
 import { AuthViewShell } from '@/widgets/auth-view-shell'
@@ -12,6 +13,8 @@ import styles from './sign-in-view.module.css'
 
 function SignInViewContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = getSafeReturnToPath(searchParams.get('returnTo'))
 
   return (
     <AuthViewShell>
@@ -23,7 +26,7 @@ function SignInViewContent() {
           <OAuthProviders intent="signIn" />
           <SignInForm
             onSuccess={() => {
-              router.push('/main')
+              router.push(returnTo)
             }}
           />
         </div>

@@ -101,7 +101,7 @@ Frontend flow:
 4. Frontend stores only `accessToken` in memory.
 5. Frontend calls `authenticateWithCurrentToken`.
 6. `authenticateWithCurrentToken` calls `me` and moves session state to `authenticated`.
-7. Frontend redirects to the protected entry route.
+7. Frontend redirects to the validated `returnTo` route when present, otherwise to `/main`.
 
 Verified invalid credentials error:
 
@@ -203,8 +203,12 @@ older bootstrap result cannot overwrite a newer sign-in result.
 `src/app/(protected)/layout.tsx` wraps protected route children in `ProtectedRouteBoundary`:
 
 - `bootstrapping` shows a loading state;
-- `anonymous` redirects to `/auth/sign-in`;
+- `anonymous` redirects to `/auth/sign-in?returnTo=<encoded protected path>`;
 - `authenticated` renders `children`.
+
+The `returnTo` value preserves the protected route path and query string. The sign-in view validates
+it before navigation and only accepts same-app relative paths that start with `/`, do not start with
+`//`, and do not start with `/auth`. Unsafe or missing values fall back to `/main`.
 
 Auth error refresh and invalidation:
 
@@ -216,7 +220,7 @@ Auth error refresh and invalidation:
 5. Refresh failure, ineligible operations, and `403` / `FORBIDDEN` errors clear the in-memory access
    token and emit a shared auth session expired event from `shared/lib/auth`.
 6. `SessionProvider` subscribes to that event and moves session state to `anonymous`.
-7. `ProtectedRouteBoundary` redirects anonymous users from protected pages.
+7. `ProtectedRouteBoundary` redirects anonymous users from protected pages with `returnTo`.
 
 The token store uses a version guard so an in-flight refresh cannot restore the token after logout.
 
@@ -229,7 +233,7 @@ Logout:
 1. The protected header renders the feature-level logout action.
 2. The action calls `logout`.
 3. `SessionProvider` clears the memory-only access token and moves session state to `anonymous`.
-4. The action redirects to `/auth/sign-in`.
+4. The action redirects to plain `/auth/sign-in`.
 
 The frontend does not persist tokens and does not read, store, or manually send the refresh token.
 
