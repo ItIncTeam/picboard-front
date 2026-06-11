@@ -32,7 +32,7 @@ When updating architecture or behavior:
 - update the relevant docs in the same task;
 - keep implementation status in docs synchronized with the actual code;
 - if implementation changes make a documented "planned" feature complete, update the documentation from pending/planned to implemented/done.
-
+Fogma https://www.figma.com/design/vEOVR2cLJ7mgszs8mWuw8f/Inctagram--Copy-?node-id=301-4851&m=dev
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
