@@ -88,14 +88,16 @@ describe('ConfirmPasswordRecoveryView', () => {
     )
   })
 
-  it('shows error and forgot-password link when code is missing', () => {
+  it('shows expired link state and forgot-password link when code is missing', () => {
     const view = renderView(new URLSearchParams())
 
     mountedRoots.push(view)
 
+    expect(view.container.textContent).toContain('Email verification link expired')
     expect(view.container.textContent).toContain(
-      'Invalid recovery link. Please request a new password reset.',
+      'Looks like the verification link has expired. Not to worry, we can send the link again',
     )
+    expect(view.container.textContent).toContain('Resend link')
 
     const link = view.container.querySelector('a')
 
