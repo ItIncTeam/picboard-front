@@ -1,5 +1,8 @@
+'use client'
+
 import { NavigationButton } from '@/features/auth'
 import { BellIcon, MenuIcon } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { Logo } from '@/shared/ui/logo'
@@ -37,6 +40,7 @@ export function Header({
   const isAuthenticated = role !== 'guest'
   const showAuthActions = !isAuthenticated
   const showSidebarTrigger = isAuthenticated && onOpenSidebar
+  const { t } = useI18n()
 
   return (
     <header className={styles.root}>
@@ -45,7 +49,7 @@ export function Header({
           <IconButton
             className={styles.sidebarTrigger}
             icon={MenuIcon}
-            label={isSidebarOpen ? 'Sidebar navigation is open' : 'Open sidebar navigation'}
+            label={isSidebarOpen ? t.header.sidebarOpen : t.header.openSidebar}
             onClick={onOpenSidebar}
           />
         )}
@@ -58,7 +62,7 @@ export function Header({
             label={
               hasNotifications
                 ? `${notificationsCount} unread notifications. Notifications are not available yet.`
-                : 'Notifications are not available yet.'
+                : t.header.notificationsUnavailable
             }
           />
 

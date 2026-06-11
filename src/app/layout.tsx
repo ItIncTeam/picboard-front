@@ -1,3 +1,4 @@
+import { I18nProvider } from '@/shared/lib/i18n'
 import type { Metadata } from 'next'
 
 import { SessionProvider } from '@/features/auth/session-management'
@@ -33,7 +34,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ApolloProvider>
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider>
+            <I18nProvider>{children}</I18nProvider>
+          </SessionProvider>
         </ApolloProvider>
       </body>
     </html>
