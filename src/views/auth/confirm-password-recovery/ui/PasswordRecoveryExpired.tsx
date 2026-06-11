@@ -34,6 +34,7 @@ export function PasswordRecoveryExpired() {
           sizes="474px"
           src={ExpiredSignUpImage}
           width={474}
+          priority
         />
       </section>
     </AuthViewShell>
