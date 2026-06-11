@@ -82,5 +82,12 @@ export const en = {
       saving: 'Saving...',
       submit: 'Create new password',
     },
+    passwordRecoveryExpired: {
+      title: 'Email verification link expired',
+      description:
+        'Looks like the verification link has expired. Not to worry, we can send the link again',
+      resendLink: 'Resend link',
+      illustrationAlt: 'Verification link expired illustration',
+    },
   },
 } as const
