@@ -1,15 +1,34 @@
 export const ru = {
   header: {
     openSidebar: 'Открыть навигацию',
+    closeSidebar: 'Закрыть навигацию',
     sidebarOpen: 'Навигация открыта',
     notificationsUnavailable: 'Уведомления пока недоступны.',
     unreadNotifications: 'непрочитанных уведомлений',
   },
+  sidebar: {
+    closeNavigation: 'Закрыть навигацию',
+    mainSidebar: 'Боковая навигация',
+    mainNavigation: 'Основная навигация',
+    feed: 'Лента',
+    create: 'Создать',
+    myProfile: 'Мой профиль',
+    messenger: 'Мессенджер',
+    search: 'Поиск',
+    statistics: 'Статистика',
+    favorites: 'Избранное',
+  },
   languageSwitcher: {
+    selectLanguage: 'Выбрать язык',
     english: 'Английский',
     russian: 'Русский',
   },
   auth: {
+    logout: {
+      signOut: 'Выйти',
+      signingOut: 'Выходим...',
+      logOut: 'Выйти',
+    },
     signIn: {
       title: 'Вход',
       email: 'Email',

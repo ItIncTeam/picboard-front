@@ -1,7 +1,7 @@
 'use client'
 
 import { NavigationButton } from '@/features/auth'
-import { BellIcon, MenuIcon } from '@/shared/assets'
+import { BellIcon } from '@/shared/assets'
 import { useI18n } from '@/shared/lib/i18n'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
@@ -14,7 +14,7 @@ type HeaderRole = 'guest' | 'user' | 'admin' | 'superAdmin'
 type HeaderProps = {
   isSidebarOpen?: boolean
   notificationsCount?: number
-  onOpenSidebar?: () => void
+  onToggleSidebar?: () => void
   role?: HeaderRole
 }
 
@@ -33,25 +33,34 @@ const logoSuffix: Partial<Record<HeaderRole, string>> = {
 export function Header({
   isSidebarOpen = false,
   notificationsCount = 0,
-  onOpenSidebar,
+  onToggleSidebar,
   role = 'user',
 }: HeaderProps) {
   const hasNotifications = notificationsCount > 0
   const isAuthenticated = role !== 'guest'
   const showAuthActions = !isAuthenticated
-  const showSidebarTrigger = isAuthenticated && onOpenSidebar
+  const showSidebarTrigger = isAuthenticated && onToggleSidebar
   const { t } = useI18n()
 
   return (
     <header className={styles.root}>
-      <div className={styles.inner}>
+      <div className={styles.inner} data-guest={showAuthActions}>
         {showSidebarTrigger && (
-          <IconButton
+          <button
+            aria-controls="app-sidebar"
+            aria-expanded={isSidebarOpen}
+            aria-label={isSidebarOpen ? t.header.closeSidebar : t.header.openSidebar}
             className={styles.sidebarTrigger}
-            icon={MenuIcon}
-            label={isSidebarOpen ? t.header.sidebarOpen : t.header.openSidebar}
-            onClick={onOpenSidebar}
-          />
+            data-open={isSidebarOpen}
+            onClick={onToggleSidebar}
+            type="button"
+          >
+            <span className={styles.sidebarTriggerIcon} aria-hidden>
+              <span className={styles.sidebarTriggerLine} />
+              <span className={styles.sidebarTriggerLine} />
+              <span className={styles.sidebarTriggerLine} />
+            </span>
+          </button>
         )}
         <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix[role]} />
         <div className={styles.actions}>
@@ -67,7 +76,11 @@ export function Header({
           />
 
           <LanguageSwitcher />
-          {showAuthActions && <NavigationButton />}
+          {showAuthActions && (
+            <div className={styles.authActions}>
+              <NavigationButton />
+            </div>
+          )}
         </div>
       </div>
     </header>

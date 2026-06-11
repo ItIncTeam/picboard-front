@@ -29,7 +29,16 @@ export function LanguageSwitcher() {
 
   return (
     <div className={styles.root}>
-      <Select options={options} value={language} onValueChange={handleValueChange} />
+      <Select
+        contentClassName={styles.content}
+        iconClassName={styles.icon}
+        options={options}
+        triggerAriaLabel={t.languageSwitcher.selectLanguage}
+        triggerClassName={styles.trigger}
+        value={language}
+        valueLabelClassName={styles.valueLabel}
+        onValueChange={handleValueChange}
+      />
     </div>
   )
 }
