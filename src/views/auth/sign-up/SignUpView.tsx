@@ -10,6 +10,7 @@ import { authRoutes } from '@/shared/lib/auth'
 import { Title } from '@/shared/ui/typography'
 import { AuthViewShell } from '@/widgets/auth-view-shell'
 import { DocModal, type DocModalKind } from '@/widgets/doc-modal'
+import { useI18n } from '@/shared/lib/i18n'
 
 import { selectSignUpMode } from './model/selectMode'
 import styles from './sign-up-view.module.css'
@@ -22,6 +23,7 @@ function SignUpViewContent() {
   const [isEmailSentOpen, setIsEmailSentOpen] = useState(false)
   const [openDoc, setOpenDoc] = useState<DocModalKind | null>(null)
   const [submittedEmail, setSubmittedEmail] = useState('')
+  const { t } = useI18n()
 
   const handleCloseDoc = useCallback(() => {
     setOpenDoc(null)
@@ -57,7 +59,7 @@ function SignUpViewContent() {
     <AuthViewShell>
       <AuthFormCard>
         <Title level="h1" className={styles.cardTitleCenter}>
-          Sign Up
+          {t.auth.signUp.title}
         </Title>
         <div className={styles.cardBody}>
           <OAuthProviders intent="signUp" />

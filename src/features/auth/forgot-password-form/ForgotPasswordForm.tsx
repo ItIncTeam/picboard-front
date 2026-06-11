@@ -4,29 +4,23 @@ import NextLink from 'next/link'
 import { type SyntheticEvent, useState } from 'react'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3'
 
+import { passwordReset } from '@/features/auth/api/passwordRecoveryApi'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Recaptcha } from '@/shared/ui/recaptcha'
 import { Text } from '@/shared/ui/typography'
-import { passwordReset } from '@/features/auth/api/passwordRecoveryApi'
 
 import styles from './forgot-password-form.module.css'
 
 const RECAPTCHA_ACTION = 'password_reset'
 
-const MESSAGES = {
-  description: 'Enter your email address and we will send you further instructions',
-  recaptchaUnavailable: 'reCAPTCHA is not ready. Please try again.',
-  successHint: "If you don't receive an email send link again",
-  successTitle: 'The link has been sent by email.',
-  userNotFound: "User with this email doesn't exist",
-}
-
-const isEmailValid = (email: string) => {
+const isEmailValid = (email: string): boolean => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
 export function ForgotPasswordForm() {
+  const { t } = useI18n()
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
@@ -38,9 +32,11 @@ export function ForgotPasswordForm() {
   const hasSuccess = Boolean(successEmail)
   const isEmailReady = isEmailValid(trimmedEmail)
   const canSubmit = isEmailReady && (hasSuccess || isRecaptchaChecked) && !isLoading
-  const recoveryButtonText = hasSuccess ? 'Send Link Again' : 'Send Link'
+  const recoveryButtonText = hasSuccess
+    ? t.auth.forgotPassword.sendLinkAgain
+    : t.auth.forgotPassword.sendLink
 
-  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault()
 
     if (!canSubmit) {
@@ -50,7 +46,7 @@ export function ForgotPasswordForm() {
     setError('')
 
     if (!executeRecaptcha) {
-      setError(MESSAGES.recaptchaUnavailable)
+      setError(t.auth.forgotPassword.recaptchaUnavailable)
 
       return
     }
@@ -63,7 +59,9 @@ export function ForgotPasswordForm() {
       await passwordReset({ captchaToken, email: trimmedEmail })
       setSuccessEmail(trimmedEmail)
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : MESSAGES.userNotFound)
+      setError(
+        submitError instanceof Error ? submitError.message : t.auth.forgotPassword.userNotFound,
+      )
       setSuccessEmail('')
       setIsRecaptchaChecked(false)
     } finally {
@@ -78,7 +76,7 @@ export function ForgotPasswordForm() {
           autoComplete="email"
           disabled={isLoading}
           error={error}
-          label="Email"
+          label={t.auth.forgotPassword.email}
           onChange={(event) => {
             setEmail(event.target.value)
             setError('')
@@ -91,13 +89,13 @@ export function ForgotPasswordForm() {
       </div>
 
       <Text className={styles.description} size="sm">
-        {MESSAGES.description}
+        {t.auth.forgotPassword.description}
       </Text>
 
       {successEmail && (
         <div className={styles.success} role="status" aria-live="polite">
-          <Text size="sm">{MESSAGES.successTitle}</Text>
-          <Text size="sm">{MESSAGES.successHint}</Text>
+          <Text size="sm">{t.auth.forgotPassword.successTitle}</Text>
+          <Text size="sm">{t.auth.forgotPassword.successHint}</Text>
         </div>
       )}
 
@@ -107,12 +105,12 @@ export function ForgotPasswordForm() {
           type="submit"
           disabled={!canSubmit}
           loading={isLoading}
-          loadingText="Sending..."
+          loadingText={t.auth.forgotPassword.sending}
         >
           {recoveryButtonText}
         </Button>
         <Button asChild className={styles.backButton} type="button" variant="textButton">
-          <NextLink href="/auth/sign-in">Back to Sign in</NextLink>
+          <NextLink href="/auth/sign-in">{t.auth.forgotPassword.backToSignIn}</NextLink>
         </Button>
       </div>
 

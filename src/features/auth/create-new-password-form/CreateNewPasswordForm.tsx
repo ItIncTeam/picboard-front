@@ -9,6 +9,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { setNewPassword } from '@/features/auth/api/passwordRecoveryApi'
 import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
 import { authRoutes } from '@/shared/lib/auth'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Text } from '@/shared/ui/typography'
@@ -24,15 +25,10 @@ const defaultValues: CreateNewPasswordFormValues = {
   passwordConfirmation: '',
 }
 
-const fallbackErrorMessage = 'Password update failed. Please try again.'
-const passwordRequirement = 'Your password must be between 6 and 20 characters'
 const redirectDelayMs = 3000
 
-const getErrorMessage = (error: unknown) => {
-  return error instanceof Error && error.message.length > 0 ? error.message : fallbackErrorMessage
-}
-
 export function CreateNewPasswordForm() {
+  const { t } = useI18n()
   const router = useRouter()
   const searchParams = useSearchParams()
   const code = useMemo(() => searchParams.get('code')?.trim() ?? '', [searchParams])
@@ -67,13 +63,19 @@ export function CreateNewPasswordForm() {
     }
   }, [router, successMessage])
 
-  const clearRootError = () => {
+  const getErrorMessage = (error: unknown): string => {
+    return error instanceof Error && error.message.length > 0
+      ? error.message
+      : t.auth.createNewPassword.fallbackError
+  }
+
+  const clearRootError = (): void => {
     if (errors.root) {
       clearErrors('root')
     }
   }
 
-  const onSubmit = async (data: CreateNewPasswordFormValues) => {
+  const onSubmit = async (data: CreateNewPasswordFormValues): Promise<void> => {
     if (!code) {
       return
     }
@@ -86,7 +88,7 @@ export function CreateNewPasswordForm() {
         password: data.password,
       })
 
-      setSuccessMessage('Password has been changed successfully!')
+      setSuccessMessage(t.auth.createNewPassword.successMessage)
     } catch (error) {
       setError('root', { message: getErrorMessage(error) })
     }
@@ -96,10 +98,12 @@ export function CreateNewPasswordForm() {
     return (
       <div className={styles.state}>
         <Text aria-live="polite" className={styles.stateMessage} color="var(--color-status-danger)">
-          Invalid recovery link. Please request a new password reset.
+          {t.auth.createNewPassword.invalidLink}
         </Text>
         <Button asChild className={styles.submitButton}>
-          <NextLink href={authRoutes.forgotPassword}>Request Password Reset</NextLink>
+          <NextLink href={authRoutes.forgotPassword}>
+            {t.auth.createNewPassword.requestPasswordReset}
+          </NextLink>
         </Button>
       </div>
     )
@@ -112,7 +116,7 @@ export function CreateNewPasswordForm() {
           {successMessage}
         </Text>
         <Button asChild className={styles.submitButton}>
-          <NextLink href={authRoutes.signIn}>Sign In</NextLink>
+          <NextLink href={authRoutes.signIn}>{t.auth.createNewPassword.signIn}</NextLink>
         </Button>
       </div>
     )
@@ -131,7 +135,7 @@ export function CreateNewPasswordForm() {
               disabled={isSubmitting}
               error={fieldState.error?.message}
               Icon={isPasswordVisible ? CloseEyeIcon : OpenEyeIcon}
-              label="New password"
+              label={t.auth.createNewPassword.newPassword}
               onChange={(event) => {
                 clearRootError()
                 field.onChange(event)
@@ -154,7 +158,7 @@ export function CreateNewPasswordForm() {
               disabled={isSubmitting}
               error={fieldState.error?.message}
               Icon={isPasswordConfirmationVisible ? CloseEyeIcon : OpenEyeIcon}
-              label="Password confirmation"
+              label={t.auth.createNewPassword.passwordConfirmation}
               onChange={(event) => {
                 clearRootError()
                 field.onChange(event)
@@ -169,7 +173,7 @@ export function CreateNewPasswordForm() {
       </div>
 
       <Text className={styles.requirement} size="sm">
-        {passwordRequirement}
+        {t.auth.createNewPassword.passwordRequirement}
       </Text>
 
       <div className={styles.formActions}>
@@ -183,10 +187,10 @@ export function CreateNewPasswordForm() {
           className={styles.submitButton}
           disabled={isSubmitting}
           loading={isSubmitting}
-          loadingText="Saving..."
+          loadingText={t.auth.createNewPassword.saving}
           type="submit"
         >
-          Create new password
+          {t.auth.createNewPassword.submit}
         </Button>
       </div>
     </form>

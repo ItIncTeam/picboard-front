@@ -14,6 +14,7 @@ import { Text } from '@/shared/ui/typography'
 import { signUp, type SignUpInput } from './api'
 import styles from './sign-up-form.module.css'
 import { signUpSchema, type SignUpFormValues } from './signUpSchema'
+import { useI18n } from '@/shared/lib/i18n'
 
 const defaultValues: SignUpFormValues = {
   username: '',
@@ -118,6 +119,7 @@ const getFieldFromGenericMessage = (message: string): keyof SignUpFormValues | n
 export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
+  const { t } = useI18n()
 
   const {
     clearErrors,
@@ -193,7 +195,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               {...field}
               autoComplete="username"
               error={fieldState.error?.message}
-              label="Username"
+              label={t.auth.signUp.username}
             />
           )}
         />
@@ -206,7 +208,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               {...field}
               autoComplete="email"
               error={fieldState.error?.message}
-              label="Email"
+              label={t.auth.signUp.email}
               type="email"
             />
           )}
@@ -221,7 +223,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               autoComplete="new-password"
               error={fieldState.error?.message}
               Icon={isPasswordVisible ? CloseEyeIcon : OpenEyeIcon}
-              label="Password"
+              label={t.auth.signUp.password}
               onClick={() => {
                 setIsPasswordVisible((currentValue) => !currentValue)
               }}
@@ -240,7 +242,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               autoComplete="new-password"
               error={fieldState.error?.message}
               Icon={isPasswordConfirmationVisible ? CloseEyeIcon : OpenEyeIcon}
-              label="Password confirmation"
+              label={t.auth.signUp.passwordConfirmation}
               onClick={() => {
                 setIsPasswordConfirmationVisible((currentValue) => !currentValue)
               }}
@@ -273,13 +275,13 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               />
 
               <Text className={styles.termsText} size="xs">
-                I agree to the{' '}
+                {t.auth.signUp.agreePrefix}{' '}
                 <button className={styles.termsLink} onClick={onOpenTerms} type="button">
-                  Terms of Service
+                  {t.auth.signUp.terms}
                 </button>{' '}
-                and{' '}
+                {t.auth.signUp.and}{' '}
                 <button className={styles.termsLink} onClick={onOpenPrivacy} type="button">
-                  Privacy Policy
+                  {t.auth.signUp.privacy}
                 </button>
               </Text>
             </div>
@@ -290,17 +292,17 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
           className={styles.submitButton}
           disabled={!isValid}
           loading={isSubmitting}
-          loadingText="Creating account..."
+          loadingText={t.auth.signUp.loading}
           type="submit"
         >
-          Sign Up
+          {t.auth.signUp.submit}
         </Button>
       </div>
 
       <div className={styles.signInFooter}>
-        <Text>Do you have an account?</Text>
+        <Text>{t.auth.signUp.signInQuestion}</Text>
         <Link className={styles.signInLink} href="/auth/sign-in">
-          Sign In
+          {t.auth.signUp.signInLink}
         </Link>
       </div>
     </form>

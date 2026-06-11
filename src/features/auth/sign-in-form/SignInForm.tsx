@@ -8,6 +8,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { useSession } from '@/features/auth/session-management'
 import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
 import { setAccessToken } from '@/shared/lib/auth'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input/Input'
 import { Text } from '@/shared/ui/typography'
@@ -16,8 +17,6 @@ import { signIn } from './api'
 import styles from './sign-in-form.module.css'
 import { signInSchema, type SignInFormValues } from './signInSchema'
 
-const fallbackErrorMessage = 'Sign in failed. Please try again.'
-const invalidCredentialsMessage = 'Incorrect email or password'
 const unauthenticatedCode = 'UNAUTHENTICATED'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
@@ -59,10 +58,11 @@ const defaultValues: SignInFormValues = {
 }
 
 type SignInFormProps = {
-  onSuccess?: () => void
+  onSuccessAction?: () => void
 }
 
-export function SignInForm({ onSuccess }: SignInFormProps) {
+export function SignInForm({ onSuccessAction }: SignInFormProps) {
+  const { t } = useI18n()
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const { authenticateWithCurrentToken } = useSession()
 
@@ -79,13 +79,13 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
     resolver: zodResolver(signInSchema),
   })
 
-  const clearRootError = () => {
+  const clearRootError = (): void => {
     if (errors.root) {
       clearErrors('root')
     }
   }
 
-  const onSubmit = async (data: SignInFormValues) => {
+  const onSubmit = async (data: SignInFormValues): Promise<void> => {
     clearErrors('root')
 
     try {
@@ -96,11 +96,11 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
       setAccessToken(accessToken)
       await authenticateWithCurrentToken()
-      onSuccess?.()
+      onSuccessAction?.()
     } catch (error) {
       const message = isInvalidCredentialsError(error)
-        ? invalidCredentialsMessage
-        : fallbackErrorMessage
+        ? t.auth.signIn.invalidCredentials
+        : t.auth.signIn.fallbackError
 
       setError('root', { message })
     }
@@ -117,7 +117,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
               {...field}
               autoComplete="email"
               error={fieldState.error?.message}
-              label="Email"
+              label={t.auth.signIn.email}
               onChange={(event) => {
                 clearRootError()
                 field.onChange(event)
@@ -137,7 +137,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
               autoComplete="current-password"
               error={fieldState.error?.message}
               Icon={isPasswordVisible ? CloseEyeIcon : OpenEyeIcon}
-              label="Password"
+              label={t.auth.signIn.password}
               onChange={(event) => {
                 clearRootError()
                 field.onChange(event)
@@ -160,7 +160,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
           size="sm"
           weight="regular"
         >
-          Forgot Password
+          {t.auth.signIn.forgotPassword}
         </Text>
       </div>
 
@@ -175,17 +175,17 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
           className={styles.submitButton}
           disabled={!isValid || isSubmitting}
           loading={isSubmitting}
-          loadingText="Signing in..."
+          loadingText={t.auth.signIn.loading}
           type="submit"
         >
-          Sign In
+          {t.auth.signIn.submit}
         </Button>
       </div>
 
       <div className={styles.signUpFooter}>
-        <Text color="var(--color-light-100)">Don&apos;t have an account?</Text>
+        <Text color="var(--color-light-100)">{t.auth.signIn.signUpQuestion}</Text>
         <Link className={styles.signUpLink} href="/auth/sign-up">
-          Sign Up
+          {t.auth.signIn.signUpLink}
         </Link>
       </div>
     </form>
