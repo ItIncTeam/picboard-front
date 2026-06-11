@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from '@/features/auth/session-management'
 import { LogOutIcon } from '@/shared/assets'
 import { authRoutes } from '@/shared/lib/auth'
+import { useI18n } from '@/shared/lib/i18n'
 import { IconButton } from '@/shared/ui/icon-button'
 
 type LogoutButtonProps = {
@@ -18,6 +19,7 @@ type LogoutButtonProps = {
 export function LogoutButton({ className, iconClassName, variant = 'icon' }: LogoutButtonProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { logout } = useSession()
+  const { t } = useI18n()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -37,14 +39,14 @@ export function LogoutButton({ className, iconClassName, variant = 'icon' }: Log
   if (variant === 'navigation') {
     return (
       <button
-        aria-label={isLoggingOut ? 'Signing out' : 'Sign out'}
+        aria-label={isLoggingOut ? t.auth.logout.signingOut : t.auth.logout.signOut}
         className={className}
         disabled={isLoggingOut}
         onClick={handleLogout}
         type="button"
       >
         <LogOutIcon aria-hidden className={iconClassName} focusable="false" />
-        <span>{isLoggingOut ? 'Signing out' : 'Log Out'}</span>
+        <span>{isLoggingOut ? t.auth.logout.signingOut : t.auth.logout.logOut}</span>
       </button>
     )
   }
@@ -54,7 +56,7 @@ export function LogoutButton({ className, iconClassName, variant = 'icon' }: Log
       className={className}
       disabled={isLoggingOut}
       icon={LogOutIcon}
-      label={isLoggingOut ? 'Signing out' : 'Sign out'}
+      label={isLoggingOut ? t.auth.logout.signingOut : t.auth.logout.signOut}
       onClick={handleLogout}
     />
   )

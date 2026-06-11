@@ -24,6 +24,20 @@ vi.mock('@/features/auth/session-management', () => ({
   }),
 }))
 
+vi.mock('@/shared/lib/i18n', () => ({
+  useI18n: () => ({
+    t: {
+      auth: {
+        logout: {
+          signOut: 'Sign out',
+          signingOut: 'Signing out',
+          logOut: 'Log Out',
+        },
+      },
+    },
+  }),
+}))
+
 vi.mock('@/shared/ui/icon-button', () => ({
   IconButton: ({
     label,

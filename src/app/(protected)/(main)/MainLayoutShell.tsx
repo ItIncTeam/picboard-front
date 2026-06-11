@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { AppHeader } from '@/widgets/app-header'
 import { Sidebar } from '@/widgets/sidebar'
@@ -11,22 +11,64 @@ type MainLayoutShellProps = Readonly<{
   children: React.ReactNode
 }>
 
-export function MainLayoutShell({ children }: MainLayoutShellProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+const mobileSidebarQuery = '(width < 768px)'
 
-  const openSidebar = () => {
-    setIsSidebarOpen(true)
+export function MainLayoutShell({ children }: MainLayoutShellProps) {
+  const [isMobile, setIsMobile] = useState(false)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+
+  const toggleSidebar = () => {
+    setIsMobileSidebarOpen((currentValue) => !currentValue)
   }
 
   const closeSidebar = () => {
-    setIsSidebarOpen(false)
+    setIsMobileSidebarOpen(false)
   }
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(mobileSidebarQuery)
+
+    const updateIsMobile = () => {
+      const nextIsMobile = mediaQuery.matches
+
+      setIsMobile(nextIsMobile)
+
+      if (!nextIsMobile) {
+        setIsMobileSidebarOpen(false)
+      }
+    }
+
+    updateIsMobile()
+    mediaQuery.addEventListener('change', updateIsMobile)
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateIsMobile)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isMobile || !isMobileSidebarOpen) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileSidebarOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isMobile, isMobileSidebarOpen])
 
   return (
     <>
-      <AppHeader isSidebarOpen={isSidebarOpen} onOpenSidebar={openSidebar} />
+      <AppHeader isSidebarOpen={isMobileSidebarOpen} onToggleSidebar={toggleSidebar} />
       <div className={styles.shell}>
-        <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
+        <Sidebar isMobile={isMobile} isOpen={isMobileSidebarOpen} onClose={closeSidebar} />
         <main className={styles.content}>{children}</main>
       </div>
     </>

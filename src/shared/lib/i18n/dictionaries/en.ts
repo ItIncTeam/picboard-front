@@ -1,15 +1,34 @@
 export const en = {
   header: {
     openSidebar: 'Open sidebar navigation',
+    closeSidebar: 'Close sidebar navigation',
     sidebarOpen: 'Sidebar navigation is open',
     notificationsUnavailable: 'Notifications are not available yet.',
     unreadNotifications: 'unread notifications',
   },
+  sidebar: {
+    closeNavigation: 'Close sidebar navigation',
+    mainSidebar: 'Main sidebar',
+    mainNavigation: 'Main navigation',
+    feed: 'Feed',
+    create: 'Create',
+    myProfile: 'My Profile',
+    messenger: 'Messenger',
+    search: 'Search',
+    statistics: 'Statistics',
+    favorites: 'Favorites',
+  },
   languageSwitcher: {
+    selectLanguage: 'Select language',
     english: 'English',
     russian: 'Russian',
   },
   auth: {
+    logout: {
+      signOut: 'Sign out',
+      signingOut: 'Signing out',
+      logOut: 'Log Out',
+    },
     signIn: {
       title: 'Sign In',
       email: 'Email',

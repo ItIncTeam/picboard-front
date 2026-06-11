@@ -7,7 +7,6 @@ import { LogoutButton } from '@/features/auth/logout-button'
 import {
   BookmarkFilledIcon,
   BookmarkIcon,
-  Close,
   HomeFilledIcon,
   HomeIcon,
   MessageCircleFilledIcon,
@@ -21,11 +20,19 @@ import {
   TrendingUpFilledIcon,
   TrendingUpIcon,
 } from '@/shared/assets'
-import { IconButton } from '@/shared/ui/icon-button'
+import { useI18n } from '@/shared/lib/i18n'
 
 import styles from './sidebar.module.css'
 
 type SidebarIcon = (props: React.ComponentProps<'svg'>) => React.ReactElement
+type SidebarLabelKey =
+  | 'feed'
+  | 'create'
+  | 'myProfile'
+  | 'messenger'
+  | 'search'
+  | 'statistics'
+  | 'favorites'
 
 type SidebarItem = {
   href: string
@@ -33,11 +40,12 @@ type SidebarItem = {
     active: SidebarIcon
     inactive: SidebarIcon
   }
-  label: string
+  labelKey: SidebarLabelKey
   match?: (pathname: string) => boolean
 }
 
 type SidebarProps = {
+  isMobile: boolean
   isOpen: boolean
   onClose: () => void
 }
@@ -49,7 +57,7 @@ const items: SidebarItem[] = [
       active: HomeFilledIcon,
       inactive: HomeIcon,
     },
-    label: 'Feed',
+    labelKey: 'feed',
   },
   {
     href: '/posts/create',
@@ -57,7 +65,7 @@ const items: SidebarItem[] = [
       active: PlusSquareFilledIcon,
       inactive: PlusSquareIcon,
     },
-    label: 'Create',
+    labelKey: 'create',
   },
   {
     href: '/profile/me',
@@ -65,7 +73,7 @@ const items: SidebarItem[] = [
       active: PersonFilledIcon,
       inactive: PersonIcon,
     },
-    label: 'My Profile',
+    labelKey: 'myProfile',
     match: (pathname) => pathname.startsWith('/profile'),
   },
   {
@@ -74,7 +82,7 @@ const items: SidebarItem[] = [
       active: MessageCircleFilledIcon,
       inactive: MessageCircleIcon,
     },
-    label: 'Messenger',
+    labelKey: 'messenger',
   },
   {
     href: '/search',
@@ -82,7 +90,7 @@ const items: SidebarItem[] = [
       active: SearchIcon,
       inactive: SearchOutlineIcon,
     },
-    label: 'Search',
+    labelKey: 'search',
   },
   {
     href: '/statistics',
@@ -90,7 +98,7 @@ const items: SidebarItem[] = [
       active: TrendingUpFilledIcon,
       inactive: TrendingUpIcon,
     },
-    label: 'Statistics',
+    labelKey: 'statistics',
   },
   {
     href: '/favorites',
@@ -98,7 +106,7 @@ const items: SidebarItem[] = [
       active: BookmarkFilledIcon,
       inactive: BookmarkIcon,
     },
-    label: 'Favorites',
+    labelKey: 'favorites',
   },
 ]
 
@@ -110,28 +118,38 @@ const isActiveItem = (item: SidebarItem, pathname: string) => {
   return pathname === item.href
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
+  const { t } = useI18n()
+
+  const isHiddenOnMobile = isMobile && !isOpen
+  const isMobileSidebarOpen = isMobile && isOpen
+  const closeAfterMobileNavigation = () => {
+    if (isMobile) {
+      onClose()
+    }
+  }
 
   return (
     <>
-      {isOpen && (
+      {isMobileSidebarOpen && (
         <button
-          aria-label="Close sidebar navigation"
+          aria-label={t.sidebar.closeNavigation}
           className={styles.backdrop}
           onClick={onClose}
           type="button"
         />
       )}
 
-      <aside className={styles.sidebar} data-open={isOpen} id="app-sidebar">
-        <IconButton
-          className={styles.closeButton}
-          icon={Close}
-          label="Close sidebar navigation"
-          onClick={onClose}
-        />
-        <nav aria-label="Main navigation" className={styles.nav}>
+      <aside
+        aria-hidden={isHiddenOnMobile}
+        aria-label={t.sidebar.mainSidebar}
+        className={styles.sidebar}
+        data-open={isOpen}
+        id="app-sidebar"
+        inert={isHiddenOnMobile ? true : undefined}
+      >
+        <nav aria-label={t.sidebar.mainNavigation} className={styles.nav}>
           <ul className={styles.list}>
             {items.map((item) => {
               const isActive = isActiveItem(item, pathname)
@@ -144,10 +162,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     className={styles.link}
                     data-active={isActive}
                     href={item.href}
-                    onClick={onClose}
+                    onClick={closeAfterMobileNavigation}
                   >
                     <Icon aria-hidden className={styles.icon} focusable="false" />
-                    <span>{item.label}</span>
+                    <span className={styles.linkText}>{t.sidebar[item.labelKey]}</span>
                   </Link>
                 </li>
               )
