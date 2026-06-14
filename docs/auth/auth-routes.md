@@ -65,7 +65,10 @@ Frontend flow:
 1. Route reads `code` from the query string.
 2. Frontend calls `emailConfirmation` with `EmailConfirmationInput`.
 3. Backend confirms the account when the code is valid.
-4. Frontend shows the confirmation result and a path to sign in.
+4. Frontend redirects to the matching sign-up UI state:
+   - success or already confirmed -> `/auth/sign-up?status=confirmed`
+   - expired, invalid, or missing code -> `/auth/sign-up?status=expired`
+5. Unknown errors stay on the confirm route with a resend link to the expired state.
 
 Verified mutation:
 
