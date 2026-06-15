@@ -13,8 +13,8 @@ export function CreateNewPasswordPage() {
 
   return (
     <AuthViewShell>
-      <AuthFormCard>
-        <Title level="h1" className={styles.title}>
+      <AuthFormCard gap={0} className={styles.authFormCart}>
+        <Title level="h1" mb="37px" className={styles.title}>
           {t.auth.createNewPassword.title}
         </Title>
         <CreateNewPasswordForm />

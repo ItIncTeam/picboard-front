@@ -1,42 +1,41 @@
 import { z } from 'zod'
-
-const passwordComplexityMessage =
-  'Password must contain a-z, A-Z, ! " # $ % & \' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~'
+import { type Dictionary } from '@/shared/lib/i18n/dictionaries'
 
 const passwordSpecialCharPattern = /[!-\/:-@\[-`{-~]/
 
-export const createNewPasswordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(1, { error: 'Password is required' })
-      .superRefine((value, context) => {
-        if (value.length < 6) {
-          context.addIssue({
-            code: 'custom',
-            message: 'Minimum number of characters 6',
-          })
-          return
-        }
+export const createNewPasswordSchema = (t: Dictionary) =>
+  z
+    .object({
+      password: z
+        .string()
+        .min(1, { error: t.auth.errors.passwordRequired })
+        .superRefine((value, context) => {
+          if (value.length < 6) {
+            context.addIssue({
+              code: 'custom',
+              message: t.auth.errors.passwordTooShort,
+            })
+            return
+          }
 
-        if (
-          !/[a-z]/.test(value) ||
-          !/[A-Z]/.test(value) ||
-          !passwordSpecialCharPattern.test(value)
-        ) {
-          context.addIssue({
-            code: 'custom',
-            message: passwordComplexityMessage,
-          })
-        }
+          if (
+            !/[a-z]/.test(value) ||
+            !/[A-Z]/.test(value) ||
+            !passwordSpecialCharPattern.test(value)
+          ) {
+            context.addIssue({
+              code: 'custom',
+              message: t.auth.errors.passwordInvalidChars,
+            })
+          }
+        }),
+      passwordConfirmation: z.string().min(1, {
+        error: t.auth.errors.passwordConfirm,
       }),
-    passwordConfirmation: z.string().min(1, {
-      error: 'Confirm your password',
-    }),
-  })
-  .refine((values) => values.password === values.passwordConfirmation, {
-    error: 'The passwords must match',
-    path: ['passwordConfirmation'],
-  })
+    })
+    .refine((values) => values.password === values.passwordConfirmation, {
+      error: t.auth.errors.passwordsMismatch,
+      path: ['passwordConfirmation'],
+    })
 
-export type CreateNewPasswordFormValues = z.infer<typeof createNewPasswordSchema>
+export type CreateNewPasswordFormValues = z.infer<ReturnType<typeof createNewPasswordSchema>>

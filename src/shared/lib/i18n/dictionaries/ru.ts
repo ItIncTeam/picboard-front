@@ -89,5 +89,13 @@ export const ru = {
       resendLink: 'Отправить ссылку повторно',
       illustrationAlt: 'Иллюстрация истекшей ссылки восстановления пароля',
     },
+    errors: {
+      passwordRequired: 'Введите пароль',
+      passwordTooShort: 'Минимальная длина — 6 символов',
+      passwordConfirm: 'Подтвердите пароль',
+      passwordsMismatch: 'Пароли не совпадают',
+      passwordInvalidChars:
+        'Пароль обязан содержать a-z, A-Z, ! " # $ % & \' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~',
+    },
   },
 } as const
