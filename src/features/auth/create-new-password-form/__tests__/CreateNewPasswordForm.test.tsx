@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { authRoutes } from '@/shared/lib/auth'
 import { I18nProvider } from '@/shared/lib/i18n'
 
-import { CreateNewPasswordForm } from '../CreateNewPasswordForm'
+import { CreateNewPasswordForm } from '@/features/auth'
 
 const apiMocks = vi.hoisted(() => ({
   setNewPassword: vi.fn(),
