@@ -9,14 +9,21 @@ import { LogOutIcon } from '@/shared/assets'
 import { authRoutes } from '@/shared/lib/auth'
 import { useI18n } from '@/shared/lib/i18n'
 import { IconButton } from '@/shared/ui/icon-button'
+import { Tooltip } from '@/shared/ui/tooltip'
 
 type LogoutButtonProps = {
   className?: string
   iconClassName?: string
+  tooltip?: string
   variant?: 'icon' | 'navigation'
 }
 
-export function LogoutButton({ className, iconClassName, variant = 'icon' }: LogoutButtonProps) {
+export function LogoutButton({
+  className,
+  iconClassName,
+  tooltip,
+  variant = 'icon',
+}: LogoutButtonProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { logout } = useSession()
   const { t } = useI18n()
@@ -37,7 +44,7 @@ export function LogoutButton({ className, iconClassName, variant = 'icon' }: Log
   }
 
   if (variant === 'navigation') {
-    return (
+    const button = (
       <button
         aria-label={isLoggingOut ? t.auth.logout.signingOut : t.auth.logout.signOut}
         className={className}
@@ -49,6 +56,16 @@ export function LogoutButton({ className, iconClassName, variant = 'icon' }: Log
         <span>{isLoggingOut ? t.auth.logout.signingOut : t.auth.logout.logOut}</span>
       </button>
     )
+
+    if (!tooltip) {
+      return button
+    }
+
+    return (
+      <Tooltip content={tooltip} side="right">
+        {button}
+      </Tooltip>
+    )
   }
 
   return (
@@ -58,6 +75,7 @@ export function LogoutButton({ className, iconClassName, variant = 'icon' }: Log
       icon={LogOutIcon}
       label={isLoggingOut ? t.auth.logout.signingOut : t.auth.logout.signOut}
       onClick={handleLogout}
+      tooltip={tooltip}
     />
   )
 }

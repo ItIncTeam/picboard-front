@@ -5,9 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { authRoutes } from '@/shared/lib/auth'
 import { I18nProvider } from '@/shared/lib/i18n'
 
-import { CreateNewPasswordForm } from '@/features/auth'
+import { CreateNewPasswordForm } from '../CreateNewPasswordForm'
 
 const apiMocks = vi.hoisted(() => ({
+  passwordReset: vi.fn(),
   setNewPassword: vi.fn(),
 }))
 
@@ -17,11 +18,14 @@ const navigationMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/features/auth/api/passwordRecoveryApi', () => ({
+  passwordReset: apiMocks.passwordReset,
   setNewPassword: apiMocks.setNewPassword,
 }))
 
 vi.mock('@/shared/assets', () => ({
   CloseEyeIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GithubIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GoogleIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
   OpenEyeIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
   SearchIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
 }))

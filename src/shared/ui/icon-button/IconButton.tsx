@@ -3,6 +3,8 @@ import { forwardRef, type MouseEventHandler, type ReactNode, type SVGProps } fro
 import clsx from 'clsx'
 import Image from 'next/image'
 
+import { Tooltip } from '@/shared/ui/tooltip'
+
 import styles from './icon-button.module.css'
 
 type IconButtonIconProps = Pick<SVGProps<SVGSVGElement>, 'aria-hidden' | 'className' | 'focusable'>
@@ -15,6 +17,7 @@ type IconButtonBaseProps = {
   indicatorCount?: number
   label: string
   onClick?: MouseEventHandler<HTMLButtonElement>
+  tooltip?: string
 }
 
 type IconButtonProps = IconButtonBaseProps &
@@ -41,10 +44,10 @@ function getIconElement(props: IconButtonProps): ReactNode {
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   function IconButton(props, ref) {
-    const { className, disabled, indicatorCount = 0, label, onClick } = props
+    const { className, disabled, indicatorCount = 0, label, onClick, tooltip } = props
     const hasIndicator = indicatorCount > 0
 
-    return (
+    const button = (
       <button
         ref={ref}
         className={clsx(styles.button, className)}
@@ -56,6 +59,16 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         {getIconElement(props)}
         {hasIndicator && <span className={styles.indicator}>{indicatorCount}</span>}
       </button>
+    )
+
+    if (!tooltip) {
+      return button
+    }
+
+    return (
+      <Tooltip content={tooltip} side="bottom">
+        <span className={styles.tooltipTrigger}>{button}</span>
+      </Tooltip>
     )
   },
 )

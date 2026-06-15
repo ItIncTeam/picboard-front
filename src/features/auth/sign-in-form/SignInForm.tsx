@@ -9,6 +9,7 @@ import { useSession } from '@/features/auth/session-management'
 import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
 import { setAccessToken } from '@/shared/lib/auth'
 import { useI18n } from '@/shared/lib/i18n'
+import { useToast } from '@/shared/lib/toast'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input/Input'
 import { Text } from '@/shared/ui/typography'
@@ -63,6 +64,7 @@ type SignInFormProps = {
 
 export function SignInForm({ onSuccessAction }: SignInFormProps) {
   const { t } = useI18n()
+  const toast = useToast()
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const { authenticateWithCurrentToken } = useSession()
 
@@ -103,6 +105,7 @@ export function SignInForm({ onSuccessAction }: SignInFormProps) {
         : t.auth.signIn.fallbackError
 
       setError('root', { message })
+      toast.error(message)
     }
   }
 

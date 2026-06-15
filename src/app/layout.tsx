@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 
 import { SessionProvider } from '@/features/auth/session-management'
 import { ApolloProvider } from '@/shared/api'
+import { ToastProvider } from '@/shared/ui/toast'
+import { TooltipProvider } from '@/shared/ui/tooltip'
 
 import './globals.css'
 
@@ -35,7 +37,11 @@ export default function RootLayout({
       <body>
         <ApolloProvider>
           <SessionProvider>
-            <I18nProvider>{children}</I18nProvider>
+            <I18nProvider>
+              <TooltipProvider>
+                <ToastProvider>{children}</ToastProvider>
+              </TooltipProvider>
+            </I18nProvider>
           </SessionProvider>
         </ApolloProvider>
       </body>
