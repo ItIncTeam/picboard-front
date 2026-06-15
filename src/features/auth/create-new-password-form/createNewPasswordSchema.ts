@@ -1,9 +1,6 @@
 import { z } from 'zod'
 import { type Dictionary } from '@/shared/lib/i18n/dictionaries'
 
-const passwordComplexityMessage =
-  'Password must contain a-z, A-Z, ! " # $ % & \' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~'
-
 const passwordSpecialCharPattern = /[!-\/:-@\[-`{-~]/
 
 export const createNewPasswordSchema = (t: Dictionary) =>
