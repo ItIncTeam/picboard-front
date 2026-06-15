@@ -89,5 +89,13 @@ export const en = {
       resendLink: 'Resend link',
       illustrationAlt: 'Verification link expired illustration',
     },
+    errors: {
+      passwordRequired: 'Password is required',
+      passwordTooShort: 'Minimum number of characters 6',
+      passwordConfirm: 'Confirm your password',
+      passwordsMismatch: 'The passwords must match',
+      passwordInvalidChars:
+        'Password must contain a-z, A-Z, ! " # $ % & \' ( ) * + , - . / : ; < = > ? @ [ \\ ] ^ _ ` { | } ~',
+    },
   },
 } as const

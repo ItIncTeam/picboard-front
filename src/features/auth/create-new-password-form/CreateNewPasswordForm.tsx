@@ -36,6 +36,8 @@ export function CreateNewPasswordForm() {
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
+  const schema = useMemo(() => createNewPasswordSchema(t), [t])
+
   const {
     clearErrors,
     control,
@@ -46,7 +48,7 @@ export function CreateNewPasswordForm() {
     defaultValues,
     mode: 'onTouched',
     reValidateMode: 'onBlur',
-    resolver: zodResolver(createNewPasswordSchema),
+    resolver: zodResolver(schema),
   })
 
   useEffect(() => {
