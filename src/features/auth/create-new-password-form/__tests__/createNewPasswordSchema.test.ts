@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { createNewPasswordSchema } from '../createNewPasswordSchema'
+import { type Dictionary } from '@/shared/lib/i18n/dictionaries'
 
 const mockT = {
   errors: {
@@ -10,7 +11,7 @@ const mockT = {
     passwordsMismatch: 'The passwords must match',
     passwordInvalidChars: 'Password must contain a-z, A-Z, ! " # $ % &...',
   },
-} as any
+} as unknown as Dictionary
 
 const schema = createNewPasswordSchema(mockT)
 
