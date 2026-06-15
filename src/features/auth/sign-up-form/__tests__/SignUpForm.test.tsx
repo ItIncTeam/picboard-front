@@ -2,6 +2,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
+
 import { SignUpForm } from '../SignUpForm'
 
 const apiMocks = vi.hoisted(() => ({
@@ -103,7 +105,11 @@ function renderSignUpForm(): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<SignUpForm onOpenPrivacy={vi.fn()} onOpenTerms={vi.fn()} onSuccess={vi.fn()} />)
+    root.render(
+      <I18nProvider>
+        <SignUpForm onOpenPrivacy={vi.fn()} onOpenTerms={vi.fn()} onSuccess={vi.fn()} />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

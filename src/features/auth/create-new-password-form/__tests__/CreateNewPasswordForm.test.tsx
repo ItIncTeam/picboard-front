@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { authRoutes } from '@/shared/lib/auth'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { CreateNewPasswordForm } from '../CreateNewPasswordForm'
 
@@ -53,7 +54,11 @@ function renderForm(searchParams = new URLSearchParams({ code: 'recovery-code' }
   document.body.append(container)
 
   act(() => {
-    root.render(<CreateNewPasswordForm />)
+    root.render(
+      <I18nProvider>
+        <CreateNewPasswordForm />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

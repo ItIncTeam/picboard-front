@@ -2,6 +2,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
+
 import { SignInView } from '../SignInView'
 
 const navigationMocks = vi.hoisted(() => ({
@@ -18,8 +20,8 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/features/auth', () => ({
   OAuthProviders: () => null,
-  SignInForm: ({ onSuccess }: { onSuccess?: () => void }) => (
-    <button onClick={onSuccess} type="button">
+  SignInForm: ({ onSuccessAction }: { onSuccessAction?: () => void }) => (
+    <button onClick={onSuccessAction} type="button">
       Sign in
     </button>
   ),
@@ -39,7 +41,11 @@ function renderSignInView(searchParams: URLSearchParams): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<SignInView />)
+    root.render(
+      <I18nProvider>
+        <SignInView />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

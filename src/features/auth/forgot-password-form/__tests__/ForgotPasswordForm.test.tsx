@@ -2,6 +2,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
+
 import { ForgotPasswordForm } from '../ForgotPasswordForm'
 
 const apiMocks = vi.hoisted(() => ({
@@ -112,7 +114,11 @@ function renderForgotPasswordForm(): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<ForgotPasswordForm />)
+    root.render(
+      <I18nProvider>
+        <ForgotPasswordForm />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

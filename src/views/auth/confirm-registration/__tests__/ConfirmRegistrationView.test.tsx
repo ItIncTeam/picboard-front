@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getSignUpConfirmedHref, getSignUpExpiredHref } from '@/shared/lib/auth'
+import type * as ConfirmRegistrationModule from '@/features/auth/confirm-registration'
 
 import { ConfirmRegistrationView } from '../ConfirmRegistrationView'
 
@@ -16,7 +17,7 @@ const navigationMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/features/auth/confirm-registration', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/auth/confirm-registration')>()
+  const actual = await importOriginal<typeof ConfirmRegistrationModule>()
 
   return {
     ...actual,
