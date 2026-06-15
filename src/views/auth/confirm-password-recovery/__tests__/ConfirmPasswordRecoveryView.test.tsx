@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { authRoutes } from '@/shared/lib/auth'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import ConfirmPasswordRecoveryView from '../ConfirmPasswordRecoveryView'
 
@@ -25,6 +26,22 @@ vi.mock('next/link', () => ({
   ),
 }))
 
+vi.mock('next/image', () => ({
+  __esModule: true,
+  default: ({ alt }: { alt: string }) => {
+    const Image = ({
+      alt: imageAlt,
+    }: {
+      alt: string
+      height: number
+      unoptimized: boolean
+      width: number
+    }) => <span aria-label={imageAlt} role="img" />
+
+    return <Image alt={alt} height={100} unoptimized width={100} />
+  },
+}))
+
 type RenderResult = {
   container: HTMLDivElement
   root: Root
@@ -39,7 +56,11 @@ function renderView(searchParams: URLSearchParams): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<ConfirmPasswordRecoveryView />)
+    root.render(
+      <I18nProvider>
+        <ConfirmPasswordRecoveryView />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }
