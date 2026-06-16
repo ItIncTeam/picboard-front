@@ -6,6 +6,8 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
+import { useToast } from '@/shared/lib/toast'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input/Input'
@@ -14,7 +16,6 @@ import { Text } from '@/shared/ui/typography'
 import { signUp, type SignUpInput } from './api'
 import styles from './sign-up-form.module.css'
 import { signUpSchema, type SignUpFormValues } from './signUpSchema'
-import { useI18n } from '@/shared/lib/i18n'
 
 const defaultValues: SignUpFormValues = {
   username: '',
@@ -120,6 +121,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
   const { t } = useI18n()
+  const toast = useToast()
 
   const {
     clearErrors,
@@ -162,6 +164,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
         }
 
         setError('root', { message })
+        toast.error(message)
         return
       }
 
@@ -180,6 +183,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
 
       if (hasUnknownField) {
         setError('root', { message: fallbackErrorMessage })
+        toast.error(fallbackErrorMessage)
       }
     }
   }

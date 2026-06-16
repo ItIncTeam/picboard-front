@@ -73,6 +73,7 @@ export function Header({
                 ? `${notificationsCount} unread notifications. Notifications are not available yet.`
                 : t.header.notificationsUnavailable
             }
+            tooltip={t.header.notificationsUnavailable}
           />
 
           <LanguageSwitcher />

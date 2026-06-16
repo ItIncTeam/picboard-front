@@ -58,6 +58,14 @@ export const WithIndicator: Story = {
   },
 }
 
+export const WithTooltip: Story = {
+  args: {
+    icon: BellIcon,
+    label: 'Notifications',
+    tooltip: 'Notifications are not available yet.',
+  },
+}
+
 export const CustomClassName: Story = {
   args: {
     className: styles.accentButton,

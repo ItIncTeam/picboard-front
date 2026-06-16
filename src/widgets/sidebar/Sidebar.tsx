@@ -21,6 +21,7 @@ import {
   TrendingUpIcon,
 } from '@/shared/assets'
 import { useI18n } from '@/shared/lib/i18n'
+import { Tooltip } from '@/shared/ui/tooltip'
 
 import styles from './sidebar.module.css'
 
@@ -124,6 +125,7 @@ export function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
 
   const isHiddenOnMobile = isMobile && !isOpen
   const isMobileSidebarOpen = isMobile && isOpen
+  const shouldShowCollapsedTooltips = !isMobile && !isOpen
   const closeAfterMobileNavigation = () => {
     if (isMobile) {
       onClose()
@@ -154,19 +156,29 @@ export function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
             {items.map((item) => {
               const isActive = isActiveItem(item, pathname)
               const Icon = isActive ? item.icons.active : item.icons.inactive
+              const label = t.sidebar[item.labelKey]
+              const link = (
+                <Link
+                  aria-current={isActive ? 'page' : undefined}
+                  className={styles.link}
+                  data-active={isActive}
+                  href={item.href}
+                  onClick={closeAfterMobileNavigation}
+                >
+                  <Icon aria-hidden className={styles.icon} focusable="false" />
+                  <span className={styles.linkText}>{label}</span>
+                </Link>
+              )
 
               return (
                 <li key={item.href}>
-                  <Link
-                    aria-current={isActive ? 'page' : undefined}
-                    className={styles.link}
-                    data-active={isActive}
-                    href={item.href}
-                    onClick={closeAfterMobileNavigation}
-                  >
-                    <Icon aria-hidden className={styles.icon} focusable="false" />
-                    <span className={styles.linkText}>{t.sidebar[item.labelKey]}</span>
-                  </Link>
+                  {shouldShowCollapsedTooltips ? (
+                    <Tooltip content={label} side="right">
+                      {link}
+                    </Tooltip>
+                  ) : (
+                    link
+                  )}
                 </li>
               )
             })}
@@ -175,6 +187,7 @@ export function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
             <LogoutButton
               className={styles.logoutButton}
               iconClassName={styles.icon}
+              tooltip={shouldShowCollapsedTooltips ? t.auth.logout.logOut : undefined}
               variant="navigation"
             />
           </div>

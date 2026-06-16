@@ -3,8 +3,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { I18nProvider } from '@/shared/lib/i18n'
+import { ToastProvider } from '@/shared/ui/toast'
 
-import { SignUpForm } from '../SignUpForm'
+import { SignUpForm } from '@/features/auth/sign-up-form'
 
 const apiMocks = vi.hoisted(() => ({
   signUp: vi.fn(),
@@ -107,7 +108,9 @@ function renderSignUpForm(): RenderResult {
   act(() => {
     root.render(
       <I18nProvider>
-        <SignUpForm onOpenPrivacy={vi.fn()} onOpenTerms={vi.fn()} onSuccess={vi.fn()} />
+        <ToastProvider>
+          <SignUpForm onOpenPrivacy={vi.fn()} onOpenTerms={vi.fn()} onSuccess={vi.fn()} />
+        </ToastProvider>
       </I18nProvider>,
     )
   })

@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
-import { createNewPasswordSchema } from '../createNewPasswordSchema'
 import { type Dictionary } from '@/shared/lib/i18n/dictionaries'
 
+import { createNewPasswordSchema } from '@/features/auth/create-new-password-form'
+
 const mockT = {
-  errors: {
-    passwordRequired: 'Password is required',
-    passwordTooShort: 'Minimum number of characters 6',
-    passwordConfirm: 'Confirm your password',
-    passwordsMismatch: 'The passwords must match',
-    passwordInvalidChars: 'Password must contain a-z, A-Z, ! " # $ % &...',
+  auth: {
+    errors: {
+      passwordRequired: 'Password is required',
+      passwordTooShort: 'Minimum number of characters 6',
+      passwordConfirm: 'Confirm your password',
+      passwordsMismatch: 'The passwords must match',
+      passwordInvalidChars: 'Password must contain a-z, A-Z, ! " # $ % &...',
+    },
   },
 } as unknown as Dictionary
 
