@@ -163,16 +163,25 @@ Scope:
 - `Button` supports `loading` and `loadingText`.
 - Auth submit buttons use loading state during async submission.
 
+### OAuth Backend-Owned Flow — Done
+
+Scope:
+
+- Google and GitHub provider buttons redirect to backend-owned OAuth start URLs.
+- Backend owns provider detection, state validation, PKCE, provider code exchange, user
+  creation/linking, and backend OAuth code issuing.
+- Frontend callback route `/auth/callback` reads the backend-generated `code`.
+- Frontend exchanges that backend code through `exchangeOAuthCode(input: { code })`.
+- Frontend stores only the returned `accessToken` in memory, calls `authenticateWithCurrentToken`,
+  and redirects to `/main`.
+
 ### Remaining Priorities
 
-1. OAuth placeholder fix — disable or hide visible provider buttons until the backend OAuth contract
-   is verified.
-2. `returnTo` after protected redirect — Done.
-3. Final SignUp email-sent modal UI — Done.
-4. Email confirmation resend UI — Done.
-5. OAuth implementation after backend contract and provider configuration are confirmed.
-6. Password visibility accessibility cleanup in shared `Input`.
-7. GraphQL Code Generator setup.
+1. `returnTo` after protected redirect — Done.
+2. Final SignUp email-sent modal UI — Done.
+3. Email confirmation resend UI — Done.
+4. Password visibility accessibility cleanup in shared `Input`.
+5. GraphQL Code Generator setup.
 
 ## FSD Placement
 

@@ -1,33 +1,39 @@
 'use client'
 
 import { GithubIcon, GoogleIcon } from '@/shared/assets'
+import { startOAuthProvider, type OAuthIntent, type OAuthProvider } from '@/features/auth/oauth'
 import { IconButton } from '@/shared/ui/icon-button'
 
 import styles from './oauth-providers.module.css'
-import type { OAuthIntent } from './model/types'
 
 type OAuthProvidersProps = {
   intent: OAuthIntent
 }
 
 export function OAuthProviders({ intent }: OAuthProvidersProps) {
-  const actionLabel = intent === 'signIn' ? 'sign-in' : 'sign-up'
+  const actionText = intent === 'signIn' ? 'Sign in' : 'Sign up'
+
+  const handleProviderClick = (provider: OAuthProvider) => {
+    startOAuthProvider(provider)
+  }
 
   return (
-    <div className={styles.list}>
-      <IconButton
-        className={styles.iconButton}
-        disabled
-        icon={GoogleIcon}
-        label={`Google ${actionLabel} is not available yet`}
-      />
+    <div className={styles.root}>
+      <div className={styles.list}>
+        <IconButton
+          className={styles.iconButton}
+          icon={GoogleIcon}
+          label={`${actionText} with Google`}
+          onClick={() => handleProviderClick('google')}
+        />
 
-      <IconButton
-        className={styles.iconButton}
-        disabled
-        icon={GithubIcon}
-        label={`GitHub ${actionLabel} is not available yet`}
-      />
+        <IconButton
+          className={styles.iconButton}
+          icon={GithubIcon}
+          label={`${actionText} with GitHub`}
+          onClick={() => handleProviderClick('github')}
+        />
+      </div>
     </div>
   )
 }

@@ -117,6 +117,7 @@ export default function Page() {
 /auth/sign-up
 /auth/forgot-password
 /auth/create-new-password
+/auth/callback
 /auth/confirm/registration
 /auth/confirm/password-recovery
 ```

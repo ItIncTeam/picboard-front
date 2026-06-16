@@ -4,14 +4,15 @@ This document maps current `/auth` routes to views, features, and verified Graph
 
 ## Route Map
 
-| Route                             | Page file                                                  | View / page                   | GraphQL operation       | Status                        |
-| --------------------------------- | ---------------------------------------------------------- | ----------------------------- | ----------------------- | ----------------------------- |
-| `/auth/sign-up`                   | `src/app/(public)/auth/sign-up/page.tsx`                   | `SignUpView`                  | `signUp`                | Integrated / backend verified |
-| `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationView`     | `emailConfirmation`     | Integrated / backend verified |
-| `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInView`                  | `signIn`, `me`          | Integrated / backend verified |
-| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`         | Existing / contract verified  |
-| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`        | Implemented                   |
-| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | `ConfirmPasswordRecoveryView` | No standalone operation | Implemented / bridge redirect |
+| Route                             | Page file                                                  | View / page                   | GraphQL operation         | Status                        |
+| --------------------------------- | ---------------------------------------------------------- | ----------------------------- | ------------------------- | ----------------------------- |
+| `/auth/sign-up`                   | `src/app/(public)/auth/sign-up/page.tsx`                   | `SignUpView`                  | `signUp`                  | Integrated / backend verified |
+| `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationView`     | `emailConfirmation`       | Integrated / backend verified |
+| `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInView`                  | `signIn`, `me`            | Integrated / backend verified |
+| `/auth/callback`                  | `src/app/(public)/auth/callback/page.tsx`                  | `OAuthCallbackView`           | `exchangeOAuthCode`, `me` | Implemented                   |
+| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`           | Existing / contract verified  |
+| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`          | Implemented                   |
+| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | `ConfirmPasswordRecoveryView` | No standalone operation   | Implemented / bridge redirect |
 
 ## Password Recovery Routes
 
@@ -121,6 +122,42 @@ Notes:
 - Sign-in does not call `refreshToken`; refresh is only used for bootstrap/session restore.
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
+
+### `/auth/callback?code=<BACKEND_CODE>`
+
+Frontend flow:
+
+1. Backend owns the complete Google/GitHub OAuth provider flow: provider detection, state
+   validation, PKCE, provider code exchange, user creation/linking, and issuing a backend OAuth code.
+2. Frontend OAuth provider buttons redirect the browser to backend-owned OAuth start URLs:
+   - Google: `https://users.picboard.space/api/v1/auth/google/start`
+   - GitHub: `https://users.picboard.space/api/v1/auth/github/login`
+3. Backend redirects production provider flows to `https://picboard.space/auth/callback`.
+   Local frontend origin is also configured, so local verification should use
+   `http://localhost:3000/auth/callback`.
+4. Frontend route `/auth/callback` receives `/auth/callback?code=<BACKEND_CODE>`.
+5. Frontend reads only `code` from the URL and calls `exchangeOAuthCode` with
+   `OAuthExchangeCodeInput`.
+6. Backend returns `accessToken` and `user`.
+7. Frontend stores only `accessToken` in memory, calls `authenticateWithCurrentToken`, then redirects
+   to `/main`.
+
+Handled callback errors:
+
+- `invalid_state`
+- `no_code`
+- `no_pkce_verifier`
+- `unverified_email`
+
+The backend may redirect to `/auth/callback?error=<ERROR_CODE>` with one of the known error codes
+above. Unknown values use the default OAuth error UI.
+
+Frontend must not:
+
+- use provider client ids, scopes, PKCE, or state;
+- redirect directly to Google or GitHub OAuth URLs;
+- store provider OAuth data in `localStorage` or `sessionStorage`;
+- exchange Google/GitHub provider codes directly.
 
 ### `/auth/forgot-password`
 

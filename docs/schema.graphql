@@ -33,6 +33,7 @@ type Mutation {
   refreshToken: RefreshTokenPayload!
   passwordReset(input: PasswordResetInput!): PasswordResetPayload!
   setNewPassword(input: SetNewPasswordInput!): SetNewPasswordPayload!
+  exchangeOAuthCode(input: OAuthExchangeCodeInput!): SignInPayload!
 }
 
 input SignUpInput {
@@ -65,6 +66,10 @@ input SetNewPasswordInput {
   password: String!
 }
 
+input OAuthExchangeCodeInput {
+  code: String!
+}
+
 type SignUpPayload {
   user: UserOutput!
   message: String!
@@ -73,7 +78,6 @@ type SignUpPayload {
 type SignInPayload {
   user: User!
   accessToken: String!
-  refreshToken: String!
 }
 
 type EmailConfirmationPayload {
