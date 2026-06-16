@@ -36,8 +36,8 @@ const PaginationState = ({
       currentPage={currentPage}
       totalPages={totalPages}
       pageSize={pageSize}
-      onPageChange={setCurrentPage}
-      onPageSizeChange={setPageSize}
+      onPageChangeAction={setCurrentPage}
+      onPageSizeChangeAction={setPageSize}
     />
   )
 }
@@ -60,8 +60,8 @@ export const Disabled: Story = {
     totalPages: 55,
     pageSize: 100,
     disabled: true,
-    onPageChange: () => {},
-    onPageSizeChange: () => {},
+    onPageChangeAction: () => {},
+    onPageSizeChangeAction: () => {},
   },
 }
 
@@ -70,7 +70,7 @@ export const WithoutPageSizeSelect: Story = {
     currentPage: 7,
     totalPages: 55,
     showPageSizeSelect: false,
-    onPageChange: () => {},
+    onPageChangeAction: () => {},
   },
 }
 

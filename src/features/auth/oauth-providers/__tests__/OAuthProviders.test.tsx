@@ -1,8 +1,8 @@
-import React, { act } from 'react'
+import { act, type SVGProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { OAuthProviders } from '@/features/auth'
+import { OAuthProviders } from '@/features/auth/oauth-providers'
 
 const oauthMocks = vi.hoisted(() => ({
   startOAuthProvider: vi.fn(),
@@ -15,8 +15,8 @@ vi.mock('@/features/auth/oauth', async () => {
 })
 
 vi.mock('@/shared/assets', () => ({
-  GithubIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
-  GoogleIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GithubIcon: (props: SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GoogleIcon: (props: SVGProps<SVGSVGElement>) => <svg {...props} />,
 }))
 
 vi.mock('next/image', () => ({

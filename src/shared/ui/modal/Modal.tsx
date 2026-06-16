@@ -11,14 +11,14 @@ type ModalProps = {
   children: ReactNode
   className?: string
   open: boolean
-  onClose: () => void
+  onCloseAction: () => void
   modalTitle: string
 }
 
-export function Modal({ children, className, modalTitle, onClose, open }: ModalProps) {
+export function Modal({ children, className, modalTitle, onCloseAction, open }: ModalProps) {
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      onClose()
+      onCloseAction()
     }
   }
 

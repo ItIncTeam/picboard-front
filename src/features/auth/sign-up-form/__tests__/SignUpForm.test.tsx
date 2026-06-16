@@ -40,15 +40,15 @@ vi.mock('@/shared/ui/button', () => ({
 vi.mock('@/shared/ui/checkbox', () => ({
   Checkbox: ({
     checked,
-    onCheckedChange,
+    onCheckedChangeAction,
   }: {
     checked?: boolean
-    onCheckedChange?: (value: boolean) => void
+    onCheckedChangeAction?: (value: boolean) => void
   }) => (
     <input
       checked={checked}
       onChange={(event) => {
-        onCheckedChange?.(event.currentTarget.checked)
+        onCheckedChangeAction?.(event.currentTarget.checked)
       }}
       type="checkbox"
     />
@@ -109,7 +109,11 @@ function renderSignUpForm(): RenderResult {
     root.render(
       <I18nProvider>
         <ToastProvider>
-          <SignUpForm onOpenPrivacy={vi.fn()} onOpenTerms={vi.fn()} onSuccess={vi.fn()} />
+          <SignUpForm
+            onOpenPrivacyAction={vi.fn()}
+            onOpenTermsAction={vi.fn()}
+            onSuccessAction={vi.fn()}
+          />
         </ToastProvider>
       </I18nProvider>,
     )

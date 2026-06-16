@@ -26,9 +26,9 @@ const defaultValues: SignUpFormValues = {
 }
 
 type SignUpFormProps = {
-  onOpenPrivacy: () => void
-  onOpenTerms: () => void
-  onSuccess?: (email: string) => void
+  onOpenPrivacyAction: () => void
+  onOpenTermsAction: () => void
+  onSuccessAction?: (email: string) => void
 }
 
 type BackendFieldError = {
@@ -117,7 +117,11 @@ const getFieldFromGenericMessage = (message: string): keyof SignUpFormValues | n
   return null
 }
 
-export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpFormProps) {
+export function SignUpForm({
+  onOpenPrivacyAction,
+  onOpenTermsAction,
+  onSuccessAction,
+}: SignUpFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
   const { t } = useI18n()
@@ -150,7 +154,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
 
       await signUp(input)
 
-      onSuccess?.(input.email)
+      onSuccessAction?.(input.email)
     } catch (error) {
       const fieldErrors = collectFieldErrors(error)
 
@@ -272,7 +276,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               <Checkbox
                 checked={field.value}
                 errorMessage={fieldState.error ? ' ' : undefined}
-                onCheckedChange={(checked) => {
+                onCheckedChangeAction={(checked) => {
                   field.onChange(checked === true)
                   field.onBlur()
                 }}
@@ -280,11 +284,11 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
 
               <Text className={styles.termsText} size="xs">
                 {t.auth.signUp.agreePrefix}{' '}
-                <button className={styles.termsLink} onClick={onOpenTerms} type="button">
+                <button className={styles.termsLink} onClick={onOpenTermsAction} type="button">
                   {t.auth.signUp.terms}
                 </button>{' '}
                 {t.auth.signUp.and}{' '}
-                <button className={styles.termsLink} onClick={onOpenPrivacy} type="button">
+                <button className={styles.termsLink} onClick={onOpenPrivacyAction} type="button">
                   {t.auth.signUp.privacy}
                 </button>
               </Text>

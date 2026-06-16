@@ -66,9 +66,9 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
 
   return (
     <>
-      <AppHeader isSidebarOpen={isMobileSidebarOpen} onToggleSidebar={toggleSidebar} />
+      <AppHeader isSidebarOpen={isMobileSidebarOpen} onToggleSidebarAction={toggleSidebar} />
       <div className={styles.shell}>
-        <Sidebar isMobile={isMobile} isOpen={isMobileSidebarOpen} onClose={closeSidebar} />
+        <Sidebar isMobile={isMobile} isOpen={isMobileSidebarOpen} onCloseAction={closeSidebar} />
         <main className={styles.content}>{children}</main>
       </div>
     </>

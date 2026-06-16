@@ -7,15 +7,20 @@ import styles from './email-sent-modal.module.css'
 type EmailSentModalProps = {
   email: string
   open: boolean
-  onClose: () => void
+  onCloseAction: () => void
 }
 
-export function EmailSentModal({ email, onClose, open }: EmailSentModalProps) {
+export function EmailSentModal({ email, onCloseAction, open }: EmailSentModalProps) {
   return (
-    <Modal className={styles.modal} modalTitle="Email sent" open={open} onClose={onClose}>
+    <Modal
+      className={styles.modal}
+      modalTitle="Email sent"
+      open={open}
+      onCloseAction={onCloseAction}
+    >
       <div className={styles.content}>
         <Text className={styles.message}>We have sent a link to confirm your email to {email}</Text>
-        <Button className={styles.button} onClick={onClose}>
+        <Button className={styles.button} onClick={onCloseAction}>
           OK
         </Button>
       </div>

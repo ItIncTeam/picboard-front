@@ -64,9 +64,9 @@ function SignUpViewContent() {
         <div className={styles.cardBody}>
           <OAuthProviders intent="signUp" />
           <SignUpForm
-            onOpenPrivacy={handleOpenPrivacy}
-            onOpenTerms={handleOpenTerms}
-            onSuccess={handleSuccess}
+            onOpenPrivacyAction={handleOpenPrivacy}
+            onOpenTermsAction={handleOpenTerms}
+            onSuccessAction={handleSuccess}
           />
         </div>
       </AuthFormCard>
@@ -74,10 +74,10 @@ function SignUpViewContent() {
         <EmailSentModal
           email={submittedEmail}
           open={isEmailSentOpen}
-          onClose={handleCloseEmailSent}
+          onCloseAction={handleCloseEmailSent}
         />
       )}
-      {openDoc !== null && <DocModal kind={openDoc} onClose={handleCloseDoc} />}
+      {openDoc !== null && <DocModal kind={openDoc} onCloseAction={handleCloseDoc} />}
     </AuthViewShell>
   )
 }
