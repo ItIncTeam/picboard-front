@@ -18,6 +18,9 @@
 }
 
 .root {
+  --radix-toast-swipe-end-x: 0px;
+  --radix-toast-swipe-move-x: 0px;
+
   position: relative;
 
   display: grid;

@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 import { useToast } from '@/shared/lib/toast'
 import { Button } from '@/shared/ui/button'
+import { ToastProvider } from '@/shared/ui/toast'
 
-import { ToastProvider } from './ToastProvider'
 import styles from './toast.stories.module.css'
 
 const ToastDemo = () => {

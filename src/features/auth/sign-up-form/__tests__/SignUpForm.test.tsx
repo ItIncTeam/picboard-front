@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from '@/shared/lib/i18n'
 import { ToastProvider } from '@/shared/ui/toast'
 
-import { SignUpForm } from '../SignUpForm'
+import { SignUpForm } from '@/features/auth/sign-up-form'
 
 const apiMocks = vi.hoisted(() => ({
   signUp: vi.fn(),

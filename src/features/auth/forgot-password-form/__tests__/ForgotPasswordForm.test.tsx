@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { I18nProvider } from '@/shared/lib/i18n'
 
-import { ForgotPasswordForm } from '@/features/auth'
+import { ForgotPasswordForm } from '@/features/auth/forgot-password-form'
 
 const apiMocks = vi.hoisted(() => ({
   passwordReset: vi.fn(),

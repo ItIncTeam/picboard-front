@@ -8,7 +8,7 @@ import {
   type ToastContextValue,
   type ToastInput,
   type ToastVariant,
-} from '@/shared/lib/toast/useToast'
+} from '@/shared/lib/toast'
 
 import styles from './toast.module.css'
 

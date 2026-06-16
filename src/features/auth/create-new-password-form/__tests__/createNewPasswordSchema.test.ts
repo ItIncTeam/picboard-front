@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { type Dictionary } from '@/shared/lib/i18n/dictionaries'
 
-import { createNewPasswordSchema } from '../createNewPasswordSchema'
+import { createNewPasswordSchema } from '@/features/auth/create-new-password-form'
 
 const mockT = {
   auth: {

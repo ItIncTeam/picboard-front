@@ -1,9 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
 import { Button } from '@/shared/ui/button'
-
-import { Tooltip } from './Tooltip'
-import { TooltipProvider } from './TooltipProvider'
+import { Tooltip, TooltipProvider } from '@/shared/ui/tooltip'
 
 const TooltipDemo = () => {
   return (
