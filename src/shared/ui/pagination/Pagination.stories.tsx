@@ -4,7 +4,7 @@ import { expect, userEvent, within } from 'storybook/test'
 
 import '@/app/globals.css'
 
-import { Pagination } from './Pagination'
+import { Pagination } from '@/shared/ui'
 
 const meta = {
   title: 'Shared/Pagination',
