@@ -10,14 +10,22 @@ Before changing code:
 3. For workflow expectations, follow `docs/work-instructions.md`.
 4. Keep changes small, local, and consistent with the existing module.
 5. Prefer named exports, strict TypeScript, and no `React.FC`.
-6. Do not add dependencies, refactors, or formatting-only changes unless the task needs them.
-7. Do not run build, test, lint, typecheck, or Storybook build commands during implementation unless explicitly requested or required to diagnose an issue.
-8. In the final summary:
-   - state what changed;
-   - state what was checked;
-   - state any remaining risk;
-   - reference the relevant docs used for the implementation or review;
-   - clearly distinguish documented requirements from personal recommendations.
+6. Use path aliases for cross-module imports. Prefer the narrow public API for the target module
+   (for example `@/features/auth/sign-up-form`) over broad barrels such as `@/features/auth`
+   when a broad import pulls unrelated modules. Keep relative imports only for same-folder or
+   module-local files such as CSS modules and index re-exports.
+7. Verify CSS custom properties before finishing. Every `var(--...)` reference must resolve to a
+   theme token, a local custom property, or a safe fallback. For library runtime variables
+   (Radix, etc.), define local fallback values when IDE or lint tooling cannot resolve them.
+8. Do not add dependencies, refactors, or formatting-only changes unless the task needs them.
+9. Do not run build, test, lint, typecheck, or Storybook build commands during implementation unless explicitly requested or required to diagnose an issue.
+10. In the final summary:
+
+- state what changed;
+- state what was checked;
+- state any remaining risk;
+- reference the relevant docs used for the implementation or review;
+- clearly distinguish documented requirements from personal recommendations.
 
 When reviewing code:
 
