@@ -12,13 +12,26 @@ type MainLayoutShellProps = Readonly<{
 }>
 
 const mobileSidebarQuery = '(width < 768px)'
+const sidebarCollapsedStorageKey = 'sidebar-collapsed'
 
 export function MainLayoutShell({ children }: MainLayoutShellProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   const toggleSidebar = () => {
-    setIsMobileSidebarOpen((currentValue) => !currentValue)
+    if (isMobile) {
+      setIsMobileSidebarOpen((currentValue) => !currentValue)
+      return
+    }
+
+    setIsSidebarCollapsed((currentValue) => {
+      const nextValue = !currentValue
+
+      window.localStorage.setItem(sidebarCollapsedStorageKey, String(nextValue))
+
+      return nextValue
+    })
   }
 
   const closeSidebar = () => {
@@ -47,6 +60,16 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
   }, [])
 
   useEffect(() => {
+    const animationFrameId = window.requestAnimationFrame(() => {
+      setIsSidebarCollapsed(window.localStorage.getItem(sidebarCollapsedStorageKey) === 'true')
+    })
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!isMobile || !isMobileSidebarOpen) {
       return
     }
@@ -66,10 +89,20 @@ export function MainLayoutShell({ children }: MainLayoutShellProps) {
 
   return (
     <>
-      <AppHeader isSidebarOpen={isMobileSidebarOpen} onToggleSidebarAction={toggleSidebar} />
+      <AppHeader
+        isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
+        onToggleSidebarAction={toggleSidebar}
+      />
       <div className={styles.shell}>
-        <Sidebar isMobile={isMobile} isOpen={isMobileSidebarOpen} onCloseAction={closeSidebar} />
-        <main className={styles.content}>{children}</main>
+        <Sidebar
+          isMobile={isMobile}
+          isOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
+          onCloseAction={closeSidebar}
+          onToggleSidebarAction={toggleSidebar}
+        />
+        <main className={styles.content} data-sidebar-collapsed={!isMobile && isSidebarCollapsed}>
+          {children}
+        </main>
       </div>
     </>
   )

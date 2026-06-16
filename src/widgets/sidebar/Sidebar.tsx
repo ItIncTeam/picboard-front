@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronLeftIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -49,6 +50,7 @@ type SidebarProps = {
   isMobile: boolean
   isOpen: boolean
   onCloseAction: () => void
+  onToggleSidebarAction: () => void
 }
 
 const items: SidebarItem[] = [
@@ -119,7 +121,7 @@ const isActiveItem = (item: SidebarItem, pathname: string) => {
   return pathname === item.href
 }
 
-export function Sidebar({ isMobile, isOpen, onCloseAction }: SidebarProps) {
+export function Sidebar({ isMobile, isOpen, onCloseAction, onToggleSidebarAction }: SidebarProps) {
   const pathname = usePathname()
   const { t } = useI18n()
 
@@ -151,6 +153,18 @@ export function Sidebar({ isMobile, isOpen, onCloseAction }: SidebarProps) {
         id="app-sidebar"
         inert={isHiddenOnMobile ? true : undefined}
       >
+        <button
+          aria-controls="app-sidebar"
+          aria-expanded={isOpen}
+          aria-label={isOpen ? 'Свернуть sidebar' : 'Развернуть sidebar'}
+          className={styles.toggleButton}
+          data-open={isOpen}
+          onClick={onToggleSidebarAction}
+          type="button"
+        >
+          <ChevronLeftIcon aria-hidden className={styles.toggleIcon} />
+        </button>
+
         <nav aria-label={t.sidebar.mainNavigation} className={styles.nav}>
           <ul className={styles.list}>
             {items.map((item) => {
