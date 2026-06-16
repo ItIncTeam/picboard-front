@@ -7,11 +7,16 @@
   overflow-y: auto;
   height: calc(100svh - var(--public-header-height));
   padding: 24px 16px;
+  transition: margin-left 0.2s ease;
 }
 
 @media (width >= 768px) {
   .content {
     margin-left: 220px;
     padding: 24px;
+  }
+
+  .content[data-sidebar-collapsed='true'] {
+    margin-left: 72px;
   }
 }
