@@ -119,7 +119,7 @@ export function ForgotPasswordForm() {
           className={styles.recaptcha}
           checked={isRecaptchaChecked}
           disabled={isLoading}
-          onCheckedChange={(checked) => {
+          onCheckedChangeAction={(checked) => {
             setIsRecaptchaChecked(checked)
             setSuccessEmail('')
           }}

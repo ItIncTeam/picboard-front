@@ -12,17 +12,17 @@ import { renderDocBody } from './model/renderDocBody'
 
 type DocModalProps = {
   kind: DocModalKind
-  onClose: () => void
+  onCloseAction: () => void
 }
 
-export function DocModal({ kind, onClose }: DocModalProps) {
+export function DocModal({ kind, onCloseAction }: DocModalProps) {
   const titleId = useId()
   const { title } = docModalConfig[kind]
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose()
+        onCloseAction()
       }
     }
 
@@ -34,10 +34,10 @@ export function DocModal({ kind, onClose }: DocModalProps) {
       document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [onClose])
+  }, [onCloseAction])
 
   return createPortal(
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <div className={styles.overlay} onClick={onCloseAction} role="presentation">
       <section
         aria-labelledby={titleId}
         aria-modal="true"
@@ -47,7 +47,7 @@ export function DocModal({ kind, onClose }: DocModalProps) {
           event.stopPropagation()
         }}
       >
-        <button autoFocus className={styles.backLink} onClick={onClose} type="button">
+        <button autoFocus className={styles.backLink} onClick={onCloseAction} type="button">
           <ArrowBackIcon aria-hidden className={styles.backIcon} />
           <span className={styles.backLabel}>Back to Sign Up</span>
         </button>

@@ -22,8 +22,8 @@ export type PaginationProps = {
   className?: string
   ariaLabel?: string
   showPageSizeSelect?: boolean
-  onPageChange: (page: number) => void
-  onPageSizeChange?: (pageSize: number) => void
+  onPageChangeAction: (page: number) => void
+  onPageSizeChangeAction?: (pageSize: number) => void
 }
 
 const clampPage = (page: number, totalPages: number): number => {
@@ -75,15 +75,15 @@ export const Pagination = ({
   className,
   ariaLabel = 'Pagination',
   showPageSizeSelect = true,
-  onPageChange,
-  onPageSizeChange,
+  onPageChangeAction,
+  onPageSizeChangeAction,
 }: PaginationProps) => {
   const safeTotalPages = Math.max(totalPages, 1)
   const activePage = clampPage(currentPage, safeTotalPages)
   const pageItems = getPageItems(activePage, safeTotalPages)
   const isPreviousDisabled = disabled || activePage === 1
   const isNextDisabled = disabled || activePage === safeTotalPages
-  const isPageSizeSelectDisabled = disabled || !onPageSizeChange
+  const isPageSizeSelectDisabled = disabled || !onPageSizeChangeAction
 
   const handlePageChange = (page: number): void => {
     const nextPage = clampPage(page, safeTotalPages)
@@ -92,11 +92,11 @@ export const Pagination = ({
       return
     }
 
-    onPageChange(nextPage)
+    onPageChangeAction(nextPage)
   }
 
   const handlePageSizeChange = (nextPageSize: string): void => {
-    onPageSizeChange?.(Number(nextPageSize))
+    onPageSizeChangeAction?.(Number(nextPageSize))
   }
 
   return (

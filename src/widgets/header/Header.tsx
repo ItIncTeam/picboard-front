@@ -14,7 +14,7 @@ type HeaderRole = 'guest' | 'user' | 'admin' | 'superAdmin'
 type HeaderProps = {
   isSidebarOpen?: boolean
   notificationsCount?: number
-  onToggleSidebar?: () => void
+  onToggleSidebarAction?: () => void
   role?: HeaderRole
 }
 
@@ -33,13 +33,13 @@ const logoSuffix: Partial<Record<HeaderRole, string>> = {
 export function Header({
   isSidebarOpen = false,
   notificationsCount = 0,
-  onToggleSidebar,
+  onToggleSidebarAction,
   role = 'user',
 }: HeaderProps) {
   const hasNotifications = notificationsCount > 0
   const isAuthenticated = role !== 'guest'
   const showAuthActions = !isAuthenticated
-  const showSidebarTrigger = isAuthenticated && onToggleSidebar
+  const showSidebarTrigger = isAuthenticated && onToggleSidebarAction
   const { t } = useI18n()
 
   return (
@@ -52,7 +52,7 @@ export function Header({
             aria-label={isSidebarOpen ? t.header.closeSidebar : t.header.openSidebar}
             className={styles.sidebarTrigger}
             data-open={isSidebarOpen}
-            onClick={onToggleSidebar}
+            onClick={onToggleSidebarAction}
             type="button"
           >
             <span className={styles.sidebarTriggerIcon} aria-hidden>

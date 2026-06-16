@@ -3,16 +3,20 @@ import { Header } from '@/widgets/header'
 type AppHeaderProps = {
   isSidebarOpen?: boolean
   notificationsCount?: number
-  onToggleSidebar?: () => void
+  onToggleSidebarAction?: () => void
 }
 
-export function AppHeader({ isSidebarOpen, notificationsCount, onToggleSidebar }: AppHeaderProps) {
+export function AppHeader({
+  isSidebarOpen,
+  notificationsCount,
+  onToggleSidebarAction,
+}: AppHeaderProps) {
   return (
     <Header
       isSidebarOpen={isSidebarOpen}
       role="user"
       notificationsCount={notificationsCount}
-      onToggleSidebar={onToggleSidebar}
+      onToggleSidebarAction={onToggleSidebarAction}
     />
   )
 }

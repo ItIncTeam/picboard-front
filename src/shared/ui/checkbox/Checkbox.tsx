@@ -8,17 +8,30 @@ import { cn } from '@/shared/lib/cn'
 
 import styles from './checkbox.module.css'
 
+type CheckboxRootProps = ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+
 export type CheckboxProps = {
   label?: string
   errorMessage?: string
   className?: string
   labelClassName?: string
   controlClassName?: string
-} & ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+  onCheckedChangeAction?: CheckboxRootProps['onCheckedChange']
+} & Omit<CheckboxRootProps, 'onCheckedChange'>
 
 export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
   (
-    { label, errorMessage, className, labelClassName, controlClassName, id, disabled, ...props },
+    {
+      label,
+      errorMessage,
+      className,
+      labelClassName,
+      controlClassName,
+      id,
+      disabled,
+      onCheckedChangeAction,
+      ...props
+    },
     ref,
   ) => {
     const baseId = useId()
@@ -36,6 +49,7 @@ export const Checkbox = forwardRef<HTMLButtonElement, CheckboxProps>(
         )}
         disabled={disabled}
         aria-invalid={isError || undefined}
+        onCheckedChange={onCheckedChangeAction}
         {...props}
       >
         <CheckboxPrimitive.Indicator className={styles.checkbox__indicator}>

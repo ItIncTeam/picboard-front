@@ -33,7 +33,7 @@ export const Basic: Story = {
     return (
       <>
         <Button onClick={openModalHandler}>Open modal</Button>
-        <Modal {...args} open={showModal} onClose={closeModalHandler}>
+        <Modal {...args} open={showModal} onCloseAction={closeModalHandler}>
           <div style={{ width: 378, padding: '24px' }}>
             <Text mb={24}>Modal content goes here.</Text>
             <Button onClick={closeModalHandler}>OK</Button>

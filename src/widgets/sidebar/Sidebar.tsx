@@ -48,7 +48,7 @@ type SidebarItem = {
 type SidebarProps = {
   isMobile: boolean
   isOpen: boolean
-  onClose: () => void
+  onCloseAction: () => void
 }
 
 const items: SidebarItem[] = [
@@ -119,7 +119,7 @@ const isActiveItem = (item: SidebarItem, pathname: string) => {
   return pathname === item.href
 }
 
-export function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isMobile, isOpen, onCloseAction }: SidebarProps) {
   const pathname = usePathname()
   const { t } = useI18n()
 
@@ -128,7 +128,7 @@ export function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
   const shouldShowCollapsedTooltips = !isMobile && !isOpen
   const closeAfterMobileNavigation = () => {
     if (isMobile) {
-      onClose()
+      onCloseAction()
     }
   }
 
@@ -138,7 +138,7 @@ export function Sidebar({ isMobile, isOpen, onClose }: SidebarProps) {
         <button
           aria-label={t.sidebar.closeNavigation}
           className={styles.backdrop}
-          onClick={onClose}
+          onClick={onCloseAction}
           type="button"
         />
       )}

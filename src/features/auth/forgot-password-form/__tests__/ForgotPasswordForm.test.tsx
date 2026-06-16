@@ -71,16 +71,16 @@ vi.mock('@/shared/ui/input', () => ({
 vi.mock('@/shared/ui/recaptcha', () => ({
   Recaptcha: ({
     checked,
-    onCheckedChange,
+    onCheckedChangeAction,
   }: {
     checked?: boolean
-    onCheckedChange?: (value: boolean) => void
+    onCheckedChangeAction?: (value: boolean) => void
   }) => (
     <input
       aria-label="reCAPTCHA verification"
       checked={checked}
       onChange={(event) => {
-        onCheckedChange?.(event.currentTarget.checked)
+        onCheckedChangeAction?.(event.currentTarget.checked)
       }}
       type="checkbox"
     />
