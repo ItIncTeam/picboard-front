@@ -1,4 +1,4 @@
-import type { AspectRatio, CreatePostStep, ImageFilter } from '../model/createPostTypes'
+import type { AspectRatio, CreatePostStep, ImageFilter } from '@/features/create-post'
 
 export const CREATE_POST_STEPS: CreatePostStep[] = ['upload', 'crop', 'filters', 'publication']
 
