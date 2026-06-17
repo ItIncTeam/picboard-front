@@ -6,9 +6,12 @@ export { FiltersStep } from './ui/FiltersStep'
 export { PublicationStep } from './ui/PublicationStep'
 export { createPostInitialState, createPostReducer } from './model/createPostReducer'
 export {
+  selectActiveImage,
   selectCanGoNext,
   selectCanPublish,
   selectHasCreatePostUnsavedData,
+  selectHasImages,
+  selectImagesCount,
   selectIsReadyForUpload,
 } from './model/createPostSelectors'
 export type {
