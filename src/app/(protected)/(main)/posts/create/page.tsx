@@ -1,5 +1,5 @@
-import { MainSectionPage } from '@/views/main-section-page'
+import { CreatePostPage } from '@/views/create-post-page'
 
 export default function Page() {
-  return <MainSectionPage section="create-post" />
+  return <CreatePostPage />
 }
