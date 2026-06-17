@@ -54,3 +54,7 @@ export type CreatePostAction =
   | { type: 'goBack' }
   | { type: 'goNext' }
   | { type: 'reset' }
+  | { type: 'addImages'; images: CreatePostImage[] }
+  | { type: 'removeImage'; imageId: string }
+  | { type: 'setActiveImage'; imageId: string | null }
+  | { type: 'setCaption'; caption: string }
