@@ -6,6 +6,7 @@ import { Button } from '@/shared/ui/button'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
 import { createPostInitialState, createPostReducer } from '@/features/create-post'
+import { selectCanGoNext, selectCanPublish } from '@/features/create-post'
 import type { CreatePostStep } from '@/features/create-post'
 import { CropStep } from './CropStep'
 import { FiltersStep } from './FiltersStep'
@@ -25,6 +26,8 @@ export function CreatePostFlow() {
   const currentStepIndex = CREATE_POST_STEPS.indexOf(state.step)
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === CREATE_POST_STEPS.length - 1
+  const canGoNext = selectCanGoNext(state)
+  const canPublish = selectCanPublish(state)
 
   return (
     <section className={styles.root} aria-label="Create post flow">
@@ -50,11 +53,11 @@ export function CreatePostFlow() {
         </Button>
 
         {isLastStep ? (
-          <Button disabled type="button">
+          <Button disabled={!canPublish} type="button">
             Publish
           </Button>
         ) : (
-          <Button onClick={() => dispatch({ type: 'goNext' })} type="button">
+          <Button disabled={!canGoNext} onClick={() => dispatch({ type: 'goNext' })} type="button">
             Next
           </Button>
         )}
