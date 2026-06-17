@@ -5,7 +5,12 @@ export { CropStep } from './ui/CropStep'
 export { FiltersStep } from './ui/FiltersStep'
 export { PublicationStep } from './ui/PublicationStep'
 export { createPostInitialState, createPostReducer } from './model/createPostReducer'
-export { selectIsReadyForUpload, selectHasCreatePostUnsavedData } from './model/createPostSelectors'
+export {
+  selectCanGoNext,
+  selectCanPublish,
+  selectHasCreatePostUnsavedData,
+  selectIsReadyForUpload,
+} from './model/createPostSelectors'
 export type {
   AspectRatio,
   CreatePostAction,
