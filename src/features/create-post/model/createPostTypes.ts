@@ -6,12 +6,48 @@ export type AspectRatio = 'original' | '1:1' | '4:5' | '16:9'
 
 export type ImageFilter = 'normal' | 'clarendon' | 'lark' | 'gingham' | 'moon'
 
+export type CreatePostImageFileInfo = {
+  name: string
+  size: number
+  type: string
+  lastModified: number
+}
+
+export type CreatePostUploadStatus =
+  | 'idle'
+  | 'requesting-presigned-url'
+  | 'uploading-to-storage'
+  | 'saving-metadata'
+  | 'uploaded'
+  | 'failed'
+
+export type CreatePostStoredMedia = {
+  key: string
+  url: string
+  fileName: string
+  contentType: string
+  size: number
+}
+
 export type CreatePostImage = {
   id: string
   name: string
+  file?: File
+  fileInfo?: CreatePostImageFileInfo
   previewUrl?: string
   aspectRatio: AspectRatio
   filter: ImageFilter
+  exported?: {
+    file: File
+    objectUrl: string
+    fileInfo: CreatePostImageFileInfo
+  }
+  upload?: {
+    status: CreatePostUploadStatus
+    storageKey?: string
+    metadata?: CreatePostStoredMedia
+    error?: string
+  }
 }
 
 export type CreatePostState = {

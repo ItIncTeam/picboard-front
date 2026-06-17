@@ -1,7 +1,7 @@
 # Frontend Task Breakdown
 
 Цель: разложить posts sprint на независимые small PRs для 4 frontend-разработчиков. Все tasks
-сохраняют `app/` тонким и не добавляют GraphQL posts operations до backend contract.
+сохраняют `app/` тонким и не добавляют GraphQL posts/upload operations до backend contract.
 
 ## Epics
 
@@ -11,6 +11,14 @@ Owner group: Dev 1, Dev 2, Dev 3.
 
 Includes route modal, fallback page reuse, create flow state, upload UI, object URLs, crop, filters,
 publication skeleton and final image export planning.
+
+Target upload pipeline after backend contract:
+
+```txt
+final edited File -> request presigned URL -> PUT to storage -> save metadata through GraphQL -> createPost
+```
+
+GraphQL Upload is not used.
 
 ### Epic 2: Posts Consumption
 
@@ -25,6 +33,8 @@ Main Page and Infinite Scroll are follow-up PRs.
 - Не добавлять dependencies в документационном PR.
 - Dependency install PRs должны быть отдельными и маленькими.
 - Не добавлять fake GraphQL operations.
+- Не добавлять real presigned upload API helpers until backend contract is ready.
+- Не использовать GraphQL Upload для post media.
 - Не хранить business logic в `page.tsx`.
 - Не копировать Figma-generated code напрямую; переводить макет в CSS modules, tokens и FSD
   boundaries.
@@ -33,6 +43,7 @@ Main Page and Infinite Scroll are follow-up PRs.
 
 ## State ownership
 
+- Dev 1 is Create Flow Owner.
 - Dev 1 owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
 - Dev 2 and Dev 3 must not change state contract independently.
 - Any change to create-post state shape must be agreed with Dev 1 before implementation.
@@ -42,6 +53,8 @@ Main Page and Infinite Scroll are follow-up PRs.
 
 Goal: подготовить основу create flow, которая одинаково работает в modal и fallback page.
 
+Role: Create Flow Owner.
+
 Checklist:
 
 - [ ] Проверить текущие exports `features/create-post`, `views/create-post-page`,
@@ -49,8 +62,11 @@ Checklist:
 - [ ] Вынести единый `CreatePostFlow` в `features/create-post`.
 - [ ] Описать step enum: `upload`, `crop`, `filters`, `publication`.
 - [ ] Описать state type без `any`.
+- [ ] Подготовить frontend-only state fields/selectors for future upload pipeline: original file
+      info, exported final file, upload status and saved metadata reference.
 - [ ] Добавить локальный reducer или hook для transitions.
 - [ ] Добавить selectors/helpers для `hasUnsavedData`.
+- [ ] Добавить selectors/helpers для readiness к presigned upload, но без API calls.
 - [ ] Подключить `CreatePostFlow` в modal shell.
 - [ ] Подключить тот же `CreatePostFlow` в fallback page.
 - [ ] Подготовить static desktop layout из Figma для crop step: header, back, `Next`, media area.
@@ -67,7 +83,9 @@ Dependencies:
 
 - Может стартовать сразу.
 - Не зависит от backend contract.
-- Должен предоставить API для Dev 2 and Dev 3.
+- Должен предоставить state API для Dev 2 and Dev 3.
+- Dev 2/3 не меняют `CreatePostState`, `CreatePostImage` or `CreatePostStep` без согласования с
+  Dev 1.
 
 Parallel work:
 
@@ -95,6 +113,8 @@ Checklist:
 - [ ] Поддержать reorder только если это нужно для MVP; иначе оставить planned.
 - [ ] Показать validation errors без backend calls.
 - [ ] Не добавлять upload GraphQL operations.
+- [ ] Не добавлять real presigned upload API helpers.
+- [ ] Не использовать GraphQL Upload.
 
 Dependencies:
 
@@ -106,7 +126,7 @@ Parallel work:
 - UI upload shell можно делать параллельно с Dev 1 на временном local state.
 - Final integration в общий flow после Dev 1.
 
-## Dev 3: Crop, Filters And Final Image Export
+## Dev 3: Crop, Filters And Final File Export
 
 Goal: подготовить client-side image processing для готовых изображений, которые уйдут на backend.
 
@@ -125,7 +145,7 @@ Checklist:
 - [ ] Определить минимальный набор filters для skeleton/MVP.
 - [ ] Применять filters к preview.
 - [ ] Экспортировать final image через canvas/blob.
-- [ ] Сохранять final image blob/file в create flow state.
+- [ ] Сохранять final edited `File` в create flow state.
 - [ ] Проверить, что exported image соответствует preview.
 - [ ] Не отправлять файлы на backend до contract.
 - [ ] Добавить cleanup для temporary object URLs generated from exported blobs.
@@ -135,6 +155,7 @@ Dependencies:
 - Нужен upload state от Dev 2.
 - Нужен create flow state от Dev 1.
 - File format/output quality зависит от backend answers.
+- Shared state shape changes must be agreed with Dev 1.
 
 Parallel work:
 
@@ -144,6 +165,9 @@ Parallel work:
 ## Dev 4: Posts Consumption Skeleton
 
 Goal: подготовить первый UI skeleton для отображения posts без backend operations.
+
+Scope: only posts display skeleton. Dev 4 does not work on create-post upload, crop, filters,
+state shape or publish pipeline in this sprint split.
 
 Checklist:
 
@@ -194,6 +218,8 @@ Follow-up PRs:
 - `createPost`, `updatePost`, `deletePost`, `getPostById`, `getUserPosts`, `getPublicPosts`,
   `getRegisteredUsersCount`.
 - Real upload integration.
+- Presigned URL API helpers before backend contract.
+- GraphQL Upload for media files.
 - Cache invalidation logic for posts.
 - ISR/revalidation implementation tied to real backend fields.
 - Exact file limits, if backend has not confirmed them.

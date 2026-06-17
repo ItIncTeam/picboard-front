@@ -1,4 +1,4 @@
-import type { Post } from '@/entities/post'
+import type { Post } from '../model/postTypes'
 import styles from './post.module.css'
 
 type PostCardProps = {

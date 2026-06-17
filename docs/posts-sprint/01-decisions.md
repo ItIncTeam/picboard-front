@@ -14,9 +14,16 @@
 - Infinite scroll: `react-intersection-observer`.
 - Backend contract пока отсутствует, поэтому frontend готовит UI skeleton без GraphQL posts
   operations.
+- GraphQL Upload для post media не используется.
+- Upload pipeline: final edited `File` -> request presigned URL -> PUT to storage -> save metadata
+  through GraphQL -> `createPost`.
+- Backend contract для presigned URL и metadata mutation пока не готов, поэтому frontend не
+  добавляет реальные API helpers, GraphQL operations или upload integration.
 - Sprint is split into Epic 1: Create Post Wizard and Epic 2: Posts Consumption.
-- Dev 1 owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
+- Dev 1 is Create Flow Owner and owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
 - Dev 2 and Dev 3 do not change create-post state shape without Dev 1 approval.
+- Dev 2 owns upload UI, frontend validation and object URL lifecycle.
+- Dev 3 owns crop/filter UI and final edited `File` export.
 - Dev 4 first UI skeleton PR focuses only on `entities/post`, `PostCard`, `PostGrid` and
   `PostDetails`.
 - Edit/delete, Main Page and Infinite Scroll are follow-up PRs.
@@ -65,14 +72,26 @@ scope. Draft требует отдельного продуктового и т�
 
 ## Почему frontend отправляет готовое изображение
 
-Frontend берет на себя crop/filter/export, чтобы backend получил уже финальный upload artifact:
+Frontend берет на себя crop/filter/export, чтобы storage получил уже финальный upload artifact:
 
 - backend не должен повторять UI-specific crop/filter decisions;
 - preview пользователя соответствует публикуемому результату;
-- publication payload становится проще: final files + metadata;
-- backend contract может сосредоточиться на storage, post creation и validation limits.
+- upload payload становится проще: final edited `File`;
+- publication payload становится проще: saved media metadata references;
+- backend contract может сосредоточиться на presigned URL, storage metadata, post creation and
+  validation limits.
 
 Backend все равно должен валидировать формат, размер, количество файлов и ownership.
+
+## Почему не GraphQL Upload
+
+Backend уточнил upload architecture: файлы не идут через GraphQL Upload/multipart. Frontend должен
+получить presigned URL, загрузить final edited `File` напрямую в storage через `PUT`, сохранить
+metadata через GraphQL mutation, а `createPost` позже должен ссылаться на сохраненную metadata.
+
+До готового backend contract нельзя добавлять реальные upload helpers, GraphQL operations или fake
+schema assumptions. Разрешены только frontend-only types, selectors and reducer tests, если они
+помогают стабилизировать `CreatePostState`.
 
 ## Почему `react-advanced-cropper`
 
@@ -92,7 +111,7 @@ Backend все равно должен валидировать формат, р
 - Close confirmation: только после появления unsaved data model.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
 - Exact GraphQL operations: только после backend contract.
-- Upload strategy: single mutation, signed URL, multipart или file service - ждем backend.
+- Exact presigned URL request, storage PUT headers and metadata mutation shape: ждем backend.
 - SSR/ISR settings для main/public pages: после backend query contract и cache requirements.
 - Exact post media limits: ждем backend/product decision.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.

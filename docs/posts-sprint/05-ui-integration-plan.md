@@ -72,12 +72,17 @@ Use only for primitives and infrastructure:
 - Used by both modal and fallback page.
 - Does not know whether it is rendered in modal or page.
 - Owns Figma step composition for upload, crop, filters and publication.
+- Dev 1 is Create Flow Owner and owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
+- Dev 2/3 do not change shared state shape without Dev 1 approval.
 
 ### `UploadStep`
 
 - Lives in `features/create-post`.
 - Handles file selection, validation and object URL creation.
 - Does not call backend.
+- Owned by Dev 2.
+- Does not add real presigned upload API helpers before backend contract.
+- Does not use GraphQL Upload.
 
 ### `CropStep`
 
@@ -85,6 +90,7 @@ Use only for primitives and infrastructure:
 - Uses `react-advanced-cropper` after dependency PR.
 - Saves crop settings into create flow state.
 - Owns crop toolbar, aspect ratio menu, zoom controls, active image navigation and media strip.
+- Owned by Dev 3 together with final edited `File` export.
 
 ### `FiltersStep`
 
@@ -92,12 +98,15 @@ Use only for primitives and infrastructure:
 - Applies preview filters.
 - Prepares final export settings.
 - Owns the desktop wide layout from Figma: preview panel plus filter grid.
+- Export output is a final edited `File` that later enters the presigned upload pipeline.
 
 ### `PublicationStep`
 
 - Lives in `features/create-post`.
 - Handles caption/tags UI and publish boundary.
 - Calls backend only after contract and API layer exist.
+- Future publish pipeline is: final edited `File` -> request presigned URL -> PUT to storage ->
+  save metadata through GraphQL -> `createPost`.
 
 ### `PostGrid`
 
@@ -157,7 +166,8 @@ Differences:
 - modal shell owns desktop route-modal dimensions and may adjust width by step;
 - fallback page owns page-level spacing/title;
 - create flow owns state and step UI;
-- backend integration later lives in feature/model/api boundaries, not in route adapters.
+- backend integration later lives in feature/model/api boundaries, not in route adapters;
+- backend integration must use presigned URL upload, not GraphQL Upload.
 
 ## Profile, main and details backend integration
 
@@ -193,6 +203,7 @@ Differences:
 - Upload validation: file type, count, size after limits are known.
 - Object URL lifecycle: revoke on remove/reset/unmount.
 - Crop/filter export helpers: output exists and respects selected settings.
+- Presigned upload readiness selectors: require final exported files, without calling backend.
 - Modal close behavior: no unsaved data closes; unsaved data opens confirm.
 - Fallback page renders same flow without modal close controls.
 - Post grid renders empty/loading/error/success states.

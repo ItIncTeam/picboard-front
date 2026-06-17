@@ -26,7 +26,9 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 - UI skeleton для Create Post без GraphQL posts operations до backend contract.
 - Frontend state model для create flow.
 - Upload validation и object URL lifecycle.
-- Crop/filter/export flow, где frontend готовит финальные изображения для backend.
+- Crop/filter/export flow, где frontend готовит final edited `File` для storage upload.
+- Presigned URL upload pipeline: final edited `File` -> request presigned URL -> PUT to storage ->
+  save metadata through GraphQL -> `createPost`.
 
 ### Epic 2: Posts Consumption
 
@@ -40,6 +42,7 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 - Установка новых dependencies в документационном PR.
 - GraphQL posts operations до backend contract.
 - Реальный upload API.
+- GraphQL Upload для media files. Frontend не отправляет файлы через GraphQL multipart.
 - Реальный crop/filter implementation до отдельного feature PR.
 - Edit/delete implementation in first UI skeleton PR.
 - Main page SSR/ISR implementation in first UI skeleton PR.
@@ -62,7 +65,9 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
   skeleton-level основу.
 - `entities/post` содержит только frontend display types and skeleton UI. Это не backend contract.
 - `widgets/posts-feed` пока не реализован.
-- `docs/schema.graphql` не содержит posts/upload contract.
+- `docs/schema.graphql` не содержит финальный posts/upload contract. Backend уточнил направление:
+  frontend получает presigned URL, загружает final file напрямую в storage, затем сохраняет metadata
+  через GraphQL.
 
 ## Целевая архитектура
 
@@ -117,8 +122,9 @@ Rules:
 6. Media strip/carousel behavior: active image, ordering, optional `embla-carousel-react` PR.
 7. Filters step: filter grid, preview, final image export planning.
 8. Publication step skeleton: caption/tags UI, validation, submit boundary без GraphQL operation.
-9. Backend contract PR: добавить GraphQL operations только после согласованной схемы.
-10. Publish integration: подключить upload/createPost flow.
+9. Backend contract PR: добавить GraphQL operations только после согласованной схемы. GraphQL
+   Upload не использовать.
+10. Publish integration: подключить presigned upload/createPost flow.
 11. Profile posts composition using `PostGrid`, then API integration.
 12. Post details composition using `PostDetails`, then API integration.
 13. Edit/delete follow-up PRs.
