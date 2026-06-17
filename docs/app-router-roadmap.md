@@ -36,6 +36,7 @@ src/app/
       layout.tsx
       @modal/default.tsx
       @modal/[...catchAll]/page.tsx
+      @modal/(.)posts/create/page.tsx
       main/page.tsx
       feed/page.tsx
       messenger/page.tsx
@@ -150,6 +151,16 @@ widgets/public-auth-shell
 
 Route-based modals живут в `app/(protected)/(main)/@modal`. Они нужны для контента, который можно
 открыть отдельным URL.
+
+Сейчас подключен skeleton Create Post modal:
+
+- soft navigation на `/posts/create` внутри `(main)` открывает `@modal/(.)posts/create/page.tsx`;
+- прямой заход или reload `/posts/create` рендерит обычный fallback route
+  `posts/create/page.tsx`;
+- `@modal/default.tsx` и `@modal/[...catchAll]/page.tsx` возвращают `null`, чтобы slot не оставался
+  активным на unmatched routes.
+
+Posts sprint planning: [Posts Sprint Overview](./posts-sprint/00-overview.md).
 
 Local UI modals живут рядом с feature или widget. Это confirmations, dropdowns и маленькие dialogs.
 

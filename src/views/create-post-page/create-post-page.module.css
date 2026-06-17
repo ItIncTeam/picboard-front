@@ -1,0 +1,29 @@
+.root {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 60px);
+  padding: 48px 24px;
+}
+
+.content {
+  display: grid;
+  gap: 20px;
+
+  width: min(100%, 720px);
+  padding: 32px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 8px;
+
+  background: var(--color-surface-secondary);
+}
+
+.eyebrow {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+  color: var(--color-text-secondary);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-lg);
+}
