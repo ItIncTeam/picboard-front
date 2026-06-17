@@ -1,8 +1,7 @@
 'use client'
-
+import { usePathname, useSearchParams } from 'next/navigation'
 import { ChevronLeftIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 
 import { LogoutButton } from '@/features/auth/logout-button'
 import {
@@ -124,7 +123,12 @@ const isActiveItem = (item: SidebarItem, pathname: string) => {
 export function Sidebar({ isMobile, isOpen, onCloseAction, onToggleSidebarAction }: SidebarProps) {
   const pathname = usePathname()
   const { t } = useI18n()
+  const searchParams = useSearchParams()
 
+  const currentSearch = searchParams.toString()
+  const returnTo = `${pathname}${currentSearch ? `?${currentSearch}` : ''}`
+
+  const createPostHref = `/posts/create?returnTo=${encodeURIComponent(returnTo)}`
   const isHiddenOnMobile = isMobile && !isOpen
   const isMobileSidebarOpen = isMobile && isOpen
   const shouldShowCollapsedTooltips = !isMobile && !isOpen
@@ -176,7 +180,7 @@ export function Sidebar({ isMobile, isOpen, onCloseAction, onToggleSidebarAction
                   aria-current={isActive ? 'page' : undefined}
                   className={styles.link}
                   data-active={isActive}
-                  href={item.href}
+                  href={item.href === '/posts/create' ? createPostHref : item.href}
                   onClick={closeAfterMobileNavigation}
                 >
                   <Icon aria-hidden className={styles.icon} focusable="false" />
