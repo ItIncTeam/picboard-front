@@ -15,6 +15,14 @@ Figma review for this flow: [Create Post Figma Review](./06-figma-review.md).
 upload -> crop -> filters -> publication -> publish
 ```
 
+Target backend pipeline after contract:
+
+```txt
+final edited File -> request presigned URL -> PUT to storage -> save metadata through GraphQL -> createPost
+```
+
+GraphQL Upload is not used for post media.
+
 ## Step: upload
 
 Responsibilities:
@@ -26,7 +34,8 @@ Responsibilities:
 - позволить удалить выбранный файл;
 - перейти к crop только если есть валидные files.
 
-На текущем этапе upload остается frontend-only. Backend upload API не подключается.
+На текущем этапе upload остается frontend-only. Backend upload API не подключается, real presigned
+upload helpers не добавляются.
 
 ## Step: crop
 
@@ -59,14 +68,17 @@ Responsibilities:
 - валидировать обязательные frontend поля;
 - показать disabled publish state, если backend contract еще не подключен;
 - позже вызвать upload/createPost integration.
+- не использовать GraphQL Upload.
 
 ## Step: publish
 
 Responsibilities after backend contract:
 
 - экспортировать final images;
-- отправить final images по согласованному upload contract;
-- вызвать `createPost` с media references and metadata;
+- запросить presigned URL для каждого final edited `File`;
+- загрузить final files напрямую в storage через `PUT`;
+- сохранить uploaded file metadata через GraphQL mutation;
+- вызвать `createPost` with saved media metadata references;
 - обработать success and errors;
 - закрыть modal or navigate to created post/profile according to product decision.
 
@@ -79,7 +91,7 @@ Product draft отложен на конец спринта.
 
 State ownership:
 
-- Dev 1 owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
+- Dev 1 is Create Flow Owner and owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
 - Dev 2 and Dev 3 do not change shared state contract independently.
 - Upload/crop/filter PRs can add local component state, but shared state shape changes require Dev 1
   agreement.
@@ -103,6 +115,24 @@ type CreatePostImageDraft = {
   exported?: {
     file: File
     objectUrl: string
+  }
+  upload?: {
+    status:
+      | 'idle'
+      | 'requesting-presigned-url'
+      | 'uploading-to-storage'
+      | 'saving-metadata'
+      | 'uploaded'
+      | 'failed'
+    storageKey?: string
+    metadata?: {
+      key: string
+      url: string
+      fileName: string
+      contentType: string
+      size: number
+    }
+    error?: string
   }
 }
 
@@ -173,7 +203,7 @@ Frontend exports final images after crop/filter:
 - render into canvas;
 - export to Blob/File using agreed format and quality;
 - store exported File in draft state;
-- send exported File to backend after upload contract is available.
+- send exported File to storage through presigned URL after backend contract is available.
 
 Open backend questions:
 
@@ -187,10 +217,14 @@ Open backend questions:
 
 Backend integration should be added only after contract exists:
 
-- upload final image files;
-- receive media/file IDs or URLs;
-- call `createPost`;
+- request presigned URL for final edited files;
+- `PUT` final edited files directly to storage;
+- save uploaded file metadata through GraphQL;
+- call `createPost` with saved media metadata references;
 - update profile/feed/main caches according to agreed API/cache strategy.
+
+Do not add GraphQL Upload, real presigned upload API helpers or fake GraphQL operations before the
+backend contract is ready.
 
 ## Current skeleton behavior
 

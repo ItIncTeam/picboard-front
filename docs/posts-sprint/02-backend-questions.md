@@ -5,14 +5,25 @@ operations до ответов.
 
 ## Upload contract
 
-- Какой upload flow нужен: GraphQL multipart, signed URL, отдельный REST endpoint или file service?
-- Upload выполняется до `createPost` или внутри `createPost` mutation?
-- Как frontend передает несколько изображений: array files, file IDs, ordered media inputs?
+- Подтвердите exact presigned URL request contract: query/mutation name, input and response shape.
+- Какие HTTP method, headers and content type должен использовать frontend при `PUT` в storage?
+- Какой expiry у presigned URL и можно ли запрашивать URL batch для нескольких изображений?
+- Upload выполняется до `createPost`; подтвердите, какая metadata mutation сохраняет uploaded file.
+- Какой metadata payload frontend передает после storage upload: url, key, file name, content type,
+  size, width/height, order?
+- Как `createPost` ссылается на сохраненную metadata: media IDs, storage keys или ordered media
+  inputs?
 - Нужно ли отдельно подтверждать upload completion?
 - Нужна ли retry/idempotency strategy для failed upload?
 - Какие error codes/messages возвращаются для invalid file, too large, unsupported type, auth
   failure и storage failure?
 - Нужен ли progress reporting contract?
+
+Confirmed frontend assumption:
+
+- GraphQL Upload/multipart для media files не используется.
+- Frontend uploads final edited `File` directly to storage with presigned URL.
+- GraphQL используется после storage upload для сохранения metadata and later `createPost`.
 
 ## File format, limits and order
 
@@ -33,6 +44,8 @@ operations до ответов.
 - Как передавать hashtags: parsed array или raw caption text?
 - Возвращает ли mutation полный `Post` или только ID/status?
 - Какая модель ошибок для partial upload success but createPost failure?
+- Что делать, если metadata сохранена, но `createPost` завершился ошибкой: cleanup, orphan media,
+  retry или draft-like recovery?
 - Нужна ли optimistic update support?
 
 ## `updatePost`

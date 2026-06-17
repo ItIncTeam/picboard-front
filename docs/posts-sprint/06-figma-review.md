@@ -218,9 +218,9 @@ State ownership:
 5. Add aspect ratio menu and zoom controls.
 6. Add multi-image media strip and carousel behavior.
 7. Add filters grid and preview.
-8. Add final image export.
+8. Add final edited `File` export.
 9. Add publication step and disabled publish boundary.
-10. Add backend integration after contract.
+10. Add presigned URL upload and `createPost` integration after backend contract.
 11. Add close confirmation when `hasUnsavedData` exists.
 12. Add draft persistence only at the end of the sprint if the team finalizes the behavior.
 
@@ -236,6 +236,7 @@ State ownership:
 - Putting upload/crop/filter state into the modal shell would make fallback page reuse harder.
 - Adding GraphQL operations before backend contract would create fake contracts that are expensive
   to unwind.
+- Using GraphQL Upload would contradict the backend-confirmed presigned URL architecture.
 
 ## Open product questions
 
@@ -255,8 +256,9 @@ State ownership:
 - Keep the first Posts Consumption PR limited to `entities/post`, `PostCard`, `PostGrid` and
   `PostDetails`.
 - Split dependency installation into separate PRs with clear usage immediately following.
-- Assign one developer as owner of `CreatePostDraft` state shape to avoid upload/crop/filter PRs
-  inventing incompatible local models.
+- Treat Dev 1 as Create Flow Owner for `CreatePostState`, `CreatePostImage` and `CreatePostStep`
+  to avoid upload/crop/filter PRs inventing incompatible local models.
+- Dev 2/3 should not change the shared state shape without Dev 1 approval.
 - Review Figma text before implementation and do not copy mixed-language strings blindly.
 - Keep close confirmation out of the first PR; add it only when unsaved data is real.
 - Move edit/delete, Main Page and infinite scroll into follow-up PRs.
