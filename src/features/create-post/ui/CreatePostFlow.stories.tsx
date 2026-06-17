@@ -6,6 +6,7 @@ import {
   type CreatePostState,
 } from '@/features/create-post'
 
+import { CreatePostCloseConfirm } from './CreatePostCloseConfirm'
 import { CreatePostFlow } from './CreatePostFlow'
 
 const meta = {
@@ -59,7 +60,7 @@ function createState(overrides: Partial<CreatePostState>): CreatePostState {
   }
 }
 
-export const UploadStep: Story = {
+export const Upload: Story = {
   render: () => (
     <CreatePostFlow
       initialState={createState({
@@ -70,7 +71,7 @@ export const UploadStep: Story = {
   ),
 }
 
-export const CropStepWithMockImage: Story = {
+export const CropWithMockImage: Story = {
   render: () => {
     const mockImage = createImage('mock-image')
 
@@ -86,7 +87,7 @@ export const CropStepWithMockImage: Story = {
   },
 }
 
-export const FiltersStepWithMockImage: Story = {
+export const FiltersWithMockImage: Story = {
   render: () => {
     const mockImage = createImage('mock-image')
 
@@ -102,7 +103,7 @@ export const FiltersStepWithMockImage: Story = {
   },
 }
 
-export const PublicationStepWithMockExportedImage: Story = {
+export const PublicationWithExportedMockImage: Story = {
   render: () => {
     const mockExportedImage = createExportedImage('mock-image')
 
@@ -116,4 +117,14 @@ export const PublicationStepWithMockExportedImage: Story = {
       />
     )
   },
+}
+
+export const CloseConfirm: Story = {
+  render: () => (
+    <CreatePostCloseConfirm
+      onDiscardAction={() => undefined}
+      onKeepEditingAction={() => undefined}
+      open
+    />
+  ),
 }
