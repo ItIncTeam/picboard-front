@@ -13,7 +13,6 @@ export type {
   CreatePostImageFileInfo,
   CreatePostState,
   CreatePostStep,
-  CreatePostStoredMedia,
   CreatePostUploadStatus,
   ImageFilter,
 } from './model/createPostTypes'
