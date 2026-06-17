@@ -9,13 +9,25 @@ import styles from './modal.module.css'
 
 type ModalProps = {
   children: ReactNode
+  bodyClassName?: string
   className?: string
+  hideCloseButton?: boolean
+  hideHeader?: boolean
   open: boolean
   onCloseAction: () => void
   modalTitle: string
 }
 
-export function Modal({ children, className, modalTitle, onCloseAction, open }: ModalProps) {
+export function Modal({
+  bodyClassName,
+  children,
+  className,
+  hideCloseButton = false,
+  hideHeader = false,
+  modalTitle,
+  onCloseAction,
+  open,
+}: ModalProps) {
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       onCloseAction()
@@ -27,15 +39,21 @@ export function Modal({ children, className, modalTitle, onCloseAction, open }: 
       <Dialog.Portal>
         <Dialog.Overlay className={styles.overlay} />
         <Dialog.Content className={clsx(styles.content, className)}>
-          <Dialog.Close asChild>
-            <IconButton className={styles.closeButton} icon={Close} label="Close" />
-          </Dialog.Close>
+          {!hideCloseButton && (
+            <Dialog.Close asChild>
+              <IconButton className={styles.closeButton} icon={Close} label="Close" />
+            </Dialog.Close>
+          )}
 
-          <div className={styles.modalHeader}>
-            <Dialog.Title className={styles.title}>{modalTitle}</Dialog.Title>
-          </div>
+          {hideHeader ? (
+            <Dialog.Title className={styles.visuallyHidden}>{modalTitle}</Dialog.Title>
+          ) : (
+            <div className={styles.modalHeader}>
+              <Dialog.Title className={styles.title}>{modalTitle}</Dialog.Title>
+            </div>
+          )}
 
-          <div className={styles.body}>{children}</div>
+          <div className={clsx(styles.body, bodyClassName)}>{children}</div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

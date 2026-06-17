@@ -2,67 +2,147 @@
 
 import { useReducer } from 'react'
 
+import { ArrowBackIcon, Close } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
+import { IconButton } from '@/shared/ui/icon-button'
+import { Title } from '@/shared/ui/typography'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
-import { createPostInitialState, createPostReducer } from '@/features/create-post'
-import { selectCanGoNext, selectCanPublish } from '@/features/create-post'
-import type { CreatePostStep } from '@/features/create-post'
+import { createPostInitialState, createPostReducer } from '../model/createPostReducer'
+import { selectCanGoNext, selectCanPublish } from '../model/createPostSelectors'
+import type { CreatePostState, CreatePostStep } from '../model/createPostTypes'
 import { CropStep } from './CropStep'
 import { FiltersStep } from './FiltersStep'
 import { PublicationStep } from './PublicationStep'
 import { UploadStep } from './UploadStep'
 import styles from './create-post-flow.module.css'
 
-const stepLabels: Record<CreatePostStep, string> = {
-  upload: 'Upload',
-  crop: 'Crop',
+type CreatePostFlowProps = {
+  initialState?: CreatePostState
+  onCloseAction?: () => void
+}
+
+const stepTitles: Record<CreatePostStep, string> = {
+  upload: 'Add Photo',
+  crop: 'Cropping',
   filters: 'Filters',
   publication: 'Publication',
 }
 
-export function CreatePostFlow() {
-  const [state, dispatch] = useReducer(createPostReducer, createPostInitialState)
+export function CreatePostFlow({
+  initialState = createPostInitialState,
+  onCloseAction,
+}: CreatePostFlowProps) {
+  const [state, dispatch] = useReducer(createPostReducer, initialState)
   const currentStepIndex = CREATE_POST_STEPS.indexOf(state.step)
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === CREATE_POST_STEPS.length - 1
   const canGoNext = selectCanGoNext(state)
   const canPublish = selectCanPublish(state)
+  const isUploadHeader = state.step === 'upload' && state.images.length === 0
+  const flowSize = state.step === 'filters' || state.step === 'publication' ? 'wide' : 'compact'
 
   return (
-    <section className={styles.root} aria-label="Create post flow">
-      <ol className={styles.steps} aria-label="Create post steps">
-        {CREATE_POST_STEPS.map((step, index) => (
-          <li className={styles.stepItem} data-active={step === state.step} key={step}>
-            <span className={styles.stepIndex}>{index + 1}</span>
-            <span>{stepLabels[step]}</span>
-          </li>
-        ))}
-      </ol>
+    <section className={styles.root} data-size={flowSize} aria-label="Create post flow">
+      {isUploadHeader
+        ? renderUploadHeader(onCloseAction)
+        : renderWizardHeader({
+            canGoNext,
+            canPublish,
+            isFirstStep,
+            isLastStep,
+            onBack: () => dispatch({ type: 'goBack' }),
+            onNext: () => dispatch({ type: 'goNext' }),
+            step: state.step,
+          })}
 
-      <div className={styles.panel}>{renderStep(state.step)}</div>
+      <div className={styles.body}>{renderStep(state.step)}</div>
+    </section>
+  )
+}
 
-      <div className={styles.actions}>
-        <Button
-          disabled={isFirstStep}
-          onClick={() => dispatch({ type: 'goBack' })}
-          type="button"
-          variant="secondary"
-        >
-          Back
-        </Button>
+function renderUploadHeader(onCloseAction?: () => void) {
+  return (
+    <header className={styles.header}>
+      <div className={styles.headerSlot} />
 
+      <Title className={styles.title} level="h2">
+        {stepTitles.upload}
+      </Title>
+
+      <div className={styles.actionSlot}>
+        {onCloseAction && (
+          <IconButton
+            className={styles.closeButton}
+            icon={Close}
+            label="Close"
+            onClick={onCloseAction}
+          />
+        )}
+      </div>
+    </header>
+  )
+}
+
+type WizardHeaderProps = {
+  canGoNext: boolean
+  canPublish: boolean
+  isFirstStep: boolean
+  isLastStep: boolean
+  onBack: () => void
+  onNext: () => void
+  step: CreatePostStep
+}
+
+function renderWizardHeader({
+  canGoNext,
+  canPublish,
+  isFirstStep,
+  isLastStep,
+  onBack,
+  onNext,
+  step,
+}: WizardHeaderProps) {
+  return (
+    <header className={styles.header}>
+      <div className={styles.headerSlot}>
+        {!isFirstStep && (
+          <IconButton
+            className={styles.backButton}
+            icon={ArrowBackIcon}
+            label="Back"
+            onClick={onBack}
+          />
+        )}
+      </div>
+
+      <Title className={styles.title} level="h2">
+        {stepTitles[step]}
+      </Title>
+
+      <div className={styles.actionSlot}>
         {isLastStep ? (
-          <Button disabled={!canPublish} type="button">
+          <Button
+            className={styles.headerAction}
+            disabled={!canPublish}
+            type="button"
+            variant="textButton"
+          >
             Publish
           </Button>
         ) : (
-          <Button disabled={!canGoNext} onClick={() => dispatch({ type: 'goNext' })} type="button">
+          <Button
+            className={styles.headerAction}
+            disabled={!canGoNext}
+            onClick={onNext}
+            type="button"
+            variant="textButton"
+          >
             Next
           </Button>
         )}
       </div>
-    </section>
+    </header>
   )
 }
 

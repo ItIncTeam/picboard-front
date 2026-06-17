@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 
 import { SessionProvider } from '@/features/auth/session-management'
 import { ApolloProvider } from '@/shared/api'
+import { RouteHistoryTracker } from '@/shared/lib/router'
 import { ToastProvider } from '@/shared/ui/toast'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
@@ -39,7 +40,10 @@ export default function RootLayout({
           <SessionProvider>
             <I18nProvider>
               <TooltipProvider>
-                <ToastProvider>{children}</ToastProvider>
+                <ToastProvider>
+                  <RouteHistoryTracker />
+                  {children}
+                </ToastProvider>
               </TooltipProvider>
             </I18nProvider>
           </SessionProvider>
