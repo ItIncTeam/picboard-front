@@ -21,14 +21,6 @@ export type CreatePostUploadStatus =
   | 'uploaded'
   | 'failed'
 
-export type CreatePostStoredMedia = {
-  key: string
-  url: string
-  fileName: string
-  contentType: string
-  size: number
-}
-
 export type CreatePostImage = {
   id: string
   name: string
@@ -44,8 +36,6 @@ export type CreatePostImage = {
   }
   upload?: {
     status: CreatePostUploadStatus
-    storageKey?: string
-    metadata?: CreatePostStoredMedia
     error?: string
   }
 }

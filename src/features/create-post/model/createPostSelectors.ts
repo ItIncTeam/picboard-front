@@ -4,6 +4,6 @@ export function selectHasCreatePostUnsavedData(state: CreatePostState): boolean 
   return state.hasUnsavedData || state.images.length > 0 || state.caption.trim().length > 0
 }
 
-export function selectCanCreatePostRequestUpload(state: CreatePostState): boolean {
+export function selectIsReadyForUpload(state: CreatePostState): boolean {
   return state.images.length > 0 && state.images.every((image) => image.exported !== undefined)
 }
