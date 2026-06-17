@@ -33,6 +33,48 @@ export function createPostReducer(
         step: getAdjacentStep(state.step, 1),
       }
 
+    case 'addImages': {
+      const firstAddedImage = action.images[0]
+
+      return {
+        ...state,
+        images: [...state.images, ...action.images],
+        activeImageId: state.activeImageId ?? firstAddedImage?.id ?? null,
+        hasUnsavedData: true,
+      }
+    }
+
+    case 'removeImage': {
+      const nextImages = state.images.filter((image) => image.id !== action.imageId)
+
+      if (nextImages.length === state.images.length) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+        activeImageId:
+          state.activeImageId === action.imageId
+            ? (nextImages[0]?.id ?? null)
+            : state.activeImageId,
+        hasUnsavedData: true,
+      }
+    }
+
+    case 'setActiveImage':
+      return {
+        ...state,
+        activeImageId: action.imageId,
+      }
+
+    case 'setCaption':
+      return {
+        ...state,
+        caption: action.caption,
+        hasUnsavedData: true,
+      }
+
     case 'reset':
       return createPostInitialState
 
