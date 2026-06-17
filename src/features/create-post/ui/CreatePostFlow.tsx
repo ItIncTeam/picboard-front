@@ -1,6 +1,7 @@
 'use client'
 
-import { useReducer } from 'react'
+import { CreatePostCloseConfirm } from '@/features/create-post/ui/CreatePostCloseConfirm'
+import { useReducer, useState } from 'react'
 
 import { ArrowBackIcon, Close } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
@@ -8,9 +9,13 @@ import { IconButton } from '@/shared/ui/icon-button'
 import { Title } from '@/shared/ui/typography'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
-import { createPostInitialState, createPostReducer } from '../model/createPostReducer'
-import { selectCanGoNext, selectCanPublish } from '../model/createPostSelectors'
-import type { CreatePostState, CreatePostStep } from '../model/createPostTypes'
+import { createPostInitialState, createPostReducer } from '@/features/create-post'
+import {
+  selectCanGoNext,
+  selectCanPublish,
+  selectHasCreatePostUnsavedData,
+} from '@/features/create-post'
+import type { CreatePostState, CreatePostStep } from '@/features/create-post'
 import { CropStep } from './CropStep'
 import { FiltersStep } from './FiltersStep'
 import { PublicationStep } from './PublicationStep'
@@ -34,6 +39,7 @@ export function CreatePostFlow({
   onCloseAction,
 }: CreatePostFlowProps) {
   const [state, dispatch] = useReducer(createPostReducer, initialState)
+  const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false)
   const currentStepIndex = CREATE_POST_STEPS.indexOf(state.step)
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === CREATE_POST_STEPS.length - 1
@@ -42,10 +48,23 @@ export function CreatePostFlow({
   const isUploadHeader = state.step === 'upload' && state.images.length === 0
   const flowSize = state.step === 'filters' || state.step === 'publication' ? 'wide' : 'compact'
 
+  const handleClose = () => {
+    if (selectHasCreatePostUnsavedData(state)) {
+      setIsCloseConfirmOpen(true)
+
+      return
+    }
+    onCloseAction?.()
+  }
+
+  const handleDiscard = () => {
+    dispatch({ type: 'reset' })
+    onCloseAction?.()
+  }
   return (
     <section className={styles.root} data-size={flowSize} aria-label="Create post flow">
       {isUploadHeader
-        ? renderUploadHeader(onCloseAction)
+        ? renderUploadHeader(handleClose)
         : renderWizardHeader({
             canGoNext,
             canPublish,
@@ -57,6 +76,11 @@ export function CreatePostFlow({
           })}
 
       <div className={styles.body}>{renderStep(state.step)}</div>
+      <CreatePostCloseConfirm
+        onDiscardAction={handleDiscard}
+        onKeepEditingAction={() => setIsCloseConfirmOpen(false)}
+        open={isCloseConfirmOpen}
+      />
     </section>
   )
 }
