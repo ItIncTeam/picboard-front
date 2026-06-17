@@ -55,29 +55,50 @@ Goal: подготовить основу create flow, которая одина
 
 Role: Create Flow Owner.
 
+Status:
+
+Completed:
+
+- state contract;
+- reducer;
+- selectors;
+- flow navigation;
+- returnTo navigation;
+- close confirm;
+- storybook states.
+
+Current:
+
+- flow tests.
+
+Future:
+
+- backend integration review;
+- draft architecture.
+
 Checklist:
 
-- [ ] Проверить текущие exports `features/create-post`, `views/create-post-page`,
+- [x] Проверить текущие exports `features/create-post`, `views/create-post-page`,
       `widgets/create-post-modal`.
-- [ ] Вынести единый `CreatePostFlow` в `features/create-post`.
-- [ ] Описать step enum: `upload`, `crop`, `filters`, `publication`.
-- [ ] Описать state type без `any`.
-- [ ] Подготовить frontend-only state fields/selectors for future upload pipeline: original file
+- [x] Вынести единый `CreatePostFlow` в `features/create-post`.
+- [x] Описать step enum: `upload`, `crop`, `filters`, `publication`.
+- [x] Описать state type без `any`.
+- [x] Подготовить frontend-only state fields/selectors for future upload pipeline: original file
       info, exported final file, upload status and saved metadata reference.
-- [ ] Добавить локальный reducer или hook для transitions.
-- [ ] Добавить selectors/helpers для `hasUnsavedData`.
-- [ ] Добавить selectors/helpers для readiness к presigned upload, но без API calls.
-- [ ] Подключить `CreatePostFlow` в modal shell.
-- [ ] Подключить тот же `CreatePostFlow` в fallback page.
-- [ ] Подготовить static desktop layout из Figma для crop step: header, back, `Next`, media area.
-- [ ] Поддержать step-dependent modal size на уровне modal shell, если shared modal ограничивает
+- [x] Добавить локальный reducer или hook для transitions.
+- [x] Добавить selectors/helpers для `hasUnsavedData`.
+- [x] Добавить selectors/helpers для readiness к presigned upload, но без API calls.
+- [x] Подключить `CreatePostFlow` в modal shell.
+- [x] Подключить тот же `CreatePostFlow` в fallback page.
+- [x] Подготовить static desktop layout из Figma для crop step: header, back, `Next`, media area.
+- [x] Поддержать step-dependent modal size на уровне modal shell, если shared modal ограничивает
       Figma layout.
-- [ ] Сохранить `app/(protected)/(main)/@modal/(.)posts/create/page.tsx` тонким adapter.
-- [ ] Сохранить `app/(protected)/(main)/posts/create/page.tsx` тонким adapter.
-- [ ] Реализовать close confirm только когда `hasUnsavedData === true`.
-- [ ] В close confirm использовать `Discard` / `Keep editing`; не показывать `Save draft`.
-- [ ] Оставить draft persistence disabled.
-- [ ] Добавить focused unit tests для reducer/helpers, если test setup уже позволяет.
+- [x] Сохранить `app/(protected)/(main)/@modal/(.)posts/create/page.tsx` тонким adapter.
+- [x] Сохранить `app/(protected)/(main)/posts/create/page.tsx` тонким adapter.
+- [x] Реализовать close confirm только когда `hasUnsavedData === true`.
+- [x] В close confirm использовать `Discard` / `Keep editing`; не показывать `Save draft`.
+- [x] Оставить draft persistence disabled.
+- [x] Добавить focused unit tests для reducer/helpers, если test setup уже позволяет.
 
 Dependencies:
 
@@ -95,6 +116,8 @@ Parallel work:
 ## Dev 2: Upload, Validation And Object URLs
 
 Goal: реализовать upload step на frontend без backend upload API.
+
+Status: In Progress.
 
 Checklist:
 
@@ -129,6 +152,8 @@ Parallel work:
 ## Dev 3: Crop, Filters And Final File Export
 
 Goal: подготовить client-side image processing для готовых изображений, которые уйдут на backend.
+
+Status: In Progress.
 
 Checklist:
 
@@ -168,6 +193,8 @@ Goal: подготовить первый UI skeleton для отображен�
 
 Scope: only posts display skeleton. Dev 4 does not work on create-post upload, crop, filters,
 state shape or publish pipeline in this sprint split.
+
+Status: In Progress.
 
 Checklist:
 

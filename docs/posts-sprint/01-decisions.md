@@ -4,10 +4,17 @@
 
 - Create открывается как route-based modal через существующий `@modal` slot.
 - `/posts/create` остается fallback page для direct open/reload.
-- Close behavior: сначала `router.back()`, если нет безопасной history - `router.replace('/main')`.
+- Create modal close использует explicit `returnTo` query parameter from Sidebar navigation.
+- `router.back()` не используется для Create modal close.
+- Auth routes and self `/posts/create` routes запрещены как close return target.
+- Close fallback route is `/main`.
 - Draft переносится в конец спринта; команда отдельно думает над его реализацией.
 - `Save draft` из Figma не реализуется в early Create Post flow.
 - Confirm при закрытии показывается только если есть unsaved data.
+- Close confirmation actions are `Discard` and `Keep editing`.
+- Storybook states `Upload`, `CropWithMockImage`, `FiltersWithMockImage`,
+  `PublicationWithExportedMockImage` and `CloseConfirm` are official UI development states for
+  Create Post Foundation.
 - Frontend отправляет на backend уже готовые изображения после crop/filter.
 - Crop library: `react-advanced-cropper`.
 - Carousel: `embla-carousel-react`.
@@ -45,6 +52,20 @@ Route-based modal лучше соответствует текущей App Route
 Local modal из Sidebar не выбран, потому что Sidebar должен оставаться navigation widget, а не
 владеть create-post workflow state.
 
+## Почему Create modal close использует explicit `returnTo`
+
+Create route открывается как intercepted modal, но close behavior не должен зависеть от browser
+history shape. Sidebar формирует `/posts/create?returnTo=currentRoute`, а modal shell валидирует
+`returnTo` and calls `router.replace(safeReturnTo)`.
+
+This keeps close deterministic:
+
+- safe previous app route is restored through explicit URL state;
+- `/auth` routes are not valid close targets;
+- `/posts/create` and `/posts/create?...` are not valid close targets;
+- missing or unsafe `returnTo` falls back to `/main`;
+- `router.back()` is not used for Create modal close.
+
 ## Почему direct `/posts/create` остается fallback page
 
 Direct open/reload не может восстановить previous page context для modal overlay. Fallback page
@@ -66,9 +87,21 @@ scope. Draft требует отдельного продуктового и т�
 - как синхронизировать draft между devices, если это нужно;
 - что делать с draft после successful publish.
 
-Пока эти решения не приняты, UI не должен показывать `Save draft`, даже disabled. Ранние PRs могут
-добавить close confirmation только с actions `Discard` и `Keep editing`, и только когда
-`hasUnsavedData === true`.
+Пока эти решения не приняты, UI не должен показывать `Save draft`, даже disabled. Current Close
+Confirm contains only `Discard` and `Keep editing`, and opens only when `hasUnsavedData === true`.
+
+## Почему Storybook states считаются официальными
+
+Create Post Foundation фиксирует Storybook states как общий UI baseline for parallel work:
+
+- `Upload`;
+- `CropWithMockImage`;
+- `FiltersWithMockImage`;
+- `PublicationWithExportedMockImage`;
+- `CloseConfirm`.
+
+Dev 2 and Dev 3 should use these states for visual development until real upload, crop, filters and
+export integration replace the mock image fixtures.
 
 ## Почему frontend отправляет готовое изображение
 
@@ -108,7 +141,6 @@ schema assumptions. Разрешены только frontend-only types, selecto
 ## Отложенные решения
 
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
-- Close confirmation: только после появления unsaved data model.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
 - Exact GraphQL operations: только после backend contract.
 - Exact presigned URL request, storage PUT headers and metadata mutation shape: ждем backend.

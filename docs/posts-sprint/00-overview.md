@@ -57,17 +57,51 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 ## Текущий frontend state
 
 - `src/app/(protected)/(main)/layout.tsx` уже содержит `@modal` slot.
-- `src/app/(protected)/(main)/@modal/(.)posts/create/page.tsx` подключает Create Post modal
-  skeleton для soft navigation.
+- `src/app/(protected)/(main)/@modal/(.)posts/create/page.tsx` подключает route-based
+  `CreatePostModal` для soft navigation.
 - `src/app/(protected)/(main)/posts/create/page.tsx` остается fallback route для direct open/reload.
-- Sidebar уже ведет Create на `/posts/create`; менять Sidebar не требуется.
-- `features/create-post`, `views/create-post-page` и `widgets/create-post-modal` имеют только
-  skeleton-level основу.
+- Sidebar ведет Create на `/posts/create?returnTo=currentRoute`.
+- `widgets/create-post-modal` закрывает modal через explicit safe `returnTo` и fallback `/main`.
+- `features/create-post` содержит `CreatePostFlow`, frontend-only state contract, reducer,
+  selectors, Close Confirm, Storybook states and focused tests for reducer/selectors/flow behavior.
+- `views/create-post-page` использует тот же `CreatePostFlow` для fallback page.
 - `entities/post` содержит только frontend display types and skeleton UI. Это не backend contract.
 - `widgets/posts-feed` пока не реализован.
 - `docs/schema.graphql` не содержит финальный posts/upload contract. Backend уточнил направление:
   frontend получает presigned URL, загружает final file напрямую в storage, затем сохраняет metadata
   через GraphQL.
+
+## Current Progress
+
+### Completed
+
+- Route-based Create Post modal through the existing `@modal` slot.
+- Direct `/posts/create` fallback page.
+- Shared `CreatePostFlow` for modal and fallback page.
+- Frontend-only `CreatePostState`, `CreatePostImage` and `CreatePostStep` contract.
+- Create flow reducer for reset, step navigation, image list, active image and caption changes.
+- Create flow selectors for unsaved data, image presence, active image, upload readiness, next and
+  publish availability.
+- Close Confirm shown only for unsaved data.
+- Safe modal close through explicit `returnTo` with `/main` fallback.
+- Auth routes and self `/posts/create` routes are blocked as close return targets.
+- Storybook UI states: `Upload`, `CropWithMockImage`, `FiltersWithMockImage`,
+  `PublicationWithExportedMockImage`, `CloseConfirm`.
+- Focused reducer, selector and Create Post flow behavior tests.
+
+### In Progress
+
+- Upload step implementation: file selection, validation and object URL lifecycle.
+- Crop and filters implementation, including final edited image export.
+- Posts UI skeleton work for post display surfaces.
+
+### Not Started
+
+- Backend posts GraphQL operations.
+- Presigned upload/createPost integration.
+- Draft persistence architecture and implementation.
+- Main/public page SSR/ISR integration.
+- Infinite scroll integration.
 
 ## Целевая архитектура
 

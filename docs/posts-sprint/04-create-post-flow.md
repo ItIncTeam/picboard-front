@@ -12,7 +12,13 @@ Figma review for this flow: [Create Post Figma Review](./06-figma-review.md).
 ## Flow
 
 ```txt
-upload -> crop -> filters -> publication -> publish
+Upload
+↓
+Crop
+↓
+Filters
+↓
+Publication
 ```
 
 Target backend pipeline after contract:
@@ -101,20 +107,26 @@ type CreatePostStep = 'upload' | 'crop' | 'filters' | 'publication'
 
 type CreatePostImageDraft = {
   id: string
-  file: File
-  objectUrl: string
-  crop?: {
-    aspectRatio: 'original' | '1:1' | '4:5' | '16:9'
-    coordinates: unknown
-    zoom: number
+  name: string
+  file?: File
+  fileInfo?: {
+    name: string
+    size: number
+    type: string
+    lastModified: number
   }
-  filter?: {
-    name: 'none' | string
-    intensity: number
-  }
+  previewUrl?: string
+  aspectRatio: 'original' | '1:1' | '4:5' | '16:9'
+  filter: 'normal' | 'clarendon' | 'lark' | 'gingham' | 'moon'
   exported?: {
     file: File
     objectUrl: string
+    fileInfo: {
+      name: string
+      size: number
+      type: string
+      lastModified: number
+    }
   }
   upload?: {
     status:
@@ -124,14 +136,6 @@ type CreatePostImageDraft = {
       | 'saving-metadata'
       | 'uploaded'
       | 'failed'
-    storageKey?: string
-    metadata?: {
-      key: string
-      url: string
-      fileName: string
-      contentType: string
-      size: number
-    }
     error?: string
   }
 }
@@ -141,9 +145,8 @@ type CreatePostDraft = {
   images: CreatePostImageDraft[]
   activeImageId: string | null
   caption: string
-  tags: string[]
+  hasUnsavedData: boolean
   isPublishing: boolean
-  error: string | null
 }
 ```
 
@@ -155,10 +158,11 @@ Implementation note: replace `unknown` coordinates with the exact cropper type w
 - `upload -> crop`: allowed when at least one valid image exists.
 - `crop -> filters`: allowed when active image crop state is valid.
 - `filters -> publication`: allowed after filters are selected or explicitly skipped.
-- `publication -> publish`: allowed when publication fields are valid and backend integration is
-  available.
+- `publication -> publish`: allowed only when final exported images exist. Backend integration is
+  still not connected.
 - Back navigation between steps should preserve selected files and settings.
-- Reset clears state and revokes object URLs.
+- Reset clears in-memory create state. Object URL revoke logic belongs to the upload/export
+  implementation work.
 
 ## Unsaved data logic
 
@@ -168,20 +172,49 @@ Implementation note: replace `unknown` coordinates with the exact cropper type w
 - crop settings changed;
 - filter settings changed;
 - caption is not empty;
-- tags are not empty;
 - final exported image exists.
 
-Close behavior:
+## Close Behavior
 
-- if `hasUnsavedData === false`: close immediately via `router.back()` with `/main` fallback;
-- if `hasUnsavedData === true`: show confirm dialog;
-- if user confirms: cleanup object URLs, reset state, close;
-- if user cancels: stay in flow.
+Current close behavior:
 
-Confirm is not part of the first skeleton. It becomes required only after unsaved data exists.
+- if `hasUnsavedData === false`: close immediately through the shell `onCloseAction`;
+- if `hasUnsavedData === true`: show Close Confirm;
+- `Discard`: reset create state, then close modal;
+- `Keep editing`: close confirm and stay in flow.
+
+The current confirm is implemented in `CreatePostCloseConfirm`.
 
 Until product draft persistence is designed, confirmation actions should be `Discard` and
 `Keep editing`. Do not implement or display `Save draft` from Figma in early PRs.
+
+## Navigation
+
+Create navigation from Sidebar:
+
+```txt
+Sidebar
+↓
+/posts/create?returnTo=currentRoute
+```
+
+Create modal close:
+
+```txt
+close
+↓
+safe returnTo
+```
+
+The modal shell reads `returnTo`, validates it and calls `router.replace(safeReturnTo)`.
+
+Navigation rules:
+
+- missing or unsafe `returnTo` falls back to `/main`;
+- `/auth` routes are forbidden as return targets;
+- `/posts/create` and `/posts/create?...` are forbidden as return targets;
+- external URLs and protocol-relative URLs are forbidden;
+- direct `/posts/create` still renders the fallback page with the same `CreatePostFlow`.
 
 ## Object URL lifecycle
 
