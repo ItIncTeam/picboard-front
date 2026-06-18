@@ -6,6 +6,8 @@
 
 Figma review для Create Post flow: [Create Post Figma Review](./06-figma-review.md).
 
+Backend contract для Posts Sprint: [Posts Backend Contract](./07-backend-contract.md).
+
 ## Цель спринта
 
 Подготовить и начать реализацию posts vertical slice:
@@ -23,12 +25,12 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 
 - Route-based Create Post modal поверх protected `(main)` segment.
 - Fallback page для прямого захода или reload `/posts/create`.
-- UI skeleton для Create Post без GraphQL posts operations до backend contract.
+- UI skeleton для Create Post без GraphQL posts operations in documentation-only work.
 - Frontend state model для create flow.
 - Upload validation и object URL lifecycle.
 - Crop/filter/export flow, где frontend готовит final edited `File` для storage upload.
-- Presigned URL upload pipeline: final edited `File` -> request presigned URL -> PUT to storage ->
-  save metadata through GraphQL -> `createPost`.
+- Backend-confirmed upload pipeline: exported `File` -> `initiateUploadBatch` -> direct storage
+  `PUT` -> `completeUploadBatch` -> `createPost`.
 
 ### Epic 2: Posts Consumption
 
@@ -40,8 +42,8 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 ## Out of scope
 
 - Установка новых dependencies в документационном PR.
-- GraphQL posts operations до backend contract.
-- Реальный upload API.
+- GraphQL posts operations in this documentation task.
+- Реальная upload/API integration.
 - GraphQL Upload для media files. Frontend не отправляет файлы через GraphQL multipart.
 - Реальный crop/filter implementation до отдельного feature PR.
 - Edit/delete implementation in first UI skeleton PR.
@@ -67,9 +69,10 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 - `views/create-post-page` использует тот же `CreatePostFlow` для fallback page.
 - `entities/post` содержит только frontend display types and skeleton UI. Это не backend contract.
 - `widgets/posts-feed` пока не реализован.
-- `docs/schema.graphql` не содержит финальный posts/upload contract. Backend уточнил направление:
-  frontend получает presigned URL, загружает final file напрямую в storage, затем сохраняет metadata
-  через GraphQL.
+- Backend подтвердил финальный Posts Sprint contract in
+  [Posts Backend Contract](./07-backend-contract.md). Production code still has no posts/upload
+  GraphQL operations or Apollo integration.
+- GraphQL Upload is not used. Binary files are uploaded directly to storage with `PUT`.
 
 ## Current Progress
 
@@ -97,8 +100,8 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 
 ### Not Started
 
-- Backend posts GraphQL operations.
-- Presigned upload/createPost integration.
+- Backend posts GraphQL operations in production code.
+- `initiateUploadBatch` / storage `PUT` / `completeUploadBatch` / `createPost` integration.
 - Draft persistence architecture and implementation.
 - Main/public page SSR/ISR integration.
 - Infinite scroll integration.
@@ -156,13 +159,15 @@ Rules:
 6. Media strip/carousel behavior: active image, ordering, optional `embla-carousel-react` PR.
 7. Filters step: filter grid, preview, final image export planning.
 8. Publication step skeleton: caption/tags UI, validation, submit boundary без GraphQL operation.
-9. Backend contract PR: добавить GraphQL operations только после согласованной схемы. GraphQL
-   Upload не использовать.
-10. Publish integration: подключить presigned upload/createPost flow.
+9. Backend contract documentation: зафиксировать `initiateUploadBatch`, direct storage `PUT`,
+   `completeUploadBatch`, `createPost`, upload limits and cursor pagination. GraphQL Upload не
+   использовать.
+10. Publish integration: подключить `initiateUploadBatch` -> storage `PUT` ->
+    `completeUploadBatch` -> `createPost` flow.
 11. Profile posts composition using `PostGrid`, then API integration.
 12. Post details composition using `PostDetails`, then API integration.
 13. Edit/delete follow-up PRs.
 14. Main/public page SSR/ISR planning and implementation после backend queries.
-15. Infinite scroll follow-up after pagination contract and dependency PR.
+15. Infinite scroll follow-up after cursor pagination integration planning and dependency PR.
 16. Close confirmation after real unsaved data tracking.
 17. Draft persistence в конце спринта, если остается capacity и команда утвердит поведение.

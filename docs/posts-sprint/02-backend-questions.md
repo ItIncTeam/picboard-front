@@ -1,112 +1,215 @@
 # Backend Questions For Posts Sprint
 
-Этот документ фиксирует вопросы к backend. Frontend не придумывает contract и не добавляет GraphQL
-operations до ответов.
+Этот документ отделяет уже подтвержденный backend contract от вопросов, которые всё еще нельзя
+додумывать на frontend.
 
-## Upload contract
+Frontend не добавляет production GraphQL operations, Apollo cache logic или upload integration до
+отдельного implementation PR.
 
-- Подтвердите exact presigned URL request contract: query/mutation name, input and response shape.
-- Какие HTTP method, headers and content type должен использовать frontend при `PUT` в storage?
-- Какой expiry у presigned URL и можно ли запрашивать URL batch для нескольких изображений?
-- Upload выполняется до `createPost`; подтвердите, какая metadata mutation сохраняет uploaded file.
-- Какой metadata payload frontend передает после storage upload: url, key, file name, content type,
-  size, width/height, order?
-- Как `createPost` ссылается на сохраненную metadata: media IDs, storage keys или ordered media
-  inputs?
-- Нужно ли отдельно подтверждать upload completion?
-- Нужна ли retry/idempotency strategy для failed upload?
-- Какие error codes/messages возвращаются для invalid file, too large, unsupported type, auth
-  failure и storage failure?
-- Нужен ли progress reporting contract?
+Full confirmed contract: [Posts Backend Contract](./07-backend-contract.md).
 
-Confirmed frontend assumption:
+## Confirmed
 
-- GraphQL Upload/multipart для media files не используется.
-- Frontend uploads final edited `File` directly to storage with presigned URL.
-- GraphQL используется после storage upload для сохранения metadata and later `createPost`.
+### Upload flow
 
-## File format, limits and order
+Backend-confirmed flow:
 
-- Какие форматы разрешены: JPEG, PNG, WebP?
-- Нужен ли preserve original format или backend ожидает единый output format?
-- Максимальный размер файла после crop/filter?
-- Максимальное количество изображений в одном post?
-- Максимальные width/height изображения?
-- Нужно ли сохранять порядок изображений как отправил frontend?
-- Кто генерирует thumbnails: frontend или backend?
-- Нужно ли хранить original image или только final processed image?
+1. Frontend generates a unique `clientUploadId` for each selected image.
+2. Frontend calls `initiateUploadBatch`.
+3. Backend returns upload descriptors with `clientUploadId`, `fileId`, `uploadUrl` and `expiresAt`.
+4. Frontend uploads binaries directly to storage via `PUT`.
+5. Frontend calls `completeUploadBatch` with uploaded `fileIds`.
+6. Backend validates files and returns `READY` or `FAILED`.
+7. Frontend calls `createPost` only after every selected file is `READY`.
 
-## `createPost`
+GraphQL Upload is not used. Binary files are not sent to the GraphQL endpoint.
 
-- Как называется mutation?
-- Какие поля обязательны: files/media IDs, caption, hashtags, location, visibility?
-- Какой max length для caption?
-- Как передавать hashtags: parsed array или raw caption text?
-- Возвращает ли mutation полный `Post` или только ID/status?
-- Какая модель ошибок для partial upload success but createPost failure?
-- Что делать, если metadata сохранена, но `createPost` завершился ошибкой: cleanup, orphan media,
-  retry или draft-like recovery?
-- Нужна ли optimistic update support?
+### Upload request mapping
 
-## `updatePost`
+`initiateUploadBatch` input:
 
-- Можно ли редактировать только caption/hashtags или media тоже?
-- Если media можно менять, это replace all или patch operations?
-- Есть ли ограничения по времени после публикации?
-- Как backend валидирует ownership?
-- Что возвращает mutation после update?
+```ts
+{
+  uploads: [
+    {
+      clientUploadId: string
+      originalName: string
+      mimeType: string
+      size: number
+    },
+  ]
+}
+```
 
-## `deletePost`
+`initiateUploadBatch` response:
 
-- Delete hard или soft?
-- Нужен ли reason?
-- Что происходит с media files после delete?
-- Какой response shape: deleted ID, success boolean, deleted post?
-- Как должны инвалидироваться profile/main/feed queries?
+```ts
+{
+  uploads: [
+    {
+      clientUploadId: string
+      fileId: string
+      uploadUrl: string
+      expiresAt: string
+    },
+  ]
+}
+```
 
-## `getPostById`
+Frontend must map the response by `clientUploadId`, not by array order.
 
-- Как называется query?
-- Доступен ли post неавторизованному пользователю?
-- Какие поля входят в details: owner, media, caption, createdAt, updatedAt, likes/comments counters?
-- Какие ошибки: not found, forbidden, deleted?
-- Нужно ли возвращать viewer-specific fields: likedByMe, canEdit, canDelete?
+### Storage upload
 
-## `getUserPosts`
+Frontend performs:
 
-- Query принимает user ID, username или `me` flag?
-- Нужна ли отдельная query для own posts?
-- Какие поля нужны для grid card?
-- Как работает pagination?
-- Можно ли сортировать posts?
-- Нужны ли private/draft/deleted filters?
+```ts
+fetch(uploadUrl, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': file.type,
+  },
+  body: file,
+})
+```
 
-## `getPublicPosts`
+Confirmed rules:
 
-- Query для public main page возвращает exactly 4 latest posts или принимает `limit: 4`?
-- Какие поля доступны public user без auth?
-- Должны ли public posts учитывать moderation/visibility?
-- Нужен ли SSR/ISR friendly cache policy?
+- `uploadUrl` is temporary;
+- `uploadUrl` is not a display URL;
+- `uploadUrl` cannot be reused after expiration;
+- successful upload means HTTP `2xx`;
+- the `PUT` request goes directly to storage, not GraphQL.
 
-## `getRegisteredUsersCount`
+### Upload completion
 
-- Это отдельная query или поле в public stats query?
-- Возвращается точное число или approximate count?
-- Как часто число может кэшироваться?
-- Доступно ли без auth?
+`completeUploadBatch` input:
 
-## Pagination
+```ts
+{
+  fileIds: string[]
+}
+```
 
-- Cursor-based или offset-based?
-- Какой default и maximum page size?
-- Есть ли `hasNextPage`, `endCursor`, `totalCount`?
-- Как обрабатывать deleted posts внутри pagination window?
-- Нужна ли stable ordering guarantee?
+`completeUploadBatch` response item:
 
-## Public access
+```ts
+{
+  fileId: string
+  status: 'READY' | 'FAILED'
+}
+```
 
-- Какие post routes доступны anonymous users?
-- Public main page должна ходить в тот же GraphQL endpoint?
-- Нужны ли auth-optional viewer fields?
-- Как backend различает public/private visibility?
-- Какие cache headers или ISR revalidate expectations?
+`READY` means the file exists in storage, backend validated it, and it can be attached to a post.
+
+### File and post limits
+
+Confirmed image constraints:
+
+- allowed MIME types: `image/jpeg`, `image/png`;
+- minimum images per post: `1`;
+- maximum images per post: `10`;
+- maximum file size: `20 MB`.
+
+Confirmed post description constraints:
+
+- optional;
+- maximum length: `500` characters.
+
+### `createPost`
+
+Frontend sends:
+
+```ts
+{
+  fileIds: string[]
+  description?: string
+}
+```
+
+`createPost` may be called only after all selected files are `READY`.
+
+### `profilePosts`
+
+`profilePosts` uses cursor pagination.
+
+Arguments:
+
+```ts
+{
+  first: number
+  after?: string
+}
+```
+
+Current backend page size is 8 posts. Frontend should prepare infinite scroll around cursor
+pagination.
+
+## Resolved / Partially Resolved
+
+### Display URLs For Images
+
+Backend plans to expose image URLs through `PostAttachment.file.url`.
+
+Expected backend schema:
+
+```graphql
+type PostAttachment {
+  fileId: ID!
+  sortOrder: Int!
+  file: File!
+}
+
+type File {
+  id: ID!
+  url: String!
+}
+```
+
+Frontend rendering:
+
+```tsx
+<Image src={attachment.file.url} />
+```
+
+Status:
+
+Expected backend update. Not yet confirmed as deployed.
+
+Frontend must not use `uploadUrl` as a display URL.
+
+## Still Open
+
+### Main Feed Query
+
+Still unresolved:
+
+- operation name;
+- arguments;
+- pagination model and page size;
+- auth requirements;
+- cache/SSR/ISR expectations;
+- response fields for feed cards.
+
+### Post Details Query
+
+Still unresolved:
+
+- operation name;
+- arguments;
+- deployed attachment display URL schema;
+- owner/viewer fields;
+- edit/delete permissions;
+- not found, forbidden and deleted error model.
+
+## Follow-up Questions
+
+These are not blockers for documenting the current backend contract, but should be clarified before
+production integration:
+
+- retry/idempotency strategy for expired `uploadUrl`, failed storage `PUT`, failed
+  `completeUploadBatch`, and failed `createPost`;
+- backend error codes/messages for unsupported type, file too large, too many files, auth failure
+  and storage validation failure;
+- whether frontend should request width/height or other media metadata in posts queries;
+- post edit/delete mutation contracts;
+- public main page contract for 4 latest posts and registered users count.

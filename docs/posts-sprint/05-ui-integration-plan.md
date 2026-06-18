@@ -48,7 +48,7 @@ Use for user actions:
 
 ### `entities/`
 
-Use first for frontend display skeletons, then for post data model after backend contract:
+Use first for frontend display skeletons, then for post data model after backend integration starts:
 
 - `entities/post`;
 - `Post`, `PostImage`, `PostCard`, `PostGrid`, `PostDetails` as frontend display skeletons;
@@ -81,7 +81,8 @@ Use only for primitives and infrastructure:
 - Handles file selection, validation and object URL creation.
 - Does not call backend.
 - Owned by Dev 2.
-- Does not add real presigned upload API helpers before backend contract.
+- Does not add real upload API helpers in upload UI work unless that PR explicitly owns backend
+  integration.
 - Does not use GraphQL Upload.
 
 ### `CropStep`
@@ -98,15 +99,15 @@ Use only for primitives and infrastructure:
 - Applies preview filters.
 - Prepares final export settings.
 - Owns the desktop wide layout from Figma: preview panel plus filter grid.
-- Export output is a final edited `File` that later enters the presigned upload pipeline.
+- Export output is a final edited `File` that later enters the backend-confirmed upload pipeline.
 
 ### `PublicationStep`
 
 - Lives in `features/create-post`.
 - Handles caption/tags UI and publish boundary.
 - Calls backend only after contract and API layer exist.
-- Future publish pipeline is: final edited `File` -> request presigned URL -> PUT to storage ->
-  save metadata through GraphQL -> `createPost`.
+- Future publish pipeline is: exported `File` -> `initiateUploadBatch` -> direct storage `PUT` ->
+  `completeUploadBatch` -> `createPost`.
 
 ### `PostGrid`
 
@@ -133,14 +134,14 @@ Use only for primitives and infrastructure:
 
 - Lives in `features/edit-post`.
 - Starts as skeleton without mutation.
-- Adds update mutation only after backend contract.
+- Adds update mutation only after backend contract is clarified for edit behavior.
 - Follow-up PR, not part of the first Posts Consumption skeleton.
 
 ### `DeletePostConfirm`
 
 - Lives in `features/delete-post`.
 - Uses shared modal/dialog primitives.
-- Adds delete mutation only after backend contract.
+- Adds delete mutation only after backend contract is clarified for delete behavior.
 - Follow-up PR, not part of the first Posts Consumption skeleton.
 
 ### `CreatePostCloseConfirm`
@@ -167,15 +168,17 @@ Differences:
 - fallback page owns page-level spacing/title;
 - create flow owns state and step UI;
 - backend integration later lives in feature/model/api boundaries, not in route adapters;
-- backend integration must use presigned URL upload, not GraphQL Upload.
+- backend integration must use `initiateUploadBatch`, direct storage `PUT`, `completeUploadBatch`
+  and `createPost`, not GraphQL Upload.
 
 ## Profile, main and details backend integration
 
 ### Profile
 
 - `views/profile-page` composes profile header and posts section.
-- `PostGrid` receives `getUserPosts` data after backend contract.
-- Infinite scroll waits for pagination contract and `react-intersection-observer` dependency PR.
+- `PostGrid` receives `profilePosts` data after backend integration.
+- Infinite scroll waits for cursor pagination integration and `react-intersection-observer`
+  dependency PR.
 
 ### Main protected page
 
@@ -193,7 +196,7 @@ Differences:
 ### Details
 
 - `posts/[postId]/page.tsx` stays thin.
-- Details view uses `getPostById` after backend contract.
+- Details view uses post details query after that contract is clarified.
 - Edit/delete actions should be gated by backend viewer permissions such as `canEdit/canDelete` if
   provided.
 
@@ -203,7 +206,7 @@ Differences:
 - Upload validation: file type, count, size after limits are known.
 - Object URL lifecycle: revoke on remove/reset/unmount.
 - Crop/filter export helpers: output exists and respects selected settings.
-- Presigned upload readiness selectors: require final exported files, without calling backend.
+- Upload readiness selectors: require final exported files, without calling backend.
 - Modal close behavior: no unsaved data closes; unsaved data opens confirm.
 - Fallback page renders same flow without modal close controls.
 - Post grid renders empty/loading/error/success states.
