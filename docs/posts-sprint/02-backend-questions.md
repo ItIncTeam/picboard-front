@@ -29,30 +29,26 @@ GraphQL Upload is not used. Binary files are not sent to the GraphQL endpoint.
 `initiateUploadBatch` input:
 
 ```ts
-{
-  uploads: [
-    {
-      clientUploadId: string
-      originalName: string
-      mimeType: string
-      size: number
-    },
-  ]
+type InitiateUploadBatchInput = {
+  uploads: Array<{
+    clientUploadId: string
+    originalName: string
+    mimeType: string
+    size: number
+  }>
 }
 ```
 
 `initiateUploadBatch` response:
 
 ```ts
-{
-  uploads: [
-    {
-      clientUploadId: string
-      fileId: string
-      uploadUrl: string
-      expiresAt: string
-    },
-  ]
+type InitiateUploadBatchPayload = {
+  uploads: Array<{
+    clientUploadId: string
+    fileId: string
+    uploadUrl: string
+    expiresAt: string
+  }>
 }
 ```
 
@@ -63,13 +59,15 @@ Frontend must map the response by `clientUploadId`, not by array order.
 Frontend performs:
 
 ```ts
-fetch(uploadUrl, {
-  method: 'PUT',
-  headers: {
-    'Content-Type': file.type,
-  },
-  body: file,
-})
+async function uploadToStorage(uploadUrl: string, file: File) {
+  return fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type,
+    },
+    body: file,
+  })
+}
 ```
 
 Confirmed rules:
@@ -85,7 +83,7 @@ Confirmed rules:
 `completeUploadBatch` input:
 
 ```ts
-{
+type CompleteUploadBatchInput = {
   fileIds: string[]
 }
 ```
@@ -93,7 +91,7 @@ Confirmed rules:
 `completeUploadBatch` response item:
 
 ```ts
-{
+type CompleteUploadBatchItem = {
   fileId: string
   status: 'READY' | 'FAILED'
 }
@@ -120,7 +118,7 @@ Confirmed post description constraints:
 Frontend sends:
 
 ```ts
-{
+type CreatePostInput = {
   fileIds: string[]
   description?: string
 }
@@ -135,7 +133,7 @@ Frontend sends:
 Arguments:
 
 ```ts
-{
+type ProfilePostsArgs = {
   first: number
   after?: string
 }
@@ -168,7 +166,17 @@ type File {
 Frontend rendering:
 
 ```tsx
-<Image src={attachment.file.url} />
+import Image from 'next/image'
+
+type AttachmentWithFile = {
+  file: {
+    url: string
+  }
+}
+
+function PostAttachmentImage({ attachment }: { attachment: AttachmentWithFile }) {
+  return <Image src={attachment.file.url} alt="" width={320} height={320} />
+}
 ```
 
 Status:

@@ -45,30 +45,26 @@ Description:
 Frontend sends:
 
 ```ts
-{
-  uploads: [
-    {
-      clientUploadId: string
-      originalName: string
-      mimeType: string
-      size: number
-    },
-  ]
+type InitiateUploadBatchInput = {
+  uploads: Array<{
+    clientUploadId: string
+    originalName: string
+    mimeType: string
+    size: number
+  }>
 }
 ```
 
 Backend returns:
 
 ```ts
-{
-  uploads: [
-    {
-      clientUploadId: string
-      fileId: string
-      uploadUrl: string
-      expiresAt: string
-    },
-  ]
+type InitiateUploadBatchPayload = {
+  uploads: Array<{
+    clientUploadId: string
+    fileId: string
+    uploadUrl: string
+    expiresAt: string
+  }>
 }
 ```
 
@@ -81,13 +77,15 @@ Frontend must not rely on array order.
 Frontend uploads each exported file directly to the returned storage URL:
 
 ```ts
-fetch(uploadUrl, {
-  method: 'PUT',
-  headers: {
-    'Content-Type': file.type,
-  },
-  body: file,
-})
+async function uploadToStorage(uploadUrl: string, file: File) {
+  return fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type,
+    },
+    body: file,
+  })
+}
 ```
 
 Rules:
@@ -104,7 +102,7 @@ Rules:
 Frontend sends:
 
 ```ts
-{
+type CompleteUploadBatchInput = {
   fileIds: string[]
 }
 ```
@@ -112,7 +110,7 @@ Frontend sends:
 Backend returns:
 
 ```ts
-{
+type CompleteUploadBatchItem = {
   fileId: string
   status: 'READY' | 'FAILED'
 }
@@ -129,7 +127,7 @@ Backend returns:
 Frontend sends:
 
 ```ts
-{
+type CreatePostInput = {
   fileIds: string[]
   description?: string
 }
@@ -146,7 +144,7 @@ Uses cursor pagination.
 Arguments:
 
 ```ts
-{
+type ProfilePostsArgs = {
   first: number
   after?: string
 }
@@ -180,7 +178,17 @@ type File {
 Frontend rendering:
 
 ```tsx
-<Image src={attachment.file.url} />
+import Image from 'next/image'
+
+type AttachmentWithFile = {
+  file: {
+    url: string
+  }
+}
+
+function PostAttachmentImage({ attachment }: { attachment: AttachmentWithFile }) {
+  return <Image src={attachment.file.url} alt="" width={320} height={320} />
+}
 ```
 
 Status:
@@ -201,10 +209,12 @@ Future backend integration state should track upload progress without treating t
 as display URLs:
 
 ```ts
-upload: {
-  fileId?: string
-  uploadUrl?: string
-  status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
+type CreatePostUploadIntegrationState = {
+  upload: {
+    fileId?: string
+    uploadUrl?: string
+    status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
+  }
 }
 ```
 

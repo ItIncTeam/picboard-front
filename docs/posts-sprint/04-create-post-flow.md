@@ -173,10 +173,12 @@ Backend integration target mapping:
 Future upload fields may be simplified around the backend contract:
 
 ```ts
-upload: {
-  fileId?: string
-  uploadUrl?: string
-  status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
+type CreatePostUploadIntegrationState = {
+  upload: {
+    fileId?: string
+    uploadUrl?: string
+    status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
+  }
 }
 ```
 
