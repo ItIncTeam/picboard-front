@@ -197,7 +197,7 @@ features/create-post
   CreatePostFlow, step state, upload, crop, filters, publication, object URL lifecycle, export.
 
 entities/post
-  Frontend display skeleton first; Post model/API only after backend contract exists.
+  Frontend display skeleton first; Post model/API only after backend integration starts.
 ```
 
 Do not put cropper state, file state, filter logic or publication form logic in `app/`, `views/` or
@@ -220,7 +220,8 @@ State ownership:
 7. Add filters grid and preview.
 8. Add final edited `File` export.
 9. Add publication step and disabled publish boundary.
-10. Add presigned URL upload and `createPost` integration after backend contract.
+10. Add `initiateUploadBatch`, direct storage `PUT`, `completeUploadBatch` and `createPost`
+    integration in a dedicated backend integration PR.
 11. Add close confirmation when `hasUnsavedData` exists.
 12. Add draft persistence only at the end of the sprint if the team finalizes the behavior.
 
@@ -234,9 +235,9 @@ State ownership:
 - Treating filters as CSS-only preview without export parity would make published images differ from
   what the user saw.
 - Putting upload/crop/filter state into the modal shell would make fallback page reuse harder.
-- Adding GraphQL operations before backend contract would create fake contracts that are expensive
-  to unwind.
-- Using GraphQL Upload would contradict the backend-confirmed presigned URL architecture.
+- Adding GraphQL operations outside the dedicated backend integration PR would mix documentation,
+  schema and Apollo work.
+- Using GraphQL Upload would contradict the backend-confirmed direct storage upload architecture.
 
 ## Open product questions
 

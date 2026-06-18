@@ -21,10 +21,10 @@ Filters
 Publication
 ```
 
-Target backend pipeline after contract:
+Backend-confirmed target pipeline:
 
 ```txt
-final edited File -> request presigned URL -> PUT to storage -> save metadata through GraphQL -> createPost
+exported File -> initiateUploadBatch -> direct storage PUT -> completeUploadBatch -> createPost
 ```
 
 GraphQL Upload is not used for post media.
@@ -40,8 +40,15 @@ Responsibilities:
 - позволить удалить выбранный файл;
 - перейти к crop только если есть валидные files.
 
-На текущем этапе upload остается frontend-only. Backend upload API не подключается, real presigned
-upload helpers не добавляются.
+Confirmed backend validation mirrored on frontend:
+
+- allowed MIME types: `image/jpeg`, `image/png`;
+- minimum images per post: `1`;
+- maximum images per post: `10`;
+- maximum file size: `20 MB`.
+
+На текущем этапе upload остается frontend-only. Backend upload API не подключается, real upload
+helpers не добавляются.
 
 ## Step: crop
 
@@ -71,28 +78,32 @@ Responsibilities:
 
 - показать final preview;
 - собрать caption/hashtags UI;
-- валидировать обязательные frontend поля;
-- показать disabled publish state, если backend contract еще не подключен;
+- валидировать description max length: `500` characters;
+- показать disabled publish state, пока backend integration не подключена;
 - позже вызвать upload/createPost integration.
 - не использовать GraphQL Upload.
 
 ## Step: publish
 
-Responsibilities after backend contract:
+Responsibilities in the future backend integration PR:
 
-- экспортировать final images;
-- запросить presigned URL для каждого final edited `File`;
-- загрузить final files напрямую в storage через `PUT`;
-- сохранить uploaded file metadata через GraphQL mutation;
-- вызвать `createPost` with saved media metadata references;
+- collect `image.exported.file` for every selected image;
+- build `initiateUploadBatch` input;
+- call `initiateUploadBatch`;
+- map upload descriptors by `clientUploadId`;
+- upload every file directly to storage via `PUT`;
+- call `completeUploadBatch`;
+- verify every selected file is `READY`;
+- call `createPost` with `fileIds` and optional description;
 - обработать success and errors;
 - закрыть modal or navigate to created post/profile according to product decision.
 
-До backend contract publish остается skeleton boundary.
+Until the backend integration PR, publish remains a skeleton boundary.
 
 ## In-memory flow state shape
 
-Ориентировочная frontend state shape. Это не backend contract и не product draft persistence.
+Current frontend state shape is frontend-only. Это не backend contract и не product draft
+persistence.
 Product draft отложен на конец спринта.
 
 State ownership:
@@ -105,7 +116,7 @@ State ownership:
 ```ts
 type CreatePostStep = 'upload' | 'crop' | 'filters' | 'publication'
 
-type CreatePostImageDraft = {
+type CreatePostImage = {
   id: string
   name: string
   file?: File
@@ -140,9 +151,9 @@ type CreatePostImageDraft = {
   }
 }
 
-type CreatePostDraft = {
+type CreatePostState = {
   step: CreatePostStep
-  images: CreatePostImageDraft[]
+  images: CreatePostImage[]
   activeImageId: string | null
   caption: string
   hasUnsavedData: boolean
@@ -153,13 +164,34 @@ type CreatePostDraft = {
 Implementation note: replace `unknown` coordinates with the exact cropper type when
 `react-advanced-cropper` is installed. Do not use `any`.
 
+Backend integration target mapping:
+
+- `CreatePostImage.id` maps to backend `clientUploadId`;
+- `CreatePostImage.exported.file` is used as the uploaded file;
+- `description` comes from `caption` and must be optional with a 500-character maximum.
+
+Future upload fields may be simplified around the backend contract:
+
+```ts
+type CreatePostUploadIntegrationState = {
+  upload: {
+    fileId?: string
+    uploadUrl?: string
+    status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
+  }
+}
+```
+
+This is target integration state, not a claim that these exact fields already exist in production
+code.
+
 ## Step transitions
 
 - `upload -> crop`: allowed when at least one valid image exists.
 - `crop -> filters`: allowed when active image crop state is valid.
 - `filters -> publication`: allowed after filters are selected or explicitly skipped.
 - `publication -> publish`: allowed only when final exported images exist. Backend integration is
-  still not connected.
+  still not connected in this documentation task.
 - Back navigation between steps should preserve selected files and settings.
 - Reset clears in-memory create state. Object URL revoke logic belongs to the upload/export
   implementation work.
@@ -234,30 +266,34 @@ Frontend exports final images after crop/filter:
 - apply crop coordinates;
 - apply selected filter settings;
 - render into canvas;
-- export to Blob/File using agreed format and quality;
+- export to Blob/File using a backend-allowed image MIME type;
 - store exported File in draft state;
-- send exported File to storage through presigned URL after backend contract is available.
+- send exported File to storage through the backend-confirmed upload flow in a follow-up
+  integration PR.
 
 Open backend questions:
 
-- output format;
+- whether frontend should preserve original JPEG/PNG format or normalize output;
 - quality/compression;
 - max width/height;
-- max file size;
 - whether backend needs crop/filter metadata for audit/debug.
 
 ## Backend connection point
 
-Backend integration should be added only after contract exists:
+Backend integration should be added only in a dedicated implementation PR:
 
-- request presigned URL for final edited files;
-- `PUT` final edited files directly to storage;
-- save uploaded file metadata through GraphQL;
-- call `createPost` with saved media metadata references;
+- collect exported files from `CreatePostImage.exported.file`;
+- build `initiateUploadBatch` input with `clientUploadId`, `originalName`, `mimeType` and `size`;
+- call `initiateUploadBatch`;
+- map response descriptors by `clientUploadId`, not array order;
+- `PUT` final edited files directly to storage with `Content-Type: file.type`;
+- treat HTTP `2xx` storage response as successful binary upload;
+- call `completeUploadBatch` with uploaded `fileIds`;
+- call `createPost` only after every selected file is `READY`;
 - update profile/feed/main caches according to agreed API/cache strategy.
 
-Do not add GraphQL Upload, real presigned upload API helpers or fake GraphQL operations before the
-backend contract is ready.
+Do not add GraphQL Upload, binary upload through GraphQL, order-based descriptor mapping, display
+usage of `uploadUrl`, real upload API helpers or fake GraphQL operations in documentation-only work.
 
 ## Current skeleton behavior
 

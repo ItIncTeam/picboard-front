@@ -19,13 +19,19 @@
 - Crop library: `react-advanced-cropper`.
 - Carousel: `embla-carousel-react`.
 - Infinite scroll: `react-intersection-observer`.
-- Backend contract пока отсутствует, поэтому frontend готовит UI skeleton без GraphQL posts
-  operations.
+- Backend contract для Posts Sprint зафиксирован в
+  [Posts Backend Contract](./07-backend-contract.md). Production code still has no posts/upload
+  GraphQL operations.
 - GraphQL Upload для post media не используется.
-- Upload pipeline: final edited `File` -> request presigned URL -> PUT to storage -> save metadata
-  through GraphQL -> `createPost`.
-- Backend contract для presigned URL и metadata mutation пока не готов, поэтому frontend не
-  добавляет реальные API helpers, GraphQL operations или upload integration.
+- Upload pipeline: exported `File` -> `initiateUploadBatch` -> direct storage `PUT` ->
+  `completeUploadBatch` -> `createPost`.
+- Frontend must map `initiateUploadBatch` response by `clientUploadId`, not by array order.
+- `uploadUrl` is temporary, not a display URL, and must not be reused after expiration.
+- `createPost` may be called only after all selected files are `READY`.
+- Upload limits are confirmed: `image/jpeg` and `image/png`, 1-10 images, maximum `20 MB` per file.
+- Post description is optional and limited to 500 characters.
+- `profilePosts` uses cursor pagination with `{ first, after? }`; current backend page size is 8
+  posts.
 - Sprint is split into Epic 1: Create Post Wizard and Epic 2: Posts Consumption.
 - Dev 1 is Create Flow Owner and owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
 - Dev 2 and Dev 3 do not change create-post state shape without Dev 1 approval.
@@ -110,21 +116,25 @@ Frontend берет на себя crop/filter/export, чтобы storage пол�
 - backend не должен повторять UI-specific crop/filter decisions;
 - preview пользователя соответствует публикуемому результату;
 - upload payload становится проще: final edited `File`;
-- publication payload становится проще: saved media metadata references;
-- backend contract может сосредоточиться на presigned URL, storage metadata, post creation and
-  validation limits.
+- publication payload становится проще: `fileIds` plus optional description;
+- backend contract can focus on upload descriptors, storage validation, post creation and validation
+  limits.
 
 Backend все равно должен валидировать формат, размер, количество файлов и ownership.
 
 ## Почему не GraphQL Upload
 
 Backend уточнил upload architecture: файлы не идут через GraphQL Upload/multipart. Frontend должен
-получить presigned URL, загрузить final edited `File` напрямую в storage через `PUT`, сохранить
-metadata через GraphQL mutation, а `createPost` позже должен ссылаться на сохраненную metadata.
+получить upload descriptors через `initiateUploadBatch`, загрузить `image.exported.file` напрямую в
+storage через `PUT`, подтвердить загрузку через `completeUploadBatch`, дождаться `READY` для всех
+выбранных файлов и только потом вызвать `createPost` с `fileIds`.
 
-До готового backend contract нельзя добавлять реальные upload helpers, GraphQL operations или fake
-schema assumptions. Разрешены только frontend-only types, selectors and reducer tests, если они
-помогают стабилизировать `CreatePostState`.
+`initiateUploadBatch` response must be mapped by `clientUploadId`. Frontend must not rely on array
+order because backend can return upload descriptors in a different order.
+
+`uploadUrl` is a temporary write URL for storage. It is not a display URL. Backend plans to expose
+renderable image URLs through `PostAttachment.file.url`, but that schema update is not yet confirmed
+as deployed.
 
 ## Почему `react-advanced-cropper`
 
@@ -142,11 +152,13 @@ schema assumptions. Разрешены только frontend-only types, selecto
 
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
-- Exact GraphQL operations: только после backend contract.
-- Exact presigned URL request, storage PUT headers and metadata mutation shape: ждем backend.
+- Exact GraphQL operation documents/codegen in production code: follow-up implementation PR.
+- Display URLs for post images: partially resolved as expected `PostAttachment.file.url`; not yet
+  confirmed as deployed.
+- Main feed query contract: still unresolved.
+- Post details query contract: still unresolved.
 - SSR/ISR settings для main/public pages: после backend query contract и cache requirements.
-- Exact post media limits: ждем backend/product decision.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
-- Infinite scroll: follow-up after pagination contract and dependency PR.
+- Infinite scroll: follow-up implementation around confirmed cursor pagination and dependency PR.
 - Moderation, reports, comments, likes: не входят в этот posts sprint slice, если отдельно не
   добавлены в backlog.

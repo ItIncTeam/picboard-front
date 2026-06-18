@@ -1,7 +1,7 @@
 # Frontend Task Breakdown
 
 Цель: разложить posts sprint на независимые small PRs для 4 frontend-разработчиков. Все tasks
-сохраняют `app/` тонким и не добавляют GraphQL posts/upload operations до backend contract.
+сохраняют `app/` тонким и не добавляют GraphQL posts/upload operations in documentation-only work.
 
 ## Epics
 
@@ -12,10 +12,10 @@ Owner group: Dev 1, Dev 2, Dev 3.
 Includes route modal, fallback page reuse, create flow state, upload UI, object URLs, crop, filters,
 publication skeleton and final image export planning.
 
-Target upload pipeline after backend contract:
+Backend-confirmed target upload pipeline:
 
 ```txt
-final edited File -> request presigned URL -> PUT to storage -> save metadata through GraphQL -> createPost
+exported File -> initiateUploadBatch -> direct storage PUT -> completeUploadBatch -> createPost
 ```
 
 GraphQL Upload is not used.
@@ -33,7 +33,9 @@ Main Page and Infinite Scroll are follow-up PRs.
 - Не добавлять dependencies в документационном PR.
 - Dependency install PRs должны быть отдельными и маленькими.
 - Не добавлять fake GraphQL operations.
-- Не добавлять real presigned upload API helpers until backend contract is ready.
+- Не добавлять real upload API helpers in this documentation PR.
+- Future upload integration must use `initiateUploadBatch`, direct storage `PUT`,
+  `completeUploadBatch` and `createPost`.
 - Не использовать GraphQL Upload для post media.
 - Не хранить business logic в `page.tsx`.
 - Не копировать Figma-generated code напрямую; переводить макет в CSS modules, tokens и FSD
@@ -84,10 +86,10 @@ Checklist:
 - [x] Описать step enum: `upload`, `crop`, `filters`, `publication`.
 - [x] Описать state type без `any`.
 - [x] Подготовить frontend-only state fields/selectors for future upload pipeline: original file
-      info, exported final file, upload status and saved metadata reference.
+      info, exported final file and upload readiness.
 - [x] Добавить локальный reducer или hook для transitions.
 - [x] Добавить selectors/helpers для `hasUnsavedData`.
-- [x] Добавить selectors/helpers для readiness к presigned upload, но без API calls.
+- [x] Добавить selectors/helpers для readiness к backend upload flow, но без API calls.
 - [x] Подключить `CreatePostFlow` в modal shell.
 - [x] Подключить тот же `CreatePostFlow` в fallback page.
 - [x] Подготовить static desktop layout из Figma для crop step: header, back, `Next`, media area.
@@ -123,12 +125,13 @@ Checklist:
 
 - [ ] Добавить `UploadStep` в `features/create-post`.
 - [ ] Использовать native file input или существующий shared primitive, если подходит.
-- [ ] Добавить accept list на основе pending backend decision, временно держать conservative
-      frontend constants.
+- [ ] Добавить accept list from confirmed backend contract: `image/jpeg`, `image/png`.
 - [ ] Валидировать количество файлов.
 - [ ] Валидировать file type.
-- [ ] Валидировать file size после согласования лимита; до этого явно отметить лимит как
-      blocked by backend contract в task note.
+- [ ] Валидировать file size: maximum `20 MB`.
+- [ ] Валидировать количество изображений: minimum `1`, maximum `10`.
+- [ ] Генерировать stable unique `clientUploadId` для каждого image; target mapping:
+      `CreatePostImage.id -> clientUploadId`.
 - [ ] Создавать object URLs только для selected files.
 - [ ] Сохранять original file metadata in create flow state.
 - [ ] Revoke object URLs при удалении файла.
@@ -136,13 +139,14 @@ Checklist:
 - [ ] Поддержать reorder только если это нужно для MVP; иначе оставить planned.
 - [ ] Показать validation errors без backend calls.
 - [ ] Не добавлять upload GraphQL operations.
-- [ ] Не добавлять real presigned upload API helpers.
+- [ ] Не добавлять real upload API helpers in upload UI PR unless that PR explicitly owns backend
+      integration.
 - [ ] Не использовать GraphQL Upload.
 
 Dependencies:
 
 - Нужен state API от Dev 1.
-- File limits зависят от backend/product answers.
+- File limits are confirmed by backend contract.
 
 Parallel work:
 
@@ -172,7 +176,7 @@ Checklist:
 - [ ] Экспортировать final image через canvas/blob.
 - [ ] Сохранять final edited `File` в create flow state.
 - [ ] Проверить, что exported image соответствует preview.
-- [ ] Не отправлять файлы на backend до contract.
+- [ ] Не отправлять файлы на backend до отдельного backend integration PR.
 - [ ] Добавить cleanup для temporary object URLs generated from exported blobs.
 
 Dependencies:
@@ -204,7 +208,7 @@ Checklist:
 - [ ] Добавить `PostDetails` skeleton для `posts/[postId]`.
 - [ ] Экспортировать public API из `entities/post`.
 - [ ] Не подключать skeleton к profile/main routes без отдельного composition PR.
-- [ ] Не добавлять queries до backend contract.
+- [ ] Не добавлять queries in the first skeleton PR.
 - [ ] Не добавлять edit/delete UI в first skeleton PR.
 - [ ] Не добавлять main/public page UI в first skeleton PR.
 - [ ] Не добавлять infinite scroll dependency в first skeleton PR.
@@ -213,9 +217,11 @@ Checklist:
 Dependencies:
 
 - Может стартовать параллельно с Dev 1.
-- API integration blocked by backend contract.
+- API integration blocked by implementation PR scope, not by missing profile pagination contract.
+- `profilePosts` uses cursor pagination with `{ first, after? }` and current page size 8.
 - Profile/details route composition can follow after skeleton components are available.
-- Infinite scroll implementation blocked until follow-up dependency PR and pagination contract.
+- Infinite scroll implementation waits for follow-up dependency PR and cursor pagination
+  integration.
 
 Parallel work:
 
@@ -229,7 +235,8 @@ Follow-up PRs:
 - Edit post skeleton.
 - Delete post confirm skeleton.
 - Main/public page skeleton.
-- Infinite scroll after pagination contract and `react-intersection-observer` dependency PR.
+- Infinite scroll after cursor pagination integration planning and `react-intersection-observer`
+  dependency PR.
 
 ## Что можно делать параллельно
 
@@ -239,23 +246,22 @@ Follow-up PRs:
 - Dependency PR planning for `react-advanced-cropper`, `embla-carousel-react`,
   `react-intersection-observer`.
 
-## Что нельзя делать до backend contract
+## Что нельзя делать в документационной синхронизации
 
 - GraphQL operations for posts.
-- `createPost`, `updatePost`, `deletePost`, `getPostById`, `getUserPosts`, `getPublicPosts`,
-  `getRegisteredUsersCount`.
+- `initiateUploadBatch`, `completeUploadBatch`, `createPost`, `updatePost`, `deletePost`,
+  `getPostById`, `profilePosts`, `getPublicPosts`, `getRegisteredUsersCount` implementation.
 - Real upload integration.
-- Presigned URL API helpers before backend contract.
+- Upload API helpers outside the dedicated backend integration PR.
 - GraphQL Upload for media files.
 - Cache invalidation logic for posts.
 - ISR/revalidation implementation tied to real backend fields.
-- Exact file limits, if backend has not confirmed them.
 - Public access assumptions beyond skeleton UI.
 
 ## Backend blockers
 
-- Upload contract.
-- `createPost`, `updatePost`, `deletePost`, `getPostById`.
-- `getUserPosts`, `getPublicPosts`, `getRegisteredUsersCount`.
-- Pagination strategy.
-- File format, order and limits.
+- Confirm deployed display URL schema. Expected direction is `PostAttachment.file.url`.
+- Main feed query contract.
+- Post details query contract.
+- `updatePost` and `deletePost` contracts.
+- Public latest posts and registered users count contract.
