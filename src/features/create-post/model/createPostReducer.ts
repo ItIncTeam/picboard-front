@@ -118,6 +118,61 @@ export function createPostReducer(
       }
     }
 
+    case 'applyUploadBatchState': {
+      if (action.patches.length === 0) {
+        return state
+      }
+
+      const patchesByImageId = new Map(action.patches.map((patch) => [patch.imageId, patch]))
+      let hasChanged = false
+
+      const nextImages = state.images.map((image) => {
+        const patch = patchesByImageId.get(image.id)
+
+        if (!patch) {
+          return image
+        }
+
+        const { imageId: _imageId, ...uploadPatch } = patch
+
+        const nextUpload = {
+          status: image.upload?.status ?? uploadPatch.status ?? 'idle',
+          ...image.upload,
+          ...uploadPatch,
+        }
+
+        if (nextUpload.status !== 'failed' && !('error' in uploadPatch)) {
+          delete nextUpload.error
+        }
+
+        if (
+          image.upload?.fileId === nextUpload.fileId &&
+          image.upload?.uploadUrl === nextUpload.uploadUrl &&
+          image.upload?.expiresAt === nextUpload.expiresAt &&
+          image.upload?.status === nextUpload.status &&
+          image.upload?.error === nextUpload.error
+        ) {
+          return image
+        }
+
+        hasChanged = true
+
+        return {
+          ...image,
+          upload: nextUpload,
+        }
+      })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+      }
+    }
+
     case 'reset':
       return createPostInitialState
 

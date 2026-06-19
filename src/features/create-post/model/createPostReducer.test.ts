@@ -306,4 +306,114 @@ describe('createPostReducer', () => {
 
     expect(nextState).toBe(state)
   })
+
+  it('applies upload patch by image id', () => {
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [firstImage, secondImage],
+      },
+      {
+        type: 'applyUploadBatchState',
+        patches: [
+          {
+            imageId: secondImage.id,
+            fileId: 'file-2',
+            uploadUrl: 'https://storage.example/upload-2',
+            expiresAt: '2026-06-19T12:00:00.000Z',
+            status: 'uploading',
+          },
+        ],
+      },
+    )
+
+    expect(result.images[0]).toBe(firstImage)
+    expect(result.images[1]?.upload).toEqual({
+      fileId: 'file-2',
+      uploadUrl: 'https://storage.example/upload-2',
+      expiresAt: '2026-06-19T12:00:00.000Z',
+      status: 'uploading',
+    })
+  })
+
+  it('ignores upload patches for unknown image ids', () => {
+    const state = {
+      ...createPostInitialState,
+      images: [firstImage],
+    }
+
+    const result = createPostReducer(state, {
+      type: 'applyUploadBatchState',
+      patches: [
+        {
+          imageId: 'missing-image',
+          fileId: 'file-missing',
+          status: 'uploading',
+        },
+      ],
+    })
+
+    expect(result).toBe(state)
+  })
+
+  it('maps upload patches by image id regardless of patch order', () => {
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [firstImage, secondImage],
+      },
+      {
+        type: 'applyUploadBatchState',
+        patches: [
+          {
+            imageId: secondImage.id,
+            fileId: 'file-2',
+            status: 'uploading',
+          },
+          {
+            imageId: firstImage.id,
+            fileId: 'file-1',
+            status: 'ready',
+          },
+        ],
+      },
+    )
+
+    expect(result.images[0]?.upload?.fileId).toBe('file-1')
+    expect(result.images[0]?.upload?.status).toBe('ready')
+    expect(result.images[1]?.upload?.fileId).toBe('file-2')
+    expect(result.images[1]?.upload?.status).toBe('uploading')
+  })
+
+  it('clears stale upload error when status becomes ready', () => {
+    const imageWithError: CreatePostImage = {
+      ...firstImage,
+      upload: {
+        fileId: 'file-1',
+        status: 'failed',
+        error: 'Upload failed',
+      },
+    }
+
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [imageWithError],
+      },
+      {
+        type: 'applyUploadBatchState',
+        patches: [
+          {
+            imageId: firstImage.id,
+            status: 'ready',
+          },
+        ],
+      },
+    )
+
+    expect(result.images[0]?.upload).toEqual({
+      fileId: 'file-1',
+      status: 'ready',
+    })
+  })
 })
