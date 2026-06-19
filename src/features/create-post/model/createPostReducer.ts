@@ -107,6 +107,17 @@ export function createPostReducer(
       }
     }
 
+    case 'setPublishing': {
+      if (state.isPublishing === action.isPublishing) {
+        return state
+      }
+
+      return {
+        ...state,
+        isPublishing: action.isPublishing,
+      }
+    }
+
     case 'reset':
       return createPostInitialState
 

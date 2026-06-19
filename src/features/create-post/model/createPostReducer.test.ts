@@ -282,4 +282,28 @@ describe('createPostReducer', () => {
       upload: undefined,
     })
   })
+
+  it('sets publishing state', () => {
+    const state = createPostReducer(createPostInitialState, {
+      type: 'setPublishing',
+      isPublishing: true,
+    })
+
+    expect(state.isPublishing).toBe(true)
+    expect(state.hasUnsavedData).toBe(false)
+  })
+
+  it('returns same state when publishing state is unchanged', () => {
+    const state = {
+      ...createPostInitialState,
+      isPublishing: true,
+    }
+
+    const nextState = createPostReducer(state, {
+      type: 'setPublishing',
+      isPublishing: true,
+    })
+
+    expect(nextState).toBe(state)
+  })
 })
