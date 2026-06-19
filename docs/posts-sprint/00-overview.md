@@ -8,11 +8,14 @@ Figma review для Create Post flow: [Create Post Figma Review](./06-figma-revi
 
 Backend contract для Posts Sprint: [Posts Backend Contract](./07-backend-contract.md).
 
+Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.md).
+
 ## Обязательное чтение для команды
 
 - [Create Post Flow](./04-create-post-flow.md);
 - [Posts Backend Contract](./07-backend-contract.md);
-- [Frontend Contracts](./08-frontend-contracts.md).
+- [Frontend Contracts](./08-frontend-contracts.md);
+- [Upload Service Plan](./09-upload-service-plan.md).
 
 ## Цель спринта
 
