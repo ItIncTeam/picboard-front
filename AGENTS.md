@@ -27,6 +27,12 @@ Before changing code:
 - reference the relevant docs used for the implementation or review;
 - clearly distinguish documented requirements from personal recommendations.
 
+  Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+
+Ask the questions one at a time.
+
+If a question can be answered by exploring the codebase, explore the codebase instead.
+
 When reviewing code:
 
 - validate findings against docs first;

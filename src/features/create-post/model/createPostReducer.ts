@@ -75,6 +75,38 @@ export function createPostReducer(
         hasUnsavedData: true,
       }
 
+    case 'setImageExported': {
+      let hasChanged = false
+
+      const nextImages = state.images.map((image) => {
+        if (image.id !== action.imageId) {
+          return image
+        }
+
+        if (image.exported === action.exported) {
+          return image
+        }
+
+        hasChanged = true
+
+        return {
+          ...image,
+          exported: action.exported,
+          upload: undefined,
+        }
+      })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+        hasUnsavedData: true,
+      }
+    }
+
     case 'reset':
       return createPostInitialState
 

@@ -17,6 +17,19 @@ const secondImage: CreatePostImage = {
   filter: 'normal',
 }
 
+const createExportedImage = () => ({
+  file: new File(['edited'], 'edited.jpg', {
+    type: 'image/jpeg',
+  }),
+  objectUrl: 'blob:edited',
+  fileInfo: {
+    name: 'edited.jpg',
+    size: 6,
+    type: 'image/jpeg',
+    lastModified: 1,
+  },
+})
+
 describe('createPostReducer', () => {
   it('resets state to initial state', () => {
     const dirtyState: CreatePostState = {
@@ -214,5 +227,59 @@ describe('createPostReducer', () => {
     })
 
     expect(result.hasUnsavedData).toBe(true)
+  })
+
+  it('stores exported file by image id', () => {
+    const exported = createExportedImage()
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [firstImage, secondImage],
+      },
+      {
+        type: 'setImageExported',
+        imageId: secondImage.id,
+        exported,
+      },
+    )
+
+    expect(result.images[0]).toBe(firstImage)
+    expect(result.images[1]).toEqual({
+      ...secondImage,
+      exported,
+      upload: undefined,
+    })
+    expect(result.hasUnsavedData).toBe(true)
+  })
+
+  it('clears upload state when exported file changes', () => {
+    const exported = createExportedImage()
+    const imageWithUpload: CreatePostImage = {
+      ...firstImage,
+      upload: {
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/upload',
+        expiresAt: '2026-06-19T12:00:00.000Z',
+        status: 'ready',
+      },
+    }
+
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [imageWithUpload],
+      },
+      {
+        type: 'setImageExported',
+        imageId: imageWithUpload.id,
+        exported,
+      },
+    )
+
+    expect(result.images[0]).toEqual({
+      ...firstImage,
+      exported,
+      upload: undefined,
+    })
   })
 })
