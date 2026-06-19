@@ -15,7 +15,27 @@ export type CreatePostImageFileInfo = {
 
 export type CreatePostUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
 
+/**
+ * Upload patch from backend upload pipeline.
+ *
+ * imageId is the local image id and must match clientUploadId
+ * used in initiateUploadBatch.
+ * Never update upload state by array index.
+ */
+export type CreatePostUploadPatch = {
+  imageId: string
+  fileId?: string
+  uploadUrl?: string
+  expiresAt?: string
+  status?: CreatePostUploadStatus
+  error?: string
+}
+
 export type CreatePostImage = {
+  /**
+   * Local image identity used as backend clientUploadId.
+   * Upload responses must be mapped by this value, never by array index.
+   */
   id: string
   name: string
   file?: File
@@ -29,7 +49,6 @@ export type CreatePostImage = {
     fileInfo: CreatePostImageFileInfo
   }
   upload?: {
-    clientUploadId: string
     fileId?: string
     uploadUrl?: string
     expiresAt?: string
@@ -56,3 +75,42 @@ export type CreatePostAction =
   | { type: 'removeImage'; imageId: string }
   | { type: 'setActiveImage'; imageId: string | null }
   | { type: 'setCaption'; caption: string }
+  /**
+   * Final file produced by crop/filter/export pipeline.
+   *
+   * This file is later used by:
+   * initiateUploadBatch
+   * -> storage PUT
+   * -> completeUploadBatch
+   * -> createPost
+   */
+  | {
+      type: 'setImageExported'
+      imageId: string
+      exported: CreatePostImage['exported']
+    }
+  /**
+   * Merges upload data into images by imageId/clientUploadId.
+   *
+   * Used by upload integration after:
+   * - initiateUploadBatch
+   * - storage PUT
+   * - completeUploadBatch
+   */
+  | {
+      type: 'applyUploadBatchState'
+      patches: CreatePostUploadPatch[]
+    }
+  /**
+   * Global publish flow state.
+   *
+   * Prevents duplicate publish requests while:
+   * initiateUploadBatch
+   * -> upload
+   * -> completeUploadBatch
+   * -> createPost
+   */
+  | {
+      type: 'setPublishing'
+      isPublishing: boolean
+    }

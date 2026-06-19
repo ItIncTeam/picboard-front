@@ -128,6 +128,9 @@ type CreatePostImage = {
     fileInfo: CreatePostImageFileInfo
   }
   upload?: {
+    fileId?: string
+    uploadUrl?: string
+    expiresAt?: string
     status: CreatePostUploadStatus
     error?: string
   }
@@ -142,7 +145,10 @@ Used by: Dev 2, Dev 3, Backend integration
 
 Changed by: Dev 2 during image creation only through the agreed `addImages` payload
 
-Purpose: frontend image identity. Target backend mapping: `CreatePostImage.id -> clientUploadId`.
+Purpose: frontend image identity. `CreatePostImage.id` is used as `clientUploadId` for the backend
+upload flow. Do not add a second `clientUploadId` field to `CreatePostImage` or `upload`.
+
+Upload response mapping must use this value. Do not map upload responses by array index.
 
 ### `name`
 
@@ -258,7 +264,40 @@ Used by: Dev 2 upload status UI, Backend integration
 Changed by: future backend integration PR after Dev 1 approval
 
 Purpose: planned upload state. Current production code defines the field, but the backend upload
-pipeline is not implemented. Do not duplicate upload state outside the shared flow contract.
+pipeline is not implemented. Do not duplicate upload state outside the shared flow contract, and do
+not duplicate `CreatePostImage.id` as `clientUploadId`.
+
+### `upload.fileId`
+
+Owner: Dev 1
+
+Used by: Backend integration
+
+Changed by: future backend integration PR after Dev 1 approval
+
+Purpose: backend file id returned by `initiateUploadBatch` and later passed through
+`completeUploadBatch` / `createPost` after the upload is ready.
+
+### `upload.uploadUrl`
+
+Owner: Dev 1
+
+Used by: Backend integration
+
+Changed by: future backend integration PR after Dev 1 approval
+
+Purpose: temporary write URL returned by `initiateUploadBatch` for storage `PUT`. It must never be
+used as a display URL.
+
+### `upload.expiresAt`
+
+Owner: Dev 1
+
+Used by: Backend integration
+
+Changed by: future backend integration PR after Dev 1 approval
+
+Purpose: expiration timestamp for the temporary `uploadUrl`.
 
 ### `upload.status`
 
@@ -268,9 +307,7 @@ Used by: Dev 2 upload status UI, Backend integration
 
 Changed by: future backend integration PR after Dev 1 approval
 
-Purpose: current type allows `idle`, `requesting-presigned-url`, `uploading-to-storage`,
-`saving-metadata`, `uploaded`, `failed`. Future backend integration may simplify this around
-`idle`, `uploading`, `uploaded`, `failed`, `ready`.
+Purpose: current type allows `idle`, `uploading`, `uploaded`, `failed`, `ready`.
 
 ### `upload.error`
 
@@ -311,7 +348,7 @@ Upload Owner
 
 Frontend mapping:
 
-- `CreatePostImage.id` is the target `clientUploadId`;
+- `CreatePostImage.id` is the `clientUploadId`;
 - `image.exported.file` is the file uploaded in the backend pipeline;
 - `uploadUrl` must never be used as an image display URL.
 
