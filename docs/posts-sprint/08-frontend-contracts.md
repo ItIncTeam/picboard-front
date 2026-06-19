@@ -443,6 +443,13 @@ Pipeline rules:
 - call `completeUploadBatch` with `fileIds`;
 - attach only `READY` files to `createPost`.
 
+Selector rules:
+
+- exported readiness is not backend `READY`;
+- backend `READY` is represented by `upload.status === 'ready'`;
+- use `selectHasAllImagesExported` for starting the upload pipeline;
+- use `selectAreAllUploadsReady` before `createPost`.
+
 ## Common Mistakes
 
 Не использовать index для связи файлов.
