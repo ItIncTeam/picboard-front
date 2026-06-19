@@ -329,7 +329,7 @@ Upload Owner
 - validation;
 - drag and drop;
 - object URLs;
-- `clientUploadId` generation;
+- `CreatePostImage.id` generation, used as `clientUploadId`;
 - upload status UI.
 
 Запрещено:
@@ -344,7 +344,7 @@ Upload Owner
 
 Не использовать индекс массива для сопоставления файлов.
 
-Всегда использовать `clientUploadId`.
+Всегда использовать `CreatePostImage.id`. Backend treats it as `clientUploadId`.
 
 Frontend mapping:
 
@@ -428,6 +428,8 @@ READY
 createPost
 ```
 
+READY status comes from completeUploadBatch, not from successful storage PUT.
+
 Не обходить этапы.
 
 Не вызывать `createPost` до `READY`.
@@ -444,6 +446,9 @@ Pipeline rules:
 ## Common Mistakes
 
 Не использовать index для связи файлов.
+
+Do not use `CreatePostImage.id` and array index interchangeably. Image order and upload identity are
+different concepts.
 
 Не хранить `uploadUrl` как display URL.
 
