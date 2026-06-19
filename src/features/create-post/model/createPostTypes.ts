@@ -13,13 +13,7 @@ export type CreatePostImageFileInfo = {
   lastModified: number
 }
 
-export type CreatePostUploadStatus =
-  | 'idle'
-  | 'requesting-presigned-url'
-  | 'uploading-to-storage'
-  | 'saving-metadata'
-  | 'uploaded'
-  | 'failed'
+export type CreatePostUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
 
 export type CreatePostImage = {
   id: string
@@ -35,6 +29,10 @@ export type CreatePostImage = {
     fileInfo: CreatePostImageFileInfo
   }
   upload?: {
+    clientUploadId: string
+    fileId?: string
+    uploadUrl?: string
+    expiresAt?: string
     status: CreatePostUploadStatus
     error?: string
   }
