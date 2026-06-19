@@ -31,6 +31,12 @@ export type CreatePostUploadPatch = {
   error?: string
 }
 
+export type CreatePostUploadCandidate = {
+  imageId: string
+  file: File
+  fileInfo: CreatePostImageFileInfo
+}
+
 export type CreatePostImage = {
   /**
    * Local image identity used as backend clientUploadId.

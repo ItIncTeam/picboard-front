@@ -9,10 +9,14 @@ export {
   selectActiveImage,
   selectCanGoNext,
   selectCanPublish,
+  selectAreAllUploadsReady,
   selectHasCreatePostUnsavedData,
+  selectHasAllImagesExported,
   selectHasImages,
   selectImagesCount,
   selectIsReadyForUpload,
+  selectReadyFileIds,
+  selectUploadCandidates,
 } from './model/createPostSelectors'
 export type {
   AspectRatio,
@@ -21,6 +25,7 @@ export type {
   CreatePostImageFileInfo,
   CreatePostState,
   CreatePostStep,
+  CreatePostUploadCandidate,
   CreatePostUploadStatus,
   ImageFilter,
 } from './model/createPostTypes'

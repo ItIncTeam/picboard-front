@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest'
 
 import {
   selectActiveImage,
+  selectAreAllUploadsReady,
   selectCanGoNext,
   selectCanPublish,
+  selectHasAllImagesExported,
   selectHasCreatePostUnsavedData,
   selectHasImages,
   selectImagesCount,
   selectIsReadyForUpload,
+  selectReadyFileIds,
+  selectUploadCandidates,
 } from './createPostSelectors'
 import { createPostInitialState } from './createPostReducer'
 import type { CreatePostImage } from './createPostTypes'
@@ -38,6 +42,14 @@ function createExportedImage(overrides: Partial<CreatePostImage> = {}): CreatePo
     },
     ...overrides,
   })
+}
+
+function getExportedImageData(image: CreatePostImage): NonNullable<CreatePostImage['exported']> {
+  if (!image.exported) {
+    throw new Error('Expected exported image data.')
+  }
+
+  return image.exported
 }
 
 describe('createPostSelectors', () => {
@@ -118,22 +130,210 @@ describe('createPostSelectors', () => {
     ).toBe(true)
   })
 
-  it('returns false when images are not exported', () => {
-    expect(selectIsReadyForUpload(createPostInitialState)).toBe(false)
+  it('returns false for all images exported when there are no images', () => {
+    expect(selectHasAllImagesExported(createPostInitialState)).toBe(false)
+  })
+
+  it('returns false for all images exported when at least one image has no exported file', () => {
+    expect(
+      selectHasAllImagesExported({
+        ...createPostInitialState,
+        images: [createExportedImage(), createImage('image-2')],
+      }),
+    ).toBe(false)
+  })
+
+  it('returns true when all images have exported file', () => {
+    expect(
+      selectHasAllImagesExported({
+        ...createPostInitialState,
+        images: [createExportedImage(), createExportedImage({ id: 'image-2' })],
+      }),
+    ).toBe(true)
+  })
+
+  it('keeps ready for upload selector as exported readiness alias', () => {
+    const state = {
+      ...createPostInitialState,
+      images: [createExportedImage()],
+    }
+
+    expect(selectIsReadyForUpload(state)).toBe(selectHasAllImagesExported(state))
+  })
+
+  it('returns empty upload candidates array when no exported images exist', () => {
+    expect(
+      selectUploadCandidates({
+        ...createPostInitialState,
+        images: [createImage()],
+      }),
+    ).toEqual([])
+  })
+
+  it('returns only exported images as upload candidates', () => {
+    const firstImage = createExportedImage({ id: 'image-1' })
+    const secondImage = createImage('image-2')
 
     expect(
-      selectIsReadyForUpload({
+      selectUploadCandidates({
+        ...createPostInitialState,
+        images: [firstImage, secondImage],
+      }),
+    ).toHaveLength(1)
+  })
+
+  it('returns image id, exported file and exported file info for upload candidates', () => {
+    const image = createExportedImage({ id: 'image-1' })
+    const exported = getExportedImageData(image)
+
+    expect(
+      selectUploadCandidates({
+        ...createPostInitialState,
+        images: [image],
+      }),
+    ).toEqual([
+      {
+        imageId: image.id,
+        file: exported.file,
+        fileInfo: exported.fileInfo,
+      },
+    ])
+  })
+
+  it('preserves image order for upload candidates', () => {
+    const firstImage = createExportedImage({ id: 'image-1' })
+    const secondImage = createExportedImage({ id: 'image-2' })
+
+    expect(
+      selectUploadCandidates({
+        ...createPostInitialState,
+        images: [firstImage, secondImage],
+      }).map((candidate) => candidate.imageId),
+    ).toEqual(['image-1', 'image-2'])
+  })
+
+  it('returns empty file ids when no uploads are ready', () => {
+    expect(
+      selectReadyFileIds({
+        ...createPostInitialState,
+        images: [
+          createImage('image-1', {
+            upload: {
+              fileId: 'file-1',
+              status: 'uploaded',
+            },
+          }),
+        ],
+      }),
+    ).toEqual([])
+  })
+
+  it('returns file ids for ready uploads only', () => {
+    expect(
+      selectReadyFileIds({
+        ...createPostInitialState,
+        images: [
+          createImage('image-1', {
+            upload: {
+              fileId: 'file-1',
+              status: 'ready',
+            },
+          }),
+          createImage('image-2', {
+            upload: {
+              fileId: 'file-2',
+              status: 'uploaded',
+            },
+          }),
+        ],
+      }),
+    ).toEqual(['file-1'])
+  })
+
+  it('preserves image order for ready file ids', () => {
+    expect(
+      selectReadyFileIds({
+        ...createPostInitialState,
+        images: [
+          createImage('image-2', {
+            upload: {
+              fileId: 'file-2',
+              status: 'ready',
+            },
+          }),
+          createImage('image-1', {
+            upload: {
+              fileId: 'file-1',
+              status: 'ready',
+            },
+          }),
+        ],
+      }),
+    ).toEqual(['file-2', 'file-1'])
+  })
+
+  it('returns false for all uploads ready when there are no images', () => {
+    expect(selectAreAllUploadsReady(createPostInitialState)).toBe(false)
+  })
+
+  it('returns false for all uploads ready when upload is missing', () => {
+    expect(
+      selectAreAllUploadsReady({
         ...createPostInitialState,
         images: [createImage()],
       }),
     ).toBe(false)
   })
 
-  it('returns true when all images are exported', () => {
+  it('returns false for all uploads ready when status is uploaded but not ready', () => {
     expect(
-      selectIsReadyForUpload({
+      selectAreAllUploadsReady({
         ...createPostInitialState,
-        images: [createExportedImage()],
+        images: [
+          createImage('image-1', {
+            upload: {
+              fileId: 'file-1',
+              status: 'uploaded',
+            },
+          }),
+        ],
+      }),
+    ).toBe(false)
+  })
+
+  it('returns false for all uploads ready when ready status has no file id', () => {
+    expect(
+      selectAreAllUploadsReady({
+        ...createPostInitialState,
+        images: [
+          createImage('image-1', {
+            upload: {
+              status: 'ready',
+            },
+          }),
+        ],
+      }),
+    ).toBe(false)
+  })
+
+  it('returns true when all images are ready and have file id', () => {
+    expect(
+      selectAreAllUploadsReady({
+        ...createPostInitialState,
+        images: [
+          createImage('image-1', {
+            upload: {
+              fileId: 'file-1',
+              status: 'ready',
+            },
+          }),
+          createImage('image-2', {
+            upload: {
+              fileId: 'file-2',
+              status: 'ready',
+            },
+          }),
+        ],
       }),
     ).toBe(true)
   })
@@ -205,6 +405,28 @@ describe('createPostSelectors', () => {
         ...createPostInitialState,
         step: 'publication',
         images: [createImage()],
+      }),
+    ).toBe(false)
+  })
+
+  it('returns false for publish from publication when caption length is greater than 500', () => {
+    expect(
+      selectCanPublish({
+        ...createPostInitialState,
+        step: 'publication',
+        caption: 'a'.repeat(501),
+        images: [createExportedImage()],
+      }),
+    ).toBe(false)
+  })
+
+  it('returns false for publish from publication while publishing', () => {
+    expect(
+      selectCanPublish({
+        ...createPostInitialState,
+        step: 'publication',
+        images: [createExportedImage()],
+        isPublishing: true,
       }),
     ).toBe(false)
   })
