@@ -1,4 +1,4 @@
-import type { CreatePostImage } from '../model/createPostTypes'
+import type { CreatePostImage } from '@/features/create-post'
 import { CreatePostSkeleton } from './CreatePostSkeleton'
 
 export type PublicationStepProps = {

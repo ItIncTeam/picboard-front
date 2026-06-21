@@ -1,5 +1,5 @@
-import { CREATE_POST_ASPECT_RATIOS } from '../lib/createPostConstants'
-import type { AspectRatio, CreatePostImage } from '../model/createPostTypes'
+import { CREATE_POST_ASPECT_RATIOS } from '@/features/create-post/lib/createPostConstants'
+import type { AspectRatio, CreatePostImage } from '@/features/create-post'
 import { CreatePostSkeleton } from './CreatePostSkeleton'
 
 export type CropStepProps = {

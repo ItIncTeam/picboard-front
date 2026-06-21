@@ -1,7 +1,7 @@
 import { Button } from '@/shared/ui/button'
 import { Text } from '@/shared/ui/typography'
 
-import type { CreatePostImage } from '../model/createPostTypes'
+import type { CreatePostImage } from '@/features/create-post'
 import styles from './upload-step.module.css'
 
 export type UploadStepProps = {

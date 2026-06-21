@@ -193,10 +193,10 @@ function PostAttachmentImage({ attachment }: { attachment: AttachmentWithFile })
 
 Status:
 
-Expected backend update. Not yet confirmed as deployed.
+Backend-confirmed display URL contract.
 
 Image URL is not expected to be stored directly in `Post` or `PostAttachment`. Frontend should read
-the display URL through `attachment.file.url` after the backend schema update is confirmed.
+the display URL through `attachment.file.url`.
 
 ## Frontend State Mapping
 

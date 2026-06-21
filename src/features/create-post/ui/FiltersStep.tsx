@@ -1,5 +1,5 @@
-import { CREATE_POST_FILTERS } from '../lib/createPostConstants'
-import type { CreatePostImage, ImageFilter } from '../model/createPostTypes'
+import { CREATE_POST_FILTERS } from '@/features/create-post/lib/createPostConstants'
+import type { CreatePostImage, ImageFilter } from '@/features/create-post'
 import { CreatePostSkeleton } from './CreatePostSkeleton'
 
 export type FiltersStepProps = {

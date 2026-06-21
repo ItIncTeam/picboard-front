@@ -109,6 +109,60 @@ Changed by: future backend integration PR after Dev 1 approval
 
 Purpose: publish submission state. Current production code does not run the backend upload pipeline.
 
+## Step Boundary Contract
+
+Owner:
+
+Dev 1
+
+Purpose:
+
+`CreatePostFlow` is the integration shell. It owns reducer, state, selectors and navigation. Step
+components receive data and callbacks only.
+
+Rules:
+
+- Step components must not import `createPostReducer`.
+- Step components must not receive or call `dispatch`.
+- Step components must not call backend, Apollo, GraphQL operations or upload service.
+- Step components must not use `uploadUrl` for display.
+- `onPublishAction` is a shell-level boundary for future publish integration. Current production
+  code does not implement GraphQL operations, storage `PUT`, upload service or `createPost`.
+
+Implemented props:
+
+```ts
+type UploadStepProps = {
+  images: CreatePostImage[]
+  activeImageId: string | null
+  onAddImages: (images: CreatePostImage[]) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
+}
+
+type CropStepProps = {
+  activeImage: CreatePostImage | null
+  onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
+  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+}
+
+type FiltersStepProps = {
+  activeImage: CreatePostImage | null
+  onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+}
+
+type PublicationStepProps = {
+  images: CreatePostImage[]
+  caption: string
+  onCaptionChange: (caption: string) => void
+}
+```
+
+`onAspectRatioChange` and `onFilterChange` update existing per-image state fields and clear stale
+`exported` / `upload` state. This prevents future publish integration from reusing a file id or
+temporary upload URL that belongs to an older edited file.
+
 ## CreatePostImage Contract
 
 Current image shape:
@@ -198,7 +252,7 @@ Owner: Dev 3
 
 Used by: Crop, export pipeline
 
-Changed by: Dev 3 through an agreed state update
+Changed by: Dev 3 through `CropStepProps.onAspectRatioChange`
 
 Purpose: per-image crop aspect ratio. Supported values are `original`, `1:1`, `4:5`, `16:9`.
 
@@ -208,7 +262,7 @@ Owner: Dev 3
 
 Used by: Filters, export pipeline
 
-Changed by: Dev 3 through an agreed state update
+Changed by: Dev 3 through `FiltersStepProps.onFilterChange`
 
 Purpose: per-image filter preset. Current planned presets are `normal`, `clarendon`, `lark`,
 `gingham`, `moon`.
@@ -219,7 +273,8 @@ Owner: Dev 3
 
 Consumed by: Upload Pipeline, Publication, selectors
 
-Changed by: Dev 3 through an agreed state update
+Changed by: Dev 3 through `CropStepProps.onImageExported` or
+`FiltersStepProps.onImageExported`
 
 Purpose: final edited artifact after crop/filter processing. Upload pipeline starts from
 `image.exported.file`.
@@ -394,13 +449,11 @@ Posts UI Owner
 
 Не предполагать структуру image URL.
 
-Использовать ожидаемый контракт:
+Использовать backend-confirmed display URL contract:
 
 ```txt
 attachment.file.url
 ```
-
-Пока считать его expected backend update.
 
 Do not use:
 
