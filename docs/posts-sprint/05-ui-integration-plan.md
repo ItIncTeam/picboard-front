@@ -224,6 +224,6 @@ Differences:
 - Select files in upload step, navigate steps, go back and verify state is preserved.
 - Remove selected image and verify preview disappears.
 - Close with no unsaved data: no confirm.
-- Close with unsaved data: confirm appears after that feature is implemented.
+- Close with unsaved data: confirm appears.
 - Profile page shows posts grid skeleton without backend calls.
 - Public main page shows latest posts/users count skeleton without backend calls.

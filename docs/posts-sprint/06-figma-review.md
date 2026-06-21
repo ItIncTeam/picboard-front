@@ -219,11 +219,10 @@ State ownership:
 6. Add multi-image media strip and carousel behavior.
 7. Add filters grid and preview.
 8. Add final edited `File` export.
-9. Add publication step and disabled publish boundary.
+9. Add publication step and publish boundary.
 10. Add `initiateUploadBatch`, direct storage `PUT`, `completeUploadBatch` and `createPost`
     integration in a dedicated backend integration PR.
-11. Add close confirmation when `hasUnsavedData` exists.
-12. Add draft persistence only at the end of the sprint if the team finalizes the behavior.
+11. Add draft persistence only at the end of the sprint if the team finalizes the behavior.
 
 ## Architecture risks
 
@@ -261,5 +260,4 @@ State ownership:
   to avoid upload/crop/filter PRs inventing incompatible local models.
 - Dev 2/3 should not change the shared state shape without Dev 1 approval.
 - Review Figma text before implementation and do not copy mixed-language strings blindly.
-- Keep close confirmation out of the first PR; add it only when unsaved data is real.
 - Move edit/delete, Main Page and infinite scroll into follow-up PRs.

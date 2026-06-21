@@ -264,8 +264,8 @@ Used by: Filters, export pipeline
 
 Changed by: Dev 3 through `FiltersStepProps.onFilterChange`
 
-Purpose: per-image filter preset. Current planned presets are `normal`, `clarendon`, `lark`,
-`gingham`, `moon`.
+Purpose: per-image filter preset. Current presets are `normal`, `clarendon`, `lark`, `gingham`,
+`moon`.
 
 ### `exported`
 

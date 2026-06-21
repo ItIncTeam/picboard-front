@@ -79,8 +79,8 @@ Responsibilities:
 - показать final preview;
 - собрать caption/hashtags UI;
 - валидировать description max length: `500` characters;
-- показать disabled publish state, пока backend integration не подключена;
-- позже вызвать upload/createPost integration.
+- show disabled publish state when `selectCanPublish` is false;
+- call the shell-level `onPublishAction` boundary when publish is allowed.
 - не использовать GraphQL Upload.
 
 ## Step: publish
@@ -158,29 +158,11 @@ type CreatePostState = {
 }
 ```
 
-Implementation note: replace `unknown` coordinates with the exact cropper type when
-`react-advanced-cropper` is installed. Do not use `any`.
-
 Backend integration target mapping:
 
 - `CreatePostImage.id` maps to backend `clientUploadId`;
 - `CreatePostImage.exported.file` is used as the uploaded file;
 - `description` comes from `caption` and must be optional with a 500-character maximum.
-
-Future upload fields may be simplified around the backend contract:
-
-```ts
-type CreatePostUploadIntegrationState = {
-  upload: {
-    fileId?: string
-    uploadUrl?: string
-    status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
-  }
-}
-```
-
-This is target integration state, not a claim that these exact fields already exist in production
-code.
 
 ## Step integration boundaries
 
@@ -229,11 +211,14 @@ previous upload state.
 
 ## Step transitions
 
-- `upload -> crop`: allowed when at least one valid image exists.
-- `crop -> filters`: allowed when active image crop state is valid.
-- `filters -> publication`: allowed after filters are selected or explicitly skipped.
-- `publication -> publish`: allowed only when final exported images exist. Backend integration is
-  still not connected; `onPublishAction` is only a boundary for future integration.
+- `upload -> crop`: currently allowed when at least one image exists.
+- `crop -> filters`: currently allowed when at least one image exists. Stricter crop validity can be
+  added with a selector update when real crop implementation lands.
+- `filters -> publication`: currently allowed when at least one image exists. Stricter filter/export
+  gating can be added with a selector update when real filters/export implementation lands.
+- `publication -> publish`: allowed when `selectCanPublish` is true: publication step, at least one
+  image, all images exported, caption length up to 500, and `isPublishing === false`. Backend
+  integration is still not connected; `onPublishAction` is only a boundary for future integration.
 - Back navigation between steps should preserve selected files and settings.
 - Reset clears in-memory create state. Object URL revoke logic belongs to the upload/export
   implementation work.

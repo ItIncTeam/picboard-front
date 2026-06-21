@@ -142,13 +142,13 @@ type ProfilePostsArgs = {
 Current backend page size is 8 posts. Frontend should prepare infinite scroll around cursor
 pagination.
 
-## Resolved / Partially Resolved
+## Resolved
 
 ### Display URLs For Images
 
-Backend plans to expose image URLs through `PostAttachment.file.url`.
+Backend exposes image URLs through `PostAttachment.file.url`.
 
-Expected backend schema:
+Backend-confirmed schema:
 
 ```graphql
 type PostAttachment {
@@ -181,7 +181,7 @@ function PostAttachmentImage({ attachment }: { attachment: AttachmentWithFile })
 
 Status:
 
-Expected backend update. Not yet confirmed as deployed.
+Backend-confirmed display URL contract.
 
 Frontend must not use `uploadUrl` as a display URL.
 
@@ -204,7 +204,6 @@ Still unresolved:
 
 - operation name;
 - arguments;
-- deployed attachment display URL schema;
 - owner/viewer fields;
 - edit/delete permissions;
 - not found, forbidden and deleted error model.
