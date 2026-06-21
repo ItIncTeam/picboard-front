@@ -67,15 +67,16 @@ Completed:
 - flow navigation;
 - returnTo navigation;
 - close confirm;
+- step props/callback boundaries;
+- publish boundary without backend implementation;
 - storybook states.
 
 Current:
 
-- flow tests.
+- backend integration review after schema update.
 
 Future:
 
-- backend integration review;
 - draft architecture.
 
 Checklist:
@@ -101,12 +102,17 @@ Checklist:
 - [x] В close confirm использовать `Discard` / `Keep editing`; не показывать `Save draft`.
 - [x] Оставить draft persistence disabled.
 - [x] Добавить focused unit tests для reducer/helpers, если test setup уже позволяет.
+- [x] Оформить step integration boundaries:
+      `CreatePostFlow` owns reducer/state/selectors/navigation, while step components receive only
+      props and callbacks.
+- [x] Добавить `onPublishAction` boundary for future publish integration without GraphQL, Apollo,
+      upload service or backend calls.
 
 Dependencies:
 
 - Может стартовать сразу.
 - Не зависит от backend contract.
-- Должен предоставить state API для Dev 2 and Dev 3.
+- Должен предоставить state API and callback boundaries для Dev 2 and Dev 3.
 - Dev 2/3 не меняют `CreatePostState`, `CreatePostImage` or `CreatePostStep` без согласования с
   Dev 1.
 

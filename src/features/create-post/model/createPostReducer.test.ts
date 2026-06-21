@@ -229,6 +229,106 @@ describe('createPostReducer', () => {
     expect(result.hasUnsavedData).toBe(true)
   })
 
+  it('updates image aspect ratio by image id and clears stale export/upload state', () => {
+    const exported = createExportedImage()
+    const imageWithExportAndUpload: CreatePostImage = {
+      ...firstImage,
+      exported,
+      upload: {
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/upload',
+        expiresAt: '2026-06-19T12:00:00.000Z',
+        status: 'ready',
+      },
+    }
+
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [imageWithExportAndUpload, secondImage],
+      },
+      {
+        type: 'setImageAspectRatio',
+        aspectRatio: '16:9',
+        imageId: firstImage.id,
+      },
+    )
+
+    expect(result.images[0]).toEqual({
+      ...firstImage,
+      aspectRatio: '16:9',
+      exported: undefined,
+      upload: undefined,
+    })
+    expect(result.images[1]).toBe(secondImage)
+    expect(result.hasUnsavedData).toBe(true)
+  })
+
+  it('returns same state when image aspect ratio is unchanged', () => {
+    const state = {
+      ...createPostInitialState,
+      images: [firstImage],
+    }
+
+    const result = createPostReducer(state, {
+      type: 'setImageAspectRatio',
+      aspectRatio: firstImage.aspectRatio,
+      imageId: firstImage.id,
+    })
+
+    expect(result).toBe(state)
+  })
+
+  it('updates image filter by image id and clears stale export/upload state', () => {
+    const exported = createExportedImage()
+    const imageWithExportAndUpload: CreatePostImage = {
+      ...firstImage,
+      exported,
+      upload: {
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/upload',
+        expiresAt: '2026-06-19T12:00:00.000Z',
+        status: 'ready',
+      },
+    }
+
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [imageWithExportAndUpload, secondImage],
+      },
+      {
+        type: 'setImageFilter',
+        filter: 'moon',
+        imageId: firstImage.id,
+      },
+    )
+
+    expect(result.images[0]).toEqual({
+      ...firstImage,
+      filter: 'moon',
+      exported: undefined,
+      upload: undefined,
+    })
+    expect(result.images[1]).toBe(secondImage)
+    expect(result.hasUnsavedData).toBe(true)
+  })
+
+  it('returns same state when image filter is unchanged', () => {
+    const state = {
+      ...createPostInitialState,
+      images: [firstImage],
+    }
+
+    const result = createPostReducer(state, {
+      type: 'setImageFilter',
+      filter: firstImage.filter,
+      imageId: firstImage.id,
+    })
+
+    expect(result).toBe(state)
+  })
+
   it('stores exported file by image id', () => {
     const exported = createExportedImage()
     const result = createPostReducer(

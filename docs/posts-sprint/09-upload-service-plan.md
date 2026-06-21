@@ -62,6 +62,14 @@ Responsibilities:
 The service lives in `features/create-post`, not `shared`, because it depends on Create Post state
 contracts, selectors, upload status semantics and post publish flow.
 
+Current integration boundary:
+
+- `CreatePostFlow` exposes `onPublishAction` as the future publish connection point.
+- Step components do not call this service directly.
+- Step components do not receive Apollo clients, GraphQL operations, upload helpers or storage
+  `PUT` functions.
+- Backend integration is still not implemented until the schema exposes the required operations.
+
 ## Pipeline
 
 ```txt

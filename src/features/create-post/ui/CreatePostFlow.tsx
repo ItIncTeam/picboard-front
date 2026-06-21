@@ -11,11 +11,18 @@ import { Title } from '@/shared/ui/typography'
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
 import { createPostInitialState, createPostReducer } from '@/features/create-post'
 import {
+  selectActiveImage,
   selectCanGoNext,
   selectCanPublish,
   selectHasCreatePostUnsavedData,
 } from '@/features/create-post'
-import type { CreatePostState, CreatePostStep } from '@/features/create-post'
+import type {
+  AspectRatio,
+  CreatePostImage,
+  CreatePostState,
+  CreatePostStep,
+  ImageFilter,
+} from '@/features/create-post'
 import { CropStep } from './CropStep'
 import { FiltersStep } from './FiltersStep'
 import { PublicationStep } from './PublicationStep'
@@ -25,6 +32,7 @@ import styles from './create-post-flow.module.css'
 type CreatePostFlowProps = {
   initialState?: CreatePostState
   onCloseAction?: () => void
+  onPublishAction?: (state: CreatePostState) => void
 }
 
 const stepTitles: Record<CreatePostStep, string> = {
@@ -37,6 +45,7 @@ const stepTitles: Record<CreatePostStep, string> = {
 export function CreatePostFlow({
   initialState = createPostInitialState,
   onCloseAction,
+  onPublishAction,
 }: CreatePostFlowProps) {
   const [state, dispatch] = useReducer(createPostReducer, initialState)
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false)
@@ -45,8 +54,41 @@ export function CreatePostFlow({
   const isLastStep = currentStepIndex === CREATE_POST_STEPS.length - 1
   const canGoNext = selectCanGoNext(state)
   const canPublish = selectCanPublish(state)
+  const activeImage = selectActiveImage(state)
   const isUploadHeader = state.step === 'upload' && state.images.length === 0
   const flowSize = state.step === 'filters' || state.step === 'publication' ? 'wide' : 'compact'
+
+  const handleAddImages = (images: CreatePostImage[]) => {
+    dispatch({ type: 'addImages', images })
+  }
+
+  const handleRemoveImage = (imageId: string) => {
+    dispatch({ type: 'removeImage', imageId })
+  }
+
+  const handleSetActiveImage = (imageId: string | null) => {
+    dispatch({ type: 'setActiveImage', imageId })
+  }
+
+  const handleAspectRatioChange = (imageId: string, aspectRatio: AspectRatio) => {
+    dispatch({ type: 'setImageAspectRatio', aspectRatio, imageId })
+  }
+
+  const handleFilterChange = (imageId: string, filter: ImageFilter) => {
+    dispatch({ type: 'setImageFilter', filter, imageId })
+  }
+
+  const handleImageExported = (imageId: string, exported: CreatePostImage['exported']) => {
+    dispatch({ type: 'setImageExported', exported, imageId })
+  }
+
+  const handleCaptionChange = (caption: string) => {
+    dispatch({ type: 'setCaption', caption })
+  }
+
+  const handlePublish = () => {
+    onPublishAction?.(state)
+  }
 
   const handleClose = () => {
     if (selectHasCreatePostUnsavedData(state)) {
@@ -72,10 +114,23 @@ export function CreatePostFlow({
             isLastStep,
             onBack: () => dispatch({ type: 'goBack' }),
             onNext: () => dispatch({ type: 'goNext' }),
+            onPublish: handlePublish,
             step: state.step,
           })}
 
-      <div className={styles.body}>{renderStep(state.step)}</div>
+      <div className={styles.body}>
+        {renderStep({
+          activeImage,
+          onAddImages: handleAddImages,
+          onAspectRatioChange: handleAspectRatioChange,
+          onCaptionChange: handleCaptionChange,
+          onFilterChange: handleFilterChange,
+          onImageExported: handleImageExported,
+          onRemoveImage: handleRemoveImage,
+          onSetActiveImage: handleSetActiveImage,
+          state,
+        })}
+      </div>
       <CreatePostCloseConfirm
         onDiscardAction={handleDiscard}
         onKeepEditingAction={() => setIsCloseConfirmOpen(false)}
@@ -115,6 +170,7 @@ type WizardHeaderProps = {
   isLastStep: boolean
   onBack: () => void
   onNext: () => void
+  onPublish: () => void
   step: CreatePostStep
 }
 
@@ -125,6 +181,7 @@ function renderWizardHeader({
   isLastStep,
   onBack,
   onNext,
+  onPublish,
   step,
 }: WizardHeaderProps) {
   return (
@@ -149,6 +206,7 @@ function renderWizardHeader({
           <Button
             className={styles.headerAction}
             disabled={!canPublish}
+            onClick={onPublish}
             type="button"
             variant="textButton"
           >
@@ -170,18 +228,66 @@ function renderWizardHeader({
   )
 }
 
-function renderStep(step: CreatePostStep) {
-  switch (step) {
+type RenderStepArgs = {
+  activeImage: CreatePostImage | null
+  onAddImages: (images: CreatePostImage[]) => void
+  onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
+  onCaptionChange: (caption: string) => void
+  onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
+  state: CreatePostState
+}
+
+function renderStep({
+  activeImage,
+  onAddImages,
+  onAspectRatioChange,
+  onCaptionChange,
+  onFilterChange,
+  onImageExported,
+  onRemoveImage,
+  onSetActiveImage,
+  state,
+}: RenderStepArgs) {
+  switch (state.step) {
     case 'upload':
-      return <UploadStep />
+      return (
+        <UploadStep
+          activeImageId={state.activeImageId}
+          images={state.images}
+          onAddImages={onAddImages}
+          onRemoveImage={onRemoveImage}
+          onSetActiveImage={onSetActiveImage}
+        />
+      )
 
     case 'crop':
-      return <CropStep />
+      return (
+        <CropStep
+          activeImage={activeImage}
+          onAspectRatioChange={onAspectRatioChange}
+          onImageExported={onImageExported}
+        />
+      )
 
     case 'filters':
-      return <FiltersStep />
+      return (
+        <FiltersStep
+          activeImage={activeImage}
+          onFilterChange={onFilterChange}
+          onImageExported={onImageExported}
+        />
+      )
 
     case 'publication':
-      return <PublicationStep />
+      return (
+        <PublicationStep
+          caption={state.caption}
+          images={state.images}
+          onCaptionChange={onCaptionChange}
+        />
+      )
   }
 }

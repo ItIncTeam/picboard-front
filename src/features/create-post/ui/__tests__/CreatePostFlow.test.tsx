@@ -4,11 +4,46 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createPostInitialState,
+  type AspectRatio,
   type CreatePostImage,
   type CreatePostState,
+  type ImageFilter,
 } from '@/features/create-post'
 
 import { CreatePostFlow } from '../CreatePostFlow'
+
+type UploadStepBoundaryProps = {
+  activeImageId: string | null
+  images: CreatePostImage[]
+  onAddImages: (images: CreatePostImage[]) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
+}
+
+type CropStepBoundaryProps = {
+  activeImage: CreatePostImage | null
+  onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
+  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+}
+
+type FiltersStepBoundaryProps = {
+  activeImage: CreatePostImage | null
+  onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+}
+
+type PublicationStepBoundaryProps = {
+  caption: string
+  images: CreatePostImage[]
+  onCaptionChange: (caption: string) => void
+}
+
+const stepBoundaries = vi.hoisted(() => ({
+  crop: null as CropStepBoundaryProps | null,
+  filters: null as FiltersStepBoundaryProps | null,
+  publication: null as PublicationStepBoundaryProps | null,
+  upload: null as UploadStepBoundaryProps | null,
+}))
 
 vi.mock('@/shared/assets', () => ({
   ArrowBackIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
@@ -87,6 +122,38 @@ vi.mock('@/shared/ui/typography', () => ({
   }) => <Component {...props}>{children}</Component>,
 }))
 
+vi.mock('../UploadStep', () => ({
+  UploadStep: (props: UploadStepBoundaryProps) => {
+    stepBoundaries.upload = props
+
+    return <section aria-label="Upload photo">Upload boundary</section>
+  },
+}))
+
+vi.mock('../CropStep', () => ({
+  CropStep: (props: CropStepBoundaryProps) => {
+    stepBoundaries.crop = props
+
+    return <section aria-label="Cropping">Crop boundary</section>
+  },
+}))
+
+vi.mock('../FiltersStep', () => ({
+  FiltersStep: (props: FiltersStepBoundaryProps) => {
+    stepBoundaries.filters = props
+
+    return <section aria-label="Filters">Filters boundary</section>
+  },
+}))
+
+vi.mock('../PublicationStep', () => ({
+  PublicationStep: (props: PublicationStepBoundaryProps) => {
+    stepBoundaries.publication = props
+
+    return <section aria-label="Publication">Publication boundary</section>
+  },
+}))
+
 type RenderResult = {
   container: HTMLDivElement
   root: Root
@@ -119,6 +186,21 @@ function createExportedImage(): CreatePostImage {
   })
 }
 
+function createExportedPayload(): NonNullable<CreatePostImage['exported']> {
+  const file = new File(['edited'], 'edited.jpg', { type: 'image/jpeg' })
+
+  return {
+    file,
+    objectUrl: 'blob:edited',
+    fileInfo: {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified,
+    },
+  }
+}
+
 function createState(overrides: Partial<CreatePostState> = {}): CreatePostState {
   return {
     ...createPostInitialState,
@@ -129,9 +211,11 @@ function createState(overrides: Partial<CreatePostState> = {}): CreatePostState 
 function renderCreatePostFlow({
   initialState,
   onCloseAction = vi.fn(),
+  onPublishAction,
 }: {
   initialState?: CreatePostState
   onCloseAction?: () => void
+  onPublishAction?: (state: CreatePostState) => void
 } = {}): RenderResult {
   const container = document.createElement('div')
   const root = createRoot(container)
@@ -139,7 +223,13 @@ function renderCreatePostFlow({
   document.body.append(container)
 
   act(() => {
-    root.render(<CreatePostFlow initialState={initialState} onCloseAction={onCloseAction} />)
+    root.render(
+      <CreatePostFlow
+        initialState={initialState}
+        onCloseAction={onCloseAction}
+        onPublishAction={onPublishAction}
+      />,
+    )
   })
 
   return { container, root }
@@ -188,6 +278,10 @@ describe('CreatePostFlow', () => {
     }
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+    stepBoundaries.crop = null
+    stepBoundaries.filters = null
+    stepBoundaries.publication = null
+    stepBoundaries.upload = null
   })
 
   afterEach(() => {
@@ -360,5 +454,145 @@ describe('CreatePostFlow', () => {
     mountedRoots.push(view)
 
     expect(queryButton(view.container, 'Publish')).toBeInstanceOf(HTMLButtonElement)
+  })
+
+  it('passes upload data and callbacks to UploadStep', () => {
+    const image = createImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(stepBoundaries.upload?.images).toEqual([image])
+    expect(stepBoundaries.upload?.activeImageId).toBe(image.id)
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(image.id)
+    })
+
+    expect(stepBoundaries.upload?.images).toEqual([])
+    expect(stepBoundaries.upload?.activeImageId).toBeNull()
+  })
+
+  it('receives uploaded images from UploadStep through the shell boundary', () => {
+    const image = createImage({ id: 'added-image' })
+    const view = renderCreatePostFlow()
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.upload?.onAddImages([image])
+    })
+
+    expect(stepBoundaries.upload?.images).toEqual([image])
+    expect(stepBoundaries.upload?.activeImageId).toBe(image.id)
+  })
+
+  it('passes active image and crop callbacks to CropStep', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'crop',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(stepBoundaries.crop?.activeImage).toEqual(image)
+
+    act(() => {
+      stepBoundaries.crop?.onAspectRatioChange(image.id, '16:9')
+    })
+
+    expect(stepBoundaries.crop?.activeImage?.aspectRatio).toBe('16:9')
+    expect(stepBoundaries.crop?.activeImage?.exported).toBeUndefined()
+
+    const exported = createExportedPayload()
+
+    act(() => {
+      stepBoundaries.crop?.onImageExported(image.id, exported)
+    })
+
+    expect(stepBoundaries.crop?.activeImage?.exported).toBe(exported)
+  })
+
+  it('passes active image and filter callbacks to FiltersStep', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'filters',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(stepBoundaries.filters?.activeImage).toEqual(image)
+
+    act(() => {
+      stepBoundaries.filters?.onFilterChange(image.id, 'moon')
+    })
+
+    expect(stepBoundaries.filters?.activeImage?.filter).toBe('moon')
+    expect(stepBoundaries.filters?.activeImage?.exported).toBeUndefined()
+
+    const exported = createExportedPayload()
+
+    act(() => {
+      stepBoundaries.filters?.onImageExported(image.id, exported)
+    })
+
+    expect(stepBoundaries.filters?.activeImage?.exported).toBe(exported)
+  })
+
+  it('passes publication data and caption callback to PublicationStep', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        caption: 'Initial caption',
+        images: [image],
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(stepBoundaries.publication?.images).toEqual([image])
+    expect(stepBoundaries.publication?.caption).toBe('Initial caption')
+
+    act(() => {
+      stepBoundaries.publication?.onCaptionChange('Updated caption')
+    })
+
+    expect(stepBoundaries.publication?.caption).toBe('Updated caption')
+  })
+
+  it('calls publish boundary without backend integration', () => {
+    const onPublishAction = vi.fn()
+    const image = createExportedImage()
+    const initialState = createState({
+      activeImageId: image.id,
+      caption: 'Ready to publish',
+      images: [image],
+      step: 'publication',
+    })
+    const view = renderCreatePostFlow({
+      initialState,
+      onPublishAction,
+    })
+
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Publish'))
+
+    expect(onPublishAction).toHaveBeenCalledWith(initialState)
   })
 })

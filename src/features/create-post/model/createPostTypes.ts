@@ -81,6 +81,8 @@ export type CreatePostAction =
   | { type: 'removeImage'; imageId: string }
   | { type: 'setActiveImage'; imageId: string | null }
   | { type: 'setCaption'; caption: string }
+  | { type: 'setImageAspectRatio'; aspectRatio: AspectRatio; imageId: string }
+  | { type: 'setImageFilter'; filter: ImageFilter; imageId: string }
   /**
    * Final file produced by crop/filter/export pipeline.
    *

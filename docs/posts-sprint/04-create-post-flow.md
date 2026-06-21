@@ -140,13 +140,10 @@ type CreatePostImage = {
     }
   }
   upload?: {
-    status:
-      | 'idle'
-      | 'requesting-presigned-url'
-      | 'uploading-to-storage'
-      | 'saving-metadata'
-      | 'uploaded'
-      | 'failed'
+    fileId?: string
+    uploadUrl?: string
+    expiresAt?: string
+    status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
     error?: string
   }
 }
@@ -185,13 +182,58 @@ type CreatePostUploadIntegrationState = {
 This is target integration state, not a claim that these exact fields already exist in production
 code.
 
+## Step integration boundaries
+
+Current implementation:
+
+- `CreatePostFlow` owns `useReducer`, `CreatePostState`, selectors and step navigation.
+- Step components receive only data props and callback props.
+- Step components do not import the reducer, do not receive `dispatch`, and do not know about
+  backend, Apollo, GraphQL operations or upload service.
+- `onPublishAction` is the shell-level connection point for future publish integration. It exists
+  without GraphQL, upload service or backend calls.
+
+Implemented step props:
+
+```ts
+type UploadStepProps = {
+  images: CreatePostImage[]
+  activeImageId: string | null
+  onAddImages: (images: CreatePostImage[]) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
+}
+
+type CropStepProps = {
+  activeImage: CreatePostImage | null
+  onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
+  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+}
+
+type FiltersStepProps = {
+  activeImage: CreatePostImage | null
+  onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+}
+
+type PublicationStepProps = {
+  images: CreatePostImage[]
+  caption: string
+  onCaptionChange: (caption: string) => void
+}
+```
+
+`onAspectRatioChange` and `onFilterChange` update existing per-image fields and clear stale
+`exported` / `upload` data, because a changed edit invalidates the previously exported file and any
+previous upload state.
+
 ## Step transitions
 
 - `upload -> crop`: allowed when at least one valid image exists.
 - `crop -> filters`: allowed when active image crop state is valid.
 - `filters -> publication`: allowed after filters are selected or explicitly skipped.
 - `publication -> publish`: allowed only when final exported images exist. Backend integration is
-  still not connected in this documentation task.
+  still not connected; `onPublishAction` is only a boundary for future integration.
 - Back navigation between steps should preserve selected files and settings.
 - Reset clears in-memory create state. Object URL revoke logic belongs to the upload/export
   implementation work.

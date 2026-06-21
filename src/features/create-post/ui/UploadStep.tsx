@@ -1,9 +1,24 @@
 import { Button } from '@/shared/ui/button'
 import { Text } from '@/shared/ui/typography'
 
+import type { CreatePostImage } from '@/features/create-post'
 import styles from './upload-step.module.css'
 
-export function UploadStep() {
+export type UploadStepProps = {
+  activeImageId: string | null
+  images: CreatePostImage[]
+  onAddImages: (images: CreatePostImage[]) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
+}
+
+export function UploadStep({
+  activeImageId: _activeImageId,
+  images: _images,
+  onAddImages: _onAddImages,
+  onRemoveImage: _onRemoveImage,
+  onSetActiveImage: _onSetActiveImage,
+}: UploadStepProps) {
   return (
     <section className={styles.root} aria-label="Upload photo">
       <div className={styles.placeholder} aria-hidden>
