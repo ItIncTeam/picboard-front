@@ -75,6 +75,64 @@ export function createPostReducer(
         hasUnsavedData: true,
       }
 
+    case 'setImageAspectRatio': {
+      let hasChanged = false
+
+      const nextImages = state.images.map((image) => {
+        if (image.id !== action.imageId || image.aspectRatio === action.aspectRatio) {
+          return image
+        }
+
+        hasChanged = true
+
+        return {
+          ...image,
+          aspectRatio: action.aspectRatio,
+          exported: undefined,
+          upload: undefined,
+        }
+      })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+        hasUnsavedData: true,
+      }
+    }
+
+    case 'setImageFilter': {
+      let hasChanged = false
+
+      const nextImages = state.images.map((image) => {
+        if (image.id !== action.imageId || image.filter === action.filter) {
+          return image
+        }
+
+        hasChanged = true
+
+        return {
+          ...image,
+          filter: action.filter,
+          exported: undefined,
+          upload: undefined,
+        }
+      })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+        hasUnsavedData: true,
+      }
+    }
+
     case 'setImageExported': {
       let hasChanged = false
 
