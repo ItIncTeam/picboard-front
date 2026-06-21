@@ -269,6 +269,16 @@ function getHeaderTitle(container: HTMLElement): string {
   return title.textContent
 }
 
+function expectNoBackendIntegrationProps(props: Record<string, unknown>) {
+  expect(props).not.toHaveProperty('apolloClient')
+  expect(props).not.toHaveProperty('createPost')
+  expect(props).not.toHaveProperty('dispatch')
+  expect(props).not.toHaveProperty('initiateUploadBatch')
+  expect(props).not.toHaveProperty('completeUploadBatch')
+  expect(props).not.toHaveProperty('uploadService')
+  expect(props).not.toHaveProperty('uploadToStorage')
+}
+
 describe('CreatePostFlow', () => {
   const mountedRoots: RenderResult[] = []
 
@@ -397,6 +407,67 @@ describe('CreatePostFlow', () => {
   })
 
   it.each([
+    [
+      'not publication step',
+      createState({
+        activeImageId: 'image-1',
+        images: [createExportedImage()],
+        step: 'filters',
+      }),
+    ],
+    [
+      'no images',
+      createState({
+        images: [],
+        step: 'publication',
+      }),
+    ],
+    [
+      'image is not exported',
+      createState({
+        activeImageId: 'image-1',
+        images: [createImage()],
+        step: 'publication',
+      }),
+    ],
+    [
+      'caption is longer than 500 characters',
+      createState({
+        activeImageId: 'image-1',
+        caption: 'a'.repeat(501),
+        images: [createExportedImage()],
+        step: 'publication',
+      }),
+    ],
+    [
+      'publish is already in progress',
+      createState({
+        activeImageId: 'image-1',
+        images: [createExportedImage()],
+        isPublishing: true,
+        step: 'publication',
+      }),
+    ],
+  ])('does not call publish boundary when publish is disabled: %s', (_caseName, initialState) => {
+    const onPublishAction = vi.fn()
+    const view = renderCreatePostFlow({
+      initialState,
+      onPublishAction,
+    })
+
+    mountedRoots.push(view)
+
+    const publishButton = queryButton(view.container, 'Publish')
+
+    if (publishButton) {
+      expect(publishButton.disabled).toBe(true)
+      clickButton(publishButton)
+    }
+
+    expect(onPublishAction).not.toHaveBeenCalled()
+  })
+
+  it.each([
     ['upload', 'Add Photo'],
     ['crop', 'Cropping'],
     ['filters', 'Filters'],
@@ -476,6 +547,35 @@ describe('CreatePostFlow', () => {
 
     expect(stepBoundaries.upload?.images).toEqual([])
     expect(stepBoundaries.upload?.activeImageId).toBeNull()
+  })
+
+  it('does not pass backend or upload service dependencies to step components', () => {
+    const image = createExportedImage()
+    const publicationView = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(publicationView)
+
+    expectNoBackendIntegrationProps(
+      stepBoundaries.publication as unknown as Record<string, unknown>,
+    )
+
+    act(() => {
+      stepBoundaries.publication?.onCaptionChange('Caption from publication step')
+    })
+    clickButton(getButton(publicationView.container, 'Back'))
+    expectNoBackendIntegrationProps(stepBoundaries.filters as unknown as Record<string, unknown>)
+
+    clickButton(getButton(publicationView.container, 'Back'))
+    expectNoBackendIntegrationProps(stepBoundaries.crop as unknown as Record<string, unknown>)
+
+    clickButton(getButton(publicationView.container, 'Back'))
+    expectNoBackendIntegrationProps(stepBoundaries.upload as unknown as Record<string, unknown>)
   })
 
   it('receives uploaded images from UploadStep through the shell boundary', () => {
@@ -594,5 +694,36 @@ describe('CreatePostFlow', () => {
     clickButton(getButton(view.container, 'Publish'))
 
     expect(onPublishAction).toHaveBeenCalledWith(initialState)
+  })
+
+  it('passes the current CreatePostState to publish boundary', () => {
+    const onPublishAction = vi.fn()
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        caption: 'Initial caption',
+        images: [image],
+        step: 'publication',
+      }),
+      onPublishAction,
+    })
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.publication?.onCaptionChange('Updated before publish')
+    })
+    clickButton(getButton(view.container, 'Publish'))
+
+    expect(onPublishAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeImageId: image.id,
+        caption: 'Updated before publish',
+        images: [image],
+        isPublishing: false,
+        step: 'publication',
+      }),
+    )
   })
 })
