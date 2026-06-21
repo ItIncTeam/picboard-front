@@ -266,7 +266,6 @@ Follow-up PRs:
 
 ## Backend blockers
 
-- Confirm deployed display URL schema. Expected direction is `PostAttachment.file.url`.
 - Main feed query contract.
 - Post details query contract.
 - `updatePost` and `deletePost` contracts.

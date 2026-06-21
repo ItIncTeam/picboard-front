@@ -158,9 +158,9 @@ Current backend page size:
 
 Frontend should prepare infinite scroll around cursor pagination.
 
-## Expected Display URL Contract
+## Display URL Contract
 
-Expected backend schema:
+Backend-confirmed schema:
 
 ```graphql
 type PostAttachment {
@@ -218,9 +218,8 @@ type CreatePostUploadIntegrationState = {
 }
 ```
 
-This is a target integration state. Do not claim these exact fields already exist unless production
-code has been updated. The current frontend state may use more granular intermediate statuses while
-the backend integration is still pending.
+This state shape exists in current frontend types. The backend upload pipeline that writes these
+fields is still pending.
 
 ## Publish Pipeline
 

@@ -178,5 +178,4 @@ Rules:
 13. Edit/delete follow-up PRs.
 14. Main/public page SSR/ISR planning and implementation после backend queries.
 15. Infinite scroll follow-up after cursor pagination integration planning and dependency PR.
-16. Close confirmation after real unsaved data tracking.
-17. Draft persistence в конце спринта, если остается capacity и команда утвердит поведение.
+16. Draft persistence в конце спринта, если остается capacity и команда утвердит поведение.

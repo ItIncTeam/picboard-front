@@ -132,9 +132,8 @@ storage через `PUT`, подтвердить загрузку через `co
 `initiateUploadBatch` response must be mapped by `clientUploadId`. Frontend must not rely on array
 order because backend can return upload descriptors in a different order.
 
-`uploadUrl` is a temporary write URL for storage. It is not a display URL. Backend plans to expose
-renderable image URLs through `PostAttachment.file.url`, but that schema update is not yet confirmed
-as deployed.
+`uploadUrl` is a temporary write URL for storage. It is not a display URL. Backend-confirmed post
+rendering uses `PostAttachment.file.url`.
 
 ## Почему `react-advanced-cropper`
 
@@ -153,8 +152,6 @@ as deployed.
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
 - Exact GraphQL operation documents/codegen in production code: follow-up implementation PR.
-- Display URLs for post images: partially resolved as expected `PostAttachment.file.url`; not yet
-  confirmed as deployed.
 - Main feed query contract: still unresolved.
 - Post details query contract: still unresolved.
 - SSR/ISR settings для main/public pages: после backend query contract и cache requirements.
