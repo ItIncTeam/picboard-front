@@ -1,4 +1,4 @@
-import type { Post } from '../model/postTypes'
+import type { Post } from '@/entities/post'
 
 const mockImageUrls = [
   'https://picsum.photos/seed/post-1/640/640',

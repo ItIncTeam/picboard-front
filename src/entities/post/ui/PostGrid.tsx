@@ -1,6 +1,6 @@
-import type { Post } from '../model/postTypes'
-import { PostCard } from './PostCard'
-import { PostCardSkeleton } from './PostCardSkeleton'
+import type { Post } from '@/entities/post'
+import { PostCard } from '@/entities/post/ui/PostCard'
+import { PostCardSkeleton } from '@/entities/post/ui/PostCardSkeleton'
 import styles from './post.module.css'
 
 const DEFAULT_SKELETON_COUNT = 8
