@@ -9,6 +9,7 @@ import { IconButton } from '@/shared/ui/icon-button'
 import { Title } from '@/shared/ui/typography'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
+import { useCreatePostPreviewUrlCleanup } from '../lib/useCreatePostPreviewUrlCleanup'
 import { createPostInitialState, createPostReducer } from '@/features/create-post'
 import {
   selectActiveImage,
@@ -49,6 +50,8 @@ export function CreatePostFlow({
 }: CreatePostFlowProps) {
   const [state, dispatch] = useReducer(createPostReducer, initialState)
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false)
+  useCreatePostPreviewUrlCleanup(state.images)
+
   const currentStepIndex = CREATE_POST_STEPS.indexOf(state.step)
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === CREATE_POST_STEPS.length - 1
