@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 
-import { createMockPosts } from '../lib/postMocks'
+import { createMockPosts, mockMultiImagePost, mockSinglePost } from '../lib/postMocks'
 import { PostGrid } from './PostGrid'
 
 const meta = {
@@ -21,6 +21,18 @@ export const ProfileGrid: Story = {
   },
 }
 
+export const SingleImage: Story = {
+  args: {
+    posts: [mockSinglePost],
+  },
+}
+
+export const MultipleImages: Story = {
+  args: {
+    posts: [mockMultiImagePost],
+  },
+}
+
 export const Loading: Story = {
   args: {
     isLoading: true,
@@ -31,5 +43,20 @@ export const Loading: Story = {
 export const Empty: Story = {
   args: {
     posts: [],
+  },
+}
+
+export const Error: Story = {
+  args: {
+    isError: true,
+    onRetry: () => {},
+  },
+}
+
+export const ErrorWithMessage: Story = {
+  args: {
+    errorMessage: 'Network error. Check your connection.',
+    isError: true,
+    onRetry: () => {},
   },
 }

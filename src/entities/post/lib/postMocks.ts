@@ -11,6 +11,10 @@ const mockImageUrls = [
   'https://picsum.photos/seed/post-8/640/640',
 ]
 
+const longCaption =
+  'A very long publication caption that should wrap across multiple lines in Storybook previews. ' +
+  'It helps verify text overflow behavior without affecting the profile grid thumbnail layout.'
+
 export function createMockPost(index: number): Post {
   const postNumber = index + 1
 
@@ -33,3 +37,32 @@ export function createMockPosts(count: number): Post[] {
     return createMockPost(index)
   })
 }
+
+export function createMockPostWithMultipleImages(imageCount = 3): Post {
+  return {
+    id: 'post-multi-image',
+    authorName: 'URLProfile',
+    caption: 'Post with multiple images',
+    images: Array.from({ length: imageCount }, (_, index) => {
+      const imageNumber = index + 1
+
+      return {
+        id: `image-${imageNumber}`,
+        alt: '',
+        url: mockImageUrls[index % mockImageUrls.length] ?? mockImageUrls[0],
+      }
+    }),
+  }
+}
+
+export function createMockPostWithLongCaption(): Post {
+  return {
+    ...createMockPost(0),
+    id: 'post-long-caption',
+    caption: longCaption,
+  }
+}
+
+export const mockSinglePost = createMockPost(0)
+export const mockMultiImagePost = createMockPostWithMultipleImages(3)
+export const mockLongCaptionPost = createMockPostWithLongCaption()
