@@ -163,7 +163,7 @@ Parallel work:
 
 Goal: подготовить client-side image processing для готовых изображений, которые уйдут на backend.
 
-Status: In Progress.
+Status: In Progress. Filters UI now has CSS preview and Canvas-based exported file creation.
 
 Checklist:
 
@@ -175,12 +175,12 @@ Checklist:
 - [ ] Поддержать выбранные aspect ratio modes.
 - [ ] Поддержать zoom через cropper controls.
 - [ ] Сохранять crop settings in state.
-- [ ] Добавить `FiltersStep`.
-- [ ] Реализовать wide filters layout из Figma: preview слева, filter grid справа.
-- [ ] Определить минимальный набор filters для skeleton/MVP.
-- [ ] Применять filters к preview.
-- [ ] Экспортировать final image через canvas/blob.
-- [ ] Сохранять final edited `File` в create flow state.
+- [x] Добавить `FiltersStep`.
+- [x] Реализовать wide filters layout из Figma: preview слева, filter grid справа.
+- [x] Определить минимальный набор filters для skeleton/MVP.
+- [x] Применять filters к preview.
+- [x] Экспортировать final image через canvas/blob.
+- [x] Сохранять final edited `File` в create flow state.
 - [ ] Проверить, что exported image соответствует preview.
 - [ ] Не отправлять файлы на backend до отдельного backend integration PR.
 - [ ] Добавить cleanup для temporary object URLs generated from exported blobs.

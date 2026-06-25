@@ -104,7 +104,9 @@ Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.
 ### In Progress
 
 - Upload step implementation: file selection, validation and object URL lifecycle.
-- Crop and filters implementation, including final edited image export.
+- Crop implementation and final export cleanup.
+- Filters implementation now has CSS preview and Canvas-based exported file creation, but the
+  production cropper is still pending.
 - Posts UI skeleton work for post display surfaces.
 
 ### Not Started
