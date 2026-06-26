@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
-import { CreatePostFlow } from '@/features/create-post'
+import { CreatePostFlow } from '@/features/create-post/create-post-flow'
 import { Modal } from '@/shared/ui/modal'
 
 import { getSafeCreatePostReturnTo } from './lib/createPostReturnTo'
