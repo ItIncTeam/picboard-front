@@ -601,6 +601,24 @@ describe('CreatePostFlow', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(secondImage.previewUrl)
   })
 
+  it('does not revoke preview object URL when moving from upload to crop step', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'upload',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Next'))
+
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
+  })
+
   it('does not pass backend or upload service dependencies to step components', () => {
     const image = createExportedImage()
     const publicationView = renderCreatePostFlow({

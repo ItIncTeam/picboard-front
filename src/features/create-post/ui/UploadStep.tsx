@@ -1,8 +1,10 @@
 'use client'
 
-import { type ChangeEvent, useRef, useState } from 'react'
+import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 
+import { Close } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
+import { IconButton } from '@/shared/ui/icon-button'
 import { Text } from '@/shared/ui/typography'
 
 import type { CreatePostImage } from '@/features/create-post'
@@ -70,9 +72,7 @@ export function UploadStep({
     onRemoveImage(image.id)
   }
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(event.currentTarget.files ?? [])
-
+  const handleSelectedFiles = (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) {
       return
     }
@@ -82,7 +82,6 @@ export function UploadStep({
 
     if (availableSlots <= 0) {
       setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
-      event.currentTarget.value = ''
 
       return
     }
@@ -112,7 +111,6 @@ export function UploadStep({
 
     if (validFiles.length === 0) {
       setErrors(nextErrors)
-      event.currentTarget.value = ''
 
       return
     }
@@ -121,11 +119,29 @@ export function UploadStep({
 
     onAddImages(nextImages)
     setErrors(nextErrors)
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    handleSelectedFiles(Array.from(event.currentTarget.files ?? []))
     event.currentTarget.value = ''
   }
 
+  const handleDragOver = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault()
+  }
+
+  const handleDrop = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault()
+    handleSelectedFiles(Array.from(event.dataTransfer.files))
+  }
+
   return (
-    <section className={styles.root} aria-label="Upload photo">
+    <section
+      className={styles.root}
+      aria-label="Upload photo"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       <input
         ref={fileInputRef}
         accept={ACCEPTED_IMAGE_TYPES_INPUT_VALUE}
@@ -169,14 +185,12 @@ export function UploadStep({
                   <img className={styles.previewImage} src={image.previewUrl} alt={image.name} />
                 )}
               </button>
-              <button
-                aria-label={`Remove ${image.name}`}
+              <IconButton
                 className={styles.removeButton}
+                icon={Close}
+                label={`Remove ${image.name}`}
                 onClick={() => handleRemoveImage(image)}
-                type="button"
-              >
-                x
-              </button>
+              />
             </li>
           ))}
         </ul>
