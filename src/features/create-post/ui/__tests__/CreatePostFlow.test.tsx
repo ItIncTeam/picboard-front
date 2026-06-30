@@ -581,6 +581,28 @@ describe('CreatePostFlow', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
   })
 
+  it('does not revoke removed preview object URL again on flow unmount', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow()
+
+    act(() => {
+      stepBoundaries.upload?.onAddImages([image])
+    })
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(image.id)
+    })
+
+    act(() => {
+      view.root.unmount()
+    })
+
+    view.container.remove()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+  })
+
   it('revokes remaining preview object URLs on flow unmount', () => {
     const firstImage = createImageWithPreview('first-image', 'blob:first-image')
     const secondImage = createImageWithPreview('second-image', 'blob:second-image')

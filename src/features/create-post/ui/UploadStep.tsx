@@ -211,8 +211,8 @@ export function UploadStep({
 
         {errors.length > 0 && (
           <ul className={styles.errors} aria-live="polite">
-            {errors.map((error) => (
-              <li key={error}>{error}</li>
+            {errors.map((error, index) => (
+              <li key={`${error}-${index}`}>{error}</li>
             ))}
           </ul>
         )}
