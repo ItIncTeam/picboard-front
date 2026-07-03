@@ -288,7 +288,7 @@ Consumed by: Upload Pipeline
 Changed by: Dev 3 during export
 
 Purpose: final `File` sent to storage through `initiateUploadBatch`, storage `PUT`,
-`completeUploadBatch` and `createPost`.
+`completeUpload` and `createPost`.
 
 ### `exported.objectUrl`
 
@@ -331,7 +331,8 @@ Used by: Backend integration
 Changed by: future backend integration PR after Dev 1 approval
 
 Purpose: backend file id returned by `initiateUploadBatch` and later passed through
-`completeUploadBatch` / `createPost` after the upload is ready.
+`completeUpload` / `createPost` after the upload is ready. Future `completeUpload` input is an
+array of `{ fileId }` items.
 
 ### `upload.uploadUrl`
 
@@ -405,6 +406,9 @@ Frontend mapping:
 
 - `CreatePostImage.id` is the `clientUploadId`;
 - `image.exported.file` is the file uploaded in the backend pipeline;
+- post uploads use `purpose: POST_IMAGE`;
+- browser `image/jpeg` maps to `MimeType.JPEG`;
+- browser `image/png` maps to `MimeType.PNG`;
 - `uploadUrl` must never be used as an image display URL.
 
 ## Dev 3 Contract
@@ -474,14 +478,14 @@ initiateUploadBatch
 ↓
 PUT upload
 ↓
-completeUploadBatch
+completeUpload
 ↓
 READY
 ↓
 createPost
 ```
 
-READY status comes from completeUploadBatch, not from successful storage PUT.
+READY status comes from completeUpload, not from successful storage PUT.
 
 Не обходить этапы.
 
@@ -493,7 +497,7 @@ Pipeline rules:
 - map backend descriptors by `clientUploadId`;
 - upload binaries directly to storage with `PUT`;
 - treat HTTP `2xx` as successful storage upload;
-- call `completeUploadBatch` with `fileIds`;
+- call `completeUpload` with `CompleteUploadInput[]`, one `{ fileId }` item per uploaded file;
 - attach only `READY` files to `createPost`.
 
 Selector rules:

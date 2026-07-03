@@ -6,11 +6,13 @@
 
 ## Общие правила
 
+- Gateway endpoint: production `https://gateway.picboard.space/api/v1`, local
+  `http://localhost:3000/api/v1`.
 - `CreatePostImage.id` — это бэкендовский `clientUploadId`.
 - Никогда не сопоставляйте изображения, дескрипторы загрузки или вложения по индексу в массиве.
 - Для загрузки используйте `image.exported.file`, а не оригинальный `image.file`.
 - `uploadUrl` предназначен только для прямого `PUT`-запроса в хранилище; **никогда не показывайте его в UI**.
-- `uploaded` ≠ `ready`; статус `ready` приходит только после вызова `completeUploadBatch`.
+- `uploaded` ≠ `ready`; статус `ready` приходит только после вызова `completeUpload`.
 - `createPost` можно вызывать только когда все выбранные файлы имеют статус `ready`.
 - Изображения постов отображаются из `attachment.file.url`.
 - В текущем продакшен-коде нет GraphQL-операций, хелпера для `PUT`-запросов и сервиса загрузки.
@@ -100,6 +102,7 @@
 **Готовые контракты:**
 
 - Разрешённые типы: `image/jpeg`, `image/png`.
+- GraphQL enum mapping: `image/jpeg` -> `MimeType.JPEG`, `image/png` -> `MimeType.PNG`.
 - Лимиты: 1–10 изображений, 20 МБ на каждое.
 - `image.id` генерируется здесь и должен быть стабильным и уникальным для всего create-потока.
 
@@ -164,8 +167,8 @@
 
 **Читай:**
 
-- `PostAttachment.fileId`, `PostAttachment.sortOrder`, `PostAttachment.file.url`.
-- `profilePosts(first, after?)` когда GraphQL-операции будут доступны.
+- `PostAttachmentEntity.fileId`, `PostAttachmentEntity.sortOrder`, `PostAttachmentEntity.file.url`.
+- `profilePosts(input: { userId, first, after? })` когда GraphQL-операции будут доступны.
 
 **Не меняй:**
 
@@ -186,12 +189,55 @@
 
 ---
 
+## Разработчик 5 — Владелец фильтров и canvas export
+
+**Отвечает за:**
+
+- Filters step.
+- Canvas export после filters.
+- `exported.objectUrl` lifecycle.
+
+**Используй колбэки:**
+
+- `onFilterChange(imageId, filter)`.
+- `onImageExported(imageId, exported)`.
+
+**Читай:**
+
+- `activeImage`.
+- `activeImage.exported`.
+- `activeImage.filter`.
+
+**Не меняй:**
+
+- Create flow state без Dev 1.
+- Upload ownership Dev 2.
+- Crop ownership Dev 3.
+- Posts UI ownership Dev 4.
+- Gateway/API integration ownership Dev 1.
+
+**Готовые контракты:**
+
+- Final upload source is `image.exported.file`.
+- `exported.objectUrl` must be revoked when replaced, reset or unmounted.
+- Exported file MIME must map to backend `MimeType.JPEG` or `MimeType.PNG`.
+
+---
+
 ## Контракты интеграции с бэкендом
 
-- `initiateUploadBatch` принимает входные данные из экспортированных файлов:  
-  `clientUploadId`, `originalName`, `mimeType`, `size`.
+- `initiateUploadBatch` принимает массив `InitiateUploadInput`: `clientUploadId`,
+  `originalName`, `purpose`, `mimeType`, `size`.
+- Для posts всегда передавать `purpose: POST_IMAGE`.
+- `MimeType`: `JPEG | PNG`.
+- `FileStatus`: `PENDING | UPLOADED | READY | FAILED | DELETED`.
 - `initiateUploadBatch` возвращает: `clientUploadId`, `fileId`, `uploadUrl`, `expiresAt`.
 - Загрузка в хранилище — прямой `PUT`-запрос на `uploadUrl` с экспортированным файлом.
-- `completeUploadBatch` получает загруженные `fileIds` и возвращает `READY` или `FAILED`.
+- `completeUpload` получает массив `{ fileId }` и возвращает `fileId` plus `FileStatus`.
 - `createPost` получает упорядоченные `fileIds` и опциональное `description` (до 500 символов).
+- `updatePostDescription` получает `postId` and `description`.
+- `deletePost` получает `postId`.
+- `profilePosts` получает `userId`, `first` and optional `after`.
+- `feed` returns `[PostEntity!]!`.
+- `post(id: String!)` returns `PostEntity` or `null`.
 - GraphQL-схема и обёртки операций пока отсутствуют в продакшен-коде.

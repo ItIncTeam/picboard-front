@@ -24,10 +24,15 @@ Publication
 Backend-confirmed target pipeline:
 
 ```txt
-exported File -> initiateUploadBatch -> direct storage PUT -> completeUploadBatch -> createPost
+exported File -> initiateUploadBatch -> direct storage PUT -> completeUpload -> createPost
 ```
 
 GraphQL Upload is not used for post media.
+
+Gateway endpoint:
+
+- production: `https://gateway.picboard.space/api/v1`;
+- local: `http://localhost:3000/api/v1`.
 
 ## Step: upload
 
@@ -92,7 +97,7 @@ Responsibilities in the future backend integration PR:
 - call `initiateUploadBatch`;
 - map upload descriptors by `clientUploadId`;
 - upload every file directly to storage via `PUT`;
-- call `completeUploadBatch`;
+- call `completeUpload`;
 - verify every selected file is `READY`;
 - call `createPost` with `fileIds` and optional description;
 - обработать success and errors;
@@ -162,6 +167,9 @@ Backend integration target mapping:
 
 - `CreatePostImage.id` maps to backend `clientUploadId`;
 - `CreatePostImage.exported.file` is used as the uploaded file;
+- posts use `purpose: POST_IMAGE`;
+- `image/jpeg` maps to `MimeType.JPEG`;
+- `image/png` maps to `MimeType.PNG`;
 - `description` comes from `caption` and must be optional with a 500-character maximum.
 
 ## Step integration boundaries
@@ -311,11 +319,14 @@ Backend integration should be added only in a dedicated implementation PR:
 
 - collect exported files from `CreatePostImage.exported.file`;
 - build `initiateUploadBatch` input with `clientUploadId`, `originalName`, `mimeType` and `size`;
+- include `purpose: POST_IMAGE` in every `InitiateUploadInput`;
+- map browser file types to `MimeType.JPEG` or `MimeType.PNG`;
 - call `initiateUploadBatch`;
 - map response descriptors by `clientUploadId`, not array order;
 - `PUT` final edited files directly to storage with `Content-Type: file.type`;
 - treat HTTP `2xx` storage response as successful binary upload;
-- call `completeUploadBatch` with uploaded `fileIds`;
+- call `completeUpload` with uploaded files as `CompleteUploadInput[]`, one `{ fileId }` item per
+  successfully uploaded file;
 - call `createPost` only after every selected file is `READY`;
 - update profile/feed/main caches according to agreed API/cache strategy.
 
