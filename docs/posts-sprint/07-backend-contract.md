@@ -5,6 +5,14 @@ Source of truth: backend-confirmed Posts Sprint contract.
 This document fixes the frontend integration target. It does not mean the frontend has already
 implemented GraphQL operations, Apollo cache updates, reducer changes or UI behavior.
 
+## Gateway Endpoint
+
+- Production: `https://gateway.picboard.space/api/v1`
+- Local: `http://localhost:3000/api/v1`
+
+Frontend posts/upload GraphQL operations must target the gateway endpoint for the current
+environment.
+
 ## Upload Flow
 
 Backend-confirmed flow:
@@ -14,9 +22,9 @@ Backend-confirmed flow:
 3. Frontend calls `initiateUploadBatch`.
 4. Backend returns upload descriptors.
 5. Frontend uploads binaries directly to storage using `PUT` requests.
-6. Frontend calls `completeUploadBatch`.
-7. Backend validates uploads and marks files `READY`.
-8. Frontend calls `createPost`.
+6. Frontend calls `completeUpload`.
+7. Backend validates uploads and returns `READY` or `FAILED`.
+8. Frontend calls `createPost` only after every selected file is `READY`.
 
 GraphQL Upload is not used.
 
@@ -42,35 +50,45 @@ Description:
 
 ## `initiateUploadBatch`
 
-Frontend sends:
+Mutation:
+
+```graphql
+initiateUploadBatch(input: [InitiateUploadInput!]!): [InitiateUploadPayload!]!
+```
+
+Frontend sends one input item per exported image:
 
 ```ts
-type InitiateUploadBatchInput = {
-  uploads: Array<{
-    clientUploadId: string
-    originalName: string
-    mimeType: string
-    size: number
-  }>
+type InitiateUploadInput = {
+  clientUploadId: string
+  originalName: string
+  purpose: 'POST_IMAGE'
+  mimeType: 'JPEG' | 'PNG'
+  size: number
 }
 ```
 
 Backend returns:
 
 ```ts
-type InitiateUploadBatchPayload = {
-  uploads: Array<{
-    clientUploadId: string
-    fileId: string
-    uploadUrl: string
-    expiresAt: string
-  }>
+type InitiateUploadPayload = {
+  clientUploadId: string
+  fileId: string
+  uploadUrl: string
+  expiresAt: string
 }
 ```
 
 Frontend must map the response by `clientUploadId`.
 
 Frontend must not rely on array order.
+
+For posts, `purpose` must be `POST_IMAGE`.
+
+GraphQL enum mapping:
+
+- browser `image/jpeg` -> `MimeType.JPEG`;
+- browser `image/png` -> `MimeType.PNG`.
 
 ## Upload To Storage
 
@@ -97,22 +115,28 @@ Rules:
 - the `PUT` request goes directly to storage;
 - the `PUT` request does not go to the GraphQL endpoint.
 
-## `completeUploadBatch`
+## `completeUpload`
+
+Mutation:
+
+```graphql
+completeUpload(input: [CompleteUploadInput!]!): [CompleteUploadPayload!]!
+```
 
 Frontend sends:
 
 ```ts
-type CompleteUploadBatchInput = {
-  fileIds: string[]
+type CompleteUploadInput = {
+  fileId: string
 }
 ```
 
-Backend returns:
+Backend returns one payload item per completed file:
 
 ```ts
-type CompleteUploadBatchItem = {
+type CompleteUploadPayload = {
   fileId: string
-  status: 'READY' | 'FAILED'
+  status: 'PENDING' | 'UPLOADED' | 'READY' | 'FAILED' | 'DELETED'
 }
 ```
 
@@ -123,6 +147,12 @@ type CompleteUploadBatchItem = {
 - file can be attached to post.
 
 ## `createPost`
+
+Mutation:
+
+```graphql
+createPost(input: CreatePostInput!): PostEntity!
+```
 
 Frontend sends:
 
@@ -135,17 +165,42 @@ type CreatePostInput = {
 
 `createPost` may be called only after all selected files are `READY`.
 
+## Post Mutations
+
+```graphql
+updatePostDescription(input: UpdatePostDescriptionInput!): PostEntity!
+deletePost(input: DeletePostInput!): Boolean!
+```
+
+```ts
+type UpdatePostDescriptionInput = {
+  postId: string
+  description: string
+}
+
+type DeletePostInput = {
+  postId: string
+}
+```
+
 ## Posts Queries
 
 ### `profilePosts`
 
 Uses cursor pagination.
 
-Arguments:
+Query:
+
+```graphql
+profilePosts(input: ProfilePostsInput!): PostConnection!
+```
+
+Input:
 
 ```ts
-type ProfilePostsArgs = {
-  first: number
+type ProfilePostsInput = {
+  userId: string
+  first?: number
   after?: string
 }
 ```
@@ -158,12 +213,26 @@ Current backend page size:
 
 Frontend should prepare infinite scroll around cursor pagination.
 
+### `feed`
+
+```graphql
+feed: [PostEntity!]!
+```
+
+### `post`
+
+```graphql
+post(id: String!): PostEntity
+```
+
+`post` may return `null` when the backend cannot return an entity for the provided id.
+
 ## Display URL Contract
 
 Backend-confirmed schema:
 
 ```graphql
-type PostAttachment {
+type PostAttachmentEntity {
   fileId: ID!
   sortOrder: Int!
   file: File!
@@ -171,6 +240,12 @@ type PostAttachment {
 
 type File {
   id: ID!
+  ownerId: String!
+  originalName: String!
+  purpose: Purpose!
+  mimeType: MimeType!
+  size: Int!
+  status: FileStatus!
   url: String!
 }
 ```
@@ -231,19 +306,25 @@ Future frontend flow:
 4. Map response by `clientUploadId`.
 5. Upload every file via `PUT`.
 6. Collect uploaded `fileIds`.
-7. Call `completeUploadBatch`.
+7. Call `completeUpload`.
 8. Verify `READY` status for every selected file.
 9. Call `createPost`.
 10. Update Apollo cache or refetch.
 11. Reset `CreatePostState`.
 12. Close modal.
 
-## Open Questions
+## Current Open Integration Questions
 
-Still unresolved:
+The operation names, input names and entity names above are no longer blocked. Remaining questions
+are implementation details, not backend schema blockers:
 
-1. Main feed query contract.
-2. Post details query contract.
+1. retry/idempotency strategy for expired `uploadUrl`, failed storage `PUT`, failed
+   `completeUpload`, and failed `createPost`;
+2. backend error codes/messages for unsupported type, file too large, too many files, auth failure
+   and storage validation failure;
+3. whether frontend should request width/height or other media metadata in post rendering queries;
+4. cache/refetch strategy after create, edit and delete;
+5. SSR/ISR/cache requirements for `feed` and public page composition.
 
 ## Implementation Boundaries
 

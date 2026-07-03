@@ -22,12 +22,26 @@
 - Backend contract для Posts Sprint зафиксирован в
   [Posts Backend Contract](./07-backend-contract.md). Production code still has no posts/upload
   GraphQL operations.
+- Gateway endpoint is fixed: production `https://gateway.picboard.space/api/v1`, local
+  `http://localhost:3000/api/v1`.
 - GraphQL Upload для post media не используется.
 - Upload pipeline: exported `File` -> `initiateUploadBatch` -> direct storage `PUT` ->
-  `completeUploadBatch` -> `createPost`.
+  `completeUpload` -> `createPost`.
+- Upload mutations are `initiateUploadBatch(input: [InitiateUploadInput!]!)` and
+  `completeUpload(input: [CompleteUploadInput!]!)`.
+- The upload completion mutation is named `completeUpload`; do not use the old batch-suffixed
+  mutation name.
+- `InitiateUploadInput` fields are `clientUploadId`, `originalName`, `purpose`, `mimeType` and
+  `size`.
+- Posts upload must send `purpose: POST_IMAGE`.
+- Backend upload enums are fixed: `MimeType` is `JPEG | PNG`; `FileStatus` is
+  `PENDING | UPLOADED | READY | FAILED | DELETED`.
 - Frontend must map `initiateUploadBatch` response by `clientUploadId`, not by array order.
 - `uploadUrl` is temporary, not a display URL, and must not be reused after expiration.
 - `createPost` may be called only after all selected files are `READY`.
+- Posts mutations are `createPost`, `updatePostDescription` and `deletePost`.
+- Posts queries are `profilePosts(input: ProfilePostsInput!)`, `feed` and `post(id: String!)`.
+- Display image URL is `PostAttachmentEntity.file.url`.
 - Upload limits are confirmed: `image/jpeg` and `image/png`, 1-10 images, maximum `20 MB` per file.
 - Post description is optional and limited to 500 characters.
 - `profilePosts` uses cursor pagination with `{ first, after? }`; current backend page size is 8
@@ -39,6 +53,9 @@
 - Dev 3 owns crop/filter UI and final edited `File` export.
 - Dev 4 first UI skeleton PR focuses only on `entities/post`, `PostCard`, `PostGrid` and
   `PostDetails`.
+- Dev 1 owns GraphQL operations, API wrappers, upload service, publish pipeline and `createPost`
+  integration.
+- Dev 5 owns Filters, canvas export and `exported.objectUrl` lifecycle.
 - Edit/delete, Main Page and Infinite Scroll are follow-up PRs.
 - Desktop behavior is route modal; mobile behavior is not confirmed and likely needs fullscreen
   wizard decision.
@@ -126,14 +143,24 @@ Backend все равно должен валидировать формат, р
 
 Backend уточнил upload architecture: файлы не идут через GraphQL Upload/multipart. Frontend должен
 получить upload descriptors через `initiateUploadBatch`, загрузить `image.exported.file` напрямую в
-storage через `PUT`, подтвердить загрузку через `completeUploadBatch`, дождаться `READY` для всех
+storage через `PUT`, подтвердить загрузку через `completeUpload`, дождаться `READY` для всех
 выбранных файлов и только потом вызвать `createPost` с `fileIds`.
 
 `initiateUploadBatch` response must be mapped by `clientUploadId`. Frontend must not rely on array
 order because backend can return upload descriptors in a different order.
 
 `uploadUrl` is a temporary write URL for storage. It is not a display URL. Backend-confirmed post
-rendering uses `PostAttachment.file.url`.
+rendering uses `PostAttachmentEntity.file.url`.
+
+Final gateway schema details:
+
+- `initiateUploadBatch` accepts `[InitiateUploadInput!]!` and returns
+  `[InitiateUploadPayload!]!`;
+- `completeUpload` accepts `[CompleteUploadInput!]!` and returns `[CompleteUploadPayload!]!`;
+- `purpose` must be `POST_IMAGE` for post images;
+- frontend browser MIME strings must be mapped to GraphQL enum values `JPEG` or `PNG`;
+- `FileStatus.READY` is required before `createPost`;
+- post rendering must use `PostAttachmentEntity.file.url`.
 
 ## Почему `react-advanced-cropper`
 
@@ -152,9 +179,7 @@ rendering uses `PostAttachment.file.url`.
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
 - Exact GraphQL operation documents/codegen in production code: follow-up implementation PR.
-- Main feed query contract: still unresolved.
-- Post details query contract: still unresolved.
-- SSR/ISR settings для main/public pages: после backend query contract и cache requirements.
+- SSR/ISR settings для main/public pages: после cache requirements.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
 - Infinite scroll: follow-up implementation around confirmed cursor pagination and dependency PR.
 - Moderation, reports, comments, likes: не входят в этот posts sprint slice, если отдельно не

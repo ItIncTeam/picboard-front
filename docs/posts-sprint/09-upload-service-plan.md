@@ -24,7 +24,7 @@ features/create-post/
 Responsibilities:
 
 - call `initiateUploadBatch`;
-- call `completeUploadBatch`;
+- call `completeUpload`;
 - expose typed API wrappers for upload-specific backend operations;
 - keep GraphQL/Apollo details out of UI components.
 
@@ -83,7 +83,7 @@ PUT exported.file to uploadUrl
 ↓
 applyUploadBatchState
 ↓
-completeUploadBatch
+completeUpload
 ↓
 mark READY
 ↓
@@ -99,14 +99,18 @@ Detailed flow:
 1. `selectUploadCandidates` returns current images that have `exported.file`.
 2. Build `initiateUploadBatch` input from candidates:
    - `clientUploadId` comes from candidate `imageId`;
-   - `originalName`, `mimeType` and `size` come from `exported.fileInfo`.
+   - `originalName`, `mimeType` and `size` come from `exported.fileInfo`;
+   - `purpose` is always `POST_IMAGE` for posts;
+   - browser `image/jpeg` maps to `MimeType.JPEG`;
+   - browser `image/png` maps to `MimeType.PNG`.
 3. Call `initiateUploadBatch`.
 4. Map backend descriptors by `clientUploadId`.
 5. For every candidate, find its descriptor by `imageId`.
 6. Upload `candidate.file` to descriptor `uploadUrl` using storage `PUT`.
 7. Use `applyUploadBatchState` to update upload state by `imageId`.
-8. Call `completeUploadBatch` with successfully uploaded `fileIds`.
-9. Mark items as `ready` only when `completeUploadBatch` returns `READY`.
+8. Call `completeUpload` with successfully uploaded files as `CompleteUploadInput[]`, one
+   `{ fileId }` item per file.
+9. Mark items as `ready` only when `completeUpload` returns `READY`.
 10. Use `selectReadyFileIds` to collect ordered file ids for `createPost`.
 11. Call `createPost` only after every current image has `upload.status === 'ready'` and `fileId`.
 12. On success, reset Create Post state and close or navigate according to the route shell.
@@ -117,12 +121,14 @@ Detailed flow:
 - UI components must not build backend upload payloads.
 - Matching is only by `CreatePostImage.id`.
 - `CreatePostImage.id` is the frontend identity and backend `clientUploadId`.
+- For posts, `InitiateUploadInput.purpose` must be `POST_IMAGE`.
+- `InitiateUploadInput.mimeType` must be GraphQL enum `JPEG` or `PNG`, not the browser MIME string.
 - Do not use array index to match upload descriptors, upload state patches or ready file ids.
 - Image order and upload identity are different concepts.
 - `uploadUrl` is a temporary write URL, not a display URL.
 - `uploaded` is not `ready`.
 - Successful storage `PUT` can move an image to `uploaded`, but backend `READY` comes only from
-  `completeUploadBatch`.
+  `completeUpload`.
 - `createPost` must be called only after all selected images are `ready`.
 - `fileIds` for `createPost` must preserve `state.images` order.
 - Do not send original `image.file` when `image.exported.file` is required.
@@ -135,8 +141,8 @@ Minimal first implementation should:
 - fail publish if `initiateUploadBatch` fails;
 - fail publish if any selected image has no returned descriptor;
 - mark an image as `failed` if its storage `PUT` fails;
-- call `completeUploadBatch` only for successfully uploaded `fileIds`;
-- fail publish if `completeUploadBatch` returns `FAILED` for any selected file;
+- call `completeUpload` only for successfully uploaded `{ fileId }` items;
+- fail publish if `completeUpload` returns `FAILED` for any selected file;
 - skip `createPost` unless all current images are `ready`.
 
 Retry, resumable upload, partial publish and expired `uploadUrl` recovery are follow-up decisions.
