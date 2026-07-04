@@ -120,20 +120,35 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   `clientUploadId`.
 - Create Post API helpers for `initiateUploadBatch`, `completeUpload` and `createPost`.
 - Feature-local upload service that maps descriptors only by `CreatePostImage.id` /
-  `clientUploadId`, uploads via storage `PUT`, requires `READY`, and preserves `state.images`
-  order for returned `fileIds`.
+  `clientUploadId`, uploads `image.exported.file` via storage `PUT`, requires `READY`, and
+  preserves `state.images` order for returned `fileIds`.
 - Default publish integration in `CreatePostFlow` with publishing and error states.
 
 ### In Progress
 
 - Crop and filters implementation, including final edited image export.
-- Posts UI skeleton work for post display surfaces.
+- Publication step UI beyond the shell boundary: caption controls and final preview.
+- Posts profile/details/feed composition on top of existing post display skeletons.
 
 ### Not Started
 
 - Draft persistence architecture and implementation.
 - Main/public page SSR/ISR integration.
 - Infinite scroll integration.
+
+## Known limitations
+
+- Crop/filter/export is not production-ready yet; current publish path requires
+  `image.exported.file`, so full end-to-end Create Post still depends on the export PRs.
+- `PublicationStep` is still a boundary/skeleton. The default publish pipeline exists in
+  `CreatePostFlow`, but final caption/preview UI remains follow-up work.
+- Apollo cache/refetch behavior after create, update and delete is not defined.
+- Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
+  retried or cleaned up after a later `PUT` failure needs backend/product clarification.
+- Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
+  `completeUpload` and failed `createPost` remains open.
+- Public main page registered users count contract is not present in the local schema.
+- SSR/ISR/cache requirements for main/public posts surfaces are not confirmed.
 
 ## Целевая архитектура
 
@@ -194,15 +209,18 @@ Rules:
 
 - Own GraphQL operations, API wrappers, upload service, publish pipeline and `createPost`
   integration.
-- Integrate final gateway schema: `MimeType.JPEG | PNG`, `FileStatus`, `purpose: POST_IMAGE`, and
-  `completeUpload`.
-- Start backend integration after the UI PR is merged.
+- Current create/upload integration is implemented for `initiateUploadBatch`, storage `PUT`,
+  `completeUpload` and `createPost`.
+- Next backend/API work is non-create posts operations, cache/refetch strategy and edit/delete
+  integration.
 
 ### Dev 2
 
-- Finish upload step UI, validation and object URL cleanup.
-- Generate stable `CreatePostImage.id` values used as backend `clientUploadId`.
-- Mirror confirmed constraints: JPEG/PNG only, 1-10 images, 20 MB per file.
+- Upload step UI, validation, selected image previews, thumbnail selection/removal and selected
+  image object URL cleanup are implemented.
+- `CreatePostImage.id` generation uses the create-post feature helper and maps to backend
+  `clientUploadId`.
+- Follow-up work is optional upload status UI polish; `UploadStep` must still not call backend.
 
 ### Dev 3
 

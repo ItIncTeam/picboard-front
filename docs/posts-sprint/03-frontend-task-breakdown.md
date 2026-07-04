@@ -98,7 +98,7 @@ Checklist:
 - [x] Вынести единый `CreatePostFlow` в `features/create-post`.
 - [x] Описать step enum: `upload`, `crop`, `filters`, `publication`.
 - [x] Описать state type без `any`.
-- [x] Подготовить frontend-only state fields/selectors for future upload pipeline: original file
+- [x] Подготовить frontend-only state fields/selectors for upload pipeline: original file
       info, exported final file and upload readiness.
 - [x] Добавить локальный reducer или hook для transitions.
 - [x] Добавить selectors/helpers для `hasUnsavedData`.
@@ -135,31 +135,31 @@ Parallel work:
 
 ## Dev 2: Upload, Validation And Object URLs
 
-Goal: реализовать upload step на frontend без backend upload API.
+Goal: реализовать upload step на frontend и передать выбранные изображения в общий create flow.
 
-Status: In Progress.
+Status: Completed for the current Create Post PR.
 
 Checklist:
 
-- [ ] Добавить `UploadStep` в `features/create-post`.
-- [ ] Использовать native file input или существующий shared primitive, если подходит.
-- [ ] Добавить accept list from confirmed backend contract: `image/jpeg`, `image/png`.
-- [ ] Валидировать количество файлов.
-- [ ] Валидировать file type.
-- [ ] Валидировать file size: maximum `20 MB`.
-- [ ] Валидировать количество изображений: minimum `1`, maximum `10`.
-- [ ] Генерировать stable unique `clientUploadId` для каждого image; target mapping:
+- [x] Добавить `UploadStep` в `features/create-post`.
+- [x] Использовать native file input или существующий shared primitive, если подходит.
+- [x] Добавить accept list from confirmed backend contract: `image/jpeg`, `image/png`.
+- [x] Валидировать количество файлов.
+- [x] Валидировать file type.
+- [x] Валидировать file size: maximum `20 MB`.
+- [x] Валидировать количество изображений: minimum `1`, maximum `10`.
+- [x] Генерировать stable unique `clientUploadId` для каждого image; target mapping:
       `CreatePostImage.id -> clientUploadId`.
-- [ ] Создавать object URLs только для selected files.
-- [ ] Сохранять original file metadata in create flow state.
-- [ ] Revoke object URLs при удалении файла.
-- [ ] Revoke object URLs при unmount/reset flow.
+- [x] Создавать object URLs только для selected files.
+- [x] Сохранять original file metadata in create flow state.
+- [x] Revoke object URLs при удалении файла.
+- [x] Revoke object URLs при unmount/reset flow.
 - [ ] Поддержать reorder только если это нужно для MVP; иначе оставить planned.
-- [ ] Показать validation errors без backend calls.
+- [x] Показать validation errors без backend calls.
 - [x] Add create-post scoped upload GraphQL helpers after backend contract confirmation.
-- [ ] Не добавлять real upload API helpers in upload UI PR unless that PR explicitly owns backend
-      integration.
-- [ ] Не использовать GraphQL Upload.
+- [x] Keep real upload API helpers out of `UploadStep`; backend calls are owned by
+      `CreatePostFlow` and the feature-local upload service.
+- [x] Не использовать GraphQL Upload.
 
 Dependencies:
 
@@ -175,12 +175,13 @@ Parallel work:
 
 Goal: подготовить crop flow and post-crop export data for the next filters/export step.
 
-Status: In Progress.
+Status: In Progress. The `CropStep` boundary/skeleton exists, but crop UI and export are not
+implemented.
 
 Checklist:
 
 - [ ] Отдельным PR добавить dependency `react-advanced-cropper`.
-- [ ] Добавить `CropStep`.
+- [x] Добавить `CropStep` boundary/skeleton.
 - [ ] Реализовать aspect ratio menu из Figma: `original`, `1:1`, `4:5`, `16:9`.
 - [ ] Реализовать zoom control из Figma после подключения cropper.
 - [ ] Реализовать image navigation arrows and active image switching.
@@ -190,7 +191,8 @@ Checklist:
 - [ ] Экспортировать image result после crop для downstream filters/canvas export.
 - [ ] Сохранять `image.exported` через agreed flow callbacks.
 - [ ] Проверить, что crop export соответствует crop preview.
-- [ ] Не отправлять файлы на backend до отдельного backend integration PR.
+- [x] Не отправлять файлы на backend из `CropStep`; backend upload is owned by the publish
+      pipeline.
 
 Dependencies:
 
@@ -210,20 +212,21 @@ Goal: подготовить первый UI skeleton для отображен�
 Scope: only posts display skeleton. Dev 4 does not work on create-post upload, crop, filters,
 state shape or publish pipeline in this sprint split.
 
-Status: In Progress.
+Status: Completed for the first display skeleton. Route composition and API integration are
+follow-ups.
 
 Checklist:
 
-- [ ] Подготовить `entities/post` display types. Они не являются backend contract.
-- [ ] Добавить `PostCard` skeleton.
-- [ ] Добавить `PostGrid` skeleton.
-- [ ] Добавить `PostDetails` skeleton для `posts/[postId]`.
-- [ ] Экспортировать public API из `entities/post`.
-- [ ] Не подключать skeleton к profile/main routes без отдельного composition PR.
-- [ ] Не добавлять queries in the first skeleton PR.
-- [ ] Не добавлять edit/delete UI в first skeleton PR.
-- [ ] Не добавлять main/public page UI в first skeleton PR.
-- [ ] Не добавлять infinite scroll dependency в first skeleton PR.
+- [x] Подготовить `entities/post` display types. Они не являются backend contract.
+- [x] Добавить `PostCard` skeleton.
+- [x] Добавить `PostGrid` skeleton.
+- [x] Добавить `PostDetails` skeleton для `posts/[postId]`.
+- [x] Экспортировать public API из `entities/post`.
+- [x] Не подключать skeleton к profile/main routes без отдельного composition PR.
+- [x] Не добавлять queries in the first skeleton PR.
+- [x] Не добавлять edit/delete UI в first skeleton PR.
+- [x] Не добавлять main/public page UI в first skeleton PR.
+- [x] Не добавлять infinite scroll dependency в first skeleton PR.
 - [ ] Документировать follow-up manual QA scenarios для profile/details.
 
 Dependencies:
@@ -256,11 +259,12 @@ Goal: implement filters, final canvas export and exported object URL lifecycle.
 
 Role: Filters/Canvas Export Owner.
 
-Status: Not Started.
+Status: In Progress. The `FiltersStep` boundary/skeleton exists, but filters UI and canvas export
+are not implemented.
 
 Checklist:
 
-- [ ] Добавить `FiltersStep`.
+- [x] Добавить `FiltersStep` boundary/skeleton.
 - [ ] Реализовать wide filters layout из Figma: preview слева, filter grid справа.
 - [ ] Определить минимальный набор filters для skeleton/MVP.
 - [ ] Применять filters к preview.
@@ -270,7 +274,8 @@ Checklist:
 - [ ] Create `exported.objectUrl` only for exported blobs.
 - [ ] Revoke `exported.objectUrl` when replaced, reset or unmounted.
 - [ ] Проверить, что exported image соответствует preview.
-- [ ] Не отправлять файлы на backend до отдельного backend integration PR.
+- [x] Не отправлять файлы на backend из `FiltersStep`; backend upload is owned by the publish
+      pipeline.
 
 Dependencies:
 
@@ -295,8 +300,8 @@ Checklist:
       `deletePost`.
 - [x] Add GraphQL operation documents/wrappers for `createPost`.
 - [ ] Add GraphQL operation documents/wrappers for `profilePosts`, `feed` and `post`.
-- [ ] Configure operation usage against gateway endpoint: production
-      `https://gateway.picboard.space/api/v1`, local `http://localhost:3000/api/v1`.
+- [x] Configure operation usage against gateway endpoint through the existing Apollo client links:
+      production `https://gateway.picboard.space/api/v1`, local `http://localhost:3000/api/v1`.
 - [x] Implement feature-local upload service.
 - [x] Implement publish pipeline.
 - [x] Integrate `createPost`.
@@ -304,7 +309,8 @@ Checklist:
 - [x] Send `purpose: POST_IMAGE` in every post image `InitiateUploadInput`.
 - [x] Build `completeUpload` input as an array of `{ fileId }` items.
 - [x] Treat only `FileStatus.READY` as publishable.
-- [ ] Keep display rendering on `PostAttachmentEntity.file.url`; never use `uploadUrl`.
+- [x] Keep display rendering on `PostAttachmentEntity.file.url`; never use `uploadUrl` in post
+      skeleton UI.
 - [ ] Define cache/refetch behavior after create, update and delete.
 
 ## Что можно делать параллельно

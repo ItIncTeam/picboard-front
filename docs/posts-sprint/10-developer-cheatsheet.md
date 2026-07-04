@@ -41,7 +41,7 @@
 **Используй селекторы:**
 
 - UI-логика: `selectHasCreatePostUnsavedData`, `selectImagesCount`, `selectHasImages`, `selectActiveImage`, `selectCanGoNext`, `selectCanPublish`.
-- Будущий пайплайн загрузки: `selectIsReadyForUpload`, `selectUploadCandidates`, `selectReadyFileIds`, `selectAreAllUploadsReady`.
+- Пайплайн загрузки: `selectIsReadyForUpload`, `selectUploadCandidates`, `selectReadyFileIds`, `selectAreAllUploadsReady`.
 
 **Читай:**
 
@@ -226,6 +226,13 @@
 - Final upload source is `image.exported.file`.
 - `exported.objectUrl` must be revoked when replaced, reset or unmounted.
 - Exported file MIME must map to backend `MimeType.JPEG` or `MimeType.PNG`.
+
+**Known limitations:**
+
+- Crop/filter/export still must create `image.exported.file` before normal UI usage can publish.
+- Retry/idempotency for expired `uploadUrl`, failed storage `PUT`, failed `completeUpload` and
+  failed `createPost` remains open.
+- Cache/refetch strategy after create, update and delete remains open.
 
 ---
 

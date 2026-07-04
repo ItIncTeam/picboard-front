@@ -233,7 +233,7 @@ file, after crop/filter export exists.
 
 Owner: Dev 2
 
-Used by: Upload UI, validation, debugging, future backend integration input mapping
+Used by: Upload UI, validation and debugging for the original selected file
 
 Changed by: Dev 2 during image creation
 
@@ -343,7 +343,7 @@ Owner: Dev 1
 
 Used by: Backend integration
 
-Changed by: future backend integration PR after Dev 1 approval
+Changed by: upload service through `applyUploadBatchState`
 
 Purpose: temporary write URL returned by `initiateUploadBatch` for storage `PUT`. It must never be
 used as a display URL.
@@ -354,7 +354,7 @@ Owner: Dev 1
 
 Used by: Backend integration
 
-Changed by: future backend integration PR after Dev 1 approval
+Changed by: upload service through `applyUploadBatchState`
 
 Purpose: expiration timestamp for the temporary `uploadUrl`.
 
@@ -364,7 +364,7 @@ Owner: Dev 1
 
 Used by: Dev 2 upload status UI, Backend integration
 
-Changed by: future backend integration PR after Dev 1 approval
+Changed by: upload service through `applyUploadBatchState`
 
 Purpose: current type allows `idle`, `uploading`, `uploaded`, `failed`, `ready`.
 
@@ -374,7 +374,7 @@ Owner: Dev 1
 
 Used by: Dev 2 upload status UI, Backend integration
 
-Changed by: future backend integration PR after Dev 1 approval
+Changed by: upload service through `applyUploadBatchState`
 
 Purpose: frontend error text or code for failed upload states.
 
@@ -470,7 +470,7 @@ Do not use:
 
 ## Upload Pipeline Contract
 
-Будущий flow:
+Current flow:
 
 ```txt
 select files
@@ -498,7 +498,7 @@ Pipeline rules:
 
 - build `initiateUploadBatch` input from exported files;
 - map backend descriptors by `clientUploadId`;
-- upload binaries directly to storage with `PUT`;
+- upload `image.exported.file` binaries directly to storage with `PUT`;
 - treat HTTP `2xx` as successful storage upload;
 - call `completeUpload` with `CompleteUploadInput[]`, one `{ fileId }` item per uploaded file;
 - attach only `READY` files to `createPost`.

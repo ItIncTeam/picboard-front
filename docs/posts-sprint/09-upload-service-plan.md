@@ -99,20 +99,22 @@ Detailed flow:
 1. `selectUploadCandidates` returns current images that have `exported.file`.
 2. Build `initiateUploadBatch` input from candidates:
    - `clientUploadId` comes from candidate `imageId`;
-   - `originalName`, `mimeType` and `size` come from `exported.fileInfo`;
+   - `originalName`, `mimeType` and `size` come from candidate `exportedFileInfo`, which is
+     `image.exported.fileInfo`;
    - `purpose` is always `POST_IMAGE` for posts;
    - browser `image/jpeg` maps to `MimeType.JPEG`;
    - browser `image/png` maps to `MimeType.PNG`.
 3. Call `initiateUploadBatch`.
 4. Map backend descriptors by `clientUploadId`.
 5. For every candidate, find its descriptor by `imageId`.
-6. Upload `candidate.file` to descriptor `uploadUrl` using storage `PUT`.
+6. Upload candidate `exportedFile`, which is `image.exported.file`, to descriptor `uploadUrl`
+   using storage `PUT`.
 7. Use `applyUploadBatchState` to update upload state by `imageId`.
 8. Call `completeUpload` with successfully uploaded files as `CompleteUploadInput[]`, one
    `{ fileId }` item per file.
 9. Mark items as `ready` only when `completeUpload` returns `READY`.
-10. Use `selectReadyFileIds` to collect ordered file ids for `createPost`.
-11. Call `createPost` only after every current image has `upload.status === 'ready'` and `fileId`.
+10. Return ordered file ids for `createPost` in current `state.images` order.
+11. Call `createPost` only after every current image returned `READY` from `completeUpload`.
 12. On success, reset Create Post state and close or navigate according to the route shell.
 
 ## Rules
@@ -155,3 +157,14 @@ Retry, resumable upload, partial publish and expired `uploadUrl` recovery are fo
 - Retry queue or resumable uploads.
 - Draft persistence.
 - Post feed/profile cache refresh strategy.
+
+## Known limitations
+
+- Crop/filter/export is not implemented yet. Normal UI usage cannot complete the publish pipeline
+  until another step creates `image.exported.file`.
+- Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
+  already uploaded files should be completed, retried or cleaned up if a later storage `PUT` fails.
+- Expired `uploadUrl` recovery, retry queue, idempotency keys and resumable uploads are not
+  defined.
+- Apollo cache/refetch behavior after successful `createPost` is not defined.
+- Backend error codes/messages for storage validation failures are not finalized.

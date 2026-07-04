@@ -180,9 +180,19 @@ Final gateway schema details:
 
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
-- Exact GraphQL operation documents/codegen in production code: follow-up implementation PR.
+- Non-create posts GraphQL operation wrappers/codegen: follow-up implementation PR for
+  `profilePosts`, `feed`, `post`, `updatePostDescription` and `deletePost`.
 - SSR/ISR settings для main/public pages: после cache requirements.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
 - Infinite scroll: follow-up implementation around confirmed cursor pagination and dependency PR.
 - Moderation, reports, comments, likes: не входят в этот posts sprint slice, если отдельно не
   добавлены в backlog.
+
+## Identity Rules
+
+- CreatePostImage.id является единственным frontend identity изображения.
+- id генерируется один раз при добавлении изображения.
+- id никогда не изменяется.
+- id используется как clientUploadId.
+- Все операции выполняются по image.id.
+- Индекс массива никогда не используется как identity.
