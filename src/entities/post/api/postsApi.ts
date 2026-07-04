@@ -2,7 +2,7 @@ import { gql } from '@apollo/client'
 
 import { apolloClient } from '@/shared/api'
 
-import type { PostConnection, PostEntity } from '../model/backendTypes'
+import type { PostConnection, PostEntity } from '@/entities/post'
 
 const postFieldsFragment = gql`
   fragment PostFields on PostEntity {

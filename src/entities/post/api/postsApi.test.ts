@@ -23,7 +23,7 @@ import {
   type ProfilePostsInput,
   type UpdatePostDescriptionInput,
 } from './postsApi'
-import type { PostEntity } from '../model/backendTypes'
+import type { PostEntity } from '@/entities/post'
 
 function getOperationDefinition(document: DocumentNode): OperationDefinitionNode {
   const operation = document.definitions.find(

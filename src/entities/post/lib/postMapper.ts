@@ -1,5 +1,5 @@
-import type { Post } from '../model/postTypes'
-import type { PostEntity } from '../model/backendTypes'
+import type { Post } from '@/entities/post'
+import type { PostEntity } from '@/entities/post'
 
 export function mapPostEntityToPost(entity: PostEntity): Post {
   const images = [...entity.attachments]

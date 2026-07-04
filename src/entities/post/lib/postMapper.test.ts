@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { PostEntity } from '../model/backendTypes'
+import type { PostEntity } from '@/entities/post'
 import { mapPostEntitiesToPosts, mapPostEntityToPost } from './postMapper'
 
 function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
