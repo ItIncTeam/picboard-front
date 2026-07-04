@@ -6,24 +6,27 @@ import { useReducer, useState } from 'react'
 import { ArrowBackIcon, Close } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
 import { IconButton } from '@/shared/ui/icon-button'
+import { Text } from '@/shared/ui/typography'
 import { Title } from '@/shared/ui/typography'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
+import { createPost } from '../api/createPostApi'
 import { useCreatePostPreviewUrlCleanup } from '../lib/useCreatePostPreviewUrlCleanup'
-import { createPostInitialState, createPostReducer } from '@/features/create-post'
+import { createPostInitialState, createPostReducer } from '../model/createPostReducer'
+import { uploadCreatePostImages } from '../model/createPostUploadService'
 import {
   selectActiveImage,
   selectCanGoNext,
   selectCanPublish,
   selectHasCreatePostUnsavedData,
-} from '@/features/create-post'
+} from '../model/createPostSelectors'
 import type {
   AspectRatio,
   CreatePostImage,
   CreatePostState,
   CreatePostStep,
   ImageFilter,
-} from '@/features/create-post'
+} from '../model/createPostTypes'
 import { CropStep } from './CropStep'
 import { FiltersStep } from './FiltersStep'
 import { PublicationStep } from './PublicationStep'
@@ -33,7 +36,7 @@ import styles from './create-post-flow.module.css'
 type CreatePostFlowProps = {
   initialState?: CreatePostState
   onCloseAction?: () => void
-  onPublishAction?: (state: CreatePostState) => void
+  onPublishAction?: (state: CreatePostState) => Promise<void> | void
 }
 
 const stepTitles: Record<CreatePostStep, string> = {
@@ -50,6 +53,8 @@ export function CreatePostFlow({
 }: CreatePostFlowProps) {
   const [state, dispatch] = useReducer(createPostReducer, initialState)
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false)
+  const [publishError, setPublishError] = useState<string | null>(null)
+
   useCreatePostPreviewUrlCleanup(state.images)
 
   const currentStepIndex = CREATE_POST_STEPS.indexOf(state.step)
@@ -89,8 +94,33 @@ export function CreatePostFlow({
     dispatch({ type: 'setCaption', caption })
   }
 
-  const handlePublish = () => {
-    onPublishAction?.(state)
+  const handlePublish = async () => {
+    if (!canPublish) {
+      return
+    }
+
+    setPublishError(null)
+    dispatch({ type: 'setPublishing', isPublishing: true })
+
+    try {
+      if (onPublishAction) {
+        await onPublishAction(state)
+
+        return
+      }
+
+      const fileIds = await uploadCreatePostImages(state, { dispatch })
+      const description = state.caption.trim() || undefined
+
+      await createPost({ description, fileIds })
+
+      dispatch({ type: 'reset' })
+      onCloseAction?.()
+    } catch (error) {
+      setPublishError(error instanceof Error ? error.message : 'Post publishing failed.')
+    } finally {
+      dispatch({ type: 'setPublishing', isPublishing: false })
+    }
   }
 
   const handleClose = () => {
@@ -115,6 +145,7 @@ export function CreatePostFlow({
             canPublish,
             isFirstStep,
             isLastStep,
+            isPublishing: state.isPublishing,
             onBack: () => dispatch({ type: 'goBack' }),
             onNext: () => dispatch({ type: 'goNext' }),
             onPublish: handlePublish,
@@ -134,6 +165,11 @@ export function CreatePostFlow({
           state,
         })}
       </div>
+      {publishError && (
+        <Text as="p" className={styles.error} role="alert" size="sm">
+          {publishError}
+        </Text>
+      )}
       <CreatePostCloseConfirm
         onDiscardAction={handleDiscard}
         onKeepEditingAction={() => setIsCloseConfirmOpen(false)}
@@ -171,9 +207,10 @@ type WizardHeaderProps = {
   canPublish: boolean
   isFirstStep: boolean
   isLastStep: boolean
+  isPublishing: boolean
   onBack: () => void
   onNext: () => void
-  onPublish: () => void
+  onPublish: () => void | Promise<void>
   step: CreatePostStep
 }
 
@@ -182,6 +219,7 @@ function renderWizardHeader({
   canPublish,
   isFirstStep,
   isLastStep,
+  isPublishing,
   onBack,
   onNext,
   onPublish,
@@ -209,6 +247,8 @@ function renderWizardHeader({
           <Button
             className={styles.headerAction}
             disabled={!canPublish}
+            loading={isPublishing}
+            loadingText="Publishing"
             onClick={onPublish}
             type="button"
             variant="textButton"

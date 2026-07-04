@@ -80,6 +80,13 @@
   min-height: 0;
 }
 
+.error {
+  margin: 0;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--color-danger-500);
+  color: var(--color-danger-500);
+}
+
 @media (width <= 640px) {
   .root,
   .root[data-size='wide'] {
