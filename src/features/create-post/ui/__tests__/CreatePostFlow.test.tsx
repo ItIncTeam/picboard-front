@@ -169,6 +169,14 @@ function createImage(overrides: Partial<CreatePostImage> = {}): CreatePostImage 
   }
 }
 
+function createImageWithPreview(id: string, previewUrl = `blob:${id}`): CreatePostImage {
+  return createImage({
+    id,
+    name: `${id}.jpg`,
+    previewUrl,
+  })
+}
+
 function createExportedImage(): CreatePostImage {
   const file = new File(['edited'], 'edited.jpg', { type: 'image/jpeg' })
 
@@ -292,6 +300,12 @@ describe('CreatePostFlow', () => {
     stepBoundaries.filters = null
     stepBoundaries.publication = null
     stepBoundaries.upload = null
+
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+      writable: true,
+    })
   })
 
   afterEach(() => {
@@ -547,6 +561,84 @@ describe('CreatePostFlow', () => {
 
     expect(stepBoundaries.upload?.images).toEqual([])
     expect(stepBoundaries.upload?.activeImageId).toBeNull()
+  })
+
+  it('revokes preview object URL when an image is removed from flow state', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(image.id)
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+  })
+
+  it('does not revoke removed preview object URL again on flow unmount', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow()
+
+    act(() => {
+      stepBoundaries.upload?.onAddImages([image])
+    })
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(image.id)
+    })
+
+    act(() => {
+      view.root.unmount()
+    })
+
+    view.container.remove()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+  })
+
+  it('revokes remaining preview object URLs on flow unmount', () => {
+    const firstImage = createImageWithPreview('first-image', 'blob:first-image')
+    const secondImage = createImageWithPreview('second-image', 'blob:second-image')
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: firstImage.id,
+        images: [firstImage, secondImage],
+      }),
+    })
+
+    act(() => {
+      view.root.unmount()
+    })
+
+    view.container.remove()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(firstImage.previewUrl)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(secondImage.previewUrl)
+  })
+
+  it('does not revoke preview object URL when moving from upload to crop step', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'upload',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Next'))
+
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
   })
 
   it('does not pass backend or upload service dependencies to step components', () => {
