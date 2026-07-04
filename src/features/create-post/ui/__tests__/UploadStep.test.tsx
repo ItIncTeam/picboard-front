@@ -25,6 +25,11 @@ vi.mock('@/shared/ui/icon-button', () => ({
   ),
 }))
 
+vi.mock('next/image', () => ({
+  __esModule: true,
+  default: () => null,
+}))
+
 type RenderResult = {
   container: HTMLDivElement
   root: Root
