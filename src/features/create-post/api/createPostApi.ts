@@ -1,8 +1,11 @@
 import { gql } from '@apollo/client'
 
+import type {
+  File as PostFile,
+  PostAttachmentEntity,
+  PostEntity,
+} from '@/entities/post/model/backendTypes'
 import { apolloClient } from '@/shared/api'
-
-import type { FileStatus, UploadMimeType, UploadPurpose } from './createPostUploadApi'
 
 const createPostMutation = gql`
   mutation CreatePost($input: CreatePostInput!) {
@@ -35,31 +38,7 @@ export type CreatePostInput = {
   fileIds: string[]
 }
 
-export type PostFile = {
-  id: string
-  mimeType: UploadMimeType
-  originalName: string
-  ownerId: string
-  purpose: UploadPurpose
-  size: number
-  status: FileStatus
-  url: string
-}
-
-export type PostAttachmentEntity = {
-  file: PostFile
-  fileId: string
-  sortOrder: number
-}
-
-export type PostEntity = {
-  attachments: PostAttachmentEntity[]
-  createdAt: string
-  description: string | null
-  id: string
-  ownerId: string
-  updatedAt: string
-}
+export type { PostAttachmentEntity, PostEntity, PostFile }
 
 type CreatePostResponse = {
   createPost: PostEntity

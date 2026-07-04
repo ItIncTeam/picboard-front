@@ -296,10 +296,10 @@ After the UI PR is merged, Dev 1 starts backend integration.
 Checklist:
 
 - [x] Add GraphQL operation documents/wrappers for `initiateUploadBatch` and `completeUpload`.
-- [ ] Add GraphQL operation documents/wrappers for `updatePostDescription` and
+- [x] Add GraphQL operation documents/wrappers for `updatePostDescription` and
       `deletePost`.
 - [x] Add GraphQL operation documents/wrappers for `createPost`.
-- [ ] Add GraphQL operation documents/wrappers for `profilePosts`, `feed` and `post`.
+- [x] Add GraphQL operation documents/wrappers for `profilePosts`, `feed` and `post`.
 - [x] Configure operation usage against gateway endpoint through the existing Apollo client links:
       production `https://gateway.picboard.space/api/v1`, local `http://localhost:3000/api/v1`.
 - [x] Implement feature-local upload service.
@@ -323,9 +323,8 @@ Checklist:
 
 ## Что нельзя делать без отдельной задачи
 
-- Follow-up GraphQL operations for post edit/delete/profile/feed/details.
-- `updatePostDescription`, `deletePost`, `post`, `profilePosts`, `feed` and registered users count
-  implementation.
+- UI composition for post edit/delete/profile/feed/details.
+- Registered users count implementation.
 - Upload API helpers outside `features/create-post` for Create Post.
 - GraphQL Upload for media files.
 - Cache invalidation logic for posts.

@@ -97,6 +97,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   `completeUpload(input: [CompleteUploadInput!]!)`.
 - Final posts schema includes `createPost`, `updatePostDescription`, `deletePost`, `profilePosts`,
   `feed` and `post`.
+- `entities/post/api` contains typed Apollo helpers for `feed`, `post`, `profilePosts`,
+  `updatePostDescription` and `deletePost`.
 - Display images use `PostAttachmentEntity.file.url`. `uploadUrl` must not be used as a display URL.
 
 ## Current Progress
@@ -119,6 +121,7 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 - `CreatePostImage.id` is generated through `crypto.randomUUID()` and is the backend
   `clientUploadId`.
 - Create Post API helpers for `initiateUploadBatch`, `completeUpload` and `createPost`.
+- Posts API helpers for `feed`, `post`, `profilePosts`, `updatePostDescription` and `deletePost`.
 - Feature-local upload service that maps descriptors only by `CreatePostImage.id` /
   `clientUploadId`, uploads `image.exported.file` via storage `PUT`, requires `READY`, and
   preserves `state.images` order for returned `fileIds`.
@@ -193,15 +196,13 @@ Rules:
 ## Roadmap To End Of Sprint
 
 1. Finish crop/filter/export: cropper integration, filter preview and final edited `File` export.
-2. Extend posts GraphQL operation wrappers for follow-up schema names:
-   `UpdatePostDescriptionInput`, `DeletePostInput` and `ProfilePostsInput`.
-3. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
-4. Compose post details and integrate `post(id: String!)`.
-5. Add edit/delete flows through `updatePostDescription` and `deletePost`.
-6. Add main feed composition through `feed`.
-7. Plan and implement cache/refetch behavior for create, edit and delete.
-8. Add infinite scroll around `PostConnection.pageInfo` after profile integration.
-9. Revisit draft persistence only if sprint capacity remains and product confirms behavior.
+2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
+3. Compose post details and integrate `post(id: String!)`.
+4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
+5. Add main feed composition through `feed`.
+6. Plan and implement cache/refetch behavior for create, edit and delete.
+7. Add infinite scroll around `PostConnection.pageInfo` after profile integration.
+8. Revisit draft persistence only if sprint capacity remains and product confirms behavior.
 
 ## Current team tasks
 

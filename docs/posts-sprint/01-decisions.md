@@ -57,6 +57,8 @@
   `PostDetails`.
 - Dev 1 owns GraphQL operations, API wrappers, upload service, publish pipeline and `createPost`
   integration.
+- Posts API foundation for `feed`, `post`, `profilePosts`, `updatePostDescription` and
+  `deletePost` lives in `entities/post/api`.
 - Dev 5 owns Filters, canvas export and `exported.objectUrl` lifecycle.
 - Edit/delete, Main Page and Infinite Scroll are follow-up PRs.
 - Desktop behavior is route modal; mobile behavior is not confirmed and likely needs fullscreen
@@ -180,8 +182,8 @@ Final gateway schema details:
 
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
-- Non-create posts GraphQL operation wrappers/codegen: follow-up implementation PR for
-  `profilePosts`, `feed`, `post`, `updatePostDescription` and `deletePost`.
+- UI composition for `profilePosts`, `feed`, `post`, `updatePostDescription` and `deletePost`:
+  follow-up implementation PRs after the API foundation.
 - SSR/ISR settings для main/public pages: после cache requirements.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
 - Infinite scroll: follow-up implementation around confirmed cursor pagination and dependency PR.

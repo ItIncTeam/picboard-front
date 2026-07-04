@@ -173,7 +173,8 @@
 **Читай:**
 
 - `PostAttachmentEntity.fileId`, `PostAttachmentEntity.sortOrder`, `PostAttachmentEntity.file.url`.
-- `profilePosts(input: { userId, first, after? })` когда GraphQL-операции будут доступны.
+- `profilePosts(input: { userId, first, after? })`, `feed()` and `post(id)` from
+  `entities/post/api` for follow-up UI composition.
 
 **Не меняй:**
 
@@ -252,4 +253,5 @@
 - `profilePosts` получает `userId`, `first` and optional `after`.
 - `feed` returns `[PostEntity!]!`.
 - `post(id: String!)` returns `PostEntity` or `null`.
-- GraphQL-схема и create-post обёртки операций присутствуют в продакшен-коде.
+- GraphQL-схема, create-post wrappers and posts API foundation wrappers are present in production
+  code.
