@@ -13,7 +13,7 @@ vi.mock('../api', () => ({
   initiateUploadBatch: apiMocks.initiateUploadBatch,
 }))
 
-import { uploadCreatePostImages } from './createPostUploadService'
+import { uploadCreatePostImages } from '@/features/create-post'
 
 function createExportedImage(id: string, fileName: string, type = 'image/jpeg'): CreatePostImage {
   const file = new File([id], fileName, { type })

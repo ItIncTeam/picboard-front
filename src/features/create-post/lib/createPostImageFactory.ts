@@ -1,4 +1,4 @@
-import type { CreatePostImage } from '../model/createPostTypes'
+import type { CreatePostImage } from '@/features/create-post'
 
 export function createCreatePostImageId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
