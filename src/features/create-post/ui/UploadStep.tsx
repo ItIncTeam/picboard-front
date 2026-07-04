@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 
 import { Close } from '@/shared/assets'
@@ -137,10 +138,13 @@ export function UploadStep({
 
       {activeImage?.previewUrl ? (
         <div className={styles.placeholder}>
-          <img
-            className={styles.activePreviewImage}
-            src={activeImage.previewUrl}
+          <Image
             alt={activeImage.name}
+            className={styles.activePreviewImage}
+            fill
+            sizes="min(100vw, 180px)"
+            src={activeImage.previewUrl}
+            unoptimized
           />
         </div>
       ) : (
@@ -166,7 +170,14 @@ export function UploadStep({
                 type="button"
               >
                 {image.previewUrl && (
-                  <img className={styles.previewImage} src={image.previewUrl} alt={image.name} />
+                  <Image
+                    alt={image.name}
+                    className={styles.previewImage}
+                    fill
+                    sizes="64px"
+                    src={image.previewUrl}
+                    unoptimized
+                  />
                 )}
               </button>
               <IconButton

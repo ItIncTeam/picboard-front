@@ -12,6 +12,9 @@
 }
 
 .placeholder {
+  position: relative;
+
+  overflow: hidden;
   display: grid;
   place-items: center;
 
@@ -104,6 +107,9 @@
 .previewButton {
   cursor: pointer;
 
+  position: relative;
+
+  overflow: hidden;
   display: block;
 
   width: 100%;
