@@ -85,7 +85,8 @@ Responsibilities:
 - собрать caption/hashtags UI;
 - валидировать description max length: `500` characters;
 - show disabled publish state when `selectCanPublish` is false;
-- call the shell-level `onPublishAction` boundary when publish is allowed.
+- call the default publish pipeline when publish is allowed, unless `onPublishAction` is provided
+  as a shell-level override for tests/stories.
 - не использовать GraphQL Upload.
 
 ## Step: publish
@@ -180,8 +181,8 @@ Current implementation:
 - Step components receive only data props and callback props.
 - Step components do not import the reducer, do not receive `dispatch`, and do not know about
   backend, Apollo, GraphQL operations or upload service.
-- `onPublishAction` is the shell-level connection point for future publish integration. It exists
-  without GraphQL, upload service or backend calls.
+- default publish integration lives in `CreatePostFlow` and uses the feature-local upload service
+  plus `createPost`; `onPublishAction` remains an optional shell-level override.
 
 Implemented step props:
 
@@ -226,7 +227,7 @@ previous upload state.
   gating can be added with a selector update when real filters/export implementation lands.
 - `publication -> publish`: allowed when `selectCanPublish` is true: publication step, at least one
   image, all images exported, caption length up to 500, and `isPublishing === false`. Backend
-  integration is still not connected; `onPublishAction` is only a boundary for future integration.
+  integration is connected through the default publish path; `onPublishAction` is only an override.
 - Back navigation between steps should preserve selected files and settings.
 - Reset clears in-memory create state. Object URL revoke logic belongs to the upload/export
   implementation work.
@@ -331,7 +332,7 @@ Backend integration should be added only in a dedicated implementation PR:
 - update profile/feed/main caches according to agreed API/cache strategy.
 
 Do not add GraphQL Upload, binary upload through GraphQL, order-based descriptor mapping, display
-usage of `uploadUrl`, real upload API helpers or fake GraphQL operations in documentation-only work.
+usage of `uploadUrl` for display or fake GraphQL operations.
 
 ## Current skeleton behavior
 
@@ -339,6 +340,8 @@ Current frontend skeleton may show the steps and placeholder preview, but must n
 
 - call backend;
 - create fake GraphQL operations;
+- add a separate `clientUploadId` field instead of using `CreatePostImage.id`;
+- match upload descriptors, completion payloads or ready file ids by array index;
 - persist draft;
 - claim upload/crop/filter is production-ready;
 - add dependencies outside dedicated dependency PRs.

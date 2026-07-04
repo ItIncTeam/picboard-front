@@ -1,12 +1,12 @@
-# Create Post Upload Service Plan
+# Create Post Upload Service
 
-This document fixes the frontend service structure for the future Create Post upload integration.
+This document fixes the frontend service structure for the Create Post upload integration.
 Backend operations and constraints are defined in [Posts Backend Contract](./07-backend-contract.md).
 Shared frontend state and selector contracts are defined in
 [Frontend Contracts](./08-frontend-contracts.md).
 
-This is an implementation plan. It does not mean production code already contains GraphQL
-operations, Apollo cache updates, storage upload helpers or publish integration.
+Production code contains create-post scoped GraphQL helpers, the feature-local upload service and
+default publish integration. Apollo cache updates and feed/profile refresh strategy are follow-ups.
 
 ## Target Structure
 
@@ -57,18 +57,18 @@ Responsibilities:
 - map upload descriptors by `CreatePostImage.id`, which backend treats as `clientUploadId`;
 - upload exported files directly to storage;
 - dispatch upload state patches through reducer actions;
-- call `createPost` only after all current images are backend `READY`.
+- return ordered `fileIds` only after all current images are backend `READY`.
 
 The service lives in `features/create-post`, not `shared`, because it depends on Create Post state
 contracts, selectors, upload status semantics and post publish flow.
 
 Current integration boundary:
 
-- `CreatePostFlow` exposes `onPublishAction` as the future publish connection point.
+- `CreatePostFlow` owns the default publish connection point.
 - Step components do not call this service directly.
 - Step components do not receive Apollo clients, GraphQL operations, upload helpers or storage
   `PUT` functions.
-- Backend integration is still not implemented until the schema exposes the required operations.
+- `onPublishAction` remains an optional shell-level override for tests/stories.
 
 ## Pipeline
 
@@ -120,7 +120,8 @@ Detailed flow:
 - Upload service belongs to `features/create-post`, not `shared`.
 - UI components must not build backend upload payloads.
 - Matching is only by `CreatePostImage.id`.
-- `CreatePostImage.id` is the frontend identity and backend `clientUploadId`.
+- `CreatePostImage.id` is the only frontend image identity and equals backend `clientUploadId`.
+- Do not add a second `clientUploadId` field.
 - For posts, `InitiateUploadInput.purpose` must be `POST_IMAGE`.
 - `InitiateUploadInput.mimeType` must be GraphQL enum `JPEG` or `PNG`, not the browser MIME string.
 - Do not use array index to match upload descriptors, upload state patches or ready file ids.
@@ -149,9 +150,7 @@ Retry, resumable upload, partial publish and expired `uploadUrl` recovery are fo
 
 ## Out Of Scope
 
-- GraphQL operation implementation in documentation work.
 - Apollo cache updates.
-- Storage `PUT` helper implementation.
 - UI progress indicators.
 - Retry queue or resumable uploads.
 - Draft persistence.

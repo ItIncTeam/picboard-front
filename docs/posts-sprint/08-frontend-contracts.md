@@ -105,9 +105,9 @@ Owner: Dev 1
 
 Used by: Publication, Backend integration
 
-Changed by: future backend integration PR after Dev 1 approval
+Changed by: `CreatePostFlow` during the default publish pipeline
 
-Purpose: publish submission state. Current production code does not run the backend upload pipeline.
+Purpose: publish submission state while upload service and `createPost` are running.
 
 ## Step Boundary Contract
 
@@ -126,8 +126,10 @@ Rules:
 - Step components must not receive or call `dispatch`.
 - Step components must not call backend, Apollo, GraphQL operations or upload service.
 - Step components must not use `uploadUrl` for display.
-- `onPublishAction` is a shell-level boundary for future publish integration. Current production
-  code does not implement GraphQL operations, storage `PUT`, upload service or `createPost`.
+- Default publish integration is owned by `CreatePostFlow`; `onPublishAction` is an optional
+  shell-level override for tests/stories.
+- Upload descriptors, upload patches and ready file ids must be matched by `CreatePostImage.id`
+  / backend `clientUploadId`, never by array index.
 
 Implemented props:
 
@@ -160,8 +162,8 @@ type PublicationStepProps = {
 ```
 
 `onAspectRatioChange` and `onFilterChange` update existing per-image state fields and clear stale
-`exported` / `upload` state. This prevents future publish integration from reusing a file id or
-temporary upload URL that belongs to an older edited file.
+`exported` / `upload` state. This prevents publish integration from reusing a file id or temporary
+upload URL that belongs to an older edited file.
 
 ## CreatePostImage Contract
 
@@ -201,6 +203,8 @@ Changed by: Dev 2 during image creation only through the agreed `addImages` payl
 
 Purpose: frontend image identity. `CreatePostImage.id` is used as `clientUploadId` for the backend
 upload flow. Do not add a second `clientUploadId` field to `CreatePostImage` or `upload`.
+
+Creation: new upload images use `crypto.randomUUID()` through the create-post feature helper.
 
 Upload response mapping must use this value. Do not map upload responses by array index.
 
@@ -316,11 +320,10 @@ Owner: Dev 1
 
 Used by: Dev 2 upload status UI, Backend integration
 
-Changed by: future backend integration PR after Dev 1 approval
+Changed by: upload service through `applyUploadBatchState`
 
-Purpose: planned upload state. Current production code defines the field, but the backend upload
-pipeline is not implemented. Do not duplicate upload state outside the shared flow contract, and do
-not duplicate `CreatePostImage.id` as `clientUploadId`.
+Purpose: upload pipeline state. Do not duplicate upload state outside the shared flow contract, and
+do not duplicate `CreatePostImage.id` as `clientUploadId`.
 
 ### `upload.fileId`
 
@@ -328,11 +331,11 @@ Owner: Dev 1
 
 Used by: Backend integration
 
-Changed by: future backend integration PR after Dev 1 approval
+Changed by: upload service through `applyUploadBatchState`
 
 Purpose: backend file id returned by `initiateUploadBatch` and later passed through
-`completeUpload` / `createPost` after the upload is ready. Future `completeUpload` input is an
-array of `{ fileId }` items.
+`completeUpload` / `createPost` after the upload is ready. `completeUpload` input is an array of
+`{ fileId }` items.
 
 ### `upload.uploadUrl`
 

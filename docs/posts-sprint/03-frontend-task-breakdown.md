@@ -117,8 +117,8 @@ Checklist:
 - [x] Оформить step integration boundaries:
       `CreatePostFlow` owns reducer/state/selectors/navigation, while step components receive only
       props and callbacks.
-- [x] Добавить `onPublishAction` boundary for future publish integration without GraphQL, Apollo,
-      upload service or backend calls.
+- [x] Add default publish integration in `CreatePostFlow`; keep `onPublishAction` as an optional
+      shell-level override for tests/stories.
 
 Dependencies:
 
@@ -156,7 +156,7 @@ Checklist:
 - [ ] Revoke object URLs при unmount/reset flow.
 - [ ] Поддержать reorder только если это нужно для MVP; иначе оставить planned.
 - [ ] Показать validation errors без backend calls.
-- [ ] Не добавлять upload GraphQL operations.
+- [x] Add create-post scoped upload GraphQL helpers after backend contract confirmation.
 - [ ] Не добавлять real upload API helpers in upload UI PR unless that PR explicitly owns backend
       integration.
 - [ ] Не использовать GraphQL Upload.
@@ -290,19 +290,20 @@ After the UI PR is merged, Dev 1 starts backend integration.
 
 Checklist:
 
-- [ ] Add GraphQL operation documents/wrappers for `initiateUploadBatch` and `completeUpload`.
-- [ ] Add GraphQL operation documents/wrappers for `createPost`, `updatePostDescription` and
+- [x] Add GraphQL operation documents/wrappers for `initiateUploadBatch` and `completeUpload`.
+- [ ] Add GraphQL operation documents/wrappers for `updatePostDescription` and
       `deletePost`.
+- [x] Add GraphQL operation documents/wrappers for `createPost`.
 - [ ] Add GraphQL operation documents/wrappers for `profilePosts`, `feed` and `post`.
 - [ ] Configure operation usage against gateway endpoint: production
       `https://gateway.picboard.space/api/v1`, local `http://localhost:3000/api/v1`.
-- [ ] Implement upload service.
-- [ ] Implement publish pipeline.
-- [ ] Integrate `createPost`.
-- [ ] Map `image/jpeg` -> `MimeType.JPEG` and `image/png` -> `MimeType.PNG`.
-- [ ] Send `purpose: POST_IMAGE` in every post image `InitiateUploadInput`.
-- [ ] Build `completeUpload` input as an array of `{ fileId }` items.
-- [ ] Treat only `FileStatus.READY` as publishable.
+- [x] Implement feature-local upload service.
+- [x] Implement publish pipeline.
+- [x] Integrate `createPost`.
+- [x] Map `image/jpeg` -> `MimeType.JPEG` and `image/png` -> `MimeType.PNG`.
+- [x] Send `purpose: POST_IMAGE` in every post image `InitiateUploadInput`.
+- [x] Build `completeUpload` input as an array of `{ fileId }` items.
+- [x] Treat only `FileStatus.READY` as publishable.
 - [ ] Keep display rendering on `PostAttachmentEntity.file.url`; never use `uploadUrl`.
 - [ ] Define cache/refetch behavior after create, update and delete.
 
@@ -314,13 +315,12 @@ Checklist:
 - Dependency PR planning for `react-advanced-cropper`, `embla-carousel-react`,
   `react-intersection-observer`.
 
-## Что нельзя делать в документационной синхронизации
+## Что нельзя делать без отдельной задачи
 
-- GraphQL operations for posts.
-- `initiateUploadBatch`, `completeUpload`, `createPost`, `updatePostDescription`, `deletePost`,
-  `post`, `profilePosts`, `feed` and registered users count implementation.
-- Real upload integration.
-- Upload API helpers outside the dedicated backend integration PR.
+- Follow-up GraphQL operations for post edit/delete/profile/feed/details.
+- `updatePostDescription`, `deletePost`, `post`, `profilePosts`, `feed` and registered users count
+  implementation.
+- Upload API helpers outside `features/create-post` for Create Post.
 - GraphQL Upload for media files.
 - Cache invalidation logic for posts.
 - ISR/revalidation implementation tied to real backend fields.
