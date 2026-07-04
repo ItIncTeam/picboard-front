@@ -75,10 +75,10 @@ export async function uploadCreatePostImages(
 function createInitiateUploadInput(candidate: CreatePostUploadCandidate): InitiateUploadInput {
   return {
     clientUploadId: candidate.imageId,
-    originalName: candidate.fileInfo.name,
+    originalName: candidate.exportedFileInfo.name,
     purpose: postImagePurpose,
-    mimeType: toUploadMimeType(candidate.fileInfo.type),
-    size: candidate.fileInfo.size,
+    mimeType: toUploadMimeType(candidate.exportedFileInfo.type),
+    size: candidate.exportedFileInfo.size,
   }
 }
 
@@ -127,9 +127,9 @@ async function uploadFilesToStorage(
     const response = await fetcher(payload.uploadUrl, {
       method: 'PUT',
       headers: {
-        'Content-Type': candidate.file.type,
+        'Content-Type': candidate.exportedFile.type,
       },
-      body: candidate.file,
+      body: candidate.exportedFile,
     })
 
     if (!response.ok) {

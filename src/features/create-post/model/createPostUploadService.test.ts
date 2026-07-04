@@ -44,6 +44,42 @@ function createExportedImage(id: string, fileName: string, type = 'image/jpeg'):
   }
 }
 
+function createImageWithDifferentExportedFile(): CreatePostImage {
+  const originalFile = new File(['original'], 'original.jpg', {
+    type: 'image/jpeg',
+    lastModified: 1,
+  })
+  const exportedFile = new File(['exported-edited-file'], 'edited.png', {
+    type: 'image/png',
+    lastModified: 2,
+  })
+
+  return {
+    id: 'image-edited',
+    name: originalFile.name,
+    file: originalFile,
+    fileInfo: {
+      name: originalFile.name,
+      size: originalFile.size,
+      type: originalFile.type,
+      lastModified: originalFile.lastModified,
+    },
+    previewUrl: 'blob:original',
+    aspectRatio: '4:5',
+    filter: 'lark',
+    exported: {
+      file: exportedFile,
+      objectUrl: 'blob:edited',
+      fileInfo: {
+        name: exportedFile.name,
+        size: exportedFile.size,
+        type: exportedFile.type,
+        lastModified: exportedFile.lastModified,
+      },
+    },
+  }
+}
+
 function createState(images: CreatePostImage[]): CreatePostState {
   return {
     ...createPostInitialState,
@@ -129,6 +165,48 @@ describe('create post upload service', () => {
       { fileId: 'file-first' },
       { fileId: 'file-second' },
     ])
+  })
+
+  it('uploads exported file and uses exported metadata when original file differs', async () => {
+    const image = createImageWithDifferentExportedFile()
+    const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt: '2026-07-04T12:00:00.000Z',
+        fileId: 'file-edited',
+        uploadUrl: 'https://storage.example/edited',
+      },
+    ])
+    apiMocks.completeUpload.mockResolvedValueOnce([
+      {
+        fileId: 'file-edited',
+        status: 'READY',
+      },
+    ])
+
+    await uploadCreatePostImages(createState([image]), { fetcher })
+
+    expect(image.file).not.toBe(image.exported?.file)
+    expect(apiMocks.initiateUploadBatch).toHaveBeenCalledWith([
+      {
+        clientUploadId: image.id,
+        originalName: image.exported?.fileInfo.name,
+        purpose: 'POST_IMAGE',
+        mimeType: 'PNG',
+        size: image.exported?.fileInfo.size,
+      },
+    ])
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://storage.example/edited',
+      expect.objectContaining({
+        headers: {
+          'Content-Type': image.exported?.file.type,
+        },
+        body: image.exported?.file,
+      }),
+    )
   })
 
   it('throws when initiateUploadBatch does not return a payload for image id', async () => {

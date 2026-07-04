@@ -14,7 +14,7 @@ export function PublicationStep({
 }: PublicationStepProps) {
   return (
     <CreatePostSkeleton
-      description="Publication boundary only. Caption UI and publish integration wait for later PRs."
+      description="Publication boundary only. Final publish uploads exported photos before creating the post."
       title="Publication"
     />
   )

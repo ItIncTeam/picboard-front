@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createCreatePostImageFromFile } from './createPostImageFactory'
+import { createCreatePostImageFromFile, createCreatePostImageId } from './createPostImageFactory'
 
 describe('create post image factory', () => {
   const originalCreateObjectUrl = URL.createObjectURL
@@ -37,5 +37,21 @@ describe('create post image factory', () => {
       filter: 'normal',
     })
     expect(randomUUID).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses UUID-like fallback when crypto.randomUUID is unavailable', () => {
+    vi.stubGlobal('crypto', {
+      getRandomValues: (bytes: Uint8Array) => {
+        bytes.forEach((_, index) => {
+          bytes[index] = index
+        })
+
+        return bytes
+      },
+    })
+
+    expect(createCreatePostImageId()).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    )
   })
 })

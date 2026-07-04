@@ -32,9 +32,9 @@ export type CreatePostUploadPatch = {
 }
 
 export type CreatePostUploadCandidate = {
+  exportedFile: File
+  exportedFileInfo: CreatePostImageFileInfo
   imageId: string
-  file: File
-  fileInfo: CreatePostImageFileInfo
 }
 
 export type CreatePostImage = {
