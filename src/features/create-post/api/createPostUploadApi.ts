@@ -32,7 +32,7 @@ export type InitiateUploadInput = {
   clientUploadId: string
   mimeType: UploadMimeType
   originalName: string
-  purpose: UploadPurpose
+  purpose: 'POST_IMAGE'
   size: number
 }
 
