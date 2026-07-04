@@ -20,8 +20,8 @@
 - Carousel: `embla-carousel-react`.
 - Infinite scroll: `react-intersection-observer`.
 - Backend contract для Posts Sprint зафиксирован в
-  [Posts Backend Contract](./07-backend-contract.md). Production code still has no posts/upload
-  GraphQL operations.
+  [Posts Backend Contract](./07-backend-contract.md). Production code now has create-post scoped
+  helpers for `initiateUploadBatch`, `completeUpload` and `createPost`.
 - Gateway endpoint is fixed: production `https://gateway.picboard.space/api/v1`, local
   `http://localhost:3000/api/v1`.
 - GraphQL Upload для post media не используется.
@@ -37,6 +37,8 @@
 - Backend upload enums are fixed: `MimeType` is `JPEG | PNG`; `FileStatus` is
   `PENDING | UPLOADED | READY | FAILED | DELETED`.
 - Frontend must map `initiateUploadBatch` response by `clientUploadId`, not by array order.
+- `CreatePostImage.id` is the only frontend image identity and equals backend `clientUploadId`.
+- Do not add a separate `clientUploadId` field and do not match upload results by array index.
 - `uploadUrl` is temporary, not a display URL, and must not be reused after expiration.
 - `createPost` may be called only after all selected files are `READY`.
 - Posts mutations are `createPost`, `updatePostDescription` and `deletePost`.
@@ -178,9 +180,19 @@ Final gateway schema details:
 
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
-- Exact GraphQL operation documents/codegen in production code: follow-up implementation PR.
+- Non-create posts GraphQL operation wrappers/codegen: follow-up implementation PR for
+  `profilePosts`, `feed`, `post`, `updatePostDescription` and `deletePost`.
 - SSR/ISR settings для main/public pages: после cache requirements.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
 - Infinite scroll: follow-up implementation around confirmed cursor pagination and dependency PR.
 - Moderation, reports, comments, likes: не входят в этот posts sprint slice, если отдельно не
   добавлены в backlog.
+
+## Identity Rules
+
+- CreatePostImage.id является единственным frontend identity изображения.
+- id генерируется один раз при добавлении изображения.
+- id никогда не изменяется.
+- id используется как clientUploadId.
+- Все операции выполняются по image.id.
+- Индекс массива никогда не используется как identity.

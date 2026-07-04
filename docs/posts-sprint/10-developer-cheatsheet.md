@@ -8,14 +8,17 @@
 
 - Gateway endpoint: production `https://gateway.picboard.space/api/v1`, local
   `http://localhost:3000/api/v1`.
-- `CreatePostImage.id` — это бэкендовский `clientUploadId`.
+- `CreatePostImage.id` — единственный frontend идентификатор изображения и бэкендовский
+  `clientUploadId`.
+- Не добавляй отдельное поле `clientUploadId`.
 - Никогда не сопоставляйте изображения, дескрипторы загрузки или вложения по индексу в массиве.
 - Для загрузки используйте `image.exported.file`, а не оригинальный `image.file`.
 - `uploadUrl` предназначен только для прямого `PUT`-запроса в хранилище; **никогда не показывайте его в UI**.
 - `uploaded` ≠ `ready`; статус `ready` приходит только после вызова `completeUpload`.
 - `createPost` можно вызывать только когда все выбранные файлы имеют статус `ready`.
 - Изображения постов отображаются из `attachment.file.url`.
-- В текущем продакшен-коде нет GraphQL-операций, хелпера для `PUT`-запросов и сервиса загрузки.
+- В текущем продакшен-коде есть create-post scoped GraphQL helpers, feature-local upload service
+  and default publish integration.
 
 ---
 
@@ -25,23 +28,24 @@
 
 - `CreatePostState`, `CreatePostImage`, редьюсер, селекторы и навигацию по шагам мастера.
 - Границы между шагами: `CreatePostFlow` → загрузка → кадрирование → фильтры → публикация.
-- Интеграцию с будущей публикацией через `onPublishAction`.
+- Default publish integration in `CreatePostFlow`; `onPublishAction` remains an optional
+  shell-level override for tests/stories.
 
 **Используй экшены:**
 
 - Навигация: `goToStep`, `goBack`, `goNext`, `reset`.
 - Обновление состояния: `addImages`, `removeImage`, `setActiveImage`, `setCaption`.
 - Состояние редактирования изображений: `setImageAspectRatio`, `setImageFilter`, `setImageExported`.
-- Будущий пайплайн публикации: `applyUploadBatchState`, `setPublishing`.
+- Пайплайн публикации: `applyUploadBatchState`, `setPublishing`.
 
 **Используй селекторы:**
 
 - UI-логика: `selectHasCreatePostUnsavedData`, `selectImagesCount`, `selectHasImages`, `selectActiveImage`, `selectCanGoNext`, `selectCanPublish`.
-- Будущий пайплайн загрузки: `selectIsReadyForUpload`, `selectUploadCandidates`, `selectReadyFileIds`, `selectAreAllUploadsReady`.
+- Пайплайн загрузки: `selectIsReadyForUpload`, `selectUploadCandidates`, `selectReadyFileIds`, `selectAreAllUploadsReady`.
 
 **Читай:**
 
-- Полный `CreatePostState` в `CreatePostFlow` и будущую интеграцию с сервисом загрузки.
+- Полный `CreatePostState` в `CreatePostFlow` и интеграцию с сервисом загрузки.
 - Порядок `state.images` при формировании финального `fileIds` для `createPost`.
 
 **Не меняй:**
@@ -59,7 +63,8 @@
 **Готовые контракты:**
 
 - Компоненты шагов получают только пропсы и колбэки.
-- `onPublishAction(state)` — будущая точка подключения публикации на уровне оболочки (shell).
+- `onPublishAction(state)` — optional shell override; default production publish path uses
+  `uploadCreatePostImages` and `createPost`.
 
 ---
 
@@ -222,6 +227,13 @@
 - `exported.objectUrl` must be revoked when replaced, reset or unmounted.
 - Exported file MIME must map to backend `MimeType.JPEG` or `MimeType.PNG`.
 
+**Known limitations:**
+
+- Crop/filter/export still must create `image.exported.file` before normal UI usage can publish.
+- Retry/idempotency for expired `uploadUrl`, failed storage `PUT`, failed `completeUpload` and
+  failed `createPost` remains open.
+- Cache/refetch strategy after create, update and delete remains open.
+
 ---
 
 ## Контракты интеграции с бэкендом
@@ -240,4 +252,4 @@
 - `profilePosts` получает `userId`, `first` and optional `after`.
 - `feed` returns `[PostEntity!]!`.
 - `post(id: String!)` returns `PostEntity` or `null`.
-- GraphQL-схема и обёртки операций пока отсутствуют в продакшен-коде.
+- GraphQL-схема и create-post обёртки операций присутствуют в продакшен-коде.

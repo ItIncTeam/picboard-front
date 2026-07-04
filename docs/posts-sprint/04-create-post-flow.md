@@ -85,25 +85,27 @@ Responsibilities:
 - собрать caption/hashtags UI;
 - валидировать description max length: `500` characters;
 - show disabled publish state when `selectCanPublish` is false;
-- call the shell-level `onPublishAction` boundary when publish is allowed.
+- call the default publish pipeline when publish is allowed, unless `onPublishAction` is provided
+  as a shell-level override for tests/stories.
 - не использовать GraphQL Upload.
 
 ## Step: publish
 
-Responsibilities in the future backend integration PR:
+Current default publish pipeline:
 
 - collect `image.exported.file` for every selected image;
-- build `initiateUploadBatch` input;
+- build `initiateUploadBatch` input from `image.exported.fileInfo`;
 - call `initiateUploadBatch`;
-- map upload descriptors by `clientUploadId`;
-- upload every file directly to storage via `PUT`;
+- map upload descriptors by `clientUploadId`, which is `CreatePostImage.id`;
+- upload every `image.exported.file` directly to storage via `PUT`;
 - call `completeUpload`;
 - verify every selected file is `READY`;
 - call `createPost` with `fileIds` and optional description;
-- обработать success and errors;
-- закрыть modal or navigate to created post/profile according to product decision.
+- обработать success and errors through publishing/error state;
+- reset the Create Post state and close/navigate through the current modal/page shell.
 
-Until the backend integration PR, publish remains a skeleton boundary.
+`onPublishAction` remains an optional override for tests/stories. Production UI should use the
+default `CreatePostFlow` publish path.
 
 ## In-memory flow state shape
 
@@ -180,8 +182,8 @@ Current implementation:
 - Step components receive only data props and callback props.
 - Step components do not import the reducer, do not receive `dispatch`, and do not know about
   backend, Apollo, GraphQL operations or upload service.
-- `onPublishAction` is the shell-level connection point for future publish integration. It exists
-  without GraphQL, upload service or backend calls.
+- default publish integration lives in `CreatePostFlow` and uses the feature-local upload service
+  plus `createPost`; `onPublishAction` remains an optional shell-level override.
 
 Implemented step props:
 
@@ -226,10 +228,11 @@ previous upload state.
   gating can be added with a selector update when real filters/export implementation lands.
 - `publication -> publish`: allowed when `selectCanPublish` is true: publication step, at least one
   image, all images exported, caption length up to 500, and `isPublishing === false`. Backend
-  integration is still not connected; `onPublishAction` is only a boundary for future integration.
+  integration is connected through the default publish path; `onPublishAction` is only an override.
 - Back navigation between steps should preserve selected files and settings.
-- Reset clears in-memory create state. Object URL revoke logic belongs to the upload/export
-  implementation work.
+- Reset clears in-memory create state. Selected image preview object URLs are revoked by the
+  create-post cleanup hook. Exported object URL lifecycle remains part of the crop/filter/export
+  work.
 
 ## Unsaved data logic
 
@@ -303,8 +306,7 @@ Frontend exports final images after crop/filter:
 - render into canvas;
 - export to Blob/File using a backend-allowed image MIME type;
 - store exported File in draft state;
-- send exported File to storage through the backend-confirmed upload flow in a follow-up
-  integration PR.
+- send exported File to storage through the backend-confirmed upload flow when the user publishes.
 
 Open backend questions:
 
@@ -315,7 +317,7 @@ Open backend questions:
 
 ## Backend connection point
 
-Backend integration should be added only in a dedicated implementation PR:
+Backend create integration is implemented in the current Create Post flow:
 
 - collect exported files from `CreatePostImage.exported.file`;
 - build `initiateUploadBatch` input with `clientUploadId`, `originalName`, `mimeType` and `size`;
@@ -328,23 +330,59 @@ Backend integration should be added only in a dedicated implementation PR:
 - call `completeUpload` with uploaded files as `CompleteUploadInput[]`, one `{ fileId }` item per
   successfully uploaded file;
 - call `createPost` only after every selected file is `READY`;
-- update profile/feed/main caches according to agreed API/cache strategy.
+- reset and close through the current modal/page shell after successful `createPost`.
 
 Do not add GraphQL Upload, binary upload through GraphQL, order-based descriptor mapping, display
-usage of `uploadUrl`, real upload API helpers or fake GraphQL operations in documentation-only work.
+usage of `uploadUrl` for display or fake GraphQL operations.
+
+Follow-up work:
+
+- update profile/feed/main caches according to agreed API/cache strategy.
 
 ## Current skeleton behavior
 
-Current frontend skeleton may show the steps and placeholder preview, but must not:
+Current crop, filters and publication UI skeletons may show step placeholders, but must not:
 
-- call backend;
-- create fake GraphQL operations;
+- add a separate `clientUploadId` field instead of using `CreatePostImage.id`;
+- match upload descriptors, completion payloads or ready file ids by array index;
 - persist draft;
 - claim upload/crop/filter is production-ready;
 - add dependencies outside dedicated dependency PRs.
+
+Upload UI and the default publish pipeline are implemented. Crop/filter/export and final
+publication UI are still follow-up work.
+
+## Known limitations
+
+- Crop/filter/export is not production-ready and still must produce `image.exported.file` before
+  the default publish path can complete from normal UI usage.
+- The publication step is still a boundary/skeleton; caption controls and final preview remain
+  follow-up UI work.
+- Cache/refetch behavior after successful `createPost` is not defined.
+- Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
+  previously uploaded files should be completed, retried or cleaned up.
+- Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
+  `completeUpload` and failed `createPost` remains open.
 
 ## Mobile behavior
 
 Desktop behavior is confirmed as a route-based modal over `(main)`. Mobile behavior is not confirmed.
 The likely direction is a fullscreen wizard, but it needs a separate product/design decision before
 implementation.
+
+image.file
+│
+▼
+image.exported.file
+│
+▼
+Upload Service
+│
+▼
+Storage
+│
+▼
+completeUpload
+│
+▼
+createPost

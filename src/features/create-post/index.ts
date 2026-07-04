@@ -34,6 +34,7 @@ export {
   selectReadyFileIds,
   selectUploadCandidates,
 } from './model/createPostSelectors'
+export { uploadCreatePostImages } from './model/createPostUploadService'
 export type {
   AspectRatio,
   CreatePostAction,

@@ -193,9 +193,9 @@ describe('createPostSelectors', () => {
       }),
     ).toEqual([
       {
+        exportedFile: exported.file,
+        exportedFileInfo: exported.fileInfo,
         imageId: image.id,
-        file: exported.file,
-        fileInfo: exported.fileInfo,
       },
     ])
   })

@@ -8,6 +8,7 @@ import { IconButton } from '@/shared/ui/icon-button'
 import { Text } from '@/shared/ui/typography'
 
 import type { CreatePostImage } from '@/features/create-post'
+import { createCreatePostImageFromFile } from '../lib/createPostImageFactory'
 import styles from './upload-step.module.css'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'] as const
@@ -19,23 +20,6 @@ function getAvailableSlotsMessage(availableSlots: number): string {
   return availableSlots === 1
     ? 'Only 1 more photo can be added.'
     : `Only ${availableSlots} more photos can be added.`
-}
-
-function createPostImageFromFile(file: File): CreatePostImage {
-  return {
-    id: crypto.randomUUID(),
-    name: file.name,
-    file,
-    fileInfo: {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      lastModified: file.lastModified,
-    },
-    previewUrl: URL.createObjectURL(file),
-    aspectRatio: 'original',
-    filter: 'normal',
-  }
 }
 
 export type UploadStepProps = {
@@ -115,7 +99,7 @@ export function UploadStep({
       return
     }
 
-    const nextImages = validFiles.map(createPostImageFromFile)
+    const nextImages = validFiles.map(createCreatePostImageFromFile)
 
     onAddImages(nextImages)
     setErrors(nextErrors)

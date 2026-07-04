@@ -3,8 +3,9 @@
 Этот документ отделяет уже подтвержденный backend contract от вопросов, которые всё еще нельзя
 додумывать на frontend.
 
-Frontend не добавляет production GraphQL operations, Apollo cache logic или upload integration до
-отдельного implementation PR.
+Create Post production code now includes create-post scoped GraphQL helpers, the feature-local
+upload service and default publish integration. Apollo cache logic and non-create posts operations
+remain follow-up implementation work.
 
 Full confirmed contract: [Posts Backend Contract](./07-backend-contract.md).
 
@@ -254,6 +255,18 @@ Frontend must not use `uploadUrl` as a display URL.
 
 No schema names are open for the current Posts Sprint handoff. Remaining items are implementation
 or product/cache details.
+
+## Known limitations
+
+- Retry/idempotency strategy is still open for expired `uploadUrl`, failed storage `PUT`, failed
+  `completeUpload` and failed `createPost`.
+- Partial upload failure behavior is not confirmed. Current frontend upload service fails fast if a
+  storage `PUT` fails.
+- Backend error codes/messages are not finalized for unsupported type, oversized file, too many
+  files, auth failure and storage validation failure.
+- Cache/refetch strategy is not finalized for create, update, delete, profile, feed and details
+  surfaces.
+- Public main page contract for registered users count is still open.
 
 ## Follow-up Questions
 

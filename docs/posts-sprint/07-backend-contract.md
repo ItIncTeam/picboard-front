@@ -2,8 +2,8 @@
 
 Source of truth: backend-confirmed Posts Sprint contract.
 
-This document fixes the frontend integration target. It does not mean the frontend has already
-implemented GraphQL operations, Apollo cache updates, reducer changes or UI behavior.
+This document fixes the frontend integration target. Current implementation status is tracked in
+the sprint overview, frontend contracts and upload service plan.
 
 ## Gateway Endpoint
 
