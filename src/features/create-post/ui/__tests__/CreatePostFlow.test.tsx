@@ -274,7 +274,7 @@ function expectNoBackendIntegrationProps(props: Record<string, unknown>) {
   expect(props).not.toHaveProperty('createPost')
   expect(props).not.toHaveProperty('dispatch')
   expect(props).not.toHaveProperty('initiateUploadBatch')
-  expect(props).not.toHaveProperty('completeUploadBatch')
+  expect(props).not.toHaveProperty('completeUpload')
   expect(props).not.toHaveProperty('uploadService')
   expect(props).not.toHaveProperty('uploadToStorage')
 }
