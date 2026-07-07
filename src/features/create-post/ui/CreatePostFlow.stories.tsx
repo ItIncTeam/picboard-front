@@ -4,6 +4,7 @@ import {
   createPostInitialState,
   type CreatePostImage,
   type CreatePostState,
+  type CreatePostUploadStatus,
 } from '@/features/create-post'
 
 import { CreatePostCloseConfirm } from './CreatePostCloseConfirm'
@@ -53,11 +54,32 @@ function createExportedImage(id: string): CreatePostImage {
   }
 }
 
+function createExportedImageWithUploadStatus(
+  id: string,
+  status: CreatePostUploadStatus,
+  error?: string,
+): CreatePostImage {
+  return {
+    ...createExportedImage(id),
+    upload: {
+      fileId: `${id}-file`,
+      status,
+      error,
+    },
+  }
+}
+
 function createState(overrides: Partial<CreatePostState>): CreatePostState {
   return {
     ...createPostInitialState,
     ...overrides,
   }
+}
+
+async function simulatePublishAction(): Promise<void> {
+  await new Promise((resolve) => {
+    setTimeout(resolve, 1200)
+  })
 }
 
 export const Upload: Story = {
@@ -114,6 +136,79 @@ export const PublicationWithExportedMockImage: Story = {
           images: [mockExportedImage],
           activeImageId: mockExportedImage.id,
         })}
+      />
+    )
+  },
+}
+
+export const PublicationUploading: Story = {
+  render: () => {
+    const mockExportedImage = createExportedImageWithUploadStatus('mock-image', 'uploading')
+
+    return (
+      <CreatePostFlow
+        initialState={createState({
+          step: 'publication',
+          images: [mockExportedImage],
+          activeImageId: mockExportedImage.id,
+        })}
+        onPublishAction={simulatePublishAction}
+      />
+    )
+  },
+}
+
+export const PublicationPublishing: Story = {
+  render: () => {
+    const mockExportedImage = createExportedImageWithUploadStatus('mock-image', 'uploading')
+
+    return (
+      <CreatePostFlow
+        initialState={createState({
+          step: 'publication',
+          images: [mockExportedImage],
+          activeImageId: mockExportedImage.id,
+          isPublishing: true,
+        })}
+        onPublishAction={simulatePublishAction}
+      />
+    )
+  },
+}
+
+export const PublicationUploadFailed: Story = {
+  render: () => {
+    const mockExportedImage = createExportedImageWithUploadStatus(
+      'mock-image',
+      'failed',
+      'Storage upload failed. Please try again.',
+    )
+
+    return (
+      <CreatePostFlow
+        initialState={createState({
+          step: 'publication',
+          images: [mockExportedImage],
+          activeImageId: mockExportedImage.id,
+        })}
+        onPublishAction={simulatePublishAction}
+      />
+    )
+  },
+}
+
+export const PublicationUploadReady: Story = {
+  render: () => {
+    const mockExportedImage = createExportedImageWithUploadStatus('mock-image', 'ready')
+
+    return (
+      <CreatePostFlow
+        initialState={createState({
+          step: 'publication',
+          images: [mockExportedImage],
+          activeImageId: mockExportedImage.id,
+        })}
+        onPublishAction={simulatePublishAction}
       />
     )
   },
