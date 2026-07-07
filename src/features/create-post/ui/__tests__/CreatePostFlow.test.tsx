@@ -45,9 +45,22 @@ const stepBoundaries = vi.hoisted(() => ({
   upload: null as UploadStepBoundaryProps | null,
 }))
 
+const publishMocks = vi.hoisted(() => ({
+  createPost: vi.fn(),
+  uploadCreatePostImages: vi.fn(),
+}))
+
 vi.mock('@/shared/assets', () => ({
   ArrowBackIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
   Close: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+}))
+
+vi.mock('../../api/createPostApi', () => ({
+  createPost: publishMocks.createPost,
+}))
+
+vi.mock('../../model/createPostUploadService', () => ({
+  uploadCreatePostImages: publishMocks.uploadCreatePostImages,
 }))
 
 vi.mock('@/shared/ui/button', () => ({
@@ -169,6 +182,14 @@ function createImage(overrides: Partial<CreatePostImage> = {}): CreatePostImage 
   }
 }
 
+function createImageWithPreview(id: string, previewUrl = `blob:${id}`): CreatePostImage {
+  return createImage({
+    id,
+    name: `${id}.jpg`,
+    previewUrl,
+  })
+}
+
 function createExportedImage(): CreatePostImage {
   const file = new File(['edited'], 'edited.jpg', { type: 'image/jpeg' })
 
@@ -215,7 +236,7 @@ function renderCreatePostFlow({
 }: {
   initialState?: CreatePostState
   onCloseAction?: () => void
-  onPublishAction?: (state: CreatePostState) => void
+  onPublishAction?: (state: CreatePostState) => Promise<void> | void
 } = {}): RenderResult {
   const container = document.createElement('div')
   const root = createRoot(container)
@@ -259,6 +280,15 @@ function clickButton(button: HTMLButtonElement) {
   })
 }
 
+async function clickButtonAndFlush(button: HTMLButtonElement) {
+  await act(async () => {
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, 0)
+    })
+  })
+}
+
 function getHeaderTitle(container: HTMLElement): string {
   const title = container.querySelector('header h2')
 
@@ -274,7 +304,7 @@ function expectNoBackendIntegrationProps(props: Record<string, unknown>) {
   expect(props).not.toHaveProperty('createPost')
   expect(props).not.toHaveProperty('dispatch')
   expect(props).not.toHaveProperty('initiateUploadBatch')
-  expect(props).not.toHaveProperty('completeUploadBatch')
+  expect(props).not.toHaveProperty('completeUpload')
   expect(props).not.toHaveProperty('uploadService')
   expect(props).not.toHaveProperty('uploadToStorage')
 }
@@ -292,6 +322,14 @@ describe('CreatePostFlow', () => {
     stepBoundaries.filters = null
     stepBoundaries.publication = null
     stepBoundaries.upload = null
+
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+      writable: true,
+    })
+    publishMocks.createPost.mockReset()
+    publishMocks.uploadCreatePostImages.mockReset()
   })
 
   afterEach(() => {
@@ -549,6 +587,84 @@ describe('CreatePostFlow', () => {
     expect(stepBoundaries.upload?.activeImageId).toBeNull()
   })
 
+  it('revokes preview object URL when an image is removed from flow state', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(image.id)
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+  })
+
+  it('does not revoke removed preview object URL again on flow unmount', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow()
+
+    act(() => {
+      stepBoundaries.upload?.onAddImages([image])
+    })
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(image.id)
+    })
+
+    act(() => {
+      view.root.unmount()
+    })
+
+    view.container.remove()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+  })
+
+  it('revokes remaining preview object URLs on flow unmount', () => {
+    const firstImage = createImageWithPreview('first-image', 'blob:first-image')
+    const secondImage = createImageWithPreview('second-image', 'blob:second-image')
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: firstImage.id,
+        images: [firstImage, secondImage],
+      }),
+    })
+
+    act(() => {
+      view.root.unmount()
+    })
+
+    view.container.remove()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(firstImage.previewUrl)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(secondImage.previewUrl)
+  })
+
+  it('does not revoke preview object URL when moving from upload to crop step', () => {
+    const image = createImageWithPreview('image-with-preview', 'blob:image-with-preview')
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'upload',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Next'))
+
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
+  })
+
   it('does not pass backend or upload service dependencies to step components', () => {
     const image = createExportedImage()
     const publicationView = renderCreatePostFlow({
@@ -675,7 +791,7 @@ describe('CreatePostFlow', () => {
     expect(stepBoundaries.publication?.caption).toBe('Updated caption')
   })
 
-  it('calls publish boundary without backend integration', () => {
+  it('calls publish boundary without backend integration', async () => {
     const onPublishAction = vi.fn()
     const image = createExportedImage()
     const initialState = createState({
@@ -691,12 +807,12 @@ describe('CreatePostFlow', () => {
 
     mountedRoots.push(view)
 
-    clickButton(getButton(view.container, 'Publish'))
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
 
     expect(onPublishAction).toHaveBeenCalledWith(initialState)
   })
 
-  it('passes the current CreatePostState to publish boundary', () => {
+  it('passes the current CreatePostState to publish boundary', async () => {
     const onPublishAction = vi.fn()
     const image = createExportedImage()
     const view = renderCreatePostFlow({
@@ -714,7 +830,7 @@ describe('CreatePostFlow', () => {
     act(() => {
       stepBoundaries.publication?.onCaptionChange('Updated before publish')
     })
-    clickButton(getButton(view.container, 'Publish'))
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
 
     expect(onPublishAction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -725,5 +841,70 @@ describe('CreatePostFlow', () => {
         step: 'publication',
       }),
     )
+  })
+
+  it('uploads images and creates post with ordered file ids by default', async () => {
+    const onCloseAction = vi.fn()
+    const image = createExportedImage()
+    const initialState = createState({
+      activeImageId: image.id,
+      caption: 'Ready to publish',
+      images: [image],
+      step: 'publication',
+    })
+
+    publishMocks.uploadCreatePostImages.mockResolvedValueOnce(['file-1'])
+    publishMocks.createPost.mockResolvedValueOnce({
+      id: 'post-1',
+      ownerId: 'user-1',
+      description: 'Ready to publish',
+      attachments: [],
+      createdAt: '2026-07-04T12:00:00.000Z',
+      updatedAt: '2026-07-04T12:00:00.000Z',
+    })
+
+    const view = renderCreatePostFlow({
+      initialState,
+      onCloseAction,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
+
+    expect(publishMocks.uploadCreatePostImages).toHaveBeenCalledWith(
+      initialState,
+      expect.objectContaining({
+        dispatch: expect.any(Function),
+      }),
+    )
+    expect(publishMocks.createPost).toHaveBeenCalledWith({
+      description: 'Ready to publish',
+      fileIds: ['file-1'],
+    })
+    expect(onCloseAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows publish error when default publish fails', async () => {
+    const image = createExportedImage()
+
+    publishMocks.uploadCreatePostImages.mockRejectedValueOnce(new Error('Storage upload failed.'))
+
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
+
+    expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
+      'Storage upload failed.',
+    )
+    expect(publishMocks.createPost).not.toHaveBeenCalled()
   })
 })

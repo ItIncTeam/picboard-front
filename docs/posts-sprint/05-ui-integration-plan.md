@@ -107,7 +107,7 @@ Use only for primitives and infrastructure:
 - Handles caption/tags UI and publish boundary.
 - Calls backend only after contract and API layer exist.
 - Future publish pipeline is: exported `File` -> `initiateUploadBatch` -> direct storage `PUT` ->
-  `completeUploadBatch` -> `createPost`.
+  `completeUpload` -> `createPost`.
 
 ### `PostGrid`
 
@@ -168,7 +168,7 @@ Differences:
 - fallback page owns page-level spacing/title;
 - create flow owns state and step UI;
 - backend integration later lives in feature/model/api boundaries, not in route adapters;
-- backend integration must use `initiateUploadBatch`, direct storage `PUT`, `completeUploadBatch`
+- backend integration must use `initiateUploadBatch`, direct storage `PUT`, `completeUpload`
   and `createPost`, not GraphQL Upload.
 
 ## Profile, main and details backend integration

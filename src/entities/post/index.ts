@@ -1,3 +1,29 @@
+export {
+  deletePost,
+  feed,
+  post,
+  profilePosts,
+  updatePostDescription,
+  type DeletePostInput,
+  type ProfilePostsInput,
+  type UpdatePostDescriptionInput,
+} from './api/postsApi'
+export { mapPostEntitiesToPosts, mapPostEntityToPost } from './lib/postMapper'
+export type {
+  File,
+  File as PostFileEntity,
+  FileStatus,
+  FileStatus as PostFileStatus,
+  MimeType,
+  MimeType as PostFileMimeType,
+  PageInfo,
+  PostAttachmentEntity,
+  PostConnection,
+  PostEdge,
+  PostEntity,
+  Purpose,
+  Purpose as PostFilePurpose,
+} from './model/backendTypes'
 export { PostCard } from './ui/PostCard'
 export { PostCardSkeleton } from './ui/PostCardSkeleton'
 export { PostDetails } from './ui/PostDetails'

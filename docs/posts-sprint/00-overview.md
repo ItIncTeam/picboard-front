@@ -10,6 +10,13 @@ Backend contract для Posts Sprint: [Posts Backend Contract](./07-backend-cont
 
 Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.md).
 
+## Gateway
+
+- Production endpoint: `https://gateway.picboard.space/api/v1`
+- Local endpoint: `http://localhost:3000/api/v1`
+
+Posts Sprint GraphQL operations must use the gateway endpoint for the active environment.
+
 ## Обязательное чтение для команды
 
 - [Create Post Flow](./04-create-post-flow.md);
@@ -34,12 +41,12 @@ Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.
 
 - Route-based Create Post modal поверх protected `(main)` segment.
 - Fallback page для прямого захода или reload `/posts/create`.
-- UI skeleton для Create Post без GraphQL posts operations in documentation-only work.
+- Create Post UI shell with backend publish integration in `features/create-post`.
 - Frontend state model для create flow.
 - Upload validation и object URL lifecycle.
 - Crop/filter/export flow, где frontend готовит final edited `File` для storage upload.
 - Backend-confirmed upload pipeline: exported `File` -> `initiateUploadBatch` -> direct storage
-  `PUT` -> `completeUploadBatch` -> `createPost`.
+  `PUT` -> `completeUpload` -> `createPost`.
 
 ### Epic 2: Posts Consumption
 
@@ -51,8 +58,7 @@ Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.
 ## Out of scope
 
 - Установка новых dependencies в документационном PR.
-- GraphQL posts operations in this documentation task.
-- Реальная upload/API integration.
+- New dependencies for upload/API integration.
 - GraphQL Upload для media files. Frontend не отправляет файлы через GraphQL multipart.
 - Реальный crop/filter implementation до отдельного feature PR.
 - Edit/delete implementation in first UI skeleton PR.
@@ -75,13 +81,25 @@ Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.
 - `widgets/create-post-modal` закрывает modal через explicit safe `returnTo` и fallback `/main`.
 - `features/create-post` содержит `CreatePostFlow`, frontend-only state contract, reducer,
   selectors, Close Confirm, Storybook states and focused tests for reducer/selectors/flow behavior.
+- `features/create-post/api` contains typed Apollo helpers for `initiateUploadBatch`,
+  `completeUpload` and `createPost`.
+- `features/create-post/model/createPostUploadService.ts` orchestrates
+  `initiateUploadBatch` -> storage `PUT` -> `completeUpload` and returns ordered `fileIds`.
+- `CreatePostFlow` connects the default publish path to the upload service and `createPost`.
 - `views/create-post-page` использует тот же `CreatePostFlow` для fallback page.
 - `entities/post` содержит только frontend display types and skeleton UI. Это не backend contract.
 - `widgets/posts-feed` пока не реализован.
 - Backend подтвердил финальный Posts Sprint contract in
-  [Posts Backend Contract](./07-backend-contract.md). Production code still has no posts/upload
-  GraphQL operations or Apollo integration.
+  [Posts Backend Contract](./07-backend-contract.md). Production code now has create-post scoped
+  GraphQL helpers, upload service and publish integration.
 - GraphQL Upload is not used. Binary files are uploaded directly to storage with `PUT`.
+- Final upload schema uses `initiateUploadBatch(input: [InitiateUploadInput!]!)` and
+  `completeUpload(input: [CompleteUploadInput!]!)`.
+- Final posts schema includes `createPost`, `updatePostDescription`, `deletePost`, `profilePosts`,
+  `feed` and `post`.
+- `entities/post/api` contains typed Apollo helpers for `feed`, `post`, `profilePosts`,
+  `updatePostDescription` and `deletePost`.
+- Display images use `PostAttachmentEntity.file.url`. `uploadUrl` must not be used as a display URL.
 
 ## Current Progress
 
@@ -100,6 +118,14 @@ Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.
 - Storybook UI states: `Upload`, `CropWithMockImage`, `FiltersWithMockImage`,
   `PublicationWithExportedMockImage`, `CloseConfirm`.
 - Focused reducer, selector and Create Post flow behavior tests.
+- `CreatePostImage.id` is generated through `crypto.randomUUID()` and is the backend
+  `clientUploadId`.
+- Create Post API helpers for `initiateUploadBatch`, `completeUpload` and `createPost`.
+- Posts API helpers for `feed`, `post`, `profilePosts`, `updatePostDescription` and `deletePost`.
+- Feature-local upload service that maps descriptors only by `CreatePostImage.id` /
+  `clientUploadId`, uploads `image.exported.file` via storage `PUT`, requires `READY`, and
+  preserves `state.images` order for returned `fileIds`.
+- Default publish integration in `CreatePostFlow` with publishing and error states.
 
 ### In Progress
 
@@ -109,13 +135,29 @@ Create Post upload service plan: [Upload Service Plan](./09-upload-service-plan.
   production cropper is still pending.
 - Posts UI skeleton work for post display surfaces.
 
+<!-- - Crop and filters implementation, including final edited image export.
+- Publication step UI beyond the shell boundary: caption controls and final preview.
+- Posts profile/details/feed composition on top of existing post display skeletons. -->
+
 ### Not Started
 
-- Backend posts GraphQL operations in production code.
-- `initiateUploadBatch` / storage `PUT` / `completeUploadBatch` / `createPost` integration.
 - Draft persistence architecture and implementation.
 - Main/public page SSR/ISR integration.
 - Infinite scroll integration.
+
+## Known limitations
+
+- Crop/filter/export is not production-ready yet; current publish path requires
+  `image.exported.file`, so full end-to-end Create Post still depends on the export PRs.
+- `PublicationStep` is still a boundary/skeleton. The default publish pipeline exists in
+  `CreatePostFlow`, but final caption/preview UI remains follow-up work.
+- Apollo cache/refetch behavior after create, update and delete is not defined.
+- Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
+  retried or cleaned up after a later `PUT` failure needs backend/product clarification.
+- Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
+  `completeUpload` and failed `createPost` remains open.
+- Public main page registered users count contract is not present in the local schema.
+- SSR/ISR/cache requirements for main/public posts surfaces are not confirmed.
 
 ## Целевая архитектура
 
@@ -157,27 +199,50 @@ Rules:
 - Entities содержат post types, model helpers и API после появления backend contract.
 - Current `entities/post` types are frontend display types only.
 
-## Порядок PR
+## Roadmap To End Of Sprint
 
-1. Routing/modal skeleton уже подготовлен: Create открывается через `@modal`, direct `/posts/create`
-   остается fallback page.
-2. Minimal parallel-start skeleton: `CreatePostFlow` state contract and `entities/post` display
-   skeleton.
-3. Create Post visual shell from Figma: modal header, static step layout, desktop dimensions, no
-   dependencies.
-4. Upload step: file input, validation, object URLs, cleanup.
-5. Crop integration: `react-advanced-cropper`, aspect ratio menu, zoom controls.
-6. Media strip/carousel behavior: active image, ordering, optional `embla-carousel-react` PR.
-7. Filters step: filter grid, preview, final image export planning.
-8. Publication step skeleton: caption/tags UI, validation, submit boundary без GraphQL operation.
-9. Backend contract documentation: зафиксировать `initiateUploadBatch`, direct storage `PUT`,
-   `completeUploadBatch`, `createPost`, upload limits and cursor pagination. GraphQL Upload не
-   использовать.
-10. Publish integration: подключить `initiateUploadBatch` -> storage `PUT` ->
-    `completeUploadBatch` -> `createPost` flow.
-11. Profile posts composition using `PostGrid`, then API integration.
-12. Post details composition using `PostDetails`, then API integration.
-13. Edit/delete follow-up PRs.
-14. Main/public page SSR/ISR planning and implementation после backend queries.
-15. Infinite scroll follow-up after cursor pagination integration planning and dependency PR.
-16. Draft persistence в конце спринта, если остается capacity и команда утвердит поведение.
+1. Finish crop/filter/export: cropper integration, filter preview and final edited `File` export.
+2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
+3. Compose post details and integrate `post(id: String!)`.
+4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
+5. Add main feed composition through `feed`.
+6. Plan and implement cache/refetch behavior for create, edit and delete.
+7. Add infinite scroll around `PostConnection.pageInfo` after profile integration.
+8. Revisit draft persistence only if sprint capacity remains and product confirms behavior.
+
+## Current team tasks
+
+### Dev 1
+
+- Own GraphQL operations, API wrappers, upload service, publish pipeline and `createPost`
+  integration.
+- Current create/upload integration is implemented for `initiateUploadBatch`, storage `PUT`,
+  `completeUpload` and `createPost`.
+- Next backend/API work is non-create posts operations, cache/refetch strategy and edit/delete
+  integration.
+
+### Dev 2
+
+- Upload step UI, validation, selected image previews, thumbnail selection/removal and selected
+  image object URL cleanup are implemented.
+- `CreatePostImage.id` generation uses the create-post feature helper and maps to backend
+  `clientUploadId`.
+- Follow-up work is optional upload status UI polish; `UploadStep` must still not call backend.
+
+### Dev 3
+
+- Finish crop UI.
+- Export image data after crop.
+- Write `image.exported` for the downstream filters/canvas export step.
+
+### Dev 4
+
+- Finish posts consumption skeleton and profile/details composition.
+- Render attachments only from `PostAttachmentEntity.file.url`.
+- Integrate `profilePosts` after Dev 1 provides API operations/wrappers.
+
+### Dev 5
+
+- Own Filters step.
+- Implement canvas export after filters.
+- Own `exported.objectUrl` lifecycle.

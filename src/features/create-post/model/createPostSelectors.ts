@@ -35,9 +35,9 @@ export function selectUploadCandidates(state: CreatePostState): CreatePostUpload
     }
 
     candidates.push({
+      exportedFile: image.exported.file,
+      exportedFileInfo: image.exported.fileInfo,
       imageId: image.id,
-      file: image.exported.file,
-      fileInfo: image.exported.fileInfo,
     })
 
     return candidates

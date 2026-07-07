@@ -32,9 +32,9 @@ export type CreatePostUploadPatch = {
 }
 
 export type CreatePostUploadCandidate = {
+  exportedFile: File
+  exportedFileInfo: CreatePostImageFileInfo
   imageId: string
-  file: File
-  fileInfo: CreatePostImageFileInfo
 }
 
 export type CreatePostImage = {
@@ -89,7 +89,7 @@ export type CreatePostAction =
    * This file is later used by:
    * initiateUploadBatch
    * -> storage PUT
-   * -> completeUploadBatch
+   * -> completeUpload
    * -> createPost
    */
   | {
@@ -103,7 +103,7 @@ export type CreatePostAction =
    * Used by upload integration after:
    * - initiateUploadBatch
    * - storage PUT
-   * - completeUploadBatch
+   * - completeUpload
    */
   | {
       type: 'applyUploadBatchState'
@@ -115,7 +115,7 @@ export type CreatePostAction =
    * Prevents duplicate publish requests while:
    * initiateUploadBatch
    * -> upload
-   * -> completeUploadBatch
+   * -> completeUpload
    * -> createPost
    */
   | {

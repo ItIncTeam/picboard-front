@@ -220,7 +220,7 @@ State ownership:
 7. Add filters grid and preview.
 8. Add final edited `File` export.
 9. Add publication step and publish boundary.
-10. Add `initiateUploadBatch`, direct storage `PUT`, `completeUploadBatch` and `createPost`
+10. Add `initiateUploadBatch`, direct storage `PUT`, `completeUpload` and `createPost`
     integration in a dedicated backend integration PR.
 11. Add draft persistence only at the end of the sprint if the team finalizes the behavior.
 

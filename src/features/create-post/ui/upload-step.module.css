@@ -7,7 +7,14 @@
   padding: clamp(1.25rem, 4vw, 1.5rem);
 }
 
+.fileInput {
+  display: none;
+}
+
 .placeholder {
+  position: relative;
+
+  overflow: hidden;
   display: grid;
   place-items: center;
 
@@ -73,6 +80,86 @@
   opacity: 0.7;
 }
 
+.previewList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr));
+  gap: 0.5rem;
+
+  width: min(100%, 20rem);
+  margin: 1rem 0 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.previewItem {
+  position: relative;
+
+  overflow: hidden;
+
+  aspect-ratio: 1;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 0.25rem;
+
+  background: var(--color-surface-secondary);
+}
+
+.previewButton {
+  cursor: pointer;
+
+  position: relative;
+
+  overflow: hidden;
+  display: block;
+
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+
+  background: transparent;
+}
+
+.removeButton {
+  cursor: pointer;
+
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+
+  display: grid;
+  place-items: center;
+
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+
+  color: var(--color-text-primary);
+
+  background: var(--color-surface-primary, var(--color-surface-secondary));
+}
+
+.previewButton[data-active='true'] {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.activePreviewImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.previewImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .content {
   display: grid;
   gap: clamp(1.25rem, 4vw, 1.5rem);
@@ -89,6 +176,17 @@
 
 .button {
   min-width: min(100%, 13.75rem);
+}
+
+.errors {
+  display: grid;
+  gap: 0.25rem;
+
+  margin: 0;
+  padding: 0;
+
+  color: var(--color-danger-500, var(--color-text-primary));
+  list-style: none;
 }
 
 @media (width <= 640px) {
