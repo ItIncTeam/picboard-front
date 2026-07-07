@@ -35,7 +35,9 @@ type FiltersStepBoundaryProps = {
 type PublicationStepBoundaryProps = {
   caption: string
   images: CreatePostImage[]
+  isPublishing: boolean
   onCaptionChange: (caption: string) => void
+  onRetryUpload: () => void
 }
 
 const stepBoundaries = vi.hoisted(() => ({
@@ -550,6 +552,23 @@ describe('CreatePostFlow', () => {
     expect(queryButton(view.container, 'Next')).toBeInstanceOf(HTMLButtonElement)
   })
 
+  it('disables back and next actions while publishing', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'crop',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(getButton(view.container, 'Back').disabled).toBe(true)
+    expect(getButton(view.container, 'Next').disabled).toBe(true)
+  })
+
   it('renders publish action for publication step', () => {
     const image = createImage()
     const view = renderCreatePostFlow({
@@ -783,6 +802,8 @@ describe('CreatePostFlow', () => {
 
     expect(stepBoundaries.publication?.images).toEqual([image])
     expect(stepBoundaries.publication?.caption).toBe('Initial caption')
+    expect(stepBoundaries.publication?.isPublishing).toBe(false)
+    expect(stepBoundaries.publication?.onRetryUpload).toEqual(expect.any(Function))
 
     act(() => {
       stepBoundaries.publication?.onCaptionChange('Updated caption')
@@ -841,6 +862,49 @@ describe('CreatePostFlow', () => {
         step: 'publication',
       }),
     )
+  })
+
+  it('retries publish through the publication boundary', async () => {
+    const onPublishAction = vi.fn()
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'publication',
+      }),
+      onPublishAction,
+    })
+
+    mountedRoots.push(view)
+
+    await act(async () => {
+      await stepBoundaries.publication?.onRetryUpload()
+    })
+
+    expect(onPublishAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not retry publish while publishing is already in progress', async () => {
+    const onPublishAction = vi.fn()
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'publication',
+      }),
+      onPublishAction,
+    })
+
+    mountedRoots.push(view)
+
+    await act(async () => {
+      await stepBoundaries.publication?.onRetryUpload()
+    })
+
+    expect(onPublishAction).not.toHaveBeenCalled()
   })
 
   it('uploads images and creates post with ordered file ids by default', async () => {

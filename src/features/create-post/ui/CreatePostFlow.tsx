@@ -6,8 +6,7 @@ import { useReducer, useState } from 'react'
 import { ArrowBackIcon, Close } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
 import { IconButton } from '@/shared/ui/icon-button'
-import { Text } from '@/shared/ui/typography'
-import { Title } from '@/shared/ui/typography'
+import { Text, Title } from '@/shared/ui/typography'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
 import { createPost } from '../api/createPostApi'
@@ -95,7 +94,7 @@ export function CreatePostFlow({
   }
 
   const handlePublish = async () => {
-    if (!canPublish) {
+    if (!canPublish || state.isPublishing) {
       return
     }
 
@@ -161,6 +160,7 @@ export function CreatePostFlow({
           onFilterChange: handleFilterChange,
           onImageExported: handleImageExported,
           onRemoveImage: handleRemoveImage,
+          onRetryUpload: handlePublish,
           onSetActiveImage: handleSetActiveImage,
           state,
         })}
@@ -231,6 +231,7 @@ function renderWizardHeader({
         {!isFirstStep && (
           <IconButton
             className={styles.backButton}
+            disabled={isPublishing}
             icon={ArrowBackIcon}
             label="Back"
             onClick={onBack}
@@ -246,7 +247,7 @@ function renderWizardHeader({
         {isLastStep ? (
           <Button
             className={styles.headerAction}
-            disabled={!canPublish}
+            disabled={!canPublish || isPublishing}
             loading={isPublishing}
             loadingText="Publishing"
             onClick={onPublish}
@@ -258,7 +259,7 @@ function renderWizardHeader({
         ) : (
           <Button
             className={styles.headerAction}
-            disabled={!canGoNext}
+            disabled={!canGoNext || isPublishing}
             onClick={onNext}
             type="button"
             variant="textButton"
@@ -279,6 +280,7 @@ type RenderStepArgs = {
   onFilterChange: (imageId: string, filter: ImageFilter) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
   onRemoveImage: (imageId: string) => void
+  onRetryUpload: () => void | Promise<void>
   onSetActiveImage: (imageId: string | null) => void
   state: CreatePostState
 }
@@ -291,6 +293,7 @@ function renderStep({
   onFilterChange,
   onImageExported,
   onRemoveImage,
+  onRetryUpload,
   onSetActiveImage,
   state,
 }: RenderStepArgs) {
@@ -333,7 +336,9 @@ function renderStep({
         <PublicationStep
           caption={state.caption}
           images={state.images}
+          isPublishing={state.isPublishing}
           onCaptionChange={onCaptionChange}
+          onRetryUpload={onRetryUpload}
         />
       )
   }
