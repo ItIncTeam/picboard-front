@@ -1,5 +1,6 @@
 import { I18nProvider } from '@/shared/lib/i18n'
 import type { Metadata } from 'next'
+import 'react-advanced-cropper/dist/style.css'
 
 import { SessionProvider } from '@/features/auth/session-management'
 import { ApolloProvider } from '@/shared/api'

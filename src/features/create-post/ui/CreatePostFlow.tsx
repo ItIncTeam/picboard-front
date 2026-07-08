@@ -310,6 +310,8 @@ function renderStep({
       return (
         <CropStep
           activeImage={activeImage}
+          images={state.images}
+          onSetActiveImage={onSetActiveImage}
           onAspectRatioChange={onAspectRatioChange}
           onImageExported={onImageExported}
         />
