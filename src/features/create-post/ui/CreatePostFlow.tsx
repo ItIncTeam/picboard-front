@@ -11,6 +11,7 @@ import { Title } from '@/shared/ui/typography'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
 import { createPost } from '../api/createPostApi'
+import { useCreatePostExportedUrlCleanup } from '../lib/useCreatePostExportedUrlCleanup'
 import { useCreatePostPreviewUrlCleanup } from '../lib/useCreatePostPreviewUrlCleanup'
 import { createPostInitialState, createPostReducer } from '../model/createPostReducer'
 import { uploadCreatePostImages } from '../model/createPostUploadService'
@@ -56,6 +57,7 @@ export function CreatePostFlow({
   const [publishError, setPublishError] = useState<string | null>(null)
 
   useCreatePostPreviewUrlCleanup(state.images)
+  useCreatePostExportedUrlCleanup(state.images)
 
   const currentStepIndex = CREATE_POST_STEPS.indexOf(state.step)
   const isFirstStep = currentStepIndex === 0

@@ -190,13 +190,20 @@ function createImageWithPreview(id: string, previewUrl = `blob:${id}`): CreatePo
   })
 }
 
-function createExportedImage(): CreatePostImage {
+function createExportedImage({
+  id = 'image-1',
+  objectUrl = 'blob:edited',
+}: {
+  id?: string
+  objectUrl?: string
+} = {}): CreatePostImage {
   const file = new File(['edited'], 'edited.jpg', { type: 'image/jpeg' })
 
   return createImage({
+    id,
     exported: {
       file,
-      objectUrl: 'blob:edited',
+      objectUrl,
       fileInfo: {
         name: file.name,
         size: file.size,
@@ -207,12 +214,14 @@ function createExportedImage(): CreatePostImage {
   })
 }
 
-function createExportedPayload(): NonNullable<CreatePostImage['exported']> {
+function createExportedPayload(
+  objectUrl = 'blob:edited',
+): NonNullable<CreatePostImage['exported']> {
   const file = new File(['edited'], 'edited.jpg', { type: 'image/jpeg' })
 
   return {
     file,
-    objectUrl: 'blob:edited',
+    objectUrl,
     fileInfo: {
       name: file.name,
       size: file.size,
@@ -645,6 +654,140 @@ describe('CreatePostFlow', () => {
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(firstImage.previewUrl)
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(secondImage.previewUrl)
+  })
+
+  it('revokes stale exported object URLs when filters are changed repeatedly', () => {
+    const image = createExportedImage({ objectUrl: 'blob:filtered-initial' })
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'filters',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.filters?.onFilterChange(image.id, 'moon')
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:filtered-initial')
+
+    act(() => {
+      stepBoundaries.filters?.onImageExported(image.id, createExportedPayload('blob:filtered-moon'))
+    })
+
+    act(() => {
+      stepBoundaries.filters?.onFilterChange(image.id, 'lark')
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:filtered-moon')
+  })
+
+  it('revokes previous exported object URL when exported file is replaced', () => {
+    const image = createExportedImage({ objectUrl: 'blob:exported-before' })
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'filters',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.filters?.onImageExported(
+        image.id,
+        createExportedPayload('blob:exported-after'),
+      )
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:exported-before')
+  })
+
+  it('revokes exported object URL when an image is removed from flow state', () => {
+    const image = createExportedImage({ objectUrl: 'blob:removed-export' })
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(image.id)
+    })
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:removed-export')
+  })
+
+  it('revokes exported object URL when the flow is reset', () => {
+    const image = createExportedImage({ objectUrl: 'blob:reset-export' })
+    const onCloseAction = vi.fn()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        hasUnsavedData: true,
+        images: [image],
+      }),
+      onCloseAction,
+    })
+
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Close'))
+    clickButton(getButton(view.container, 'Discard'))
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:reset-export')
+  })
+
+  it('revokes remaining exported object URLs on flow unmount', () => {
+    const image = createExportedImage({ objectUrl: 'blob:unmount-export' })
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+      }),
+    })
+
+    act(() => {
+      view.root.unmount()
+    })
+
+    view.container.remove()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:unmount-export')
+  })
+
+  it('does not revoke the same exported object URL twice', () => {
+    const sharedObjectUrl = 'blob:shared-export'
+    const firstImage = createExportedImage({ id: 'first-image', objectUrl: sharedObjectUrl })
+    const secondImage = createExportedImage({ id: 'second-image', objectUrl: sharedObjectUrl })
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: firstImage.id,
+        images: [firstImage, secondImage],
+      }),
+    })
+
+    act(() => {
+      stepBoundaries.upload?.onRemoveImage(firstImage.id)
+    })
+
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(sharedObjectUrl)
+
+    act(() => {
+      view.root.unmount()
+    })
+
+    view.container.remove()
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(sharedObjectUrl)
   })
 
   it('does not revoke preview object URL when moving from upload to crop step', () => {

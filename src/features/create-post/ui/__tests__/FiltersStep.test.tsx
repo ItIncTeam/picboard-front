@@ -13,6 +13,7 @@ type RenderResult = {
 
 const createImageBitmapMock = vi.fn()
 const createObjectUrlMock = vi.fn()
+const closeImageBitmapMock = vi.fn()
 const drawImageMock = vi.fn()
 
 function createImage(overrides: Partial<CreatePostImage> = {}): CreatePostImage {
@@ -101,8 +102,9 @@ describe('FiltersStep', () => {
     }
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+    closeImageBitmapMock.mockReset()
     createImageBitmapMock.mockResolvedValue({
-      close: vi.fn(),
+      close: closeImageBitmapMock,
       height: 80,
       width: 120,
     })
@@ -221,5 +223,40 @@ describe('FiltersStep', () => {
     expect(createImageBitmapMock).toHaveBeenNthCalledWith(1, cropped.file)
     expect(createImageBitmapMock).toHaveBeenNthCalledWith(2, cropped.file)
     expect(onFilterChange).toHaveBeenLastCalledWith(image.id, 'lark')
+  })
+
+  it('closes image bitmap when canvas export fails', async () => {
+    const onImageExported = vi.fn()
+    const image = createImage()
+    const view = renderFiltersStep({
+      activeImage: image,
+      onImageExported,
+    })
+
+    mountedRoots.push(view)
+    restoreCreateElement()
+    restoreCreateElement = () => {}
+
+    const originalCreateElement = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const element = originalCreateElement(tagName)
+
+      if (tagName === 'canvas') {
+        Object.defineProperty(element, 'getContext', {
+          configurable: true,
+          value: () => null,
+        })
+      }
+
+      return element
+    })
+
+    restoreCreateElement = () => createElementSpy.mockRestore()
+
+    await clickButton(getButton(view.container, 'Moon'))
+
+    expect(closeImageBitmapMock).toHaveBeenCalledTimes(1)
+    expect(onImageExported).not.toHaveBeenCalled()
+    expect(view.container.textContent).toContain('Failed to apply filter. Try another filter.')
   })
 })

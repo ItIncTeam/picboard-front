@@ -64,10 +64,10 @@ function ActiveFiltersStep({
   const handleFilterSelect = (filter: ImageFilter) => {
     setSelectedFilter(filter)
     setExportError(null)
-    onFilterChange(activeImage.id, filter)
 
     if (!baseFile) {
       setExportError('Selected image is not available for export.')
+      setSelectedFilter(activeImage.filter)
 
       return
     }
@@ -76,7 +76,9 @@ function ActiveFiltersStep({
       file: baseFile,
       filter,
       imageId: activeImage.id,
+      onExportFailed: () => setSelectedFilter(activeImage.filter),
       onExported: onImageExported,
+      onFilterChange,
       requestId: exportRequestIdRef.current + 1,
       requestIdRef: exportRequestIdRef,
       setExportError,
@@ -151,7 +153,9 @@ type ExportFilteredImageArgs = {
   file: File
   filter: ImageFilter
   imageId: string
+  onExportFailed: () => void
   onExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onFilterChange: (imageId: string, filter: ImageFilter) => void
   requestId: number
   requestIdRef: MutableRefObject<number>
   setExportError: (message: string | null) => void
@@ -161,7 +165,9 @@ async function exportFilteredImage({
   file,
   filter,
   imageId,
+  onExportFailed,
   onExported,
+  onFilterChange,
   requestId,
   requestIdRef,
   setExportError,
@@ -177,6 +183,7 @@ async function exportFilteredImage({
 
     const objectUrl = URL.createObjectURL(filteredFile)
 
+    onFilterChange(imageId, filter)
     onExported(imageId, {
       file: filteredFile,
       fileInfo: createFileInfo(filteredFile),
@@ -184,6 +191,7 @@ async function exportFilteredImage({
     })
   } catch {
     if (requestIdRef.current === requestId) {
+      onExportFailed()
       setExportError('Failed to apply filter. Try another filter.')
     }
   }
@@ -191,38 +199,41 @@ async function exportFilteredImage({
 
 async function createFilteredFile(file: File, filter: string): Promise<File> {
   const image = await createImageBitmap(file)
-  const canvas = document.createElement('canvas')
 
-  canvas.width = image.width
-  canvas.height = image.height
+  try {
+    const canvas = document.createElement('canvas')
 
-  const ctx = canvas.getContext('2d')
+    canvas.width = image.width
+    canvas.height = image.height
 
-  if (!ctx) {
-    throw new Error('Canvas context is not available')
+    const ctx = canvas.getContext('2d')
+
+    if (!ctx) {
+      throw new Error('Canvas context is not available')
+    }
+
+    ctx.filter = filter
+    ctx.drawImage(image, 0, 0)
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (!result) {
+          reject(new Error('Failed to export canvas'))
+
+          return
+        }
+
+        resolve(result)
+      }, file.type)
+    })
+
+    return new File([blob], file.name, {
+      lastModified: Date.now(),
+      type: file.type,
+    })
+  } finally {
+    image.close()
   }
-
-  ctx.filter = filter
-  ctx.drawImage(image, 0, 0)
-
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((result) => {
-      if (!result) {
-        reject(new Error('Failed to export canvas'))
-
-        return
-      }
-
-      resolve(result)
-    }, file.type)
-  })
-
-  image.close()
-
-  return new File([blob], file.name, {
-    lastModified: Date.now(),
-    type: file.type,
-  })
 }
 
 function createFileInfo(file: File) {
