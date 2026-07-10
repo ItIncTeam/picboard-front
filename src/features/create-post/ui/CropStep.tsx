@@ -17,6 +17,7 @@ import {
   ShowSwiper,
 } from '@/shared/assets'
 import { AspectButtonsBlock } from '@/features/create-post/ui/aspectButtonsBlock/AspectButtonsBlock'
+import Image from 'next/image'
 
 export type CropStepProps = {
   activeImage: CreatePostImage | null
@@ -168,7 +169,14 @@ export function CropStep({
                   onClick={() => onSetActiveImage(image.id)}
                 >
                   {imageSrc ? (
-                    <img className={styles.swiperImage} src={imageSrc} alt={image.name} />
+                    <Image
+                      className={styles.swiperImage}
+                      src={imageSrc}
+                      alt={image.name}
+                      unoptimized // Важно! Отключает серверную оптимизацию для Blob
+                      width={50} // Укажите примерную ширину миниатюры в пикселях
+                      height={50} // Укажите примерную высоту миниатюры в пикселях
+                    />
                   ) : (
                     <span className={styles.swiperPlaceholder}>{image.name}</span>
                   )}
