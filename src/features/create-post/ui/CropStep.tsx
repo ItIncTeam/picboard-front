@@ -37,6 +37,13 @@ export function CropStep({
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
   const [isVisibleSlider, setIsVisibleSlider] = useState(false)
 
+  const ASPECT_RATIOS: Record<AspectRatio, number | undefined> = {
+    original: undefined,
+    '1:1': 1,
+    '4:5': 4 / 5,
+    '16:9': 16 / 9,
+  }
+
   const handleRatioSelect = (ratio: AspectRatio) => {
     setSelectedRatio(ratio)
   }
@@ -123,8 +130,7 @@ export function CropStep({
         src={activeImage?.exported?.objectUrl || activeImage?.previewUrl}
         className={styles.activePreviewImage}
         stencilProps={{
-          aspectRatio:
-            selectedRatio === 'original' ? undefined : eval(selectedRatio.replace(':', '/')),
+          aspectRatio: ASPECT_RATIOS[selectedRatio],
         }}
       />
       {isVisibleAspectRatio && (

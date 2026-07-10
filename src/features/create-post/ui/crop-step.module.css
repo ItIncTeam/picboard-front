@@ -171,11 +171,6 @@
   background: var(--color-surface-primary, var(--color-surface-secondary));
 }
 
-.previewButton[data-active='true'] {
-  outline: 2px solid var(--color-accent-primary, var(--color-text-primary));
-  outline-offset: -2px;
-}
-
 .activePreviewImage {
   width: 100%;
   max-width: 100%;
