@@ -23,7 +23,7 @@ type Query {
   me: User!
   user(id: String!): User
   feed: [PostEntity!]!
-  post(id: String!): PostEntity
+  post(id: ID!): PostEntity
   profilePosts(input: ProfilePostsInput!): PostConnection!
 }
 
@@ -167,7 +167,7 @@ type File {
   mimeType: MimeType!
   size: Int!
   status: FileStatus!
-  url: String!
+  url: String
 }
 
 type InitiateUploadPayload {
@@ -183,9 +183,10 @@ type CompleteUploadPayload {
 }
 
 type PostAttachmentEntity {
+  id: ID!
   fileId: ID!
-  sortOrder: Int!
-  file: File!
+  order: Int!
+  file: File
 }
 
 type PostEntity {

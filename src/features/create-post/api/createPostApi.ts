@@ -14,8 +14,9 @@ const createPostMutation = gql`
       ownerId
       description
       attachments {
+        id
         fileId
-        sortOrder
+        order
         file {
           id
           ownerId
@@ -34,7 +35,7 @@ const createPostMutation = gql`
 `
 
 export type CreatePostInput = {
-  description?: string
+  description?: string | null
   fileIds: string[]
 }
 
@@ -44,7 +45,21 @@ type CreatePostResponse = {
   createPost: PostEntity
 }
 
+const POST_DESCRIPTION_MAX_LENGTH = 500
+
+function assertDescriptionLength(description: string | null | undefined): void {
+  if (
+    description !== undefined &&
+    description !== null &&
+    description.length > POST_DESCRIPTION_MAX_LENGTH
+  ) {
+    throw new Error(`Post description must be ${POST_DESCRIPTION_MAX_LENGTH} characters or fewer.`)
+  }
+}
+
 export const createPost = async (input: CreatePostInput): Promise<PostEntity> => {
+  assertDescriptionLength(input.description)
+
   const response = await apolloClient.mutate<CreatePostResponse, { input: CreatePostInput }>({
     mutation: createPostMutation,
     variables: {
