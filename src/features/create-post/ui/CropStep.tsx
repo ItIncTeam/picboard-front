@@ -93,8 +93,6 @@ export function CropStep({
     return images.slice(activeIndex - 1, activeIndex + 2)
   })()
 
-  console.log(visibleImages)
-
   const handleSelectedFiles = (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) {
       return
