@@ -99,7 +99,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   `feed` and `post`.
 - `entities/post/api` contains typed Apollo helpers for `feed`, `post`, `profilePosts`,
   `updatePostDescription` and `deletePost`.
-- Display images use `PostAttachmentEntity.file.url`. `uploadUrl` must not be used as a display URL.
+- Display images use `PostAttachmentEntity.file?.url`; attachments without an available display URL
+  are skipped. `uploadUrl` must not be used as a display URL.
 
 ## Current Progress
 
@@ -197,7 +198,7 @@ Rules:
 
 1. Finish crop/filter/export: cropper integration, filter preview and final edited `File` export.
 2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
-3. Compose post details and integrate `post(id: String!)`.
+3. Compose post details and integrate `post(id: ID!)`.
 4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
 5. Add main feed composition through `feed`.
 6. Plan and implement cache/refetch behavior for create, edit and delete.
@@ -232,7 +233,8 @@ Rules:
 ### Dev 4
 
 - Finish posts consumption skeleton and profile/details composition.
-- Render attachments only from `PostAttachmentEntity.file.url`.
+- Render attachments only from `PostAttachmentEntity.file?.url`; skip attachments without an
+  available display URL.
 - Integrate `profilePosts` after Dev 1 provides API operations/wrappers.
 
 ### Dev 5

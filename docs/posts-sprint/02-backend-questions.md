@@ -205,27 +205,28 @@ Confirmed queries:
 
 ```graphql
 feed: [PostEntity!]!
-post(id: String!): PostEntity
+post(id: ID!): PostEntity
 ```
 
 ## Resolved
 
 ### Display URLs For Images
 
-Backend exposes image URLs through `PostAttachmentEntity.file.url`.
+Backend exposes image URLs through nullable `PostAttachmentEntity.file?.url`.
 
 Backend-confirmed schema:
 
 ```graphql
 type PostAttachmentEntity {
+  id: ID!
   fileId: ID!
-  sortOrder: Int!
-  file: File!
+  order: Int!
+  file: File
 }
 
 type File {
   id: ID!
-  url: String!
+  url: String
 }
 ```
 

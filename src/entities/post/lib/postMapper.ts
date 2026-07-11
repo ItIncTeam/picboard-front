@@ -3,12 +3,20 @@ import type { PostEntity } from '@/entities/post'
 
 export function mapPostEntityToPost(entity: PostEntity): Post {
   const images = [...entity.attachments]
-    .sort((first, second) => first.sortOrder - second.sortOrder)
-    .map((attachment) => ({
-      id: attachment.fileId,
-      alt: attachment.file.originalName,
-      url: attachment.file.url,
-    }))
+    .sort((first, second) => first.order - second.order)
+    .flatMap((attachment) => {
+      if (!attachment.file?.url) {
+        return []
+      }
+
+      return [
+        {
+          id: attachment.fileId,
+          alt: attachment.file.originalName,
+          url: attachment.file.url,
+        },
+      ]
+    })
 
   return {
     id: entity.id,

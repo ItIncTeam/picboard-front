@@ -264,4 +264,28 @@ describe('create post upload service', () => {
       'Upload completion for file file-1 returned FAILED.',
     )
   })
+
+  it('does not treat UPLOADED as ready for createPost', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt: '2026-07-04T12:00:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/first',
+      },
+    ])
+    apiMocks.completeUpload.mockResolvedValueOnce([
+      {
+        fileId: 'file-1',
+        status: 'UPLOADED',
+      },
+    ])
+
+    await expect(uploadCreatePostImages(createState([image]), { fetcher })).rejects.toThrow(
+      'Upload completion for file file-1 returned UPLOADED.',
+    )
+  })
 })
