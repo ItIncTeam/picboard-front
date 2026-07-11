@@ -1,8 +1,8 @@
 'use client'
 
 import type { AspectRatio, CreatePostImage } from '@/features/create-post'
-import type { ChangeEvent} from 'react';
-import { type DragEvent, useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
+import { useRef, useState } from 'react'
 
 import type { CropperRef } from 'react-advanced-cropper'
 import { Cropper } from 'react-advanced-cropper'
