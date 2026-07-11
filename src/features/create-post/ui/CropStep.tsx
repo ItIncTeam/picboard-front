@@ -26,6 +26,7 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'] as const
 const ACCEPTED_IMAGE_TYPES_INPUT_VALUE = ACCEPTED_IMAGE_TYPES.join(',')
 const MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
 const MAX_IMAGES_COUNT = 10
+const MAX_VISIBLE_IMAGES = 3
 
 function getAvailableSlotsMessage(availableSlots: number): string {
   return availableSlots === 1
@@ -69,6 +70,30 @@ export function CropStep({
 
     fileInputRef.current?.click()
   }
+
+  const visibleImages = (() => {
+    if (images.length <= MAX_VISIBLE_IMAGES) {
+      return images
+    }
+
+    if (!activeImage?.id) {
+      return images.slice(0, MAX_VISIBLE_IMAGES)
+    }
+
+    const activeIndex = images.findIndex((image) => image.id === activeImage.id)
+
+    if (activeIndex === 0) {
+      return images.slice(0, MAX_VISIBLE_IMAGES)
+    }
+
+    if (activeIndex === images.length - 1) {
+      return images.slice(activeIndex - 2)
+    }
+
+    return images.slice(activeIndex - 1, activeIndex + 2)
+  })()
+
+  console.log(visibleImages)
 
   const handleSelectedFiles = (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) {
@@ -276,7 +301,7 @@ export function CropStep({
             type="file"
           />
           <div className={styles.swiper} aria-label="Selected images">
-            {images.map((image) => {
+            {visibleImages?.map((image) => {
               const imageSrc = image.exported?.objectUrl || image.previewUrl
               const isActive = image.id === activeImage?.id
 
