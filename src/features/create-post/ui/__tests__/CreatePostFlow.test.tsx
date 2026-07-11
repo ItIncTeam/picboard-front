@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createPostInitialState,
   type AspectRatio,
+  type CreatePostAction,
   type CreatePostImage,
   type CreatePostState,
   type ImageFilter,
@@ -37,7 +38,7 @@ type PublicationStepBoundaryProps = {
   images: CreatePostImage[]
   isPublishing: boolean
   onCaptionChange: (caption: string) => void
-  onRetryUpload: () => void
+  onRetryUpload: () => Promise<void> | void
 }
 
 const stepBoundaries = vi.hoisted(() => ({
@@ -256,6 +257,18 @@ function renderCreatePostFlow({
   })
 
   return { container, root }
+}
+
+function createDeferred<T = void>() {
+  let resolve: (value: T | PromiseLike<T>) => void = () => undefined
+  let reject: (reason?: unknown) => void = () => undefined
+
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve
+    reject = promiseReject
+  })
+
+  return { promise, reject, resolve }
 }
 
 function queryButton(container: HTMLElement, name: string): HTMLButtonElement | null {
@@ -883,6 +896,85 @@ describe('CreatePostFlow', () => {
     })
 
     expect(onPublishAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears failed upload error when retry moves upload through uploading to ready', async () => {
+    const uploadReady = createDeferred()
+    const createPostReady = createDeferred<unknown>()
+    const image = createExportedImage()
+    const failedImage: CreatePostImage = {
+      ...image,
+      upload: {
+        error: 'Storage upload failed.',
+        fileId: 'stale-file',
+        status: 'failed',
+      },
+    }
+    let retryResult: Promise<void> | void
+
+    publishMocks.uploadCreatePostImages.mockImplementationOnce(
+      async (
+        _state: CreatePostState,
+        { dispatch }: { dispatch?: (action: CreatePostAction) => void },
+      ) => {
+        dispatch?.({
+          patches: [{ imageId: image.id, status: 'uploading' }],
+          type: 'applyUploadBatchState',
+        })
+
+        await uploadReady.promise
+
+        dispatch?.({
+          patches: [{ fileId: 'file-1', imageId: image.id, status: 'ready' }],
+          type: 'applyUploadBatchState',
+        })
+
+        return ['file-1']
+      },
+    )
+    publishMocks.createPost.mockReturnValueOnce(createPostReady.promise)
+
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [failedImage],
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
+      error: 'Storage upload failed.',
+      fileId: 'stale-file',
+      status: 'failed',
+    })
+
+    await act(async () => {
+      retryResult = stepBoundaries.publication?.onRetryUpload()
+      await Promise.resolve()
+    })
+
+    expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
+      fileId: 'stale-file',
+      status: 'uploading',
+    })
+
+    await act(async () => {
+      uploadReady.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
+      fileId: 'file-1',
+      status: 'ready',
+    })
+
+    await act(async () => {
+      createPostReady.resolve({})
+      await retryResult
+    })
   })
 
   it('does not retry publish while publishing is already in progress', async () => {

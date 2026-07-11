@@ -26,6 +26,7 @@
 .DS_Store
 *.pem
 .idea
+.tmp/
 
 # debug
 npm-debug.log*
