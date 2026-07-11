@@ -120,8 +120,8 @@ export function CropStep({
       },
     }
 
-    onImageExported(activeImage.id, exported)
     onAspectRatioChange(activeImage.id, ratio)
+    onImageExported(activeImage.id, exported)
   }
 
   return (
