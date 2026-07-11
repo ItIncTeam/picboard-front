@@ -1,7 +1,8 @@
 'use client'
 
 import type { AspectRatio, CreatePostImage } from '@/features/create-post'
-import { useRef, useState } from 'react'
+import type { ChangeEvent} from 'react';
+import { type DragEvent, useRef, useState } from 'react'
 
 import type { CropperRef } from 'react-advanced-cropper'
 import { Cropper } from 'react-advanced-cropper'
@@ -19,6 +20,18 @@ import {
 } from '@/shared/assets'
 import { AspectButtonsBlock } from '@/features/create-post/ui/aspectButtonsBlock/AspectButtonsBlock'
 import Image from 'next/image'
+import { createCreatePostImageFromFile } from '@/features/create-post/lib/createPostImageFactory'
+
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'] as const
+const ACCEPTED_IMAGE_TYPES_INPUT_VALUE = ACCEPTED_IMAGE_TYPES.join(',')
+const MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
+const MAX_IMAGES_COUNT = 10
+
+function getAvailableSlotsMessage(availableSlots: number): string {
+  return availableSlots === 1
+    ? 'Only 1 more photo can be added.'
+    : `Only ${availableSlots} more photos can be added.`
+}
 
 export type CropStepProps = {
   activeImage: CreatePostImage | null
@@ -42,6 +55,74 @@ export function CropStep({
   const [selectedRatio, setSelectedRatio] = useState<AspectRatio>('original')
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
   const [isVisibleSlider, setIsVisibleSlider] = useState(false)
+
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [errors, setErrors] = useState<string[]>([])
+  const hasReachedImagesLimit = images.length >= MAX_IMAGES_COUNT
+
+  const handleSelectFiles = () => {
+    if (hasReachedImagesLimit) {
+      setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
+
+      return
+    }
+
+    fileInputRef.current?.click()
+  }
+
+  const handleSelectedFiles = (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) {
+      return
+    }
+
+    const availableSlots = MAX_IMAGES_COUNT - images.length
+    const nextErrors: string[] = []
+
+    if (availableSlots <= 0) {
+      setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
+
+      return
+    }
+
+    if (selectedFiles.length > availableSlots) {
+      nextErrors.push(getAvailableSlotsMessage(availableSlots))
+    }
+
+    const filesForValidation = selectedFiles.slice(0, Math.max(availableSlots, 0))
+    const validFiles = filesForValidation.filter((file) => {
+      const hasAcceptedType = ACCEPTED_IMAGE_TYPES.some((imageType) => imageType === file.type)
+
+      if (!hasAcceptedType) {
+        nextErrors.push(`${file.name} must be JPEG or PNG.`)
+
+        return false
+      }
+
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        nextErrors.push(`${file.name} must be 20 MB or smaller.`)
+
+        return false
+      }
+
+      return true
+    })
+
+    if (validFiles.length === 0) {
+      setErrors(nextErrors)
+
+      return
+    }
+
+    const nextImages = validFiles.map(createCreatePostImageFromFile)
+
+    onAddImages(nextImages)
+    setErrors(nextErrors)
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    handleSelectedFiles(Array.from(event.currentTarget.files ?? []))
+    event.currentTarget.value = ''
+  }
 
   const handleRemoveImage = (image: CreatePostImage) => {
     const currentIndex = images.findIndex((item) => item.id === image.id)
@@ -186,6 +267,14 @@ export function CropStep({
 
       {isVisibleSlider && (
         <>
+          <input
+            ref={fileInputRef}
+            accept={ACCEPTED_IMAGE_TYPES_INPUT_VALUE}
+            className={styles.fileInput}
+            multiple
+            onChange={handleFileChange}
+            type="file"
+          />
           <div className={styles.swiper} aria-label="Selected images">
             {images.map((image) => {
               const imageSrc = image.exported?.objectUrl || image.previewUrl
@@ -226,7 +315,13 @@ export function CropStep({
               )
             })}
             <div className={styles.wrapperAddImage}>
-              <IconButton className={styles.addImage} icon={AddImage} label="AddImage" />
+              <IconButton
+                className={styles.addImage}
+                icon={AddImage}
+                label="AddImage"
+                disabled={hasReachedImagesLimit}
+                onClick={handleSelectFiles}
+              />
             </div>
           </div>
 
@@ -245,6 +340,13 @@ export function CropStep({
               )
             })}
           </div>
+          {errors.length > 0 && (
+            <ul className={styles.errors} aria-live="polite">
+              {errors.map((error, index) => (
+                <li key={`${error}-${index}`}>{error}</li>
+              ))}
+            </ul>
+          )}
         </>
       )}
 
@@ -254,12 +356,14 @@ export function CropStep({
           icon={ArrowBackIcon}
           label={'ArrowBackIcon'}
           onClick={handlePrevImage}
+          disabled={images.length <= 1}
         />
         <IconButton
           className={styles.navigationItem}
           icon={ArrowNextIcon}
           label={'ArrowNextIcon'}
           onClick={handleNextImage}
+          disabled={images.length <= 1}
         />
       </div>
     </div>
