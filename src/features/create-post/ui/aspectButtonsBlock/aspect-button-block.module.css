@@ -1,0 +1,32 @@
+.aspectButtonBlock {
+  position: absolute;
+  bottom: 50px;
+  left: 12px;
+
+  display: flex;
+  flex-direction: column;
+
+  width: 156px;
+  height: 152px;
+  padding: 10px 12px;
+
+  opacity: 0.8;
+  background-color: var(--color-surface-secondary);
+
+  & button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 12px;
+    border: none;
+
+    color: var(--color-text-secondary);
+
+    background: none;
+  }
+
+  & button[data-active='true'] {
+    color: var(--color-text-primary);
+  }
+}
