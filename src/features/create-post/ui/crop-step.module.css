@@ -249,24 +249,16 @@
   display: flex;
   gap: 8px;
 
-  /* width: min(244px, calc(100% - 24px)); */
   padding: 12px;
-
-  /* overflow-x: auto; */
-
   border-radius: 2px;
 
   background: rgb(0 0 0 / 60%);
 }
 
 .swiperItem {
+  position: relative;
+
   overflow: hidden;
-
-  /* flex: 0 0 64px; */
-
-  /* display: flex; */
-
-  /* place-items: center; */
 
   width: 80px;
   height: 82px;
@@ -274,6 +266,19 @@
   border: 2px solid transparent;
 
   background: transparent;
+}
+
+.deleteImage {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+
+  width: 12px;
+  height: 12px;
+
+  color: var(--color-text-primary);
+
+  background: rgb(0 0 0 / 60%);
 }
 
 .swiperItem[data-active='true'] {

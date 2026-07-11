@@ -13,6 +13,7 @@ import {
   ArrowBackIcon,
   ArrowNextIcon,
   AspectRatioBtn,
+  Close,
   Dot,
   ShowSwiper,
 } from '@/shared/assets'
@@ -25,6 +26,8 @@ export type CropStepProps = {
   onSetActiveImage: (imageId: string | null) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onRemoveImage: (imageId: string) => void
+  onAddImages: (images: CreatePostImage[]) => void
 }
 
 export function CropStep({
@@ -32,11 +35,39 @@ export function CropStep({
   images,
   onSetActiveImage,
   onAspectRatioChange,
+  onRemoveImage,
   onImageExported,
+  onAddImages,
 }: CropStepProps) {
   const [selectedRatio, setSelectedRatio] = useState<AspectRatio>('original')
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
   const [isVisibleSlider, setIsVisibleSlider] = useState(false)
+
+  const handleRemoveImage = (image: CreatePostImage) => {
+    const currentIndex = images.findIndex((item) => item.id === image.id)
+    const nextImages = images.filter((item) => item.id !== image.id)
+
+    onRemoveImage(image.id)
+
+    if (nextImages.length === 0) {
+      onSetActiveImage(null)
+      return
+    }
+
+    const nextIndex = (() => {
+      if (currentIndex === -1) {
+        return 0
+      }
+
+      if (currentIndex >= nextImages.length) {
+        return nextImages.length - 1
+      }
+
+      return currentIndex
+    })()
+
+    onSetActiveImage(nextImages[nextIndex].id)
+  }
 
   const ASPECT_RATIOS: Record<AspectRatio, number | undefined> = {
     original: undefined,
@@ -161,26 +192,37 @@ export function CropStep({
               const isActive = image.id === activeImage?.id
 
               return (
-                <button
+                <div
                   key={image.id}
-                  type="button"
+                  role="button"
                   className={styles.swiperItem}
                   data-active={isActive}
                   onClick={() => onSetActiveImage(image.id)}
                 >
                   {imageSrc ? (
-                    <Image
-                      className={styles.swiperImage}
-                      src={imageSrc}
-                      alt={image.name}
-                      unoptimized // Важно! Отключает серверную оптимизацию для Blob
-                      width={50} // Укажите примерную ширину миниатюры в пикселях
-                      height={50} // Укажите примерную высоту миниатюры в пикселях
-                    />
+                    <>
+                      <Image
+                        className={styles.swiperImage}
+                        src={imageSrc}
+                        alt={image.name}
+                        unoptimized // Важно! Отключает серверную оптимизацию для Blob
+                        width={50} // Укажите примерную ширину миниатюры в пикселях
+                        height={50} // Укажите примерную высоту миниатюры в пикселях
+                      />
+                      <IconButton
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          handleRemoveImage(image)
+                        }}
+                        className={styles.deleteImage}
+                        icon={Close}
+                        label="deleteImage"
+                      />
+                    </>
                   ) : (
                     <span className={styles.swiperPlaceholder}>{image.name}</span>
                   )}
-                </button>
+                </div>
               )
             })}
             <div className={styles.wrapperAddImage}>

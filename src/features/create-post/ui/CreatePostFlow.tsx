@@ -314,6 +314,8 @@ function renderStep({
           onSetActiveImage={onSetActiveImage}
           onAspectRatioChange={onAspectRatioChange}
           onImageExported={onImageExported}
+          onRemoveImage={onRemoveImage}
+          onAddImages={onAddImages}
         />
       )
 
