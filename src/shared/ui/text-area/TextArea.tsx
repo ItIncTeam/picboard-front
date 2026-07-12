@@ -18,6 +18,7 @@ type Props = {
 export const TextArea = ({
   asChild,
   className,
+  classNameLabel,
   label,
   error,
   onKeyUp,
@@ -34,7 +35,7 @@ export const TextArea = ({
   return (
     <div className={s.root}>
       {label && (
-        <label htmlFor={baseId} className={s.label}>
+        <label htmlFor={baseId} className={clsx(s.label, classNameLabel)}>
           {label}
         </label>
       )}
