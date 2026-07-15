@@ -4,7 +4,7 @@ import { oauthStartUrls } from './startOAuthProvider'
 
 describe('oauthStartUrls', () => {
   it('uses backend-owned OAuth start URLs', () => {
-    expect(oauthStartUrls.google).toBe('https://users.picboard.space/api/v1/auth/google/start')
-    expect(oauthStartUrls.github).toBe('https://users.picboard.space/api/v1/auth/github/login')
+    expect(oauthStartUrls.google).toBe('https://gateway.picboard.space/api/v1/auth/google/start')
+    expect(oauthStartUrls.github).toBe('https://gateway.picboard.space/api/v1/auth/github/login')
   })
 })
