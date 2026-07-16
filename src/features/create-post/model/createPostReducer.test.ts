@@ -47,6 +47,7 @@ describe('createPostReducer', () => {
       ],
       activeImageId: 'image-1',
       isPublishing: true,
+      pendingFilterExportImageIds: ['image-1'],
     }
 
     const result = createPostReducer(dirtyState, { type: 'reset' })
@@ -145,6 +146,19 @@ describe('createPostReducer', () => {
     expect(result.images).toEqual([firstImage])
   })
 
+  it('clears pending filter export when image is removed', () => {
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [firstImage, secondImage],
+        pendingFilterExportImageIds: [secondImage.id],
+      },
+      { type: 'removeImage', imageId: secondImage.id },
+    )
+
+    expect(result.pendingFilterExportImageIds).toEqual([])
+  })
+
   it('clears activeImageId when removed image was active and no images remain', () => {
     const result = createPostReducer(
       {
@@ -231,9 +245,11 @@ describe('createPostReducer', () => {
 
   it('updates image aspect ratio by image id and clears stale export/upload state', () => {
     const exported = createExportedImage()
+    const filterBase = createExportedImage()
     const imageWithExportAndUpload: CreatePostImage = {
       ...firstImage,
       exported,
+      filterBase,
       upload: {
         fileId: 'file-1',
         uploadUrl: 'https://storage.example/upload',
@@ -258,6 +274,7 @@ describe('createPostReducer', () => {
       ...firstImage,
       aspectRatio: '16:9',
       exported: undefined,
+      filterBase: undefined,
       upload: undefined,
     })
     expect(result.images[1]).toBe(secondImage)
@@ -327,6 +344,45 @@ describe('createPostReducer', () => {
     })
 
     expect(result).toBe(state)
+  })
+
+  it('stores filter base by image id', () => {
+    const filterBase = createExportedImage()
+    const result = createPostReducer(
+      {
+        ...createPostInitialState,
+        images: [firstImage, secondImage],
+      },
+      {
+        type: 'setImageFilterBase',
+        filterBase,
+        imageId: secondImage.id,
+      },
+    )
+
+    expect(result.images[0]).toBe(firstImage)
+    expect(result.images[1]).toEqual({
+      ...secondImage,
+      filterBase,
+    })
+  })
+
+  it('sets pending filter export state', () => {
+    const pendingState = createPostReducer(createPostInitialState, {
+      type: 'setImageFilterExporting',
+      imageId: firstImage.id,
+      isExporting: true,
+    })
+
+    expect(pendingState.pendingFilterExportImageIds).toEqual([firstImage.id])
+
+    const settledState = createPostReducer(pendingState, {
+      type: 'setImageFilterExporting',
+      imageId: firstImage.id,
+      isExporting: false,
+    })
+
+    expect(settledState.pendingFilterExportImageIds).toEqual([])
   })
 
   it('stores exported file by image id', () => {

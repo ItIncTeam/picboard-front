@@ -1,7 +1,9 @@
 'use client'
-import { CreatePostFlow } from '@/features/create-post/create-post-flow'
+
 import { useRouter } from 'next/navigation'
-//import { CreatePostFlow } from '@/features/create-post'
+
+import { CreatePostFlow } from '@/features/create-post/create-post-flow'
+
 import styles from './create-post-page.module.css'
 
 export function CreatePostPage() {

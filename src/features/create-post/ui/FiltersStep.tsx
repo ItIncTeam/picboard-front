@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { useRef, useState, type MutableRefObject } from 'react'
+import { useEffect, useRef, useState, type MutableRefObject } from 'react'
 
 import { Button } from '@/shared/ui/button'
 import { Text } from '@/shared/ui/typography'
@@ -11,7 +11,9 @@ import styles from './filters-step.module.css'
 
 export type FiltersStepProps = {
   activeImage: CreatePostImage | null
+  onFilterBaseChange: (imageId: string, filterBase: CreatePostImage['filterBase']) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onFilterExportingChange: (imageId: string, isExporting: boolean) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
 }
 
@@ -23,7 +25,13 @@ const imageFilterCssValues: Record<ImageFilter, string> = {
   normal: 'none',
 }
 
-export function FiltersStep({ activeImage, onFilterChange, onImageExported }: FiltersStepProps) {
+export function FiltersStep({
+  activeImage,
+  onFilterBaseChange,
+  onFilterChange,
+  onFilterExportingChange,
+  onImageExported,
+}: FiltersStepProps) {
   if (!activeImage) {
     return (
       <CreatePostSkeleton description="Choose an image before applying filters." title="Filters" />
@@ -34,7 +42,9 @@ export function FiltersStep({ activeImage, onFilterChange, onImageExported }: Fi
     <ActiveFiltersStep
       activeImage={activeImage}
       key={activeImage.id}
+      onFilterBaseChange={onFilterBaseChange}
       onFilterChange={onFilterChange}
+      onFilterExportingChange={onFilterExportingChange}
       onImageExported={onImageExported}
     />
   )
@@ -42,43 +52,61 @@ export function FiltersStep({ activeImage, onFilterChange, onImageExported }: Fi
 
 type ActiveFiltersStepProps = {
   activeImage: CreatePostImage
+  onFilterBaseChange: (imageId: string, filterBase: CreatePostImage['filterBase']) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onFilterExportingChange: (imageId: string, isExporting: boolean) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
 }
 
 function ActiveFiltersStep({
   activeImage,
+  onFilterBaseChange,
   onFilterChange,
+  onFilterExportingChange,
   onImageExported,
 }: ActiveFiltersStepProps) {
-  const [baseFile] = useState<File | null>(
-    () => activeImage.exported?.file ?? activeImage.file ?? null,
-  )
-  const [basePreviewUrl] = useState<string | null>(
-    () => activeImage.exported?.objectUrl ?? activeImage.previewUrl ?? null,
-  )
+  const [baseExport] = useState<CreatePostImage['filterBase']>(() => createFilterBase(activeImage))
   const [exportError, setExportError] = useState<string | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<ImageFilter>(activeImage.filter)
   const exportRequestIdRef = useRef(0)
+  const isMountedRef = useRef(true)
+  const baseFile = baseExport?.file ?? null
+  const basePreviewUrl = baseExport?.objectUrl ?? null
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+      exportRequestIdRef.current += 1
+      onFilterExportingChange(activeImage.id, false)
+    }
+  }, [activeImage.id, onFilterExportingChange])
 
   const handleFilterSelect = (filter: ImageFilter) => {
     setSelectedFilter(filter)
     setExportError(null)
 
-    if (!baseFile) {
+    if (!baseFile || !baseExport) {
       setExportError('Selected image is not available for export.')
       setSelectedFilter(activeImage.filter)
 
       return
     }
 
+    onFilterBaseChange(activeImage.id, activeImage.filterBase ?? baseExport)
+    onFilterExportingChange(activeImage.id, true)
+
     void exportFilteredImage({
       file: baseFile,
       filter,
       imageId: activeImage.id,
-      onExportFailed: () => setSelectedFilter(activeImage.filter),
+      isActive: () => isMountedRef.current,
+      onExportFailed: () => {
+        setSelectedFilter(activeImage.filter)
+        onFilterExportingChange(activeImage.id, false)
+      },
       onExported: onImageExported,
       onFilterChange,
+      onFilterExported: () => onFilterExportingChange(activeImage.id, false),
       requestId: exportRequestIdRef.current + 1,
       requestIdRef: exportRequestIdRef,
       setExportError,
@@ -153,9 +181,11 @@ type ExportFilteredImageArgs = {
   file: File
   filter: ImageFilter
   imageId: string
+  isActive: () => boolean
   onExportFailed: () => void
   onExported: (imageId: string, exported: CreatePostImage['exported']) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onFilterExported: () => void
   requestId: number
   requestIdRef: MutableRefObject<number>
   setExportError: (message: string | null) => void
@@ -165,9 +195,11 @@ async function exportFilteredImage({
   file,
   filter,
   imageId,
+  isActive,
   onExportFailed,
   onExported,
   onFilterChange,
+  onFilterExported,
   requestId,
   requestIdRef,
   setExportError,
@@ -177,7 +209,7 @@ async function exportFilteredImage({
   try {
     const filteredFile = await createFilteredFile(file, imageFilterCssValues[filter])
 
-    if (requestIdRef.current !== requestId) {
+    if (!isActive() || requestIdRef.current !== requestId) {
       return
     }
 
@@ -189,8 +221,9 @@ async function exportFilteredImage({
       fileInfo: createFileInfo(filteredFile),
       objectUrl,
     })
+    onFilterExported()
   } catch {
-    if (requestIdRef.current === requestId) {
+    if (isActive() && requestIdRef.current === requestId) {
       onExportFailed()
       setExportError('Failed to apply filter. Try another filter.')
     }
@@ -242,6 +275,31 @@ function createFileInfo(file: File) {
     name: file.name,
     size: file.size,
     type: file.type,
+  }
+}
+
+function createFilterBase(image: CreatePostImage): CreatePostImage['filterBase'] {
+  if (image.filterBase) {
+    return image.filterBase
+  }
+
+  if (image.exported) {
+    return image.exported
+  }
+
+  if (!image.file || !image.previewUrl) {
+    return undefined
+  }
+
+  return {
+    file: image.file,
+    fileInfo: image.fileInfo ?? {
+      lastModified: image.file.lastModified,
+      name: image.file.name,
+      size: image.file.size,
+      type: image.file.type,
+    },
+    objectUrl: image.previewUrl,
   }
 }
 

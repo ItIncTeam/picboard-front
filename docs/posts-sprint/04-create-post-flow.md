@@ -146,6 +146,16 @@ type CreatePostImage = {
       lastModified: number
     }
   }
+  filterBase?: {
+    file: File
+    objectUrl: string
+    fileInfo: {
+      name: string
+      size: number
+      type: string
+      lastModified: number
+    }
+  }
   upload?: {
     fileId?: string
     uploadUrl?: string
@@ -162,6 +172,7 @@ type CreatePostState = {
   caption: string
   hasUnsavedData: boolean
   isPublishing: boolean
+  pendingFilterExportImageIds: string[]
 }
 ```
 
@@ -204,7 +215,9 @@ type CropStepProps = {
 
 type FiltersStepProps = {
   activeImage: CreatePostImage | null
+  onFilterBaseChange: (imageId: string, filterBase: CreatePostImage['filterBase']) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onFilterExportingChange: (imageId: string, isExporting: boolean) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
 }
 
@@ -224,11 +237,12 @@ previous upload state.
 - `upload -> crop`: currently allowed when at least one image exists.
 - `crop -> filters`: currently allowed when at least one image exists. Stricter crop validity can be
   added with a selector update when real crop implementation lands.
-- `filters -> publication`: currently allowed when at least one image exists. Stricter filter/export
-  gating can be added with a selector update when real filters/export implementation lands.
+- `filters -> publication`: allowed when at least one image exists and no filter canvas export is
+  pending.
 - `publication -> publish`: allowed when `selectCanPublish` is true: publication step, at least one
-  image, all images exported, caption length up to 500, and `isPublishing === false`. Backend
-  integration is connected through the default publish path; `onPublishAction` is only an override.
+  image, all images exported, caption length up to 500, `isPublishing === false`, and no filter
+  canvas export is pending. Backend integration is connected through the default publish path;
+  `onPublishAction` is only an override.
 - Back navigation between steps should preserve selected files and settings.
 - Reset clears in-memory create state. Selected image preview object URLs are revoked by the
   create-post cleanup hook. Exported object URL lifecycle remains part of the crop/filter/export

@@ -28,7 +28,9 @@ type CropStepBoundaryProps = {
 
 type FiltersStepBoundaryProps = {
   activeImage: CreatePostImage | null
+  onFilterBaseChange: (imageId: string, filterBase: CreatePostImage['filterBase']) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onFilterExportingChange: (imageId: string, isExporting: boolean) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
 }
 
@@ -495,6 +497,15 @@ describe('CreatePostFlow', () => {
         step: 'publication',
       }),
     ],
+    [
+      'filter export is still pending',
+      createState({
+        activeImageId: 'image-1',
+        images: [createExportedImage()],
+        pendingFilterExportImageIds: ['image-1'],
+        step: 'publication',
+      }),
+    ],
   ])('does not call publish boundary when publish is disabled: %s', (_caseName, initialState) => {
     const onPublishAction = vi.fn()
     const view = renderCreatePostFlow({
@@ -572,6 +583,35 @@ describe('CreatePostFlow', () => {
     mountedRoots.push(view)
 
     expect(queryButton(view.container, 'Publish')).toBeInstanceOf(HTMLButtonElement)
+  })
+
+  it('keeps user on filters while filter export is pending', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'filters',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    act(() => {
+      stepBoundaries.filters?.onFilterExportingChange(image.id, true)
+    })
+
+    const nextButton = getButton(view.container, 'Next')
+
+    expect(nextButton.disabled).toBe(true)
+    clickButton(nextButton)
+    expect(getHeaderTitle(view.container)).toBe('Filters')
+
+    act(() => {
+      stepBoundaries.filters?.onFilterExportingChange(image.id, false)
+    })
+
+    expect(getButton(view.container, 'Next').disabled).toBe(false)
   })
 
   it('passes upload data and callbacks to UploadStep', () => {
@@ -896,10 +936,12 @@ describe('CreatePostFlow', () => {
     expect(stepBoundaries.filters?.activeImage).toEqual(image)
 
     act(() => {
+      stepBoundaries.filters?.onFilterBaseChange(image.id, image.exported)
       stepBoundaries.filters?.onFilterChange(image.id, 'moon')
     })
 
     expect(stepBoundaries.filters?.activeImage?.filter).toBe('moon')
+    expect(stepBoundaries.filters?.activeImage?.filterBase).toBe(image.exported)
     expect(stepBoundaries.filters?.activeImage?.exported).toBeUndefined()
 
     const exported = createExportedPayload()

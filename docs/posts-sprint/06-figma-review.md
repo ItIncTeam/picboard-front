@@ -94,6 +94,9 @@ Implementation implication:
 - filter preview and selected preset are per image;
 - CSS filters are acceptable for preview, but export must apply the same visual result to the final
   canvas/blob before backend upload;
+- filter export is asynchronous, so the flow must keep the user on Filters until the current export
+  succeeds or fails;
+- repeated filters must use the crop result as a stable base, not the previous filtered export;
 - exact Instagram-like filter parity is a product/design decision, not an implicit requirement.
 
 ### Overlay

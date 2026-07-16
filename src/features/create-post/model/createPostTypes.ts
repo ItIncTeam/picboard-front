@@ -54,6 +54,11 @@ export type CreatePostImage = {
     objectUrl: string
     fileInfo: CreatePostImageFileInfo
   }
+  filterBase?: {
+    file: File
+    objectUrl: string
+    fileInfo: CreatePostImageFileInfo
+  }
   upload?: {
     fileId?: string
     uploadUrl?: string
@@ -70,6 +75,7 @@ export type CreatePostState = {
   caption: string
   hasUnsavedData: boolean
   isPublishing: boolean
+  pendingFilterExportImageIds: string[]
 }
 
 export type CreatePostAction =
@@ -83,6 +89,8 @@ export type CreatePostAction =
   | { type: 'setCaption'; caption: string }
   | { type: 'setImageAspectRatio'; aspectRatio: AspectRatio; imageId: string }
   | { type: 'setImageFilter'; filter: ImageFilter; imageId: string }
+  | { type: 'setImageFilterBase'; filterBase: CreatePostImage['filterBase']; imageId: string }
+  | { type: 'setImageFilterExporting'; imageId: string; isExporting: boolean }
   /**
    * Final file produced by crop/filter/export pipeline.
    *

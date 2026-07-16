@@ -47,11 +47,15 @@ function createExported(fileName = 'cropped.jpg'): NonNullable<CreatePostImage['
 
 function renderFiltersStep({
   activeImage,
+  onFilterBaseChange = vi.fn(),
   onFilterChange = vi.fn(),
+  onFilterExportingChange = vi.fn(),
   onImageExported = vi.fn(),
 }: {
   activeImage: CreatePostImage | null
+  onFilterBaseChange?: (imageId: string, filterBase: CreatePostImage['filterBase']) => void
   onFilterChange?: (imageId: string, filter: CreatePostImage['filter']) => void
+  onFilterExportingChange?: (imageId: string, isExporting: boolean) => void
   onImageExported?: (imageId: string, exported: CreatePostImage['exported']) => void
 }): RenderResult {
   const container = document.createElement('div')
@@ -63,7 +67,9 @@ function renderFiltersStep({
     root.render(
       <FiltersStep
         activeImage={activeImage}
+        onFilterBaseChange={onFilterBaseChange}
         onFilterChange={onFilterChange}
+        onFilterExportingChange={onFilterExportingChange}
         onImageExported={onImageExported}
       />,
     )
@@ -159,12 +165,16 @@ describe('FiltersStep', () => {
   })
 
   it('previews and exports the selected filter through callbacks', async () => {
+    const onFilterBaseChange = vi.fn()
     const onFilterChange = vi.fn()
+    const onFilterExportingChange = vi.fn()
     const onImageExported = vi.fn()
     const image = createImage()
     const view = renderFiltersStep({
       activeImage: image,
+      onFilterBaseChange,
       onFilterChange,
+      onFilterExportingChange,
       onImageExported,
     })
 
@@ -172,6 +182,14 @@ describe('FiltersStep', () => {
 
     await clickButton(getButton(view.container, 'Moon'))
 
+    expect(onFilterBaseChange).toHaveBeenCalledWith(
+      image.id,
+      expect.objectContaining({
+        file: image.file,
+        objectUrl: image.previewUrl,
+      }),
+    )
+    expect(onFilterExportingChange).toHaveBeenNthCalledWith(1, image.id, true)
     expect(onFilterChange).toHaveBeenCalledWith(image.id, 'moon')
     expect(createImageBitmapMock).toHaveBeenCalledWith(image.file)
     expect(drawImageMock).toHaveBeenCalledTimes(1)
@@ -187,6 +205,7 @@ describe('FiltersStep', () => {
         objectUrl: 'blob:filtered-output',
       }),
     )
+    expect(onFilterExportingChange).toHaveBeenLastCalledWith(image.id, false)
   })
 
   it('exports repeated filter changes from the initial base file', async () => {
@@ -212,7 +231,9 @@ describe('FiltersStep', () => {
       view.root.render(
         <FiltersStep
           activeImage={{ ...image, exported: filtered, filter: 'moon' }}
+          onFilterBaseChange={vi.fn()}
           onFilterChange={onFilterChange}
+          onFilterExportingChange={vi.fn()}
           onImageExported={onImageExported}
         />,
       )
@@ -223,6 +244,30 @@ describe('FiltersStep', () => {
     expect(createImageBitmapMock).toHaveBeenNthCalledWith(1, cropped.file)
     expect(createImageBitmapMock).toHaveBeenNthCalledWith(2, cropped.file)
     expect(onFilterChange).toHaveBeenLastCalledWith(image.id, 'lark')
+  })
+
+  it('uses stored crop base after remount instead of filtered export', async () => {
+    const onFilterChange = vi.fn()
+    const onImageExported = vi.fn()
+    const cropped = createExported('cropped.jpg')
+    const filtered = createExported('filtered.jpg')
+    const image = createImage({
+      exported: filtered,
+      filter: 'moon',
+      filterBase: cropped,
+    })
+    const view = renderFiltersStep({
+      activeImage: image,
+      onFilterChange,
+      onImageExported,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButton(getButton(view.container, 'Normal'))
+
+    expect(createImageBitmapMock).toHaveBeenCalledWith(cropped.file)
+    expect(onFilterChange).toHaveBeenCalledWith(image.id, 'normal')
   })
 
   it('closes image bitmap when canvas export fails', async () => {
@@ -258,5 +303,67 @@ describe('FiltersStep', () => {
     expect(closeImageBitmapMock).toHaveBeenCalledTimes(1)
     expect(onImageExported).not.toHaveBeenCalled()
     expect(view.container.textContent).toContain('Failed to apply filter. Try another filter.')
+  })
+
+  it('does not call export callbacks after unmount', async () => {
+    const onFilterChange = vi.fn()
+    const onImageExported = vi.fn()
+    let pendingBlobCallback: BlobCallback | null = null
+    const image = createImage()
+
+    restoreCreateElement()
+    restoreCreateElement = () => {}
+
+    const originalCreateElement = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const element = originalCreateElement(tagName)
+
+      if (tagName === 'canvas') {
+        Object.defineProperty(element, 'getContext', {
+          configurable: true,
+          value: () => ({
+            drawImage: drawImageMock,
+            filter: '',
+          }),
+        })
+        Object.defineProperty(element, 'toBlob', {
+          configurable: true,
+          value: (callback: BlobCallback) => {
+            pendingBlobCallback = callback
+          },
+        })
+      }
+
+      return element
+    })
+
+    restoreCreateElement = () => createElementSpy.mockRestore()
+
+    const view = renderFiltersStep({
+      activeImage: image,
+      onFilterChange,
+      onImageExported,
+    })
+
+    await act(async () => {
+      getButton(view.container, 'Moon').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(pendingBlobCallback).toBeTypeOf('function')
+
+    act(() => {
+      view.root.unmount()
+    })
+    view.container.remove()
+
+    await act(async () => {
+      pendingBlobCallback?.(new Blob(['filtered'], { type: 'image/jpeg' }))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(onFilterChange).not.toHaveBeenCalled()
+    expect(onImageExported).not.toHaveBeenCalled()
   })
 })

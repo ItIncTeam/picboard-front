@@ -44,6 +44,7 @@ type CreatePostState = {
   caption: string
   hasUnsavedData: boolean
   isPublishing: boolean
+  pendingFilterExportImageIds: string[]
 }
 ```
 
@@ -109,6 +110,17 @@ Changed by: `CreatePostFlow` during the default publish pipeline
 
 Purpose: publish submission state while upload service and `createPost` are running.
 
+### `pendingFilterExportImageIds`
+
+Owner: Dev 1 / Dev 3 boundary
+
+Used by: Create flow shell, Filters
+
+Changed by: `FiltersStep` through agreed callbacks only
+
+Purpose: transient UI guard while canvas filter export is running. The create flow must not move
+from Filters to Publication, and Publication must not publish, while this list is non-empty.
+
 ## Step Boundary Contract
 
 Owner:
@@ -150,7 +162,9 @@ type CropStepProps = {
 
 type FiltersStepProps = {
   activeImage: CreatePostImage | null
+  onFilterBaseChange: (imageId: string, filterBase: CreatePostImage['filterBase']) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onFilterExportingChange: (imageId: string, isExporting: boolean) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
 }
 
@@ -179,6 +193,11 @@ type CreatePostImage = {
   aspectRatio: AspectRatio
   filter: ImageFilter
   exported?: {
+    file: File
+    objectUrl: string
+    fileInfo: CreatePostImageFileInfo
+  }
+  filterBase?: {
     file: File
     objectUrl: string
     fileInfo: CreatePostImageFileInfo
@@ -313,6 +332,19 @@ Consumed by: Upload Pipeline
 Changed by: Dev 3 during export
 
 Purpose: serializable metadata for the exported file.
+
+### `filterBase`
+
+Owner: Dev 3
+
+Consumed by: Filters
+
+Changed by: Filters through `FiltersStepProps.onFilterBaseChange`, and cleared when crop aspect
+ratio changes.
+
+Purpose: stable image source for filter processing. It represents the crop result (or the original
+image when crop output is not present yet). Filters must always render/export from this base, never
+from a previously filtered `exported.file`; `normal` exports this base with no filter.
 
 ### `upload`
 

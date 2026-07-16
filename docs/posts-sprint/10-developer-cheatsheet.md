@@ -124,6 +124,8 @@
 
 - `onAspectRatioChange(imageId, aspectRatio)`.
 - `onFilterChange(imageId, filter)`.
+- `onFilterBaseChange(imageId, filterBase)`.
+- `onFilterExportingChange(imageId, isExporting)`.
 - `onImageExported(imageId, exported)`.
 
 **Используй селекторы:**
@@ -213,6 +215,7 @@
 
 - `activeImage`.
 - `activeImage.exported`.
+- `activeImage.filterBase`.
 - `activeImage.filter`.
 
 **Не меняй:**
@@ -228,6 +231,10 @@
 - Final upload source is `image.exported.file`.
 - `exported.objectUrl` must be revoked when replaced, reset or unmounted.
 - Exported file MIME must map to backend `MimeType.JPEG` or `MimeType.PNG`.
+- Filters must export from stable `image.filterBase` when present, so repeated filters and
+  `normal` use the crop result instead of stacking over the previous filtered export.
+- While filter canvas export is pending, the flow must stay on Filters and must not publish an older
+  `image.exported.file`.
 
 **Known limitations:**
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { CreatePostCloseConfirm } from '@/features/create-post/ui/CreatePostCloseConfirm'
-import { useReducer, useState } from 'react'
+import { useCallback, useReducer, useState } from 'react'
 
 import { ArrowBackIcon, Close } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
@@ -88,6 +88,14 @@ export function CreatePostFlow({
     dispatch({ type: 'setImageFilter', filter, imageId })
   }
 
+  const handleFilterBaseChange = (imageId: string, filterBase: CreatePostImage['filterBase']) => {
+    dispatch({ type: 'setImageFilterBase', filterBase, imageId })
+  }
+
+  const handleFilterExportingChange = useCallback((imageId: string, isExporting: boolean) => {
+    dispatch({ type: 'setImageFilterExporting', imageId, isExporting })
+  }, [])
+
   const handleImageExported = (imageId: string, exported: CreatePostImage['exported']) => {
     dispatch({ type: 'setImageExported', exported, imageId })
   }
@@ -160,7 +168,9 @@ export function CreatePostFlow({
           onAddImages: handleAddImages,
           onAspectRatioChange: handleAspectRatioChange,
           onCaptionChange: handleCaptionChange,
+          onFilterBaseChange: handleFilterBaseChange,
           onFilterChange: handleFilterChange,
+          onFilterExportingChange: handleFilterExportingChange,
           onImageExported: handleImageExported,
           onRemoveImage: handleRemoveImage,
           onSetActiveImage: handleSetActiveImage,
@@ -278,7 +288,9 @@ type RenderStepArgs = {
   onAddImages: (images: CreatePostImage[]) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
   onCaptionChange: (caption: string) => void
+  onFilterBaseChange: (imageId: string, filterBase: CreatePostImage['filterBase']) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
+  onFilterExportingChange: (imageId: string, isExporting: boolean) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
   onRemoveImage: (imageId: string) => void
   onSetActiveImage: (imageId: string | null) => void
@@ -290,7 +302,9 @@ function renderStep({
   onAddImages,
   onAspectRatioChange,
   onCaptionChange,
+  onFilterBaseChange,
   onFilterChange,
+  onFilterExportingChange,
   onImageExported,
   onRemoveImage,
   onSetActiveImage,
@@ -325,7 +339,9 @@ function renderStep({
       return (
         <FiltersStep
           activeImage={activeImage}
+          onFilterBaseChange={onFilterBaseChange}
           onFilterChange={onFilterChange}
+          onFilterExportingChange={onFilterExportingChange}
           onImageExported={onImageExported}
         />
       )

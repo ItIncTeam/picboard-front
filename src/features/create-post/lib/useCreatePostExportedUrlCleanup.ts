@@ -8,7 +8,12 @@ export function useCreatePostExportedUrlCleanup(images: CreatePostImage[]) {
   useEffect(() => {
     const nextExportedUrls = new Set(
       images
-        .map((image) => image.exported?.objectUrl)
+        .flatMap((image) => [
+          image.exported?.objectUrl,
+          image.filterBase?.objectUrl === image.previewUrl
+            ? undefined
+            : image.filterBase?.objectUrl,
+        ])
         .filter((objectUrl): objectUrl is string => Boolean(objectUrl)),
     )
 

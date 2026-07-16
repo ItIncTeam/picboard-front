@@ -8,6 +8,7 @@ import {
   selectHasAllImagesExported,
   selectHasCreatePostUnsavedData,
   selectHasImages,
+  selectHasPendingFilterExport,
   selectImagesCount,
   selectIsReadyForUpload,
   selectReadyFileIds,
@@ -148,6 +149,17 @@ describe('createPostSelectors', () => {
       selectHasAllImagesExported({
         ...createPostInitialState,
         images: [createExportedImage(), createExportedImage({ id: 'image-2' })],
+      }),
+    ).toBe(true)
+  })
+
+  it('detects pending filter export', () => {
+    expect(selectHasPendingFilterExport(createPostInitialState)).toBe(false)
+
+    expect(
+      selectHasPendingFilterExport({
+        ...createPostInitialState,
+        pendingFilterExportImageIds: ['image-1'],
       }),
     ).toBe(true)
   })
@@ -371,6 +383,17 @@ describe('createPostSelectors', () => {
     ).toBe(true)
   })
 
+  it('returns false for next from filters while filter export is pending', () => {
+    expect(
+      selectCanGoNext({
+        ...createPostInitialState,
+        step: 'filters',
+        images: [createImage()],
+        pendingFilterExportImageIds: ['image-1'],
+      }),
+    ).toBe(false)
+  })
+
   it('returns false for next from publication when there are images', () => {
     expect(
       selectCanGoNext({
@@ -427,6 +450,17 @@ describe('createPostSelectors', () => {
         step: 'publication',
         images: [createExportedImage()],
         isPublishing: true,
+      }),
+    ).toBe(false)
+  })
+
+  it('returns false for publish from publication while filter export is pending', () => {
+    expect(
+      selectCanPublish({
+        ...createPostInitialState,
+        step: 'publication',
+        images: [createExportedImage()],
+        pendingFilterExportImageIds: ['image-1'],
       }),
     ).toBe(false)
   })

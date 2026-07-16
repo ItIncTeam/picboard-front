@@ -8,6 +8,7 @@ export const createPostInitialState: CreatePostState = {
   caption: '',
   hasUnsavedData: false,
   isPublishing: false,
+  pendingFilterExportImageIds: [],
 }
 
 export function createPostReducer(
@@ -46,6 +47,9 @@ export function createPostReducer(
 
     case 'removeImage': {
       const nextImages = state.images.filter((image) => image.id !== action.imageId)
+      const nextPendingFilterExportImageIds = state.pendingFilterExportImageIds.filter(
+        (imageId) => imageId !== action.imageId,
+      )
 
       if (nextImages.length === state.images.length) {
         return state
@@ -54,6 +58,7 @@ export function createPostReducer(
       return {
         ...state,
         images: nextImages,
+        pendingFilterExportImageIds: nextPendingFilterExportImageIds,
         activeImageId:
           state.activeImageId === action.imageId
             ? (nextImages[0]?.id ?? null)
@@ -89,6 +94,7 @@ export function createPostReducer(
           ...image,
           aspectRatio: action.aspectRatio,
           exported: undefined,
+          filterBase: undefined,
           upload: undefined,
         }
       })
@@ -130,6 +136,58 @@ export function createPostReducer(
         ...state,
         images: nextImages,
         hasUnsavedData: true,
+      }
+    }
+
+    case 'setImageFilterBase': {
+      let hasChanged = false
+
+      const nextImages = state.images.map((image) => {
+        if (image.id !== action.imageId || image.filterBase === action.filterBase) {
+          return image
+        }
+
+        hasChanged = true
+
+        return {
+          ...image,
+          filterBase: action.filterBase,
+        }
+      })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+      }
+    }
+
+    case 'setImageFilterExporting': {
+      const pendingIds = new Set(state.pendingFilterExportImageIds)
+
+      if (action.isExporting) {
+        pendingIds.add(action.imageId)
+      } else {
+        pendingIds.delete(action.imageId)
+      }
+
+      const nextPendingFilterExportImageIds = Array.from(pendingIds)
+      const hasChanged =
+        nextPendingFilterExportImageIds.length !== state.pendingFilterExportImageIds.length ||
+        nextPendingFilterExportImageIds.some((imageId) => {
+          return !state.pendingFilterExportImageIds.includes(imageId)
+        })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        pendingFilterExportImageIds: nextPendingFilterExportImageIds,
       }
     }
 

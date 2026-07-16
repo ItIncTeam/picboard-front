@@ -26,6 +26,10 @@ export function selectHasAllImagesExported(state: CreatePostState): boolean {
   return selectHasImages(state) && state.images.every((image) => image.exported !== undefined)
 }
 
+export function selectHasPendingFilterExport(state: CreatePostState): boolean {
+  return state.pendingFilterExportImageIds.length > 0
+}
+
 export const selectIsReadyForUpload = selectHasAllImagesExported
 
 export function selectUploadCandidates(state: CreatePostState): CreatePostUploadCandidate[] {
@@ -66,12 +70,17 @@ export function selectCanGoNext(state: CreatePostState): boolean {
     return false
   }
 
+  if (state.step === 'filters' && selectHasPendingFilterExport(state)) {
+    return false
+  }
+
   return selectHasImages(state)
 }
 
 export function selectCanPublish(state: CreatePostState): boolean {
   return (
     state.step === 'publication' &&
+    !selectHasPendingFilterExport(state) &&
     selectHasAllImagesExported(state) &&
     state.caption.length <= CREATE_POST_CAPTION_MAX_LENGTH &&
     !state.isPublishing
