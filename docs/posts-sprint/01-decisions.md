@@ -42,8 +42,9 @@
 - `uploadUrl` is temporary, not a display URL, and must not be reused after expiration.
 - `createPost` may be called only after all selected files are `READY`.
 - Posts mutations are `createPost`, `updatePostDescription` and `deletePost`.
-- Posts queries are `profilePosts(input: ProfilePostsInput!)`, `feed` and `post(id: String!)`.
-- Display image URL is `PostAttachmentEntity.file.url`.
+- Posts queries are `profilePosts(input: ProfilePostsInput!)`, `feed` and `post(id: ID!)`.
+- Display image URL is `PostAttachmentEntity.file?.url`; frontend skips attachments without an
+  available display URL.
 - Upload limits are confirmed: `image/jpeg` and `image/png`, 1-10 images, maximum `20 MB` per file.
 - Post description is optional and limited to 500 characters.
 - `profilePosts` uses cursor pagination with `{ first, after? }`; current backend page size is 8
@@ -154,7 +155,7 @@ storage через `PUT`, подтвердить загрузку через `co
 order because backend can return upload descriptors in a different order.
 
 `uploadUrl` is a temporary write URL for storage. It is not a display URL. Backend-confirmed post
-rendering uses `PostAttachmentEntity.file.url`.
+rendering uses `PostAttachmentEntity.file?.url`.
 
 Final gateway schema details:
 
@@ -164,7 +165,7 @@ Final gateway schema details:
 - `purpose` must be `POST_IMAGE` for post images;
 - frontend browser MIME strings must be mapped to GraphQL enum values `JPEG` or `PNG`;
 - `FileStatus.READY` is required before `createPost`;
-- post rendering must use `PostAttachmentEntity.file.url`.
+- post rendering must use `PostAttachmentEntity.file?.url` and tolerate nullable `file` / `url`.
 
 ## Почему `react-advanced-cropper`
 

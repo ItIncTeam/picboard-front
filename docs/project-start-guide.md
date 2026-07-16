@@ -42,14 +42,14 @@ pnpm install
 Обязательные переменные для локальной разработки:
 
 ```env
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://users.picboard.space/api/v1
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://gateway.picboard.space/api/v1
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 ```
 
 Пример `.env.local`:
 
 ```env
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://users.picboard.space/api/v1
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://gateway.picboard.space/api/v1
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=YOUR_RECAPTCHA_SITE_KEY
 ```
 

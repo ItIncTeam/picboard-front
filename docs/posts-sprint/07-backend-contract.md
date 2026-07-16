@@ -222,7 +222,7 @@ feed: [PostEntity!]!
 ### `post`
 
 ```graphql
-post(id: String!): PostEntity
+post(id: ID!): PostEntity
 ```
 
 `post` may return `null` when the backend cannot return an entity for the provided id.
@@ -233,9 +233,10 @@ Backend-confirmed schema:
 
 ```graphql
 type PostAttachmentEntity {
+  id: ID!
   fileId: ID!
-  sortOrder: Int!
-  file: File!
+  order: Int!
+  file: File
 }
 
 type File {
@@ -246,7 +247,7 @@ type File {
   mimeType: MimeType!
   size: Int!
   status: FileStatus!
-  url: String!
+  url: String
 }
 ```
 

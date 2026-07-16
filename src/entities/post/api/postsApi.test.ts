@@ -64,7 +64,8 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/first.jpg',
         },
         fileId: 'file-1',
-        sortOrder: 1,
+        id: 'attachment-1',
+        order: 1,
       },
       {
         file: {
@@ -78,7 +79,8 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/cover.png',
         },
         fileId: 'file-2',
-        sortOrder: 0,
+        id: 'attachment-2',
+        order: 0,
       },
     ],
     createdAt: '2026-07-04T12:00:00.000Z',
@@ -146,6 +148,9 @@ describe('posts GraphQL helpers', () => {
     expect(getOperationName(request.query)).toBe('Post')
     expect(getVariableNames(request.query)).toEqual(['id'])
     expect(request.variables).toEqual({ id: 'post-1' })
+    expect(request.query.loc?.source.body).toContain('query Post($id: ID!)')
+    expect(request.query.loc?.source.body).toContain('order')
+    expect(request.query.loc?.source.body).not.toContain('sortOrder')
   })
 
   it('allows post query to return null', async () => {
@@ -209,6 +214,36 @@ describe('posts GraphQL helpers', () => {
     expect(request.variables).toEqual({ input })
   })
 
+  it.each([0, 9, 1.5])(
+    'rejects invalid profilePosts.first before GraphQL request: %s',
+    async (first) => {
+      await expect(profilePosts({ first, userId: 'user-1' })).rejects.toThrow(
+        'profilePosts.first must be an integer from 1 to 8.',
+      )
+
+      expect(apolloMocks.query).not.toHaveBeenCalled()
+    },
+  )
+
+  it('allows omitted profilePosts.first', async () => {
+    const payload = {
+      edges: [],
+      pageInfo: {
+        endCursor: null,
+        hasNextPage: false,
+        startCursor: null,
+      },
+    }
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        profilePosts: payload,
+      },
+    })
+
+    await expect(profilePosts({ userId: 'user-1' })).resolves.toEqual(payload)
+  })
+
   it('throws when profilePosts returns no payload', async () => {
     apolloMocks.query.mockResolvedValueOnce({
       data: null,
@@ -247,6 +282,33 @@ describe('posts GraphQL helpers', () => {
     expect(getOperationName(request.mutation)).toBe('UpdatePostDescription')
     expect(getVariableNames(request.mutation)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
+  })
+
+  it('rejects update description longer than 500 characters before GraphQL request', async () => {
+    await expect(
+      updatePostDescription({
+        description: 'a'.repeat(501),
+        postId: 'post-1',
+      }),
+    ).rejects.toThrow('Post description must be 500 characters or fewer.')
+
+    expect(apolloMocks.mutate).not.toHaveBeenCalled()
+  })
+
+  it('allows null update description', async () => {
+    const input: UpdatePostDescriptionInput = {
+      description: null,
+      postId: 'post-1',
+    }
+    const payload = createPostEntity({ description: null })
+
+    apolloMocks.mutate.mockResolvedValueOnce({
+      data: {
+        updatePostDescription: payload,
+      },
+    })
+
+    await expect(updatePostDescription(input)).resolves.toEqual(payload)
   })
 
   it('throws when updatePostDescription returns no payload', async () => {

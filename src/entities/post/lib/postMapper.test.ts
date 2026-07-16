@@ -18,7 +18,8 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/first.jpg',
         },
         fileId: 'file-1',
-        sortOrder: 1,
+        id: 'attachment-1',
+        order: 1,
       },
       {
         file: {
@@ -32,7 +33,8 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/cover.png',
         },
         fileId: 'file-2',
-        sortOrder: 0,
+        id: 'attachment-2',
+        order: 0,
       },
     ],
     createdAt: '2026-07-04T12:00:00.000Z',
@@ -68,5 +70,56 @@ describe('post mapper', () => {
 
   it('maps backend entities list to frontend posts', () => {
     expect(mapPostEntitiesToPosts([createPostEntity({ id: 'post-1' })])).toHaveLength(1)
+  })
+
+  it('skips attachments without a file or display URL', () => {
+    const entity = createPostEntity({
+      attachments: [
+        {
+          file: null,
+          fileId: 'file-without-entity',
+          id: 'attachment-without-file',
+          order: 0,
+        },
+        {
+          file: {
+            id: 'file-without-url',
+            mimeType: 'JPEG',
+            originalName: 'without-url.jpg',
+            ownerId: 'user-1',
+            purpose: 'POST_IMAGE',
+            size: 1024,
+            status: 'READY',
+            url: null,
+          },
+          fileId: 'file-without-url',
+          id: 'attachment-without-url',
+          order: 1,
+        },
+        {
+          file: {
+            id: 'file-visible',
+            mimeType: 'PNG',
+            originalName: 'visible.png',
+            ownerId: 'user-1',
+            purpose: 'POST_IMAGE',
+            size: 2048,
+            status: 'READY',
+            url: 'https://cdn.example/visible.png',
+          },
+          fileId: 'file-visible',
+          id: 'attachment-visible',
+          order: 2,
+        },
+      ],
+    })
+
+    expect(mapPostEntityToPost(entity).images).toEqual([
+      {
+        alt: 'visible.png',
+        id: 'file-visible',
+        url: 'https://cdn.example/visible.png',
+      },
+    ])
   })
 })

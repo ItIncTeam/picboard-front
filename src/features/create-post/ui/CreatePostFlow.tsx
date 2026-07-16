@@ -13,21 +13,21 @@ import { CREATE_POST_STEPS } from '../lib/createPostConstants'
 import { createPost } from '../api/createPostApi'
 import { useCreatePostExportedUrlCleanup } from '../lib/useCreatePostExportedUrlCleanup'
 import { useCreatePostPreviewUrlCleanup } from '../lib/useCreatePostPreviewUrlCleanup'
-import { createPostInitialState, createPostReducer } from '../model/createPostReducer'
-import { uploadCreatePostImages } from '../model/createPostUploadService'
+import { createPostInitialState, createPostReducer } from '@/features/create-post'
+import { uploadCreatePostImages } from '@/features/create-post'
 import {
   selectActiveImage,
   selectCanGoNext,
   selectCanPublish,
   selectHasCreatePostUnsavedData,
-} from '../model/createPostSelectors'
+} from '@/features/create-post'
 import type {
   AspectRatio,
   CreatePostImage,
   CreatePostState,
   CreatePostStep,
   ImageFilter,
-} from '../model/createPostTypes'
+} from '@/features/create-post'
 import { CropStep } from './CropStep'
 import { FiltersStep } from './FiltersStep'
 import { PublicationStep } from './PublicationStep'
@@ -312,8 +312,12 @@ function renderStep({
       return (
         <CropStep
           activeImage={activeImage}
+          images={state.images}
+          onSetActiveImage={onSetActiveImage}
           onAspectRatioChange={onAspectRatioChange}
           onImageExported={onImageExported}
+          onRemoveImage={onRemoveImage}
+          onAddImages={onAddImages}
         />
       )
 

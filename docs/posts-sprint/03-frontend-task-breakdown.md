@@ -27,8 +27,8 @@ Final gateway schema:
 - upload mutations: `initiateUploadBatch(input: [InitiateUploadInput!]!)` and
   `completeUpload(input: [CompleteUploadInput!]!)`;
 - posts mutations: `createPost`, `updatePostDescription`, `deletePost`;
-- posts queries: `profilePosts(input: ProfilePostsInput!)`, `feed`, `post(id: String!)`;
-- display URL: `PostAttachmentEntity.file.url`.
+- posts queries: `profilePosts(input: ProfilePostsInput!)`, `feed`, `post(id: ID!)`;
+- display URL: `PostAttachmentEntity.file?.url`; nullable `file` / `url` must be tolerated.
 
 ### Epic 2: Posts Consumption
 
@@ -322,8 +322,8 @@ Checklist:
 - [x] Send `purpose: POST_IMAGE` in every post image `InitiateUploadInput`.
 - [x] Build `completeUpload` input as an array of `{ fileId }` items.
 - [x] Treat only `FileStatus.READY` as publishable.
-- [x] Keep display rendering on `PostAttachmentEntity.file.url`; never use `uploadUrl` in post
-      skeleton UI.
+- [x] Keep display rendering on `PostAttachmentEntity.file?.url`; never use `uploadUrl` in post
+      skeleton UI, and skip attachments without an available display URL.
 - [ ] Define cache/refetch behavior after create, update and delete.
 
 ## Что можно делать параллельно
@@ -346,7 +346,8 @@ Checklist:
 
 ## Backend blockers
 
-No gateway schema blocker remains for the listed Posts Sprint operations.
+Gateway schema is synchronized with the current Posts contract. `completeUpload` still requires
+`READY` before `createPost`.
 
 Still not blocked by backend schema, but pending implementation/product decisions:
 

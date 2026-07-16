@@ -10,8 +10,9 @@ const postFieldsFragment = gql`
     ownerId
     description
     attachments {
+      id
       fileId
-      sortOrder
+      order
       file {
         id
         ownerId
@@ -41,7 +42,7 @@ const feedQuery = gql`
 const postQuery = gql`
   ${postFieldsFragment}
 
-  query Post($id: String!) {
+  query Post($id: ID!) {
     post(id: $id) {
       ...PostFields
     }
@@ -91,7 +92,7 @@ export type ProfilePostsInput = {
 }
 
 export type UpdatePostDescriptionInput = {
-  description: string
+  description?: string | null
   postId: string
 }
 
@@ -117,6 +118,29 @@ type UpdatePostDescriptionResponse = {
 
 type DeletePostResponse = {
   deletePost: boolean
+}
+
+const POST_DESCRIPTION_MAX_LENGTH = 500
+const PROFILE_POSTS_FIRST_MAX = 8
+
+function assertDescriptionLength(description: string | null | undefined): void {
+  if (
+    description !== undefined &&
+    description !== null &&
+    description.length > POST_DESCRIPTION_MAX_LENGTH
+  ) {
+    throw new Error(`Post description must be ${POST_DESCRIPTION_MAX_LENGTH} characters or fewer.`)
+  }
+}
+
+function assertProfilePostsFirst(first: number | undefined): void {
+  if (first === undefined) {
+    return
+  }
+
+  if (!Number.isInteger(first) || first < 1 || first > PROFILE_POSTS_FIRST_MAX) {
+    throw new Error(`profilePosts.first must be an integer from 1 to ${PROFILE_POSTS_FIRST_MAX}.`)
+  }
 }
 
 export const feed = async (): Promise<PostEntity[]> => {
@@ -149,6 +173,8 @@ export const post = async (id: string): Promise<PostEntity | null> => {
 }
 
 export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnection> => {
+  assertProfilePostsFirst(input.first)
+
   const response = await apolloClient.query<ProfilePostsResponse, { input: ProfilePostsInput }>({
     query: profilePostsQuery,
     variables: {
@@ -168,6 +194,8 @@ export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnec
 export const updatePostDescription = async (
   input: UpdatePostDescriptionInput,
 ): Promise<PostEntity> => {
+  assertDescriptionLength(input.description)
+
   const response = await apolloClient.mutate<
     UpdatePostDescriptionResponse,
     { input: UpdatePostDescriptionInput }

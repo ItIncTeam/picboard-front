@@ -18,7 +18,7 @@ type IconButtonBaseProps = {
   label: string
   onClick?: MouseEventHandler<HTMLButtonElement>
   tooltip?: string
-}
+} & React.ComponentPropsWithoutRef<'button'>
 
 type IconButtonProps = IconButtonBaseProps &
   (
@@ -44,7 +44,17 @@ function getIconElement(props: IconButtonProps): ReactNode {
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   function IconButton(props, ref) {
-    const { className, disabled, indicatorCount = 0, label, onClick, tooltip } = props
+    const {
+      className,
+      disabled,
+      indicatorCount = 0,
+      label,
+      onClick,
+      tooltip,
+      icon: _icon,
+      src: _src,
+      ...rest
+    } = props
     const hasIndicator = indicatorCount > 0
 
     const button = (
@@ -55,6 +65,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         type="button"
         aria-label={label}
         onClick={onClick}
+        {...rest}
       >
         {getIconElement(props)}
         {hasIndicator && <span className={styles.indicator}>{indicatorCount}</span>}

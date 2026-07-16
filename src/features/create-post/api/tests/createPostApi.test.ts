@@ -64,7 +64,8 @@ describe('create post GraphQL helper', () => {
                 url: 'https://cdn.example/post.jpg',
               },
               fileId: 'file-1',
-              sortOrder: 0,
+              id: 'attachment-1',
+              order: 0,
             },
           ],
           createdAt: '2026-07-03T12:00:00.000Z',
@@ -94,6 +95,44 @@ describe('create post GraphQL helper', () => {
     expect(getOperationName(request.mutation)).toBe('CreatePost')
     expect(getVariableNames(request.mutation)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
+    expect(request.mutation.loc?.source.body).toContain('order')
+    expect(request.mutation.loc?.source.body).not.toContain('sortOrder')
+  })
+
+  it('allows null description', async () => {
+    const input: CreatePostInput = {
+      description: null,
+      fileIds: ['file-1'],
+    }
+
+    apolloMocks.mutate.mockResolvedValueOnce({
+      data: {
+        createPost: {
+          attachments: [],
+          createdAt: '2026-07-03T12:00:00.000Z',
+          description: null,
+          id: 'post-1',
+          ownerId: 'user-1',
+          updatedAt: '2026-07-03T12:00:00.000Z',
+        },
+      },
+    })
+
+    await expect(createPost(input)).resolves.toMatchObject({
+      description: null,
+      id: 'post-1',
+    })
+  })
+
+  it('rejects description longer than 500 characters before GraphQL request', async () => {
+    await expect(
+      createPost({
+        description: 'a'.repeat(501),
+        fileIds: ['file-1'],
+      }),
+    ).rejects.toThrow('Post description must be 500 characters or fewer.')
+
+    expect(apolloMocks.mutate).not.toHaveBeenCalled()
   })
 
   it('throws when createPost returns no payload', async () => {
