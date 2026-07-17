@@ -81,7 +81,8 @@ Responsibilities:
 
 Responsibilities:
 
-- показать final preview;
+- показать final preview только из `image.exported.objectUrl`; если export еще не готов, показать
+  placeholder вместо `previewUrl`;
 - собрать caption/hashtags UI;
 - валидировать description max length: `500` characters;
 - show disabled publish state when `selectCanPublish` is false;

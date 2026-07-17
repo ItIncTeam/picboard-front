@@ -18,13 +18,19 @@ export type PublicationStepProps = {
 }
 
 const CAPTION_MAX_LENGTH_ERROR = `Maximum number of characters ${CREATE_POST_CAPTION_MAX_LENGTH}`
+const EXPORT_PREVIEW_NOT_READY_MESSAGE = 'Final preview is not ready'
+const NO_IMAGES_PREVIEW_MESSAGE = 'Add and export images to preview publication.'
 
 function getPublicationPreviewUrl(image: CreatePostImage | undefined): string | undefined {
-  if (!image) {
-    return undefined
+  return image?.exported?.objectUrl
+}
+
+function getPreviewPlaceholderMessage(images: CreatePostImage[]): string {
+  if (images.length === 0) {
+    return NO_IMAGES_PREVIEW_MESSAGE
   }
 
-  return image.exported?.objectUrl ?? image.previewUrl
+  return EXPORT_PREVIEW_NOT_READY_MESSAGE
 }
 
 export function PublicationStep({ caption, images, onCaptionChange }: PublicationStepProps) {
@@ -66,10 +72,12 @@ export function PublicationStep({ caption, images, onCaptionChange }: Publicatio
             unoptimized
           />
         ) : (
-          <p className={styles.previewPlaceholder}>Add and export images to preview publication.</p>
+          <p className={styles.previewPlaceholder} role="status">
+            {getPreviewPlaceholderMessage(images)}
+          </p>
         )}
 
-        {hasMultipleImages && activePreviewUrl && (
+        {hasMultipleImages && (
           <>
             <div className={styles.navigationWrapper}>
               <IconButton
@@ -111,7 +119,6 @@ export function PublicationStep({ caption, images, onCaptionChange }: Publicatio
             classNameLabel={styles.descriptionLabel}
             error={isCaptionOverLimit ? CAPTION_MAX_LENGTH_ERROR : null}
             label="Add publication descriptions"
-            maxLength={CREATE_POST_CAPTION_MAX_LENGTH}
             onChange={(event) => onCaptionChange(event.target.value)}
             placeholder="Text-area"
             value={caption}

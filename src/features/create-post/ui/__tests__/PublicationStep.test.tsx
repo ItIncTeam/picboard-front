@@ -30,7 +30,7 @@ vi.mock('@/shared/ui/icon-button', () => ({
 
 vi.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt }: { alt: string }) => <img alt={alt} />,
+  default: ({ alt, src }: { alt: string; src: string }) => <img alt={alt} src={src} />,
 }))
 
 type RenderResult = {
@@ -55,6 +55,16 @@ function createExportedImage(id: string): CreatePostImage {
         lastModified: 1_700_000_000_000,
       },
     },
+  }
+}
+
+function createImageWithoutExport(id: string): CreatePostImage {
+  return {
+    id,
+    name: `${id}.jpg`,
+    aspectRatio: 'original',
+    filter: 'normal',
+    previewUrl: `blob:${id}`,
   }
 }
 
@@ -116,11 +126,26 @@ describe('PublicationStep', () => {
 
     mountedRoots.push(view.root)
 
-    expect(view.container.querySelector('img[alt="image-1.jpg"]')).not.toBeNull()
+    const previewImage = view.container.querySelector('img[alt="image-1.jpg"]')
+
+    expect(previewImage).not.toBeNull()
+    expect(previewImage?.getAttribute('src')).toBe('blob:image-1-exported')
     expect(view.container.querySelector('textarea')?.value).toBe('Initial caption')
     expect(view.container.textContent).toContain(
       `${'Initial caption'.length}/${CREATE_POST_CAPTION_MAX_LENGTH}`,
     )
+  })
+
+  it('shows placeholder instead of original preview when exported image is missing', () => {
+    const view = renderPublicationStep({
+      images: [createImageWithoutExport('image-1')],
+    })
+
+    mountedRoots.push(view.root)
+
+    expect(view.container.querySelector('img')).toBeNull()
+    expect(view.container.textContent).toContain('Final preview is not ready')
+    expect(view.container.textContent).not.toContain('blob:image-1')
   })
 
   it('calls onCaptionChange when description is edited', () => {
@@ -158,7 +183,15 @@ describe('PublicationStep', () => {
 
     mountedRoots.push(view.root)
 
+    const textarea = view.container.querySelector('textarea')
+    const errorMessage = view.container.querySelector('[role="alert"]')
+
     expect(view.container.textContent).toContain(
+      `Maximum number of characters ${CREATE_POST_CAPTION_MAX_LENGTH}`,
+    )
+    expect(textarea?.getAttribute('aria-invalid')).toBe('true')
+    expect(textarea?.getAttribute('aria-describedby')).toBe(errorMessage?.id)
+    expect(errorMessage?.textContent).toBe(
       `Maximum number of characters ${CREATE_POST_CAPTION_MAX_LENGTH}`,
     )
   })
@@ -184,5 +217,39 @@ describe('PublicationStep', () => {
 
     expect(view.container.querySelector('button[aria-label="Previous image"]')).toBeNull()
     expect(view.container.querySelector('button[aria-label="Next image"]')).toBeNull()
+  })
+
+  it('renders multiple images in state order and switches exported preview URLs', () => {
+    const view = renderPublicationStep({
+      images: [createExportedImage('image-1'), createExportedImage('image-2')],
+    })
+
+    mountedRoots.push(view.root)
+
+    const paginationButtons = view.container.querySelectorAll('button[aria-label^="Image "]')
+
+    expect(paginationButtons).toHaveLength(2)
+    expect(paginationButtons[0]?.getAttribute('aria-label')).toBe('Image 1')
+    expect(paginationButtons[1]?.getAttribute('aria-label')).toBe('Image 2')
+
+    const getPreviewSrc = () => view.container.querySelector('img')?.getAttribute('src')
+
+    expect(getPreviewSrc()).toBe('blob:image-1-exported')
+    expect(getPreviewSrc()).not.toBe('blob:image-1')
+
+    act(() => {
+      view.container
+        .querySelector('button[aria-label="Next image"]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    expect(getPreviewSrc()).toBe('blob:image-2-exported')
+    expect(getPreviewSrc()).not.toBe('blob:image-2')
+
+    act(() => {
+      paginationButtons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    expect(getPreviewSrc()).toBe('blob:image-1-exported')
   })
 })
