@@ -81,7 +81,8 @@ Responsibilities:
 
 Responsibilities:
 
-- показать final preview;
+- показать final preview только из `image.exported.objectUrl`; если export еще не готов, показать
+  placeholder вместо `previewUrl`;
 - собрать caption/hashtags UI;
 - валидировать description max length: `500` characters;
 - show disabled publish state when `selectCanPublish` is false;
@@ -341,23 +342,21 @@ Follow-up work:
 
 ## Current skeleton behavior
 
-Current crop, filters and publication UI skeletons may show step placeholders, but must not:
+`FiltersStep` may still show a step placeholder, but must not:
 
 - add a separate `clientUploadId` field instead of using `CreatePostImage.id`;
 - match upload descriptors, completion payloads or ready file ids by array index;
 - persist draft;
-- claim upload/crop/filter is production-ready;
+- claim filters/export is production-ready;
 - add dependencies outside dedicated dependency PRs.
 
-Upload UI and the default publish pipeline are implemented. Crop/filter/export and final
-publication UI are still follow-up work.
+Upload UI, crop UI, publication UI and the default publish pipeline are implemented. Filters/export
+remain follow-up work.
 
 ## Known limitations
 
-- Crop/filter/export is not production-ready and still must produce `image.exported.file` before
-  the default publish path can complete from normal UI usage.
-- The publication step is still a boundary/skeleton; caption controls and final preview remain
-  follow-up UI work.
+- Filters/export is not production-ready and still must produce `image.exported.file` before the
+  default publish path can complete from normal UI usage after the filters step.
 - Cache/refetch behavior after successful `createPost` is not defined.
 - Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
   previously uploaded files should be completed, retried or cleaned up.

@@ -127,11 +127,12 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   `clientUploadId`, uploads `image.exported.file` via storage `PUT`, requires `READY`, and
   preserves `state.images` order for returned `fileIds`.
 - Default publish integration in `CreatePostFlow` with publishing and error states.
+- `PublicationStep` UI with exported image preview, caption textarea, character counter and
+  description validation.
 
 ### In Progress
 
 - Crop and filters implementation, including final edited image export.
-- Publication step UI beyond the shell boundary: caption controls and final preview.
 - Posts profile/details/feed composition on top of existing post display skeletons.
 
 ### Not Started
@@ -142,10 +143,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 ## Known limitations
 
-- Crop/filter/export is not production-ready yet; current publish path requires
-  `image.exported.file`, so full end-to-end Create Post still depends on the export PRs.
-- `PublicationStep` is still a boundary/skeleton. The default publish pipeline exists in
-  `CreatePostFlow`, but final caption/preview UI remains follow-up work.
+- Crop/filter/export is not production-ready yet; full end-to-end Create Post still depends on
+  the filters export PR.
 - Apollo cache/refetch behavior after create, update and delete is not defined.
 - Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
