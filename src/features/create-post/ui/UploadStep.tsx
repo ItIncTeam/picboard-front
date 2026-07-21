@@ -184,13 +184,14 @@ export function UploadStep({
           </div>
 
           <ul className={styles.previewList} aria-label="Selected photos">
-            {images.map((image) => {
+            {images.map((image, index) => {
               const isActive = image.id === activeImage?.id
 
               return (
                 <li key={image.id} className={styles.previewItem} data-active={isActive}>
                   <button
-                    aria-label={`Select ${image.name}`}
+                    aria-label={`Select image ${index + 1}: ${image.name}`}
+                    aria-pressed={isActive}
                     className={styles.previewButton}
                     onClick={() => onSetActiveImage(image.id)}
                     type="button"

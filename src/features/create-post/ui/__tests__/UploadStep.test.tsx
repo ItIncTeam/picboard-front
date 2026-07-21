@@ -313,7 +313,7 @@ describe('UploadStep', () => {
 
     mountedRoots.push(view)
 
-    clickButton(view.container, 'Select selectable.jpg')
+    clickButton(view.container, 'Select image 1: selectable.jpg')
 
     expect(view.onSetActiveImage).toHaveBeenCalledWith(image.id)
   })
@@ -357,10 +357,14 @@ describe('UploadStep', () => {
 
     mountedRoots.push(view)
 
-    const activeButton = view.container.querySelector('[aria-label="Select active.jpg"]')
-    const inactiveButton = view.container.querySelector('[aria-label="Select inactive.jpg"]')
+    const activeButton = view.container.querySelector('[aria-label="Select image 1: active.jpg"]')
+    const inactiveButton = view.container.querySelector(
+      '[aria-label="Select image 2: inactive.jpg"]',
+    )
 
     expect(activeButton?.closest('li')?.getAttribute('data-active')).toBe('true')
     expect(inactiveButton?.closest('li')?.getAttribute('data-active')).toBe('false')
+    expect(activeButton?.getAttribute('aria-pressed')).toBe('true')
+    expect(inactiveButton?.getAttribute('aria-pressed')).toBe('false')
   })
 })
