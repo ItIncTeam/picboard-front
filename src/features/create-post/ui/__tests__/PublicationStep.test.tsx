@@ -65,7 +65,10 @@ type RenderResult = {
   root: Root
 }
 
-function createExportedImage(id: string, overrides: Partial<CreatePostImage> = {}): CreatePostImage {
+function createExportedImage(
+  id: string,
+  overrides: Partial<CreatePostImage> = {},
+): CreatePostImage {
   return {
     id,
     name: `${id}.jpg`,

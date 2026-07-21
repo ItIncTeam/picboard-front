@@ -295,6 +295,13 @@ function clickButton(button: HTMLButtonElement) {
   })
 }
 
+function enableButtonForProgrammaticClick(button: HTMLButtonElement) {
+  Object.defineProperty(button, 'disabled', {
+    configurable: true,
+    value: false,
+  })
+}
+
 async function clickButtonAndFlush(button: HTMLButtonElement) {
   await act(async () => {
     button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -580,6 +587,50 @@ describe('CreatePostFlow', () => {
 
     expect(getButton(view.container, 'Back').disabled).toBe(true)
     expect(getButton(view.container, 'Next').disabled).toBe(true)
+  })
+
+  it('does not go back while publishing', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    const backButton = getButton(view.container, 'Back')
+
+    enableButtonForProgrammaticClick(backButton)
+    clickButton(backButton)
+
+    expect(getHeaderTitle(view.container)).toBe('Publication')
+    expect(stepBoundaries.publication?.isPublishing).toBe(true)
+  })
+
+  it('does not go next while publishing', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'crop',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    const nextButton = getButton(view.container, 'Next')
+
+    enableButtonForProgrammaticClick(nextButton)
+    clickButton(nextButton)
+
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
+    expect(stepBoundaries.crop?.activeImage).toEqual(image)
   })
 
   it('renders publish action for publication step', () => {

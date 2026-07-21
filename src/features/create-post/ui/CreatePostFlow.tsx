@@ -93,6 +93,22 @@ export function CreatePostFlow({
     dispatch({ type: 'setCaption', caption })
   }
 
+  const handleBack = () => {
+    if (state.isPublishing) {
+      return
+    }
+
+    dispatch({ type: 'goBack' })
+  }
+
+  const handleNext = () => {
+    if (state.isPublishing) {
+      return
+    }
+
+    dispatch({ type: 'goNext' })
+  }
+
   const handlePublish = async () => {
     if (!canPublish || state.isPublishing) {
       return
@@ -145,8 +161,8 @@ export function CreatePostFlow({
             isFirstStep,
             isLastStep,
             isPublishing: state.isPublishing,
-            onBack: () => dispatch({ type: 'goBack' }),
-            onNext: () => dispatch({ type: 'goNext' }),
+            onBack: handleBack,
+            onNext: handleNext,
             onPublish: handlePublish,
             step: state.step,
           })}
