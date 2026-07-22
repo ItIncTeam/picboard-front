@@ -213,10 +213,10 @@ Frontend decision:
 `/auth/callback?code=<BACKEND_CODE>`. Frontend does not exchange Google/GitHub provider codes
 directly and does not send provider state, PKCE verifier, client id, scope, or refresh token.
 
-Backend-owned OAuth start URLs:
+Backend-owned OAuth start URLs are built from `NEXT_PUBLIC_GRAPHQL_ENDPOINT`:
 
-- Google: `https://users.picboard.space/api/v1/auth/google/start`
-- GitHub: `https://users.picboard.space/api/v1/auth/github/login`
+- Google: `${NEXT_PUBLIC_GRAPHQL_ENDPOINT}/auth/google/start`
+- GitHub: `${NEXT_PUBLIC_GRAPHQL_ENDPOINT}/auth/github/login`
 
 Backend redirects production provider flows to `https://picboard.space/auth/callback`. Local
 frontend origin is also configured, so local verification should use
