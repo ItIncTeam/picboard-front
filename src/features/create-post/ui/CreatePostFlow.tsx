@@ -68,7 +68,10 @@ export function CreatePostFlow({
   const canGoNext = selectCanGoNext(state)
   const canPublish = selectCanPublish(state)
   const hasPendingFilterExport = selectHasPendingFilterExport(state)
-  const canGoBack = !isFirstStep && !(state.step === 'filters' && hasPendingFilterExport)
+  const canGoBack =
+    !isFirstStep &&
+    !(state.step === 'crop' && isCropNextExporting) &&
+    !(state.step === 'filters' && hasPendingFilterExport)
   const activeImage = selectActiveImage(state)
   const isUploadHeader = state.step === 'upload' && state.images.length === 0
   const flowSize = state.step === 'filters' || state.step === 'publication' ? 'wide' : 'compact'

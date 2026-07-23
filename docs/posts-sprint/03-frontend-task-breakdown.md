@@ -272,22 +272,24 @@ Goal: implement filters, final canvas export and exported object URL lifecycle.
 
 Role: Filters/Canvas Export Owner.
 
-Status: In Progress. The `FiltersStep` boundary/skeleton exists, but filters UI and canvas export
-are not implemented.
+Status: Implemented for current MVP. `FiltersStep` renders the Figma-style preview/grid, applies
+CSS preview filters, exports through Canvas into `image.exported`, uses stable `image.filterBase`,
+blocks filter buttons during pending export and reports pending export state to the flow.
 
 Checklist:
 
-- [x] Добавить `FiltersStep` boundary/skeleton.
-- [ ] Реализовать wide filters layout из Figma: preview слева, filter grid справа.
-- [ ] Определить минимальный набор filters для skeleton/MVP.
-- [ ] Применять filters к preview.
-- [ ] Экспортировать final image через canvas/blob.
-- [ ] Сохранять final edited `File` in `image.exported`.
-- [ ] Ensure exported files can map to backend `MimeType.JPEG` or `MimeType.PNG`.
-- [ ] Create `exported.objectUrl` only for exported blobs.
-- [ ] Revoke `exported.objectUrl` when replaced, reset or unmounted.
-- [ ] Проверить, что exported image соответствует preview.
-- [x] Не отправлять файлы на backend из `FiltersStep`; backend upload is owned by the publish
+- [x] Add `FiltersStep` boundary/skeleton.
+- [x] Implement wide filters layout from Figma: preview left, filter grid right.
+- [x] Define minimal filters set for skeleton/MVP.
+- [x] Apply filters to preview.
+- [x] Export final image through canvas/blob.
+- [x] Save final edited `File` in `image.exported`.
+- [x] Ensure exported files can map to backend `MimeType.JPEG` or `MimeType.PNG`.
+- [x] Create `exported.objectUrl` only for exported blobs.
+- [x] Revoke `exported.objectUrl` when replaced, reset or unmounted.
+- [x] Block filter buttons while export is pending.
+- [ ] Verify exported image matches preview.
+- [x] Do not send files to backend from `FiltersStep`; backend upload is owned by the publish
       pipeline.
 
 Dependencies:
@@ -295,12 +297,12 @@ Dependencies:
 - Needs Dev 1 state callbacks and publish boundary.
 - Needs Dev 2 selected files and previews.
 - Needs Dev 3 crop output.
-- Backend integration starts after UI PR merge.
+- Backend integration starts from the publish pipeline, not from `FiltersStep`.
 
 Parallel work:
 
 - Filters UI can start with a local fixture.
-- Final canvas export integration waits for Dev 3 crop output.
+- Final canvas export uses Dev 3 crop output through `image.exported` / `image.filterBase`.
 
 ## Dev 1 Backend Integration Follow-Up
 

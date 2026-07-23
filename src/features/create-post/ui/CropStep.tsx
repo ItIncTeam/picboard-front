@@ -2,7 +2,7 @@
 
 import type { AspectRatio, CreatePostImage } from '@/features/create-post'
 import type { ChangeEvent } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import type { CropperRef } from 'react-advanced-cropper'
 import { Cropper } from 'react-advanced-cropper'
@@ -27,6 +27,8 @@ const ACCEPTED_IMAGE_TYPES_INPUT_VALUE = ACCEPTED_IMAGE_TYPES.join(',')
 const MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
 const MAX_IMAGES_COUNT = 10
 const MAX_VISIBLE_IMAGES = 3
+
+type CropExportStatus = 'exported' | 'failed' | 'stale'
 
 function getAvailableSlotsMessage(availableSlots: number): string {
   return availableSlots === 1
@@ -230,31 +232,66 @@ export function CropStep({
 
   const cropperRef = useRef<CropperRef>(null)
   const handledNextExportRequestIdRef = useRef(0)
+  const activeImageIdRef = useRef<string | null>(activeImage?.id ?? null)
+  const cropExportRequestIdRef = useRef(0)
+  const isMountedRef = useRef(true)
+
+  useLayoutEffect(() => {
+    activeImageIdRef.current = activeImage?.id ?? null
+    cropExportRequestIdRef.current += 1
+  }, [activeImage?.id])
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+      cropExportRequestIdRef.current += 1
+    }
+  }, [])
 
   const exportCrop = useCallback(
     async (
       ratio: AspectRatio,
       onExported: (imageId: string, exported: CreatePostImage['exported']) => void,
-    ): Promise<boolean> => {
-      if (!activeImage?.id || !cropperRef.current) return false
+    ): Promise<CropExportStatus> => {
+      if (!activeImage?.id || !cropperRef.current) return 'failed'
+
+      const imageId = activeImage.id
+      const requestId = cropExportRequestIdRef.current + 1
+      const isCurrentExport = () => {
+        return (
+          isMountedRef.current &&
+          activeImageIdRef.current === imageId &&
+          cropExportRequestIdRef.current === requestId
+        )
+      }
+
+      cropExportRequestIdRef.current = requestId
 
       const canvas = cropperRef.current.getCanvas()
-      if (!canvas) return false
+      if (!canvas) return 'failed'
 
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob(resolve, 'image/jpeg', 0.92)
       })
 
-      if (!blob) return false
+      if (!blob) return isCurrentExport() ? 'failed' : 'stale'
+      if (!isCurrentExport()) return 'stale'
 
       const fileName = activeImage.file?.name ?? activeImage.name ?? 'cropped-image.jpg'
       const file = new File([blob], fileName, {
         type: blob.type || activeImage.fileInfo?.type || 'image/jpeg',
         lastModified: Date.now(),
       })
+      const objectUrl = URL.createObjectURL(blob)
+
+      if (!isCurrentExport()) {
+        URL.revokeObjectURL(objectUrl)
+
+        return 'stale'
+      }
 
       const exported: NonNullable<CreatePostImage['exported']> = {
-        objectUrl: URL.createObjectURL(blob),
+        objectUrl,
         file,
         fileInfo: {
           name: file.name,
@@ -264,10 +301,17 @@ export function CropStep({
         },
       }
 
-      onAspectRatioChange(activeImage.id, ratio)
-      onExported(activeImage.id, exported)
+      onAspectRatioChange(imageId, ratio)
 
-      return true
+      if (!isCurrentExport()) {
+        URL.revokeObjectURL(objectUrl)
+
+        return 'stale'
+      }
+
+      onExported(imageId, exported)
+
+      return 'exported'
     },
     [activeImage, onAspectRatioChange],
   )
@@ -288,8 +332,8 @@ export function CropStep({
 
     handledNextExportRequestIdRef.current = nextExportRequestId
 
-    void exportCrop(selectedRatio, onNextImageExported ?? onImageExported).then((isExported) => {
-      if (!isExported) {
+    void exportCrop(selectedRatio, onNextImageExported ?? onImageExported).then((status) => {
+      if (status === 'failed') {
         onNextExportFailed?.()
       }
     })

@@ -74,6 +74,10 @@ export function selectCanGoNext(state: CreatePostState): boolean {
     return false
   }
 
+  if (state.step === 'filters') {
+    return selectHasAllImagesExported(state)
+  }
+
   return selectHasImages(state)
 }
 

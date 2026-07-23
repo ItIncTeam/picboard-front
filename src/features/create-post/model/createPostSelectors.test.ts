@@ -373,12 +373,32 @@ describe('createPostSelectors', () => {
     ).toBe(true)
   })
 
-  it('returns true for next from filters when there are images', () => {
+  it('returns false for next from filters when an image is not exported', () => {
     expect(
       selectCanGoNext({
         ...createPostInitialState,
         step: 'filters',
         images: [createImage()],
+      }),
+    ).toBe(false)
+  })
+
+  it('returns false for next from filters when at least one image is not exported', () => {
+    expect(
+      selectCanGoNext({
+        ...createPostInitialState,
+        step: 'filters',
+        images: [createExportedImage(), createImage('image-2')],
+      }),
+    ).toBe(false)
+  })
+
+  it('returns true for next from filters when all images are exported', () => {
+    expect(
+      selectCanGoNext({
+        ...createPostInitialState,
+        step: 'filters',
+        images: [createExportedImage(), createExportedImage({ id: 'image-2' })],
       }),
     ).toBe(true)
   })

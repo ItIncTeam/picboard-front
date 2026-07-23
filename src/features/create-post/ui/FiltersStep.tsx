@@ -71,6 +71,7 @@ function ActiveFiltersStep({
   const [selectedFilter, setSelectedFilter] = useState<ImageFilter>(activeImage.filter)
   const exportAbortControllerRef = useRef<AbortController | null>(null)
   const exportRequestIdRef = useRef(0)
+  const isExportingRef = useRef(false)
   const isMountedRef = useRef(true)
   const baseFile = baseExport?.file ?? null
   const basePreviewUrl = baseExport?.objectUrl ?? null
@@ -78,6 +79,7 @@ function ActiveFiltersStep({
   useEffect(() => {
     return () => {
       isMountedRef.current = false
+      isExportingRef.current = false
       exportAbortControllerRef.current?.abort()
       exportRequestIdRef.current += 1
       onFilterExportingChange(activeImage.id, false)
@@ -85,7 +87,8 @@ function ActiveFiltersStep({
   }, [activeImage.id, onFilterExportingChange])
 
   const handleFilterSelect = (filter: ImageFilter) => {
-    exportAbortControllerRef.current?.abort()
+    if (isExportingRef.current) return
+
     setSelectedFilter(filter)
     setExportError(null)
 
@@ -99,6 +102,7 @@ function ActiveFiltersStep({
     onFilterBaseChange(activeImage.id, activeImage.filterBase ?? baseExport)
     onFilterExportingChange(activeImage.id, true)
     setExportingFilter(filter)
+    isExportingRef.current = true
 
     const abortController = new AbortController()
     const requestId = exportRequestIdRef.current + 1
@@ -113,12 +117,14 @@ function ActiveFiltersStep({
       onExportFailed: () => {
         setSelectedFilter(activeImage.filter)
         setExportingFilter(null)
+        isExportingRef.current = false
         onFilterExportingChange(activeImage.id, false)
       },
       onExported: onImageExported,
       onFilterChange,
       onFilterExported: () => {
         setExportingFilter(null)
+        isExportingRef.current = false
         onFilterExportingChange(activeImage.id, false)
       },
       requestId,
@@ -169,6 +175,7 @@ function ActiveFiltersStep({
               aria-pressed={isSelected}
               className={styles.filterButton}
               data-selected={isSelected ? 'true' : 'false'}
+              disabled={exportingFilter !== null}
               key={filter}
               onClick={() => handleFilterSelect(filter)}
               type="button"

@@ -272,6 +272,7 @@ describe('FiltersStep', () => {
 
     const view = renderFiltersStep({ activeImage: image })
     const moonButton = getButton(view.container, 'Moon')
+    const larkButton = getButton(view.container, 'Lark')
 
     mountedRoots.push(view)
 
@@ -280,9 +281,15 @@ describe('FiltersStep', () => {
       await Promise.resolve()
     })
 
-    expect(moonButton.disabled).toBe(false)
+    expect(moonButton.disabled).toBe(true)
+    expect(larkButton.disabled).toBe(true)
     expect(moonButton.textContent).toBe('Moon')
     expect(view.container.querySelector('[role="status"]')?.textContent).toBe('Applying filter...')
+    expect(createImageBitmapMock).toHaveBeenCalledTimes(1)
+
+    await clickButton(larkButton)
+
+    expect(createImageBitmapMock).toHaveBeenCalledTimes(1)
 
     await act(async () => {
       pendingBlobCallback?.(new Blob(['filtered'], { type: 'image/jpeg' }))

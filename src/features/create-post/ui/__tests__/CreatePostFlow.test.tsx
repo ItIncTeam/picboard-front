@@ -621,6 +621,26 @@ describe('CreatePostFlow', () => {
     expect(getButton(view.container, 'Back').disabled).toBe(false)
   })
 
+  it('keeps user on filters until every image has a final export', () => {
+    const firstImage = createExportedImage({ id: 'image-1' })
+    const secondImage = createImage({ id: 'image-2' })
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: firstImage.id,
+        images: [firstImage, secondImage],
+        step: 'filters',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    const nextButton = getButton(view.container, 'Next')
+
+    expect(nextButton.disabled).toBe(true)
+    clickButton(nextButton)
+    expect(getHeaderTitle(view.container)).toBe('Filters')
+  })
+
   it('passes upload data and callbacks to UploadStep', () => {
     const image = createImage()
     const view = renderCreatePostFlow({
@@ -945,6 +965,11 @@ describe('CreatePostFlow', () => {
     expect(getHeaderTitle(view.container)).toBe('Cropping')
     expect(stepBoundaries.crop?.nextExportRequestId).toBe(1)
     expect(getButton(view.container, 'Next').disabled).toBe(true)
+    expect(getButton(view.container, 'Back').disabled).toBe(true)
+
+    clickButton(getButton(view.container, 'Back'))
+
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
 
     const exported = createExportedPayload('blob:cropped-before-filters')
 

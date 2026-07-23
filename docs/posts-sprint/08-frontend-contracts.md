@@ -158,6 +158,9 @@ type CropStepProps = {
   activeImage: CreatePostImage | null
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  nextExportRequestId?: number
+  onNextImageExported?: (imageId: string, exported: CreatePostImage['exported']) => void
+  onNextExportFailed?: () => void
 }
 
 type FiltersStepProps = {
@@ -241,12 +244,12 @@ Purpose: display/original name for selected image.
 
 Owner: Dev 2
 
-Used by: Upload validation, Crop, Filters
+Used by: Upload validation, Crop
 
 Changed by: Dev 2 during image creation
 
-Purpose: original selected file. Backend upload must use `image.exported.file`, not this original
-file, after crop/filter export exists.
+Purpose: original selected file. After Crop, Filters must not use this original file; they must use
+`image.exported.file` only. Backend upload must use `image.exported.file`, not this original file.
 
 ### `fileInfo`
 
@@ -262,12 +265,13 @@ Purpose: serializable metadata for the original file: name, size, type and lastM
 
 Owner: Dev 2
 
-Used by: Upload preview, Crop, Filters
+Used by: Upload preview, Crop
 
 Changed by: Dev 2 during object URL lifecycle
 
-Purpose: local preview URL for the original selected image. Must be revoked on remove, reset and
-unmount.
+Purpose: local preview URL for the original selected image. After Crop, Filters must not use this
+original preview URL; they must use `image.exported.objectUrl` only. Must be revoked on remove,
+reset and unmount.
 
 ### `aspectRatio`
 
@@ -281,22 +285,22 @@ Purpose: per-image crop aspect ratio. Supported values are `original`, `1:1`, `4
 
 ### `filter`
 
-Owner: Dev 3
+Owner: Dev 5
 
 Used by: Filters, export pipeline
 
-Changed by: Dev 3 through `FiltersStepProps.onFilterChange`
+Changed by: Dev 5 through `FiltersStepProps.onFilterChange`
 
 Purpose: per-image filter preset. Current presets are `normal`, `clarendon`, `lark`, `gingham`,
 `moon`.
 
 ### `exported`
 
-Owner: Dev 3
+Owner: Dev 3 / Dev 5
 
 Consumed by: Upload Pipeline, Publication, selectors
 
-Changed by: Dev 3 through `CropStepProps.onImageExported` or
+Changed by: Dev 3 through `CropStepProps.onImageExported` or Dev 5 through
 `FiltersStepProps.onImageExported`
 
 Purpose: final edited artifact after crop/filter processing. Upload pipeline starts from
@@ -304,47 +308,48 @@ Purpose: final edited artifact after crop/filter processing. Upload pipeline sta
 
 ### `exported.file`
 
-Owner: Dev 3
+Owner: Dev 3 / Dev 5
 
 Consumed by: Upload Pipeline
 
-Changed by: Dev 3 during export
+Changed by: crop or filter export
 
 Purpose: final `File` sent to storage through `initiateUploadBatch`, storage `PUT`,
 `completeUpload` and `createPost`.
 
 ### `exported.objectUrl`
 
-Owner: Dev 3
+Owner: Dev 3 / Dev 5
 
 Consumed by: Publication preview
 
-Changed by: Dev 3 during export
+Changed by: crop or filter export
 
 Purpose: local preview URL for exported image. Must be revoked when replaced, reset or unmounted.
 
 ### `exported.fileInfo`
 
-Owner: Dev 3
+Owner: Dev 3 / Dev 5
 
 Consumed by: Upload Pipeline
 
-Changed by: Dev 3 during export
+Changed by: crop or filter export
 
 Purpose: serializable metadata for the exported file.
 
 ### `filterBase`
 
-Owner: Dev 3
+Owner: Dev 5
 
 Consumed by: Filters
 
 Changed by: Filters through `FiltersStepProps.onFilterBaseChange`, and cleared when crop aspect
 ratio changes.
 
-Purpose: stable image source for filter processing. It represents the crop result (or the original
-image when crop output is not present yet). Filters must always render/export from this base, never
-from a previously filtered `exported.file`; `normal` exports this base with no filter.
+Purpose: stable image source for filter processing. After Crop it must be created from
+`image.exported`, which is the crop result. Filters must never fall back to original `image.file` or
+`previewUrl`, and must never stack on a previously filtered `exported.file`; `normal` exports this
+base with no filter.
 
 ### `upload`
 

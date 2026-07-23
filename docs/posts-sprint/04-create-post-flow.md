@@ -71,11 +71,14 @@ Responsibilities:
 
 Responsibilities:
 
-- показать preview с выбранными фильтрами;
-- использовать Figma layout: preview слева, filters grid справа на desktop;
-- хранить filter settings per image;
-- не менять original file;
-- подготовить image processing pipeline для export.
+- Show preview with the selected filter.
+- Use Figma layout: preview on the left, filters grid on the right on desktop.
+- Store filter settings per image.
+- Export only from stable `image.filterBase`, not from original `image.file` or previous filtered
+  `image.exported`.
+- Write the filtered final `File` to `image.exported`.
+- Show loading state and block filter buttons while filter export is pending.
+- Ignore stale async export results and revoke stale object URLs immediately.
 
 ## Step: publication
 
@@ -241,9 +244,10 @@ previous upload state.
 - `upload -> crop`: currently allowed when at least one image exists.
 - `crop -> filters`: allowed when at least one image exists. Pressing `Next` on the crop step
   requests a current crop canvas export from `CropStep`; `CreatePostFlow` stores the exported file
-  in `image.exported` and moves to filters only after that export succeeds.
-- `filters -> publication`: allowed when at least one image exists and no filter canvas export is
-  pending.
+  in `image.exported` and moves to filters only after that export succeeds. Back and Next are
+  blocked while this crop export is pending.
+- `filters -> publication`: allowed when at least one image exists, every image has a final
+  `image.exported` file, and no filter canvas export is pending.
 - `publication -> publish`: allowed when `selectCanPublish` is true: publication step, at least one
   image, all images exported, caption length up to 500, `isPublishing === false`, and no filter
   canvas export is pending. Backend integration is connected through the default publish path;
@@ -358,23 +362,28 @@ Follow-up work:
 
 - update profile/feed/main caches according to agreed API/cache strategy.
 
-## Current skeleton behavior
+## Filters behavior
 
-`FiltersStep` may still show a step placeholder, but must not:
+`FiltersStep`:
+
+- previews filters with CSS values;
+- exports the selected filter through Canvas into `image.exported`;
+- uses `image.filterBase` as the stable source so filters do not stack on previous filtered output;
+- blocks filter buttons while export is pending;
+- clears pending export state when export completes, fails or unmounts.
+
+`FiltersStep` must not:
 
 - add a separate `clientUploadId` field instead of using `CreatePostImage.id`;
 - match upload descriptors, completion payloads or ready file ids by array index;
 - persist draft;
-- claim filters/export is production-ready;
 - add dependencies outside dedicated dependency PRs.
 
-Upload UI, crop UI, publication UI and the default publish pipeline are implemented. Filters/export
-remain follow-up work.
+Upload UI, crop UI, filters UI, publication UI and the default publish pipeline are implemented.
 
 ## Known limitations
 
-- Filters/export is not production-ready and still must produce `image.exported.file` before the
-  default publish path can complete from normal UI usage after the filters step.
+- Filter export preview parity should still be verified against the final exported file.
 - Cache/refetch behavior after successful `createPost` is not defined.
 - Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
   previously uploaded files should be completed, retried or cleaned up.

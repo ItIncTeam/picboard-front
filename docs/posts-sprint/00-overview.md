@@ -129,26 +129,14 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 - Default publish integration in `CreatePostFlow` with publishing and error states.
 - `PublicationStep` UI with exported image preview, caption textarea, character counter and
   description validation.
+- `FiltersStep` UI with CSS preview, Canvas-based export into `image.exported`, stable
+  `image.filterBase`, pending export guard and filter button blocking during export.
 
 ### In Progress
 
-<<<<<<< HEAD
-
 - Upload step implementation: file selection, validation and object URL lifecycle.
 - Crop implementation and final export cleanup.
-- Filters implementation now has CSS preview and Canvas-based exported file creation, but the
-  production cropper is still pending.
-- Posts UI skeleton work for post display surfaces.
-
-<!-- - Crop and filters implementation, including final edited image export.
-- Publication step UI beyond the shell boundary: caption controls and final preview.
-- Posts profile/details/feed composition on top of existing post display skeletons. -->
-
-=======
-
-- Crop and filters implementation, including final edited image export.
 - Posts profile/details/feed composition on top of existing post display skeletons.
-  > > > > > > > origin/dev
 
 ### Not Started
 
@@ -158,8 +146,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 ## Known limitations
 
-- Crop/filter/export is not production-ready yet; full end-to-end Create Post still depends on
-  the filters export PR.
+- Crop/export polish is still in progress; filters already export final files from
+  `image.filterBase`.
 - Apollo cache/refetch behavior after create, update and delete is not defined.
 - Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
@@ -210,7 +198,7 @@ Rules:
 
 ## Roadmap To End Of Sprint
 
-1. Finish crop/filter/export: cropper integration, filter preview and final edited `File` export.
+1. Finish crop/export polish and verify filter export parity with preview.
 2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
 3. Compose post details and integrate `post(id: ID!)`.
 4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
@@ -254,5 +242,5 @@ Rules:
 ### Dev 5
 
 - Own Filters step.
-- Implement canvas export after filters.
-- Own `exported.objectUrl` lifecycle.
+- Maintain canvas export after filters.
+- Own filter export pending state and `exported.objectUrl` lifecycle.
