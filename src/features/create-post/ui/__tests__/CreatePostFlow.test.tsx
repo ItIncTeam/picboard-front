@@ -22,8 +22,11 @@ type UploadStepBoundaryProps = {
 
 type CropStepBoundaryProps = {
   activeImage: CreatePostImage | null
+  nextExportRequestId: number
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onNextExportFailed: () => void
+  onNextImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
 }
 
 type FiltersStepBoundaryProps = {
@@ -923,6 +926,34 @@ describe('CreatePostFlow', () => {
     })
 
     expect(stepBoundaries.crop?.activeImage?.exported).toBe(exported)
+  })
+
+  it('exports the current crop before moving to filters', () => {
+    const image = createImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'crop',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Next'))
+
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
+    expect(stepBoundaries.crop?.nextExportRequestId).toBe(1)
+    expect(getButton(view.container, 'Next').disabled).toBe(true)
+
+    const exported = createExportedPayload('blob:cropped-before-filters')
+
+    act(() => {
+      stepBoundaries.crop?.onNextImageExported(image.id, exported)
+    })
+
+    expect(getHeaderTitle(view.container)).toBe('Filters')
+    expect(stepBoundaries.filters?.activeImage?.exported).toBe(exported)
   })
 
   it('passes active image and filter callbacks to FiltersStep', () => {

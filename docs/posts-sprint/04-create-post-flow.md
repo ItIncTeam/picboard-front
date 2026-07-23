@@ -212,6 +212,9 @@ type CropStepProps = {
   activeImage: CreatePostImage | null
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  nextExportRequestId?: number
+  onNextImageExported?: (imageId: string, exported: CreatePostImage['exported']) => void
+  onNextExportFailed?: () => void
 }
 
 type FiltersStepProps = {
@@ -236,8 +239,9 @@ previous upload state.
 ## Step transitions
 
 - `upload -> crop`: currently allowed when at least one image exists.
-- `crop -> filters`: currently allowed when at least one image exists. Stricter crop validity can be
-  added with a selector update when real crop implementation lands.
+- `crop -> filters`: allowed when at least one image exists. Pressing `Next` on the crop step
+  requests a current crop canvas export from `CropStep`; `CreatePostFlow` stores the exported file
+  in `image.exported` and moves to filters only after that export succeeds.
 - `filters -> publication`: allowed when at least one image exists and no filter canvas export is
   pending.
 - `publication -> publish`: allowed when `selectCanPublish` is true: publication step, at least one

@@ -280,9 +280,9 @@ describe('FiltersStep', () => {
       await Promise.resolve()
     })
 
-    expect(moonButton.disabled).toBe(true)
-    expect(moonButton.textContent).toContain('Applying')
-    expect(view.container.textContent).toContain('Applying filter...')
+    expect(moonButton.disabled).toBe(false)
+    expect(moonButton.textContent).toBe('Moon')
+    expect(view.container.querySelector('[role="status"]')?.textContent).toBe('Applying filter...')
 
     await act(async () => {
       pendingBlobCallback?.(new Blob(['filtered'], { type: 'image/jpeg' }))

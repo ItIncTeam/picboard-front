@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { useState } from 'react'
 
 import {
   createPostInitialState,
   type CreatePostImage,
   type CreatePostState,
 } from '@/features/create-post'
+import { Button } from '@/shared/ui/button'
 
 import { CreatePostCloseConfirm } from './CreatePostCloseConfirm'
 import { CreatePostFlow } from './CreatePostFlow'
@@ -120,11 +122,28 @@ export const PublicationWithExportedMockImage: Story = {
 }
 
 export const CloseConfirm: Story = {
-  render: () => (
-    <CreatePostCloseConfirm
-      onDiscardAction={() => undefined}
-      onKeepEditingAction={() => undefined}
-      open
-    />
-  ),
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true)
+
+    const openConfirm = () => {
+      setIsOpen(true)
+    }
+
+    const closeConfirm = () => {
+      setIsOpen(false)
+    }
+
+    return (
+      <>
+        <Button type="button" onClick={openConfirm}>
+          Open confirm
+        </Button>
+        <CreatePostCloseConfirm
+          onDiscardAction={closeConfirm}
+          onKeepEditingAction={closeConfirm}
+          open={isOpen}
+        />
+      </>
+    )
+  },
 }

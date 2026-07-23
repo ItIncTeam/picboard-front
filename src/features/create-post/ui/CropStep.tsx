@@ -2,7 +2,7 @@
 
 import type { AspectRatio, CreatePostImage } from '@/features/create-post'
 import type { ChangeEvent } from 'react'
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { CropperRef } from 'react-advanced-cropper'
 import { Cropper } from 'react-advanced-cropper'
@@ -40,8 +40,11 @@ export type CropStepProps = {
   onSetActiveImage: (imageId: string | null) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onNextExportFailed?: () => void
+  onNextImageExported?: (imageId: string, exported: CreatePostImage['exported']) => void
   onRemoveImage: (imageId: string) => void
   onAddImages: (images: CreatePostImage[]) => void
+  nextExportRequestId?: number
 }
 
 export function CropStep({
@@ -51,7 +54,10 @@ export function CropStep({
   onAspectRatioChange,
   onRemoveImage,
   onImageExported,
+  onNextExportFailed,
+  onNextImageExported,
   onAddImages,
+  nextExportRequestId = 0,
 }: CropStepProps) {
   const [selectedRatio, setSelectedRatio] = useState<AspectRatio>('original')
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
@@ -223,41 +229,78 @@ export function CropStep({
   }
 
   const cropperRef = useRef<CropperRef>(null)
+  const handledNextExportRequestIdRef = useRef(0)
+
+  const exportCrop = useCallback(
+    async (
+      ratio: AspectRatio,
+      onExported: (imageId: string, exported: CreatePostImage['exported']) => void,
+    ): Promise<boolean> => {
+      if (!activeImage?.id || !cropperRef.current) return false
+
+      const canvas = cropperRef.current.getCanvas()
+      if (!canvas) return false
+
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/jpeg', 0.92)
+      })
+
+      if (!blob) return false
+
+      const fileName = activeImage.file?.name ?? activeImage.name ?? 'cropped-image.jpg'
+      const file = new File([blob], fileName, {
+        type: blob.type || activeImage.fileInfo?.type || 'image/jpeg',
+        lastModified: Date.now(),
+      })
+
+      const exported: NonNullable<CreatePostImage['exported']> = {
+        objectUrl: URL.createObjectURL(blob),
+        file,
+        fileInfo: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+        },
+      }
+
+      onAspectRatioChange(activeImage.id, ratio)
+      onExported(activeImage.id, exported)
+
+      return true
+    },
+    [activeImage, onAspectRatioChange],
+  )
 
   const handleCrop = async (ratio: AspectRatio = selectedRatio) => {
     setIsVisibleAspectRatio(false)
 
-    if (!activeImage?.id || !cropperRef.current) return
+    await exportCrop(ratio, onImageExported)
+  }
 
-    const canvas = cropperRef.current.getCanvas()
-    if (!canvas) return
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/jpeg', 0.92)
-    })
-
-    if (!blob) return
-
-    const fileName = activeImage.file?.name ?? activeImage.name ?? 'cropped-image.jpg'
-    const file = new File([blob], fileName, {
-      type: blob.type || activeImage.fileInfo?.type || 'image/jpeg',
-      lastModified: Date.now(),
-    })
-
-    const exported: NonNullable<CreatePostImage['exported']> = {
-      objectUrl: URL.createObjectURL(blob),
-      file,
-      fileInfo: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-      },
+  useEffect(() => {
+    if (
+      nextExportRequestId === 0 ||
+      handledNextExportRequestIdRef.current === nextExportRequestId
+    ) {
+      return
     }
 
-    onAspectRatioChange(activeImage.id, ratio)
-    onImageExported(activeImage.id, exported)
-  }
+    handledNextExportRequestIdRef.current = nextExportRequestId
+
+    void exportCrop(selectedRatio, onNextImageExported ?? onImageExported).then((isExported) => {
+      if (!isExported) {
+        onNextExportFailed?.()
+      }
+    })
+  }, [
+    nextExportRequestId,
+    exportCrop,
+    onImageExported,
+    onNextExportFailed,
+    onNextImageExported,
+    selectedRatio,
+  ])
 
   return (
     <div style={{ width: '492px' }}>

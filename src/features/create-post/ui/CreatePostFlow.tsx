@@ -55,6 +55,8 @@ export function CreatePostFlow({
 }: CreatePostFlowProps) {
   const [state, dispatch] = useReducer(createPostReducer, initialState)
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false)
+  const [cropNextExportRequestId, setCropNextExportRequestId] = useState(0)
+  const [isCropNextExporting, setIsCropNextExporting] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
 
   useCreatePostPreviewUrlCleanup(state.images)
@@ -103,6 +105,16 @@ export function CreatePostFlow({
     dispatch({ type: 'setImageExported', exported, imageId })
   }
 
+  const handleCropNextImageExported = (imageId: string, exported: CreatePostImage['exported']) => {
+    dispatch({ type: 'setImageExported', exported, imageId })
+    dispatch({ type: 'goNext' })
+    setIsCropNextExporting(false)
+  }
+
+  const handleCropNextExportFailed = () => {
+    setIsCropNextExporting(false)
+  }
+
   const handleCaptionChange = (caption: string) => {
     dispatch({ type: 'setCaption', caption })
   }
@@ -149,6 +161,17 @@ export function CreatePostFlow({
       return
     }
 
+    if (state.step === 'crop') {
+      if (isCropNextExporting) {
+        return
+      }
+
+      setIsCropNextExporting(true)
+      setCropNextExportRequestId((requestId) => requestId + 1)
+
+      return
+    }
+
     dispatch({ type: 'goNext' })
   }
 
@@ -170,7 +193,7 @@ export function CreatePostFlow({
       {isUploadHeader
         ? renderUploadHeader(handleClose)
         : renderWizardHeader({
-            canGoNext,
+            canGoNext: state.step === 'crop' ? canGoNext && !isCropNextExporting : canGoNext,
             canPublish,
             canGoBack,
             isFirstStep,
@@ -192,8 +215,11 @@ export function CreatePostFlow({
           onFilterChange: handleFilterChange,
           onFilterExportingChange: handleFilterExportingChange,
           onImageExported: handleImageExported,
+          onNextExportFailed: handleCropNextExportFailed,
+          onNextImageExported: handleCropNextImageExported,
           onRemoveImage: handleRemoveImage,
           onSetActiveImage: handleSetActiveImage,
+          nextExportRequestId: cropNextExportRequestId,
           state,
         })}
       </div>
@@ -315,8 +341,11 @@ type RenderStepArgs = {
   onFilterChange: (imageId: string, filter: ImageFilter) => void
   onFilterExportingChange: (imageId: string, isExporting: boolean) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onNextExportFailed: () => void
+  onNextImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
   onRemoveImage: (imageId: string) => void
   onSetActiveImage: (imageId: string | null) => void
+  nextExportRequestId: number
   state: CreatePostState
 }
 
@@ -329,8 +358,11 @@ function renderStep({
   onFilterChange,
   onFilterExportingChange,
   onImageExported,
+  onNextExportFailed,
+  onNextImageExported,
   onRemoveImage,
   onSetActiveImage,
+  nextExportRequestId,
   state,
 }: RenderStepArgs) {
   switch (state.step) {
@@ -353,8 +385,11 @@ function renderStep({
           onSetActiveImage={onSetActiveImage}
           onAspectRatioChange={onAspectRatioChange}
           onImageExported={onImageExported}
+          onNextExportFailed={onNextExportFailed}
+          onNextImageExported={onNextImageExported}
           onRemoveImage={onRemoveImage}
           onAddImages={onAddImages}
+          nextExportRequestId={nextExportRequestId}
         />
       )
 

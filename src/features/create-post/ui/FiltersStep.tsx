@@ -150,6 +150,14 @@ function ActiveFiltersStep({
             Preview is not available
           </Text>
         )}
+        {exportingFilter && (
+          <div className={styles.previewLoadingOverlay} role="status">
+            <span aria-hidden className={styles.previewSpinner} />
+            <Text as="span" className={styles.previewLoadingText} size="sm">
+              Applying filter...
+            </Text>
+          </div>
+        )}
       </div>
 
       <div className={styles.controls} aria-label="Available filters">
@@ -162,8 +170,6 @@ function ActiveFiltersStep({
               className={styles.filterButton}
               data-selected={isSelected ? 'true' : 'false'}
               key={filter}
-              loading={exportingFilter === filter}
-              loadingText="Applying"
               onClick={() => handleFilterSelect(filter)}
               type="button"
               variant="outlined"
@@ -174,7 +180,7 @@ function ActiveFiltersStep({
                     alt=""
                     className={styles.filterThumbnail}
                     fill
-                    sizes="6rem"
+                    sizes="60px"
                     src={basePreviewUrl}
                     style={{ filter: imageFilterCssValues[filter] }}
                     unoptimized
@@ -187,12 +193,6 @@ function ActiveFiltersStep({
             </Button>
           )
         })}
-
-        {exportingFilter && (
-          <Text as="p" className={styles.status} role="status" size="sm">
-            Applying filter...
-          </Text>
-        )}
 
         {exportError && (
           <Text as="p" className={styles.error} role="alert" size="sm">
