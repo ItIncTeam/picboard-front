@@ -135,8 +135,19 @@
   border-color: var(--color-text-secondary);
 }
 
-.textArea:focus {
+.textArea:focus,
+.textArea:not(:placeholder-shown) {
+  color: var(--color-text-primary);
+}
+
+.textArea:hover:not(:placeholder-shown) {
+  color: var(--color-text-primary);
+}
+
+.textArea:focus,
+.textArea:focus:not(:placeholder-shown) {
   border-color: var(--color-text-primary);
+  background-color: var(--color-surface-secondary);
   outline: none;
 }
 
