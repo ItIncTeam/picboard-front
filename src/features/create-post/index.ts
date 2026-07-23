@@ -29,6 +29,7 @@ export {
   selectHasCreatePostUnsavedData,
   selectHasAllImagesExported,
   selectHasImages,
+  selectHasPendingFilterExport,
   selectImagesCount,
   selectIsReadyForUpload,
   selectReadyFileIds,
