@@ -18,6 +18,7 @@ type Props = {
 export const TextArea = ({
   asChild,
   className,
+  classNameLabel,
   label,
   error,
   onKeyUp,
@@ -27,6 +28,7 @@ export const TextArea = ({
   ...rest
 }: Props) => {
   const baseId = useId()
+  const errorId = `${baseId}-error`
   const [isKeyboardUsed, setIsKeyboardUsed] = useState(false)
 
   const Component = asChild ? Slot : 'textarea'
@@ -34,7 +36,7 @@ export const TextArea = ({
   return (
     <div className={s.root}>
       {label && (
-        <label htmlFor={baseId} className={s.label}>
+        <label htmlFor={baseId} className={clsx(s.label, classNameLabel)}>
           {label}
         </label>
       )}
@@ -47,6 +49,8 @@ export const TextArea = ({
           className,
         )}
         {...rest}
+        aria-describedby={error ? errorId : rest['aria-describedby']}
+        aria-invalid={error ? true : rest['aria-invalid']}
         id={baseId}
         onKeyUp={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
           if (e.key === 'Tab') {
@@ -63,7 +67,11 @@ export const TextArea = ({
           onBlur?.(e) // Вызов внешнего onBlur, если он передан
         }}
       />
-      {error && <span className={s.textError}>{error}</span>}
+      {error && (
+        <span className={s.textError} id={errorId} role="alert">
+          {error}
+        </span>
+      )}
     </div>
   )
 }

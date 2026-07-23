@@ -7,3 +7,5 @@ export const CREATE_POST_ASPECT_RATIOS: AspectRatio[] = ['original', '1:1', '4:5
 export const CREATE_POST_FILTERS: ImageFilter[] = ['normal', 'clarendon', 'lark', 'gingham', 'moon']
 
 export const CREATE_POST_INITIAL_STEP: CreatePostStep = 'upload'
+
+export const CREATE_POST_CAPTION_MAX_LENGTH = 500
