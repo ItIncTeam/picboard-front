@@ -602,9 +602,12 @@ describe('CreatePostFlow', () => {
     })
 
     const nextButton = getButton(view.container, 'Next')
+    const backButton = getButton(view.container, 'Back')
 
     expect(nextButton.disabled).toBe(true)
+    expect(backButton.disabled).toBe(true)
     clickButton(nextButton)
+    clickButton(backButton)
     expect(getHeaderTitle(view.container)).toBe('Filters')
 
     act(() => {
@@ -612,6 +615,7 @@ describe('CreatePostFlow', () => {
     })
 
     expect(getButton(view.container, 'Next').disabled).toBe(false)
+    expect(getButton(view.container, 'Back').disabled).toBe(false)
   })
 
   it('passes upload data and callbacks to UploadStep', () => {

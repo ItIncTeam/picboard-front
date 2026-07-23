@@ -67,7 +67,9 @@ function ActiveFiltersStep({
 }: ActiveFiltersStepProps) {
   const [baseExport] = useState<CreatePostImage['filterBase']>(() => createFilterBase(activeImage))
   const [exportError, setExportError] = useState<string | null>(null)
+  const [exportingFilter, setExportingFilter] = useState<ImageFilter | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<ImageFilter>(activeImage.filter)
+  const exportAbortControllerRef = useRef<AbortController | null>(null)
   const exportRequestIdRef = useRef(0)
   const isMountedRef = useRef(true)
   const baseFile = baseExport?.file ?? null
@@ -76,12 +78,14 @@ function ActiveFiltersStep({
   useEffect(() => {
     return () => {
       isMountedRef.current = false
+      exportAbortControllerRef.current?.abort()
       exportRequestIdRef.current += 1
       onFilterExportingChange(activeImage.id, false)
     }
   }, [activeImage.id, onFilterExportingChange])
 
   const handleFilterSelect = (filter: ImageFilter) => {
+    exportAbortControllerRef.current?.abort()
     setSelectedFilter(filter)
     setExportError(null)
 
@@ -94,6 +98,12 @@ function ActiveFiltersStep({
 
     onFilterBaseChange(activeImage.id, activeImage.filterBase ?? baseExport)
     onFilterExportingChange(activeImage.id, true)
+    setExportingFilter(filter)
+
+    const abortController = new AbortController()
+    const requestId = exportRequestIdRef.current + 1
+
+    exportAbortControllerRef.current = abortController
 
     void exportFilteredImage({
       file: baseFile,
@@ -102,19 +112,28 @@ function ActiveFiltersStep({
       isActive: () => isMountedRef.current,
       onExportFailed: () => {
         setSelectedFilter(activeImage.filter)
+        setExportingFilter(null)
         onFilterExportingChange(activeImage.id, false)
       },
       onExported: onImageExported,
       onFilterChange,
-      onFilterExported: () => onFilterExportingChange(activeImage.id, false),
-      requestId: exportRequestIdRef.current + 1,
+      onFilterExported: () => {
+        setExportingFilter(null)
+        onFilterExportingChange(activeImage.id, false)
+      },
+      requestId,
       requestIdRef: exportRequestIdRef,
       setExportError,
+      signal: abortController.signal,
     })
   }
 
   return (
-    <section className={styles.root} aria-label="Filters editor">
+    <section
+      aria-busy={exportingFilter !== null}
+      className={styles.root}
+      aria-label="Filters editor"
+    >
       <div className={styles.previewPane}>
         {basePreviewUrl ? (
           <Image
@@ -143,6 +162,8 @@ function ActiveFiltersStep({
               className={styles.filterButton}
               data-selected={isSelected ? 'true' : 'false'}
               key={filter}
+              loading={exportingFilter === filter}
+              loadingText="Applying"
               onClick={() => handleFilterSelect(filter)}
               type="button"
               variant="outlined"
@@ -167,6 +188,12 @@ function ActiveFiltersStep({
           )
         })}
 
+        {exportingFilter && (
+          <Text as="p" className={styles.status} role="status" size="sm">
+            Applying filter...
+          </Text>
+        )}
+
         {exportError && (
           <Text as="p" className={styles.error} role="alert" size="sm">
             {exportError}
@@ -189,6 +216,7 @@ type ExportFilteredImageArgs = {
   requestId: number
   requestIdRef: MutableRefObject<number>
   setExportError: (message: string | null) => void
+  signal: AbortSignal
 }
 
 async function exportFilteredImage({
@@ -203,19 +231,34 @@ async function exportFilteredImage({
   requestId,
   requestIdRef,
   setExportError,
+  signal,
 }: ExportFilteredImageArgs) {
   requestIdRef.current = requestId
+  const isCurrentExport = () => !signal.aborted && isActive() && requestIdRef.current === requestId
 
   try {
-    const filteredFile = await createFilteredFile(file, imageFilterCssValues[filter])
+    const filteredFile = await createFilteredFile(file, imageFilterCssValues[filter], signal)
 
-    if (!isActive() || requestIdRef.current !== requestId) {
+    if (!isCurrentExport()) {
       return
     }
 
     const objectUrl = URL.createObjectURL(filteredFile)
 
+    if (!isCurrentExport()) {
+      URL.revokeObjectURL(objectUrl)
+
+      return
+    }
+
     onFilterChange(imageId, filter)
+
+    if (!isCurrentExport()) {
+      URL.revokeObjectURL(objectUrl)
+
+      return
+    }
+
     onExported(imageId, {
       file: filteredFile,
       fileInfo: createFileInfo(filteredFile),
@@ -223,17 +266,21 @@ async function exportFilteredImage({
     })
     onFilterExported()
   } catch {
-    if (isActive() && requestIdRef.current === requestId) {
+    if (isCurrentExport()) {
       onExportFailed()
       setExportError('Failed to apply filter. Try another filter.')
     }
   }
 }
 
-async function createFilteredFile(file: File, filter: string): Promise<File> {
+async function createFilteredFile(file: File, filter: string, signal: AbortSignal): Promise<File> {
+  throwIfAborted(signal)
+
   const image = await createImageBitmap(file)
 
   try {
+    throwIfAborted(signal)
+
     const canvas = document.createElement('canvas')
 
     canvas.width = image.width
@@ -249,7 +296,19 @@ async function createFilteredFile(file: File, filter: string): Promise<File> {
     ctx.drawImage(image, 0, 0)
 
     const blob = await new Promise<Blob>((resolve, reject) => {
+      const handleAbort = () => reject(new DOMException('Export aborted', 'AbortError'))
+
+      signal.addEventListener('abort', handleAbort, { once: true })
+
       canvas.toBlob((result) => {
+        signal.removeEventListener('abort', handleAbort)
+
+        if (signal.aborted) {
+          reject(new DOMException('Export aborted', 'AbortError'))
+
+          return
+        }
+
         if (!result) {
           reject(new Error('Failed to export canvas'))
 
@@ -260,12 +319,20 @@ async function createFilteredFile(file: File, filter: string): Promise<File> {
       }, file.type)
     })
 
+    throwIfAborted(signal)
+
     return new File([blob], file.name, {
       lastModified: Date.now(),
       type: file.type,
     })
   } finally {
     image.close()
+  }
+}
+
+function throwIfAborted(signal: AbortSignal) {
+  if (signal.aborted) {
+    throw new DOMException('Export aborted', 'AbortError')
   }
 }
 
@@ -283,24 +350,7 @@ function createFilterBase(image: CreatePostImage): CreatePostImage['filterBase']
     return image.filterBase
   }
 
-  if (image.exported) {
-    return image.exported
-  }
-
-  if (!image.file || !image.previewUrl) {
-    return undefined
-  }
-
-  return {
-    file: image.file,
-    fileInfo: image.fileInfo ?? {
-      lastModified: image.file.lastModified,
-      name: image.file.name,
-      size: image.file.size,
-      type: image.file.type,
-    },
-    objectUrl: image.previewUrl,
-  }
+  return image.exported
 }
 
 function formatFilterName(filter: ImageFilter): string {

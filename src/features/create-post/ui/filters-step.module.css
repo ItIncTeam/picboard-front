@@ -96,7 +96,14 @@
   white-space: nowrap;
 }
 
+.status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
 .error {
+  grid-column: 1 / -1;
   margin: 0;
   color: var(--color-status-danger);
 }
@@ -110,7 +117,8 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .error {
+  .error,
+  .status {
     grid-column: 1 / -1;
   }
 }

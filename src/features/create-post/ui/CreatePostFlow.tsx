@@ -20,6 +20,7 @@ import {
   selectCanGoNext,
   selectCanPublish,
   selectHasCreatePostUnsavedData,
+  selectHasPendingFilterExport,
 } from '@/features/create-post'
 import type {
   AspectRatio,
@@ -64,6 +65,8 @@ export function CreatePostFlow({
   const isLastStep = currentStepIndex === CREATE_POST_STEPS.length - 1
   const canGoNext = selectCanGoNext(state)
   const canPublish = selectCanPublish(state)
+  const hasPendingFilterExport = selectHasPendingFilterExport(state)
+  const canGoBack = !isFirstStep && !(state.step === 'filters' && hasPendingFilterExport)
   const activeImage = selectActiveImage(state)
   const isUploadHeader = state.step === 'upload' && state.images.length === 0
   const flowSize = state.step === 'filters' || state.step === 'publication' ? 'wide' : 'compact'
@@ -133,6 +136,22 @@ export function CreatePostFlow({
     }
   }
 
+  const handleBack = () => {
+    if (!canGoBack) {
+      return
+    }
+
+    dispatch({ type: 'goBack' })
+  }
+
+  const handleNext = () => {
+    if (!canGoNext) {
+      return
+    }
+
+    dispatch({ type: 'goNext' })
+  }
+
   const handleClose = () => {
     if (selectHasCreatePostUnsavedData(state)) {
       setIsCloseConfirmOpen(true)
@@ -153,11 +172,12 @@ export function CreatePostFlow({
         : renderWizardHeader({
             canGoNext,
             canPublish,
+            canGoBack,
             isFirstStep,
             isLastStep,
             isPublishing: state.isPublishing,
-            onBack: () => dispatch({ type: 'goBack' }),
-            onNext: () => dispatch({ type: 'goNext' }),
+            onBack: handleBack,
+            onNext: handleNext,
             onPublish: handlePublish,
             step: state.step,
           })}
@@ -215,6 +235,7 @@ function renderUploadHeader(onCloseAction?: () => void) {
 }
 
 type WizardHeaderProps = {
+  canGoBack: boolean
   canGoNext: boolean
   canPublish: boolean
   isFirstStep: boolean
@@ -227,6 +248,7 @@ type WizardHeaderProps = {
 }
 
 function renderWizardHeader({
+  canGoBack,
   canGoNext,
   canPublish,
   isFirstStep,
@@ -243,6 +265,7 @@ function renderWizardHeader({
         {!isFirstStep && (
           <IconButton
             className={styles.backButton}
+            disabled={!canGoBack}
             icon={ArrowBackIcon}
             label="Back"
             onClick={onBack}

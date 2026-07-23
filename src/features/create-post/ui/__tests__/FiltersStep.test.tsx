@@ -13,6 +13,7 @@ type RenderResult = {
 
 const createImageBitmapMock = vi.fn()
 const createObjectUrlMock = vi.fn()
+const revokeObjectUrlMock = vi.fn()
 const closeImageBitmapMock = vi.fn()
 const drawImageMock = vi.fn()
 
@@ -109,6 +110,7 @@ describe('FiltersStep', () => {
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     closeImageBitmapMock.mockReset()
+    revokeObjectUrlMock.mockReset()
     createImageBitmapMock.mockResolvedValue({
       close: closeImageBitmapMock,
       height: 80,
@@ -119,6 +121,7 @@ describe('FiltersStep', () => {
     vi.stubGlobal('URL', {
       ...URL,
       createObjectURL: createObjectUrlMock,
+      revokeObjectURL: revokeObjectUrlMock,
     })
 
     const originalCreateElement = document.createElement.bind(document)
@@ -169,7 +172,8 @@ describe('FiltersStep', () => {
     const onFilterChange = vi.fn()
     const onFilterExportingChange = vi.fn()
     const onImageExported = vi.fn()
-    const image = createImage()
+    const cropped = createExported('cropped.jpg')
+    const image = createImage({ exported: cropped })
     const view = renderFiltersStep({
       activeImage: image,
       onFilterBaseChange,
@@ -185,13 +189,13 @@ describe('FiltersStep', () => {
     expect(onFilterBaseChange).toHaveBeenCalledWith(
       image.id,
       expect.objectContaining({
-        file: image.file,
-        objectUrl: image.previewUrl,
+        file: cropped.file,
+        objectUrl: cropped.objectUrl,
       }),
     )
     expect(onFilterExportingChange).toHaveBeenNthCalledWith(1, image.id, true)
     expect(onFilterChange).toHaveBeenCalledWith(image.id, 'moon')
-    expect(createImageBitmapMock).toHaveBeenCalledWith(image.file)
+    expect(createImageBitmapMock).toHaveBeenCalledWith(cropped.file)
     expect(drawImageMock).toHaveBeenCalledTimes(1)
     expect(createObjectUrlMock).toHaveBeenCalledTimes(1)
     expect(onImageExported).toHaveBeenCalledWith(
@@ -199,13 +203,94 @@ describe('FiltersStep', () => {
       expect.objectContaining({
         file: expect.any(File),
         fileInfo: expect.objectContaining({
-          name: image.file?.name,
-          type: image.file?.type,
+          name: cropped.file.name,
+          type: cropped.file.type,
         }),
         objectUrl: 'blob:filtered-output',
       }),
     )
     expect(onFilterExportingChange).toHaveBeenLastCalledWith(image.id, false)
+  })
+
+  it('does not export from original file when cropped export is missing', async () => {
+    const onFilterBaseChange = vi.fn()
+    const onFilterChange = vi.fn()
+    const onFilterExportingChange = vi.fn()
+    const onImageExported = vi.fn()
+    const image = createImage()
+    const view = renderFiltersStep({
+      activeImage: image,
+      onFilterBaseChange,
+      onFilterChange,
+      onFilterExportingChange,
+      onImageExported,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButton(getButton(view.container, 'Moon'))
+
+    expect(createImageBitmapMock).not.toHaveBeenCalled()
+    expect(onFilterBaseChange).not.toHaveBeenCalled()
+    expect(onFilterExportingChange).not.toHaveBeenCalled()
+    expect(onFilterChange).not.toHaveBeenCalled()
+    expect(onImageExported).not.toHaveBeenCalled()
+    expect(view.container.textContent).toContain('Selected image is not available for export.')
+  })
+
+  it('shows loading state while filter export is pending', async () => {
+    let pendingBlobCallback: BlobCallback | null = null
+    const image = createImage({ exported: createExported() })
+
+    restoreCreateElement()
+    restoreCreateElement = () => {}
+
+    const originalCreateElement = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const element = originalCreateElement(tagName)
+
+      if (tagName === 'canvas') {
+        Object.defineProperty(element, 'getContext', {
+          configurable: true,
+          value: () => ({
+            drawImage: drawImageMock,
+            filter: '',
+          }),
+        })
+        Object.defineProperty(element, 'toBlob', {
+          configurable: true,
+          value: (callback: BlobCallback) => {
+            pendingBlobCallback = callback
+          },
+        })
+      }
+
+      return element
+    })
+
+    restoreCreateElement = () => createElementSpy.mockRestore()
+
+    const view = renderFiltersStep({ activeImage: image })
+    const moonButton = getButton(view.container, 'Moon')
+
+    mountedRoots.push(view)
+
+    await act(async () => {
+      moonButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(moonButton.disabled).toBe(true)
+    expect(moonButton.textContent).toContain('Applying')
+    expect(view.container.textContent).toContain('Applying filter...')
+
+    await act(async () => {
+      pendingBlobCallback?.(new Blob(['filtered'], { type: 'image/jpeg' }))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(view.container.textContent).not.toContain('Applying filter...')
   })
 
   it('exports repeated filter changes from the initial base file', async () => {
@@ -270,9 +355,139 @@ describe('FiltersStep', () => {
     expect(onFilterChange).toHaveBeenCalledWith(image.id, 'normal')
   })
 
+  it('ignores an outdated filter export after a newer export starts', async () => {
+    const onFilterChange = vi.fn()
+    const onImageExported = vi.fn()
+    const pendingBlobCallbacks: BlobCallback[] = []
+    const image = createImage({ exported: createExported() })
+
+    restoreCreateElement()
+    restoreCreateElement = () => {}
+
+    const originalCreateElement = document.createElement.bind(document)
+    const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName) => {
+      const element = originalCreateElement(tagName)
+
+      if (tagName === 'canvas') {
+        Object.defineProperty(element, 'getContext', {
+          configurable: true,
+          value: () => ({
+            drawImage: drawImageMock,
+            filter: '',
+          }),
+        })
+        Object.defineProperty(element, 'toBlob', {
+          configurable: true,
+          value: (callback: BlobCallback) => {
+            pendingBlobCallbacks.push(callback)
+          },
+        })
+      }
+
+      return element
+    })
+
+    restoreCreateElement = () => createElementSpy.mockRestore()
+
+    const view = renderFiltersStep({
+      activeImage: image,
+      onFilterChange,
+      onImageExported,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButton(getButton(view.container, 'Moon'))
+    await clickButton(getButton(view.container, 'Lark'))
+
+    expect(pendingBlobCallbacks).toHaveLength(2)
+
+    await act(async () => {
+      pendingBlobCallbacks[0]?.(new Blob(['outdated'], { type: 'image/jpeg' }))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(onFilterChange).not.toHaveBeenCalledWith(image.id, 'moon')
+    expect(onImageExported).not.toHaveBeenCalled()
+
+    await act(async () => {
+      pendingBlobCallbacks[1]?.(new Blob(['fresh'], { type: 'image/jpeg' }))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(onFilterChange).toHaveBeenCalledWith(image.id, 'lark')
+    expect(onImageExported).toHaveBeenCalledTimes(1)
+  })
+
+  it('revokes object URL when export becomes stale after URL creation', async () => {
+    createObjectUrlMock
+      .mockReturnValueOnce('blob:stale-output')
+      .mockReturnValueOnce('blob:fresh-output')
+
+    const onFilterChange = vi.fn(() => {
+      getButton(view.container, 'Lark').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const onImageExported = vi.fn()
+    const image = createImage({ exported: createExported() })
+    const view = renderFiltersStep({
+      activeImage: image,
+      onFilterChange,
+      onImageExported,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButton(getButton(view.container, 'Moon'))
+
+    expect(revokeObjectUrlMock).toHaveBeenCalledWith('blob:stale-output')
+    expect(onImageExported).not.toHaveBeenCalledWith(
+      image.id,
+      expect.objectContaining({ objectUrl: 'blob:stale-output' }),
+    )
+  })
+
+  it('revokes object URL when image changes after URL creation', async () => {
+    createObjectUrlMock.mockReturnValueOnce('blob:changed-image-output')
+
+    const onFilterChange = vi.fn(() => {
+      view.root.render(
+        <FiltersStep
+          activeImage={createImage({
+            exported: createExported('second-cropped.jpg'),
+            id: 'image-2',
+          })}
+          onFilterBaseChange={vi.fn()}
+          onFilterChange={vi.fn()}
+          onFilterExportingChange={vi.fn()}
+          onImageExported={onImageExported}
+        />,
+      )
+    })
+    const onImageExported = vi.fn()
+    const image = createImage({ exported: createExported('first-cropped.jpg') })
+
+    const view = renderFiltersStep({
+      activeImage: image,
+      onFilterChange,
+      onImageExported,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButton(getButton(view.container, 'Moon'))
+
+    expect(revokeObjectUrlMock).toHaveBeenCalledWith('blob:changed-image-output')
+    expect(onImageExported).not.toHaveBeenCalledWith(
+      image.id,
+      expect.objectContaining({ objectUrl: 'blob:changed-image-output' }),
+    )
+  })
+
   it('closes image bitmap when canvas export fails', async () => {
     const onImageExported = vi.fn()
-    const image = createImage()
+    const image = createImage({ exported: createExported() })
     const view = renderFiltersStep({
       activeImage: image,
       onImageExported,
@@ -309,7 +524,7 @@ describe('FiltersStep', () => {
     const onFilterChange = vi.fn()
     const onImageExported = vi.fn()
     let pendingBlobCallback: BlobCallback | null = null
-    const image = createImage()
+    const image = createImage({ exported: createExported() })
 
     restoreCreateElement()
     restoreCreateElement = () => {}
