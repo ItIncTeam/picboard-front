@@ -1,6 +1,7 @@
 # Password Recovery Schema Findings
 
-Verified against `https://gateway.picboard.space/api/v1` on June 6, 2026.
+Verified against the now-legacy `https://users.picboard.space/api/v1` endpoint on June 6, 2026.
+The report below is historical and was not re-run against the gateway endpoint.
 
 The local `curl` run required `-k` because certificate validation failed with
 `unable to get local issuer certificate`. The schema and mutation validation
@@ -163,13 +164,13 @@ Response:
 ## Introspection Queries Used
 
 ```bash
-curl -k -sS -X POST https://gateway.picboard.space/api/v1 \
+curl -k -sS -X POST https://users.picboard.space/api/v1 \
   -H 'Content-Type: application/json' \
   --data '{"query":"query PasswordRecoverySchema { __schema { mutationType { fields { name args { name type { kind name ofType { kind name ofType { kind name } } } } type { kind name ofType { kind name ofType { kind name } } } } } } }"}'
 ```
 
 ```bash
-curl -k -sS -X POST https://gateway.picboard.space/api/v1 \
+curl -k -sS -X POST https://users.picboard.space/api/v1 \
   -H 'Content-Type: application/json' \
   --data '{"query":"query PasswordRecoveryTypes { passwordResetInput: __type(name: \"PasswordResetInput\") { kind name inputFields { name type { kind name ofType { kind name ofType { kind name } } } defaultValue } } passwordResetPayload: __type(name: \"PasswordResetPayload\") { kind name fields { name type { kind name ofType { kind name ofType { kind name } } } } } setNewPasswordInput: __type(name: \"SetNewPasswordInput\") { kind name inputFields { name type { kind name ofType { kind name ofType { kind name } } } defaultValue } } setNewPasswordPayload: __type(name: \"SetNewPasswordPayload\") { kind name fields { name type { kind name ofType { kind name ofType { kind name } } } } } }"}'
 ```
