@@ -121,22 +121,6 @@ export function CreatePostFlow({
     dispatch({ type: 'setCaption', caption })
   }
 
-  const handleBack = () => {
-    if (state.isPublishing) {
-      return
-    }
-
-    dispatch({ type: 'goBack' })
-  }
-
-  const handleNext = () => {
-    if (state.isPublishing) {
-      return
-    }
-
-    dispatch({ type: 'goNext' })
-  }
-
   const handlePublish = async () => {
     if (!canPublish || state.isPublishing) {
       return
