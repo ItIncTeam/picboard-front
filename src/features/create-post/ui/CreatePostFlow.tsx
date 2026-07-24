@@ -6,8 +6,7 @@ import { useCallback, useReducer, useState } from 'react'
 import { ArrowBackIcon, Close } from '@/shared/assets'
 import { Button } from '@/shared/ui/button'
 import { IconButton } from '@/shared/ui/icon-button'
-import { Text } from '@/shared/ui/typography'
-import { Title } from '@/shared/ui/typography'
+import { Text, Title } from '@/shared/ui/typography'
 
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
 import { createPost } from '../api/createPostApi'
@@ -122,8 +121,24 @@ export function CreatePostFlow({
     dispatch({ type: 'setCaption', caption })
   }
 
+  const handleBack = () => {
+    if (state.isPublishing) {
+      return
+    }
+
+    dispatch({ type: 'goBack' })
+  }
+
+  const handleNext = () => {
+    if (state.isPublishing) {
+      return
+    }
+
+    dispatch({ type: 'goNext' })
+  }
+
   const handlePublish = async () => {
-    if (!canPublish) {
+    if (!canPublish || state.isPublishing) {
       return
     }
 
@@ -221,6 +236,7 @@ export function CreatePostFlow({
           onNextExportFailed: handleCropNextExportFailed,
           onNextImageExported: handleCropNextImageExported,
           onRemoveImage: handleRemoveImage,
+          onRetryUpload: handlePublish,
           onSetActiveImage: handleSetActiveImage,
           nextExportRequestId: cropNextExportRequestId,
           state,
@@ -294,7 +310,7 @@ function renderWizardHeader({
         {!isFirstStep && (
           <IconButton
             className={styles.backButton}
-            disabled={!canGoBack}
+            disabled={isPublishing}
             icon={ArrowBackIcon}
             label="Back"
             onClick={onBack}
@@ -310,7 +326,7 @@ function renderWizardHeader({
         {isLastStep ? (
           <Button
             className={styles.headerAction}
-            disabled={!canPublish}
+            disabled={!canPublish || isPublishing}
             loading={isPublishing}
             loadingText="Publishing"
             onClick={onPublish}
@@ -322,7 +338,7 @@ function renderWizardHeader({
         ) : (
           <Button
             className={styles.headerAction}
-            disabled={!canGoNext}
+            disabled={!canGoNext || isPublishing}
             onClick={onNext}
             type="button"
             variant="textButton"
@@ -347,6 +363,7 @@ type RenderStepArgs = {
   onNextExportFailed: () => void
   onNextImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
   onRemoveImage: (imageId: string) => void
+  onRetryUpload: () => void | Promise<void>
   onSetActiveImage: (imageId: string | null) => void
   nextExportRequestId: number
   state: CreatePostState
@@ -364,6 +381,7 @@ function renderStep({
   onNextExportFailed,
   onNextImageExported,
   onRemoveImage,
+  onRetryUpload,
   onSetActiveImage,
   nextExportRequestId,
   state,
@@ -412,7 +430,9 @@ function renderStep({
         <PublicationStep
           caption={state.caption}
           images={state.images}
+          isPublishing={state.isPublishing}
           onCaptionChange={onCaptionChange}
+          onRetryUpload={onRetryUpload}
         />
       )
   }

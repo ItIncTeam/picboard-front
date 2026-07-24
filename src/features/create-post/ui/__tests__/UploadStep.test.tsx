@@ -313,8 +313,58 @@ describe('UploadStep', () => {
 
     mountedRoots.push(view)
 
-    clickButton(view.container, 'Select selectable.jpg')
+    clickButton(view.container, 'Select image 1: selectable.jpg')
 
     expect(view.onSetActiveImage).toHaveBeenCalledWith(image.id)
+  })
+
+  it('labels active preview and selected photos gallery', () => {
+    const images = [
+      createImage({ id: 'first', name: 'first.jpg', previewUrl: 'blob:first' }),
+      createImage({ id: 'second', name: 'second.jpg', previewUrl: 'blob:second' }),
+      createImage({ id: 'third', name: 'third.jpg', previewUrl: 'blob:third' }),
+    ]
+    const view = renderUploadStep({
+      activeImageId: 'first',
+      images,
+    })
+
+    mountedRoots.push(view)
+
+    expect(view.container.textContent).toContain('Selected photo')
+    expect(view.container.textContent).toContain('Selected photos')
+    expect(view.container.textContent).toContain('3 photos selected')
+    expect(
+      view.container.querySelector('[aria-label="Upload photo"]')?.getAttribute('data-has-images'),
+    ).toBe('true')
+  })
+
+  it('marks the active thumbnail', () => {
+    const activeImage = createImage({
+      id: 'active',
+      name: 'active.jpg',
+      previewUrl: 'blob:active',
+    })
+    const inactiveImage = createImage({
+      id: 'inactive',
+      name: 'inactive.jpg',
+      previewUrl: 'blob:inactive',
+    })
+    const view = renderUploadStep({
+      activeImageId: activeImage.id,
+      images: [activeImage, inactiveImage],
+    })
+
+    mountedRoots.push(view)
+
+    const activeButton = view.container.querySelector('[aria-label="Select image 1: active.jpg"]')
+    const inactiveButton = view.container.querySelector(
+      '[aria-label="Select image 2: inactive.jpg"]',
+    )
+
+    expect(activeButton?.closest('li')?.getAttribute('data-active')).toBe('true')
+    expect(inactiveButton?.closest('li')?.getAttribute('data-active')).toBe('false')
+    expect(activeButton?.getAttribute('aria-pressed')).toBe('true')
+    expect(inactiveButton?.getAttribute('aria-pressed')).toBe('false')
   })
 })

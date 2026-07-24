@@ -1,6 +1,7 @@
 # Password Recovery Schema Findings
 
-Verified against `https://users.picboard.space/api/v1` on June 6, 2026.
+Verified against the now-legacy `https://users.picboard.space/api/v1` endpoint on June 6, 2026.
+The report below is historical and was not re-run against the gateway endpoint.
 
 The local `curl` run required `-k` because certificate validation failed with
 `unable to get local issuer certificate`. The schema and mutation validation

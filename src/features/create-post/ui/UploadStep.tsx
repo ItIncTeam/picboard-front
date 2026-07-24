@@ -23,6 +23,10 @@ function getAvailableSlotsMessage(availableSlots: number): string {
     : `Only ${availableSlots} more photos can be added.`
 }
 
+function getSelectedPhotosMessage(imagesCount: number): string {
+  return imagesCount === 1 ? '1 photo selected' : `${imagesCount} photos selected`
+}
+
 export type UploadStepProps = {
   activeImageId: string | null
   images: CreatePostImage[]
@@ -124,6 +128,7 @@ export function UploadStep({
     <section
       className={styles.root}
       aria-label="Upload photo"
+      data-has-images={images.length > 0}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -136,59 +141,83 @@ export function UploadStep({
         type="file"
       />
 
-      {activeImage?.previewUrl ? (
-        <div className={styles.placeholder}>
-          <Image
-            alt={activeImage.name}
-            className={styles.activePreviewImage}
-            fill
-            sizes="min(100vw, 180px)"
-            src={activeImage.previewUrl}
-            unoptimized
-          />
-        </div>
-      ) : (
-        <div className={styles.placeholder} aria-hidden>
-          <div className={styles.icon}>
-            <span className={styles.iconSky} />
-            <span className={styles.iconSun} />
-            <span className={styles.iconMountainPrimary} />
-            <span className={styles.iconMountainSecondary} />
+      <div className={styles.previewPanel}>
+        {images.length > 0 && (
+          <Text as="p" className={styles.sectionLabel} size="sm">
+            Selected photo
+          </Text>
+        )}
+
+        {activeImage?.previewUrl ? (
+          <div className={styles.placeholder}>
+            <Image
+              alt={activeImage.name}
+              className={styles.activePreviewImage}
+              fill
+              sizes="min(100vw, 288px)"
+              src={activeImage.previewUrl}
+              style={{ objectFit: 'contain' }}
+              unoptimized
+            />
           </div>
-        </div>
-      )}
+        ) : (
+          <div className={styles.placeholder} aria-hidden>
+            <div className={styles.icon}>
+              <span className={styles.iconSky} />
+              <span className={styles.iconSun} />
+              <span className={styles.iconMountainPrimary} />
+              <span className={styles.iconMountainSecondary} />
+            </div>
+          </div>
+        )}
+      </div>
 
       {images.length > 0 && (
-        <ul className={styles.previewList} aria-label="Selected photos">
-          {images.map((image) => (
-            <li key={image.id} className={styles.previewItem}>
-              <button
-                aria-label={`Select ${image.name}`}
-                className={styles.previewButton}
-                data-active={image.id === activeImageId}
-                onClick={() => onSetActiveImage(image.id)}
-                type="button"
-              >
-                {image.previewUrl && (
-                  <Image
-                    alt={image.name}
-                    className={styles.previewImage}
-                    fill
-                    sizes="64px"
-                    src={image.previewUrl}
-                    unoptimized
+        <div className={styles.gallery}>
+          <div className={styles.galleryHeader}>
+            <Text as="p" className={styles.sectionLabel} size="sm">
+              Selected photos
+            </Text>
+            <Text as="p" className={styles.counter} size="sm">
+              {getSelectedPhotosMessage(images.length)}
+            </Text>
+          </div>
+
+          <ul className={styles.previewList} aria-label="Selected photos">
+            {images.map((image, index) => {
+              const isActive = image.id === activeImage?.id
+
+              return (
+                <li key={image.id} className={styles.previewItem} data-active={isActive}>
+                  <button
+                    aria-label={`Select image ${index + 1}: ${image.name}`}
+                    aria-pressed={isActive}
+                    className={styles.previewButton}
+                    onClick={() => onSetActiveImage(image.id)}
+                    type="button"
+                  >
+                    {image.previewUrl && (
+                      <Image
+                        alt={image.name}
+                        className={styles.previewImage}
+                        fill
+                        sizes="64px"
+                        src={image.previewUrl}
+                        unoptimized
+                      />
+                    )}
+                  </button>
+                  <IconButton
+                    className={styles.removeButton}
+                    icon={Close}
+                    label={`Remove ${image.name}`}
+                    onClick={() => handleRemoveImage(image)}
                   />
-                )}
-              </button>
-              <IconButton
-                className={styles.removeButton}
-                icon={Close}
-                label={`Remove ${image.name}`}
-                onClick={() => handleRemoveImage(image)}
-              />
-            </li>
-          ))}
-        </ul>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       )}
 
       <div className={styles.content}>

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createPostInitialState,
   type AspectRatio,
+  type CreatePostAction,
   type CreatePostImage,
   type CreatePostState,
   type ImageFilter,
@@ -40,7 +41,9 @@ type FiltersStepBoundaryProps = {
 type PublicationStepBoundaryProps = {
   caption: string
   images: CreatePostImage[]
+  isPublishing: boolean
   onCaptionChange: (caption: string) => void
+  onRetryUpload: () => Promise<void> | void
 }
 
 const stepBoundaries = vi.hoisted(() => ({
@@ -270,6 +273,18 @@ function renderCreatePostFlow({
   return { container, root }
 }
 
+function createDeferred<T = void>() {
+  let resolve: (value: T | PromiseLike<T>) => void = () => undefined
+  let reject: (reason?: unknown) => void = () => undefined
+
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve
+    reject = promiseReject
+  })
+
+  return { promise, reject, resolve }
+}
+
 function queryButton(container: HTMLElement, name: string): HTMLButtonElement | null {
   return (
     Array.from(container.querySelectorAll('button')).find(
@@ -291,6 +306,13 @@ function getButton(container: HTMLElement, name: string): HTMLButtonElement {
 function clickButton(button: HTMLButtonElement) {
   act(() => {
     button.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  })
+}
+
+function enableButtonForProgrammaticClick(button: HTMLButtonElement) {
+  Object.defineProperty(button, 'disabled', {
+    configurable: true,
+    value: false,
   })
 }
 
@@ -571,6 +593,67 @@ describe('CreatePostFlow', () => {
 
     expect(queryButton(view.container, 'Back')).toBeInstanceOf(HTMLButtonElement)
     expect(queryButton(view.container, 'Next')).toBeInstanceOf(HTMLButtonElement)
+  })
+
+  it('disables back and next actions while publishing', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'crop',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(getButton(view.container, 'Back').disabled).toBe(true)
+    expect(getButton(view.container, 'Next').disabled).toBe(true)
+  })
+
+  it('does not go back while publishing', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    const backButton = getButton(view.container, 'Back')
+
+    enableButtonForProgrammaticClick(backButton)
+    clickButton(backButton)
+
+    expect(getHeaderTitle(view.container)).toBe('Publication')
+    expect(stepBoundaries.publication?.isPublishing).toBe(true)
+  })
+
+  it('does not go next while publishing', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'crop',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    const nextButton = getButton(view.container, 'Next')
+
+    enableButtonForProgrammaticClick(nextButton)
+    clickButton(nextButton)
+
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
+    expect(stepBoundaries.crop?.activeImage).toEqual(image)
   })
 
   it('renders publish action for publication step', () => {
@@ -1028,6 +1111,8 @@ describe('CreatePostFlow', () => {
 
     expect(stepBoundaries.publication?.images).toEqual([image])
     expect(stepBoundaries.publication?.caption).toBe('Initial caption')
+    expect(stepBoundaries.publication?.isPublishing).toBe(false)
+    expect(stepBoundaries.publication?.onRetryUpload).toEqual(expect.any(Function))
 
     act(() => {
       stepBoundaries.publication?.onCaptionChange('Updated caption')
@@ -1086,6 +1171,128 @@ describe('CreatePostFlow', () => {
         step: 'publication',
       }),
     )
+  })
+
+  it('retries publish through the publication boundary', async () => {
+    const onPublishAction = vi.fn()
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'publication',
+      }),
+      onPublishAction,
+    })
+
+    mountedRoots.push(view)
+
+    await act(async () => {
+      await stepBoundaries.publication?.onRetryUpload()
+    })
+
+    expect(onPublishAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears failed upload error when retry moves upload through uploading to ready', async () => {
+    const uploadReady = createDeferred()
+    const createPostReady = createDeferred<unknown>()
+    const image = createExportedImage()
+    const failedImage: CreatePostImage = {
+      ...image,
+      upload: {
+        error: 'Storage upload failed.',
+        fileId: 'stale-file',
+        status: 'failed',
+      },
+    }
+    let retryResult: Promise<void> | void
+
+    publishMocks.uploadCreatePostImages.mockImplementationOnce(
+      async (
+        _state: CreatePostState,
+        { dispatch }: { dispatch?: (action: CreatePostAction) => void },
+      ) => {
+        dispatch?.({
+          patches: [{ imageId: image.id, status: 'uploading' }],
+          type: 'applyUploadBatchState',
+        })
+
+        await uploadReady.promise
+
+        dispatch?.({
+          patches: [{ fileId: 'file-1', imageId: image.id, status: 'ready' }],
+          type: 'applyUploadBatchState',
+        })
+
+        return ['file-1']
+      },
+    )
+    publishMocks.createPost.mockReturnValueOnce(createPostReady.promise)
+
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [failedImage],
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
+      error: 'Storage upload failed.',
+      fileId: 'stale-file',
+      status: 'failed',
+    })
+
+    await act(async () => {
+      retryResult = stepBoundaries.publication?.onRetryUpload()
+      await Promise.resolve()
+    })
+
+    expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
+      fileId: 'stale-file',
+      status: 'uploading',
+    })
+
+    await act(async () => {
+      uploadReady.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
+      fileId: 'file-1',
+      status: 'ready',
+    })
+
+    await act(async () => {
+      createPostReady.resolve({})
+      await retryResult
+    })
+  })
+
+  it('does not retry publish while publishing is already in progress', async () => {
+    const onPublishAction = vi.fn()
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        isPublishing: true,
+        step: 'publication',
+      }),
+      onPublishAction,
+    })
+
+    mountedRoots.push(view)
+
+    await act(async () => {
+      await stepBoundaries.publication?.onRetryUpload()
+    })
+
+    expect(onPublishAction).not.toHaveBeenCalled()
   })
 
   it('uploads images and creates post with ordered file ids by default', async () => {
