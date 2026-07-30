@@ -172,7 +172,7 @@
 }
 
 .previewButton[data-active='true'] {
-  outline: 2px solid var(--color-accent-primary, var(--color-text-primary));
+  outline: 2px solid var(--color-text-primary);
   outline-offset: -2px;
 }
 
