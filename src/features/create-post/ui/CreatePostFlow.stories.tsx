@@ -9,6 +9,7 @@ import {
 
 import { CreatePostCloseConfirm } from './CreatePostCloseConfirm'
 import { CreatePostFlow } from './CreatePostFlow'
+import { createMockImages } from '@/features/create-post/lib/mockImages'
 
 const meta = {
   title: 'Features/CreatePost/CreatePostFlow',
@@ -95,16 +96,23 @@ export const Upload: Story = {
 
 export const CropWithMockImage: Story = {
   render: () => {
-    const mockImage = createImage('mock-image')
+    const mockImages = createMockImages(3)
 
     return (
-      <CreatePostFlow
-        initialState={createState({
-          step: 'crop',
-          images: [mockImage],
-          activeImageId: mockImage.id,
-        })}
-      />
+      <div
+        style={{
+          position: 'relative',
+          width: '492px',
+        }}
+      >
+        <CreatePostFlow
+          initialState={createState({
+            step: 'crop',
+            images: mockImages,
+            activeImageId: mockImages[0].id,
+          })}
+        />
+      </div>
     )
   },
 }

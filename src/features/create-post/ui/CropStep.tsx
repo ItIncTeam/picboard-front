@@ -53,9 +53,18 @@ export function CropStep({
   onImageExported,
   onAddImages,
 }: CropStepProps) {
-  const [selectedRatio, setSelectedRatio] = useState<AspectRatio>('original')
+  const [selectedRatio, setSelectedRatio] = useState<AspectRatio>(
+    activeImage?.aspectRatio ?? 'original',
+  )
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
   const [isVisibleSlider, setIsVisibleSlider] = useState(false)
+
+  const switchActiveImage = (imageId: string | null) => {
+    onSetActiveImage(imageId)
+
+    const nextImage = images.find((image) => image.id === imageId)
+    setSelectedRatio(nextImage?.aspectRatio ?? 'original')
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [errors, setErrors] = useState<string[]>([])
@@ -191,7 +200,8 @@ export function CropStep({
     if (currentIndex === -1) return
 
     const nextIndex = (currentIndex + 1) % images.length
-    onSetActiveImage(images[nextIndex].id)
+    // onSetActiveImage(images[nextIndex].id)
+    switchActiveImage(images[nextIndex].id)
   }
 
   const handlePrevImage = () => {
@@ -201,7 +211,8 @@ export function CropStep({
     if (currentIndex === -1) return
 
     const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1
-    onSetActiveImage(images[prevIndex].id)
+    switchActiveImage(images[prevIndex].id)
+    // onSetActiveImage(images[prevIndex].id)
   }
 
   const handleVisibleAspectRatioChange = () => {
@@ -263,7 +274,7 @@ export function CropStep({
     <div style={{ width: '492px' }}>
       <Cropper
         ref={cropperRef}
-        src={activeImage?.exported?.objectUrl || activeImage?.previewUrl}
+        src={activeImage?.previewUrl}
         className={styles.activePreviewImage}
         stencilProps={{
           aspectRatio: ASPECT_RATIOS[selectedRatio],
@@ -309,7 +320,8 @@ export function CropStep({
                   role="button"
                   className={styles.swiperItem}
                   data-active={isActive}
-                  onClick={() => onSetActiveImage(image.id)}
+                  onClick={() => switchActiveImage(image.id)}
+                  // onClick={() => onSetActiveImage(image.id)}
                 >
                   {imageSrc ? (
                     <>

@@ -64,6 +64,8 @@ export function CreatePostFlow({
   const activeImage = selectActiveImage(state)
   const isUploadHeader = state.step === 'upload' && state.images.length === 0
   const flowSize = state.step === 'filters' || state.step === 'publication' ? 'wide' : 'compact'
+  const [isCropExporting, setIsCropExporting] = useState<boolean>(false)
+  const isCropStep = state.step === 'crop'
 
   const handleAddImages = (images: CreatePostImage[]) => {
     dispatch({ type: 'addImages', images })
@@ -151,6 +153,22 @@ export function CreatePostFlow({
     dispatch({ type: 'reset' })
     onCloseAction?.()
   }
+
+  const exportCropImage = (images: CreatePostImage[]) => {
+    setIsCropExporting(true)
+    images.forEach((img) => {
+      if (!img.exported && img.previewUrl && img.file && img.fileInfo) {
+        handleImageExported(img.id, {
+          objectUrl: img.previewUrl,
+          fileInfo: img.fileInfo,
+          file: img.file,
+        })
+      }
+    })
+    setIsCropExporting(false)
+    dispatch({ type: 'goNext' })
+  }
+
   return (
     <section className={styles.root} data-size={flowSize} aria-label="Create post flow">
       {isUploadHeader
@@ -161,8 +179,25 @@ export function CreatePostFlow({
             isFirstStep,
             isLastStep,
             isPublishing: state.isPublishing,
-            onBack: handleBack,
-            onNext: handleNext,
+            // onBack: handleBack,
+            // onNext: handleNext,
+            isCropExporting,
+            isCropStep,
+            onBack: () => {
+              if (isCropStep && isCropExporting) {
+                return
+              }
+
+              dispatch({ type: 'goBack' })
+            },
+            onNext: () => {
+              if (isCropStep) {
+                exportCropImage(state.images)
+                return
+              }
+
+              dispatch({ type: 'goNext' })
+            },
             onPublish: handlePublish,
             step: state.step,
           })}
@@ -224,6 +259,8 @@ type WizardHeaderProps = {
   isFirstStep: boolean
   isLastStep: boolean
   isPublishing: boolean
+  isCropExporting: boolean
+  isCropStep: boolean
   onBack: () => void
   onNext: () => void
   onPublish: () => void | Promise<void>
@@ -236,18 +273,22 @@ function renderWizardHeader({
   isFirstStep,
   isLastStep,
   isPublishing,
+  isCropExporting,
+  isCropStep,
   onBack,
   onNext,
   onPublish,
   step,
 }: WizardHeaderProps) {
+  const isNextDisabled = !canGoNext || (isCropStep && isCropExporting)
+  const isBackDisabled = isCropStep && isCropExporting
   return (
     <header className={styles.header}>
       <div className={styles.headerSlot}>
         {!isFirstStep && (
           <IconButton
             className={styles.backButton}
-            disabled={isPublishing}
+            disabled={isPublishing || isBackDisabled}
             icon={ArrowBackIcon}
             label="Back"
             onClick={onBack}
@@ -275,7 +316,7 @@ function renderWizardHeader({
         ) : (
           <Button
             className={styles.headerAction}
-            disabled={!canGoNext || isPublishing}
+            disabled={!canGoNext || isPublishing || isNextDisabled}
             onClick={onNext}
             type="button"
             variant="textButton"

@@ -1,5 +1,12 @@
 import styles from './aspect-button-block.module.css'
-import { AspectRatio16_9, AspectRatio1_1, AspectRatio4_5, AspectRatioOrigin } from '@/shared/assets'
+import {
+  AspectRatio16_9,
+  AspectRatio1_1,
+  AspectRatio4_5,
+  AspectRatioOrigin,
+  Close,
+  ShowSwiper,
+} from '@/shared/assets'
 import type { AspectRatio } from '@/features/create-post'
 
 type Props = {
