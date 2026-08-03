@@ -179,8 +179,6 @@ export function CreatePostFlow({
             isFirstStep,
             isLastStep,
             isPublishing: state.isPublishing,
-            // onBack: handleBack,
-            // onNext: handleNext,
             isCropExporting,
             isCropStep,
             onBack: () => {

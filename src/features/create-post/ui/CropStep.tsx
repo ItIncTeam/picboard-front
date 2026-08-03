@@ -271,7 +271,7 @@ export function CropStep({
   }
 
   return (
-    <div style={{ width: '492px' }}>
+    <div className={styles.cropWrapper}>
       <Cropper
         ref={cropperRef}
         src={activeImage?.previewUrl}
