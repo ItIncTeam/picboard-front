@@ -1,6 +1,6 @@
 .root {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
 
   width: min(100%, clamp(20rem, 82vw, 30.75rem));
   min-height: min(35.25rem, calc(100vh - 2rem));

@@ -55,7 +55,10 @@ vi.mock('@/shared/ui/typography', () => ({
 
 vi.mock('next/image', () => ({
   __esModule: true,
-  default: ({ alt, src }: { alt: string; src: string }) => <img alt={alt} src={src} />,
+  default: ({ alt, src }: { alt: string; src: string }) => (
+    // eslint-disable-next-line @next/next/no-img-element -- deterministic browser-test boundary
+    <img alt={alt} src={src} />
+  ),
 }))
 
 type RenderResult = {

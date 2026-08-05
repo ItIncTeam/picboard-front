@@ -3,15 +3,17 @@ import { AspectRatio16_9, AspectRatio1_1, AspectRatio4_5, AspectRatioOrigin } fr
 import type { AspectRatio } from '@/features/create-post'
 
 type Props = {
+  disabled?: boolean
   onSelectRatio: (ratio: AspectRatio) => void
   selectedRatio: AspectRatio
 }
 
-export const AspectButtonsBlock = ({ onSelectRatio, selectedRatio }: Props) => {
+export const AspectButtonsBlock = ({ disabled = false, onSelectRatio, selectedRatio }: Props) => {
   return (
     <div className={styles.aspectButtonBlock}>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => onSelectRatio('original')}
         data-active={selectedRatio === 'original'}
       >
@@ -20,6 +22,7 @@ export const AspectButtonsBlock = ({ onSelectRatio, selectedRatio }: Props) => {
       </button>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => onSelectRatio('1:1')}
         data-active={selectedRatio === '1:1'}
       >
@@ -28,6 +31,7 @@ export const AspectButtonsBlock = ({ onSelectRatio, selectedRatio }: Props) => {
       </button>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => onSelectRatio('4:5')}
         data-active={selectedRatio === '4:5'}
       >
@@ -36,6 +40,7 @@ export const AspectButtonsBlock = ({ onSelectRatio, selectedRatio }: Props) => {
       </button>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => onSelectRatio('16:9')}
         data-active={selectedRatio === '16:9'}
       >

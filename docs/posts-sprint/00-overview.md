@@ -132,7 +132,7 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 ### In Progress
 
-- Crop and filters implementation, including final edited image export.
+- Filters implementation and filtered image export. Crop canvas export is implemented.
 - Posts profile/details/feed composition on top of existing post display skeletons.
 
 ### Not Started
@@ -143,8 +143,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 ## Known limitations
 
-- Crop/filter/export is not production-ready yet; full end-to-end Create Post still depends on
-  the filters export PR.
+- Crop canvas export is production-ready, including sequential multi-image processing and async
+  stale-result protection. Full end-to-end Create Post still depends on the filters export PR.
 - Apollo cache/refetch behavior after create, update and delete is not defined.
 - Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
@@ -195,7 +195,7 @@ Rules:
 
 ## Roadmap To End Of Sprint
 
-1. Finish crop/filter/export: cropper integration, filter preview and final edited `File` export.
+1. Finish filters and filtered `File` export on top of the implemented crop canvas export.
 2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
 3. Compose post details and integrate `post(id: ID!)`.
 4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
@@ -225,9 +225,8 @@ Rules:
 
 ### Dev 3
 
-- Finish crop UI.
-- Export image data after crop.
-- Write `image.exported` for the downstream filters/canvas export step.
+- Crop UI, responsive modal layout and sequential canvas export to `image.exported` are complete.
+- Next work is filter preview and filtered re-export without changing original image data.
 
 ### Dev 4
 

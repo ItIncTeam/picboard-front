@@ -9,14 +9,29 @@ import {
 
 import { CreatePostCloseConfirm } from './CreatePostCloseConfirm'
 import { CreatePostFlow } from './CreatePostFlow'
+import { createMockImages } from '@/features/create-post/lib/mockImages'
 
 const meta = {
   title: 'Features/CreatePost/CreatePostFlow',
   component: CreatePostFlow,
   tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'fullscreen',
   },
+  decorators: [
+    (Story) => (
+      <div
+        style={{
+          display: 'grid',
+          minHeight: '100vh',
+          margin: -24,
+          placeItems: 'center',
+        }}
+      >
+        <Story />
+      </div>
+    ),
+  ],
 } satisfies Meta<typeof CreatePostFlow>
 
 export default meta
@@ -95,15 +110,45 @@ export const Upload: Story = {
 
 export const CropWithMockImage: Story = {
   render: () => {
-    const mockImage = createImage('mock-image')
+    const mockImages = createMockImages(3)
 
     return (
       <CreatePostFlow
         initialState={createState({
           step: 'crop',
-          images: [mockImage],
-          activeImageId: mockImage.id,
+          images: mockImages,
+          activeImageId: mockImages[0].id,
         })}
+      />
+    )
+  },
+}
+
+export const CropWideImage: Story = {
+  render: () => {
+    const image = {
+      ...createImage('wide-image'),
+      previewUrl: 'https://picsum.photos/seed/post-wide/960/480',
+    }
+
+    return (
+      <CreatePostFlow
+        initialState={createState({ step: 'crop', images: [image], activeImageId: image.id })}
+      />
+    )
+  },
+}
+
+export const CropPortraitImage: Story = {
+  render: () => {
+    const image = {
+      ...createImage('portrait-image'),
+      previewUrl: 'https://picsum.photos/seed/post-portrait/480/960',
+    }
+
+    return (
+      <CreatePostFlow
+        initialState={createState({ step: 'crop', images: [image], activeImageId: image.id })}
       />
     )
   },

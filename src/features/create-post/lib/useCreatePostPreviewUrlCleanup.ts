@@ -2,32 +2,53 @@ import { useEffect, useRef } from 'react'
 
 import type { CreatePostImage } from '../model/createPostTypes'
 
+/**
+ * Owns preview and exported object URLs for one CreatePostFlow lifecycle.
+ * Final unmount revokes every remaining URL; a later flow instance must create new URLs instead
+ * of reusing values owned by the unmounted instance.
+ */
 export function useCreatePostPreviewUrlCleanup(images: CreatePostImage[]) {
-  const previewUrlsRef = useRef<Set<string>>(new Set())
+  const cleanupGenerationRef = useRef(0)
+  const objectUrlsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    const nextPreviewUrls = new Set(
-      images
-        .map((image) => image.previewUrl)
-        .filter((previewUrl): previewUrl is string => Boolean(previewUrl)),
-    )
+    const nextObjectUrls = new Set<string>()
 
-    previewUrlsRef.current.forEach((previewUrl) => {
-      if (!nextPreviewUrls.has(previewUrl)) {
-        URL.revokeObjectURL(previewUrl)
+    images.forEach((image) => {
+      if (image.previewUrl) {
+        nextObjectUrls.add(image.previewUrl)
+      }
+
+      if (image.exported?.objectUrl) {
+        nextObjectUrls.add(image.exported.objectUrl)
       }
     })
 
-    previewUrlsRef.current = nextPreviewUrls
+    objectUrlsRef.current.forEach((objectUrl) => {
+      if (!nextObjectUrls.has(objectUrl)) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    })
+
+    objectUrlsRef.current = nextObjectUrls
   }, [images])
 
   useEffect(() => {
-    return () => {
-      previewUrlsRef.current.forEach((previewUrl) => {
-        URL.revokeObjectURL(previewUrl)
-      })
+    const cleanupGeneration = cleanupGenerationRef.current + 1
+    cleanupGenerationRef.current = cleanupGeneration
 
-      previewUrlsRef.current.clear()
+    return () => {
+      queueMicrotask(() => {
+        if (cleanupGenerationRef.current !== cleanupGeneration) {
+          return
+        }
+
+        objectUrlsRef.current.forEach((objectUrl) => {
+          URL.revokeObjectURL(objectUrl)
+        })
+
+        objectUrlsRef.current.clear()
+      })
     }
   }, [])
 }
