@@ -187,11 +187,10 @@ Differences:
 
 ### Public main page
 
-- `views/public-home-page` should show 4 latest posts and registered users count.
-- Public access and cache policy wait for backend answers.
+- `views/public-home-page` shows 4 latest posts and registered users count.
+- Public data uses `Homepage { usersCount feed { ... } }` with a 60 second revalidation window.
 - Do not assume auth-required fields are available to anonymous users.
-- Main/public page implementation is a follow-up PR, not part of the first Posts Consumption
-  skeleton.
+- Main/public page implementation lives in the UC-1 public home page PR.
 
 ### Details
 
