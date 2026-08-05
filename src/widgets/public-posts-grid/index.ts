@@ -1,0 +1,1 @@
+export { PublicPostsGrid } from './PublicPostsGrid'
