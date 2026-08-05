@@ -196,8 +196,8 @@ type ProfilePostsInput = {
 }
 ```
 
-Current backend page size is 8 posts. Frontend should prepare infinite scroll around cursor
-pagination.
+The gateway schema does not define a default for `first`. The current frontend guard accepts values
+from 1 through 8 and should prepare infinite scroll around cursor pagination.
 
 ### `feed` and `post`
 
@@ -205,28 +205,31 @@ Confirmed queries:
 
 ```graphql
 feed: [PostEntity!]!
-post(id: ID!): PostEntity
+post(id: String!): PostEntity
+usersCount: Int!
 ```
+
+`feed` currently has no pagination arguments.
 
 ## Resolved
 
 ### Display URLs For Images
 
-Backend exposes image URLs through nullable `PostAttachmentEntity.file?.url`.
+Backend exposes image URLs through nullable `PostAttachmentEntity.file`; once `file` is present,
+its `url` is non-null.
 
 Backend-confirmed schema:
 
 ```graphql
 type PostAttachmentEntity {
-  id: ID!
   fileId: ID!
-  order: Int!
+  sortOrder: Int!
   file: File
 }
 
 type File {
   id: ID!
-  url: String
+  url: String!
 }
 ```
 
@@ -267,7 +270,8 @@ or product/cache details.
   files, auth failure and storage validation failure.
 - Cache/refetch strategy is not finalized for create, update, delete, profile, feed and details
   surfaces.
-- Public main page contract for registered users count is still open.
+- Public access and composition rules for the Public Main data remain product/integration work;
+  the count field itself is available as `usersCount: Int!`.
 
 ## Follow-up Questions
 
@@ -281,4 +285,4 @@ production integration:
 - whether frontend should request width/height or other media metadata in posts queries;
 - edit/delete permissions and error model;
 - cache/refetch strategy for create, update, delete, profile, feed and details surfaces;
-- public main page contract for registered users count.
+- public access and cache policy for Public Main queries.

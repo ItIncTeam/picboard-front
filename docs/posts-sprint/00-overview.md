@@ -99,8 +99,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   `feed` and `post`.
 - `entities/post/api` contains typed Apollo helpers for `feed`, `post`, `profilePosts`,
   `updatePostDescription` and `deletePost`.
-- Display images use `PostAttachmentEntity.file?.url`; attachments without an available display URL
-  are skipped. `uploadUrl` must not be used as a display URL.
+- Display images use `PostAttachmentEntity.file?.url`; `file` is nullable, while `file.url` is
+  non-null. Attachments without a `file` are skipped. `uploadUrl` must not be used as a display URL.
 
 ## Current Progress
 
@@ -150,7 +150,7 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
 - Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
   `completeUpload` and failed `createPost` remains open.
-- Public main page registered users count contract is not present in the local schema.
+- The gateway exposes `usersCount: Int!`; its Public Main UI integration remains separate work.
 - SSR/ISR/cache requirements for main/public posts surfaces are not confirmed.
 
 ## Целевая архитектура
@@ -197,7 +197,7 @@ Rules:
 
 1. Finish filters and filtered `File` export on top of the implemented crop canvas export.
 2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
-3. Compose post details and integrate `post(id: ID!)`.
+3. Compose post details and integrate `post(id: String!)`.
 4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
 5. Add main feed composition through `feed`.
 6. Plan and implement cache/refetch behavior for create, edit and delete.
@@ -231,8 +231,7 @@ Rules:
 ### Dev 4
 
 - Finish posts consumption skeleton and profile/details composition.
-- Render attachments only from `PostAttachmentEntity.file?.url`; skip attachments without an
-  available display URL.
+- Render attachments only from `PostAttachmentEntity.file?.url`; skip attachments with `file: null`.
 - Integrate `profilePosts` after Dev 1 provides API operations/wrappers.
 
 ### Dev 5

@@ -42,13 +42,14 @@
 - `uploadUrl` is temporary, not a display URL, and must not be reused after expiration.
 - `createPost` may be called only after all selected files are `READY`.
 - Posts mutations are `createPost`, `updatePostDescription` and `deletePost`.
-- Posts queries are `profilePosts(input: ProfilePostsInput!)`, `feed` and `post(id: ID!)`.
-- Display image URL is `PostAttachmentEntity.file?.url`; frontend skips attachments without an
-  available display URL.
+- Posts queries are `profilePosts(input: ProfilePostsInput!)`, unpaginated `feed` and
+  `post(id: String!)`; `usersCount: Int!` is available for Public Main.
+- Display image URL is `PostAttachmentEntity.file?.url`; `file` is nullable, `file.url` is
+  non-null, and frontend skips attachments with `file: null`.
 - Upload limits are confirmed: `image/jpeg` and `image/png`, 1-10 images, maximum `20 MB` per file.
 - Post description is optional and limited to 500 characters.
-- `profilePosts` uses cursor pagination with `{ first, after? }`; current backend page size is 8
-  posts.
+- `profilePosts` uses cursor pagination with `{ first, after? }`; the gateway defines no default for
+  `first`, and the current frontend guard accepts values from 1 through 8.
 - Sprint is split into Epic 1: Create Post Wizard and Epic 2: Posts Consumption.
 - Dev 1 is Create Flow Owner and owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
 - Dev 2 and Dev 3 do not change create-post state shape without Dev 1 approval.
@@ -165,7 +166,8 @@ Final gateway schema details:
 - `purpose` must be `POST_IMAGE` for post images;
 - frontend browser MIME strings must be mapped to GraphQL enum values `JPEG` or `PNG`;
 - `FileStatus.READY` is required before `createPost`;
-- post rendering must use `PostAttachmentEntity.file?.url` and tolerate nullable `file` / `url`.
+- post rendering must use `PostAttachmentEntity.file?.url`, tolerate nullable `file`, and treat
+  `file.url` as non-null after the `file` check.
 
 ## Почему `react-advanced-cropper`
 

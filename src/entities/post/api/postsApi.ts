@@ -10,9 +10,8 @@ const postFieldsFragment = gql`
     ownerId
     description
     attachments {
-      id
       fileId
-      order
+      sortOrder
       file {
         id
         ownerId
@@ -42,7 +41,7 @@ const feedQuery = gql`
 const postQuery = gql`
   ${postFieldsFragment}
 
-  query Post($id: ID!) {
+  query Post($id: String!) {
     post(id: $id) {
       ...PostFields
     }

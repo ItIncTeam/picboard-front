@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DocumentNode, OperationDefinitionNode } from 'graphql'
+import { visit, type DocumentNode, type OperationDefinitionNode } from 'graphql'
 
 const apolloMocks = vi.hoisted(() => ({
   mutate: vi.fn(),
@@ -37,6 +37,27 @@ function getVariableNames(document: DocumentNode): string[] {
   )
 }
 
+function getAttachmentFieldNames(document: DocumentNode): string[] {
+  let fieldNames: string[] = []
+
+  visit(document, {
+    Field(node) {
+      if (node.name.value !== 'attachments') {
+        return
+      }
+
+      fieldNames =
+        node.selectionSet?.selections.flatMap((selection) =>
+          selection.kind === 'Field' ? [selection.name.value] : [],
+        ) ?? []
+
+      return false
+    },
+  })
+
+  return fieldNames
+}
+
 describe('create post GraphQL helper', () => {
   afterEach(() => {
     apolloMocks.mutate.mockReset()
@@ -64,8 +85,7 @@ describe('create post GraphQL helper', () => {
                 url: 'https://cdn.example/post.jpg',
               },
               fileId: 'file-1',
-              id: 'attachment-1',
-              order: 0,
+              sortOrder: 0,
             },
           ],
           createdAt: '2026-07-03T12:00:00.000Z',
@@ -95,8 +115,7 @@ describe('create post GraphQL helper', () => {
     expect(getOperationName(request.mutation)).toBe('CreatePost')
     expect(getVariableNames(request.mutation)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
-    expect(request.mutation.loc?.source.body).toContain('order')
-    expect(request.mutation.loc?.source.body).not.toContain('sortOrder')
+    expect(getAttachmentFieldNames(request.mutation)).toEqual(['fileId', 'sortOrder', 'file'])
   })
 
   it('allows null description', async () => {

@@ -18,8 +18,7 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/first.jpg',
         },
         fileId: 'file-1',
-        id: 'attachment-1',
-        order: 1,
+        sortOrder: 1,
       },
       {
         file: {
@@ -33,8 +32,7 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/cover.png',
         },
         fileId: 'file-2',
-        id: 'attachment-2',
-        order: 0,
+        sortOrder: 0,
       },
     ],
     createdAt: '2026-07-04T12:00:00.000Z',
@@ -47,7 +45,7 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
 }
 
 describe('post mapper', () => {
-  it('maps backend PostEntity to frontend Post display model', () => {
+  it('maps PostEntity and sorts attachments by sortOrder', () => {
     expect(mapPostEntityToPost(createPostEntity())).toEqual({
       authorName: 'user-1',
       caption: 'Post description',
@@ -72,29 +70,13 @@ describe('post mapper', () => {
     expect(mapPostEntitiesToPosts([createPostEntity({ id: 'post-1' })])).toHaveLength(1)
   })
 
-  it('skips attachments without a file or display URL', () => {
+  it('skips an attachment with a nullable file', () => {
     const entity = createPostEntity({
       attachments: [
         {
           file: null,
           fileId: 'file-without-entity',
-          id: 'attachment-without-file',
-          order: 0,
-        },
-        {
-          file: {
-            id: 'file-without-url',
-            mimeType: 'JPEG',
-            originalName: 'without-url.jpg',
-            ownerId: 'user-1',
-            purpose: 'POST_IMAGE',
-            size: 1024,
-            status: 'READY',
-            url: null,
-          },
-          fileId: 'file-without-url',
-          id: 'attachment-without-url',
-          order: 1,
+          sortOrder: 0,
         },
         {
           file: {
@@ -108,8 +90,7 @@ describe('post mapper', () => {
             url: 'https://cdn.example/visible.png',
           },
           fileId: 'file-visible',
-          id: 'attachment-visible',
-          order: 2,
+          sortOrder: 1,
         },
       ],
     })
