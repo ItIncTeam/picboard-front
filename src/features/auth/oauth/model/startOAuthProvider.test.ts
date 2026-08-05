@@ -12,28 +12,42 @@ describe('oauthStartUrls', () => {
   afterEach(() => {
     vi.resetModules()
     vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
   })
 
-  it('uses the configured GraphQL endpoint for OAuth start URLs', async () => {
-    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'http://localhost:3000/api/v1')
+  it('fails fast when the OAuth base URL is not configured', async () => {
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', '')
+    const assignMock = vi.fn()
+
+    vi.stubGlobal('window', {
+      location: {
+        assign: assignMock,
+      },
+    })
+
+    await expect(importOAuthStartUrls()).rejects.toThrow(
+      'NEXT_PUBLIC_OAUTH_BASE_URL is not configured',
+    )
+    expect(assignMock).not.toHaveBeenCalled()
+  })
+
+  it('uses the OAuth base URL independently from the GraphQL endpoint', async () => {
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'https://gateway.picboard.space/api/v1')
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', 'https://users.picboard.space/api/v1')
 
     const oauthStartUrls = await importOAuthStartUrls()
 
-    expect(oauthStartUrls.google).toBe('http://localhost:3000/api/v1/auth/google/start')
-    expect(oauthStartUrls.github).toBe('http://localhost:3000/api/v1/auth/github/login')
+    expect(oauthStartUrls.google).toBe('https://users.picboard.space/api/v1/auth/google/start')
+    expect(oauthStartUrls.github).toBe('https://users.picboard.space/api/v1/auth/github/login')
   })
 
-  it('normalizes the configured GraphQL endpoint trailing slash', async () => {
-    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'https://dev-gateway.picboard.space/api/v1/')
+  it('normalizes the OAuth base URL trailing slash', async () => {
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', 'https://users.picboard.space/api/v1/')
 
     const oauthStartUrls = await importOAuthStartUrls()
 
-    expect(oauthStartUrls.google).toBe(
-      'https://dev-gateway.picboard.space/api/v1/auth/google/start',
-    )
-    expect(oauthStartUrls.github).toBe(
-      'https://dev-gateway.picboard.space/api/v1/auth/github/login',
-    )
+    expect(oauthStartUrls.google).toBe('https://users.picboard.space/api/v1/auth/google/start')
+    expect(oauthStartUrls.github).toBe('https://users.picboard.space/api/v1/auth/github/login')
   })
 })
 
@@ -44,8 +58,11 @@ describe('startOAuthProvider', () => {
     vi.restoreAllMocks()
   })
 
-  it('redirects the browser to the selected OAuth provider start URL', async () => {
-    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'http://localhost:3000/api/v1')
+  it.each([
+    ['google', 'https://users.picboard.space/api/v1/auth/google/start'],
+    ['github', 'https://users.picboard.space/api/v1/auth/github/login'],
+  ] as const)('redirects the browser to the %s OAuth start URL', async (provider, expectedUrl) => {
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', 'https://users.picboard.space/api/v1')
 
     const assignMock = vi.fn()
 
@@ -57,8 +74,8 @@ describe('startOAuthProvider', () => {
 
     const startOAuthProvider = await importStartOAuthProvider()
 
-    startOAuthProvider('google')
+    startOAuthProvider(provider)
 
-    expect(assignMock).toHaveBeenCalledWith('http://localhost:3000/api/v1/auth/google/start')
+    expect(assignMock).toHaveBeenCalledWith(expectedUrl)
   })
 })

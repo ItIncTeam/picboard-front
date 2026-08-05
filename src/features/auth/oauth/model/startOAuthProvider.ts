@@ -1,12 +1,19 @@
 import type { OAuthProvider } from './types'
 
-const graphqlEndpoint =
-  typeof process !== 'undefined'
-    ? (process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ?? '/graphql')
-    : '/graphql'
+function getOAuthBaseUrl(): string {
+  const oauthBaseUrl = process.env.NEXT_PUBLIC_OAUTH_BASE_URL
+
+  if (!oauthBaseUrl) {
+    throw new Error('NEXT_PUBLIC_OAUTH_BASE_URL is not configured')
+  }
+
+  return oauthBaseUrl
+}
+
+const oauthBaseUrl = getOAuthBaseUrl()
 
 function createOAuthStartUrl(path: string): string {
-  const endpoint = graphqlEndpoint.replace(/\/+$/, '')
+  const endpoint = oauthBaseUrl.replace(/\/+$/, '')
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
 
   return `${endpoint}${normalizedPath}`

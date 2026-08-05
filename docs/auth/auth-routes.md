@@ -129,10 +129,12 @@ Frontend flow:
 
 1. Backend owns the complete Google/GitHub OAuth provider flow: provider detection, state
    validation, PKCE, provider code exchange, user creation/linking, and issuing a backend OAuth code.
-2. Frontend OAuth provider buttons redirect the browser to backend-owned OAuth start URLs built
-   from `NEXT_PUBLIC_GRAPHQL_ENDPOINT`:
-   - Google: `${NEXT_PUBLIC_GRAPHQL_ENDPOINT}/auth/google/start`
-   - GitHub: `${NEXT_PUBLIC_GRAPHQL_ENDPOINT}/auth/github/login`
+2. Frontend OAuth provider buttons redirect the browser to users-service OAuth start URLs built
+   from `NEXT_PUBLIC_OAUTH_BASE_URL`. GraphQL continues to use `NEXT_PUBLIC_GRAPHQL_ENDPOINT`.
+   The gateway does not currently proxy OAuth start routes, so the two base URLs must remain
+   independent:
+   - Google: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/google/start`
+   - GitHub: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/github/login`
 3. Backend redirects production provider flows to `https://picboard.space/auth/callback`.
    Local frontend origin is also configured, so local verification should use
    `http://localhost:3000/auth/callback`.
