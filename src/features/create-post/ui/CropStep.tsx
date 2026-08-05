@@ -1,8 +1,8 @@
 'use client'
 
 import type { AspectRatio, CreatePostImage } from '@/features/create-post'
-import type { ChangeEvent } from 'react'
-import { useRef, useState } from 'react'
+import type { ChangeEvent, Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
 import type { CropperRef } from 'react-advanced-cropper'
 import { Cropper } from 'react-advanced-cropper'
@@ -36,41 +36,230 @@ function getAvailableSlotsMessage(availableSlots: number): string {
 
 export type CropStepProps = {
   activeImage: CreatePostImage | null
+  disabled?: boolean
+  exportRef?: Ref<CropStepHandle>
   images: CreatePostImage[]
   onSetActiveImage: (imageId: string | null) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
-  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onImageDirty: (imageId: string) => void
   onRemoveImage: (imageId: string) => void
   onAddImages: (images: CreatePostImage[]) => void
 }
 
+export type CropExportResult = {
+  exported: NonNullable<CreatePostImage['exported']>
+  imageId: string
+  ratio: AspectRatio
+}
+
+export type CropStepHandle = {
+  exportActiveImage: () => Promise<CropExportResult>
+}
+
+export class CropExportCancelledError extends Error {
+  constructor() {
+    super('Crop export was cancelled because the active image changed.')
+    this.name = 'CropExportCancelledError'
+  }
+}
+
+const ASPECT_RATIOS: Record<AspectRatio, number | undefined> = {
+  original: undefined,
+  '1:1': 1,
+  '4:5': 4 / 5,
+  '16:9': 16 / 9,
+}
+
+function getCropperStateSignature(cropper: CropperRef, ratio: AspectRatio): string | null {
+  const state = cropper.getState()
+
+  return state
+    ? JSON.stringify({
+        coordinates: state.coordinates,
+        ratio,
+        transforms: state.transforms,
+        visibleArea: state.visibleArea,
+      })
+    : null
+}
+
+function getExportMimeType(image: CreatePostImage): 'image/jpeg' | 'image/png' {
+  const originalType = image.file?.type ?? image.fileInfo?.type
+
+  return originalType === 'image/png' ? 'image/png' : 'image/jpeg'
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image/png') {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob)
+          return
+        }
+
+        reject(new Error('Could not export the cropped image. Please try again.'))
+      },
+      mimeType,
+      mimeType === 'image/jpeg' ? 0.92 : undefined,
+    )
+  })
+}
+
 export function CropStep({
   activeImage,
+  disabled = false,
+  exportRef,
   images,
   onSetActiveImage,
   onAspectRatioChange,
+  onImageDirty,
   onRemoveImage,
-  onImageExported,
   onAddImages,
 }: CropStepProps) {
-  const [selectedRatio, setSelectedRatio] = useState<AspectRatio>(
-    activeImage?.aspectRatio ?? 'original',
-  )
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
   const [isVisibleSlider, setIsVisibleSlider] = useState(false)
+  const activeRatio = activeImage?.aspectRatio ?? 'original'
+  const cropperRef = useRef<CropperRef>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const mountedRef = useRef(false)
+  const activeImageRef = useRef(activeImage)
+  const exportRequestIdRef = useRef(0)
+  const exportedStateRef = useRef(
+    new Map<string, { objectUrl: string; signature: string | null }>(),
+  )
+  const [errors, setErrors] = useState<string[]>([])
 
-  const switchActiveImage = (imageId: string | null) => {
-    onSetActiveImage(imageId)
+  useEffect(() => {
+    mountedRef.current = true
 
-    const nextImage = images.find((image) => image.id === imageId)
-    setSelectedRatio(nextImage?.aspectRatio ?? 'original')
+    return () => {
+      mountedRef.current = false
+      exportRequestIdRef.current += 1
+    }
+  }, [])
+
+  useEffect(() => {
+    activeImageRef.current = activeImage
+  }, [activeImage])
+
+  useEffect(() => {
+    exportRequestIdRef.current += 1
+  }, [activeImage?.id])
+
+  const isExportRequestCurrent = useCallback((requestId: number, imageId: string) => {
+    return (
+      mountedRef.current &&
+      exportRequestIdRef.current === requestId &&
+      activeImageRef.current?.id === imageId
+    )
+  }, [])
+
+  const exportActiveImage = useCallback(async (): Promise<CropExportResult> => {
+    const image = activeImageRef.current
+    const cropper = cropperRef.current
+
+    if (!image?.id || !cropper) {
+      throw new Error('Crop preview is not ready. Please try again.')
+    }
+
+    const signature = getCropperStateSignature(cropper, image.aspectRatio)
+    const exportedState = exportedStateRef.current.get(image.id)
+    const canReuseExport =
+      Boolean(image.exported) &&
+      exportedState?.objectUrl === image.exported?.objectUrl &&
+      exportedState?.signature === signature
+
+    if (canReuseExport && image.exported) {
+      return {
+        exported: image.exported,
+        imageId: image.id,
+        ratio: image.aspectRatio,
+      }
+    }
+
+    const canvas = cropper.getCanvas()
+
+    if (!canvas) {
+      throw new Error('Crop preview is not ready. Please try again.')
+    }
+
+    const requestId = exportRequestIdRef.current + 1
+    exportRequestIdRef.current = requestId
+    const mimeType = getExportMimeType(image)
+    const blob = await canvasToBlob(canvas, mimeType)
+
+    if (!isExportRequestCurrent(requestId, image.id)) {
+      throw new CropExportCancelledError()
+    }
+
+    const fileName = image.file?.name ?? image.name ?? 'cropped-image.jpg'
+    const file = new File([blob], fileName, {
+      type: blob.type || mimeType,
+      lastModified: Date.now(),
+    })
+    const objectUrl = URL.createObjectURL(file)
+
+    if (!isExportRequestCurrent(requestId, image.id)) {
+      URL.revokeObjectURL(objectUrl)
+      throw new CropExportCancelledError()
+    }
+
+    exportedStateRef.current.set(image.id, { objectUrl, signature })
+
+    return {
+      imageId: image.id,
+      ratio: image.aspectRatio,
+      exported: {
+        objectUrl,
+        file,
+        fileInfo: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+        },
+      },
+    }
+  }, [isExportRequestCurrent])
+
+  useImperativeHandle(exportRef, () => ({ exportActiveImage }), [exportActiveImage])
+
+  const handleCropperChange = (cropper: CropperRef) => {
+    const image = activeImageRef.current
+
+    if (!image?.exported) {
+      return
+    }
+
+    const exportedState = exportedStateRef.current.get(image.id)
+
+    if (
+      !exportedState ||
+      exportedState.objectUrl !== image.exported.objectUrl ||
+      exportedState.signature === getCropperStateSignature(cropper, image.aspectRatio)
+    ) {
+      return
+    }
+
+    exportedStateRef.current.delete(image.id)
+    onImageDirty(image.id)
   }
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [errors, setErrors] = useState<string[]>([])
+  const switchActiveImage = (imageId: string | null) => {
+    if (disabled) {
+      return
+    }
+
+    onSetActiveImage(imageId)
+  }
   const hasReachedImagesLimit = images.length >= MAX_IMAGES_COUNT
 
   const handleSelectFiles = () => {
+    if (disabled) {
+      return
+    }
+
     if (hasReachedImagesLimit) {
       setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
 
@@ -103,7 +292,7 @@ export function CropStep({
   })()
 
   const handleSelectedFiles = (selectedFiles: File[]) => {
-    if (selectedFiles.length === 0) {
+    if (disabled || selectedFiles.length === 0) {
       return
     }
 
@@ -157,13 +346,22 @@ export function CropStep({
   }
 
   const handleRemoveImage = (image: CreatePostImage) => {
+    if (disabled) {
+      return
+    }
+
     const currentIndex = images.findIndex((item) => item.id === image.id)
     const nextImages = images.filter((item) => item.id !== image.id)
 
     onRemoveImage(image.id)
+    exportedStateRef.current.delete(image.id)
+
+    if (activeImage?.id !== image.id) {
+      return
+    }
 
     if (nextImages.length === 0) {
-      onSetActiveImage(null)
+      switchActiveImage(null)
       return
     }
 
@@ -179,111 +377,77 @@ export function CropStep({
       return currentIndex
     })()
 
-    onSetActiveImage(nextImages[nextIndex].id)
-  }
-
-  const ASPECT_RATIOS: Record<AspectRatio, number | undefined> = {
-    original: undefined,
-    '1:1': 1,
-    '4:5': 4 / 5,
-    '16:9': 16 / 9,
+    switchActiveImage(nextImages[nextIndex].id)
   }
 
   const handleRatioSelect = (ratio: AspectRatio) => {
-    setSelectedRatio(ratio)
+    if (disabled || !activeImage?.id || ratio === activeImage.aspectRatio) {
+      return
+    }
+
+    onAspectRatioChange(activeImage.id, ratio)
   }
 
   const handleNextImage = () => {
-    if (!activeImage?.id || images.length <= 1) return
+    if (disabled || !activeImage?.id || images.length <= 1) return
 
     const currentIndex = images.findIndex((image) => image.id === activeImage.id)
     if (currentIndex === -1) return
 
     const nextIndex = (currentIndex + 1) % images.length
-    // onSetActiveImage(images[nextIndex].id)
     switchActiveImage(images[nextIndex].id)
   }
 
   const handlePrevImage = () => {
-    if (!activeImage?.id || images.length <= 1) return
+    if (disabled || !activeImage?.id || images.length <= 1) return
 
     const currentIndex = images.findIndex((image) => image.id === activeImage.id)
     if (currentIndex === -1) return
 
     const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1
     switchActiveImage(images[prevIndex].id)
-    // onSetActiveImage(images[prevIndex].id)
   }
 
   const handleVisibleAspectRatioChange = () => {
-    if (isVisibleAspectRatio) {
-      handleCrop(selectedRatio)
-    } else {
-      setIsVisibleSlider(false)
-      setIsVisibleAspectRatio(true)
+    if (disabled) {
+      return
     }
+
+    setIsVisibleSlider(false)
+    setIsVisibleAspectRatio((isVisible) => !isVisible)
   }
 
   const handleVisibleSliderChange = () => {
-    if (isVisibleSlider) {
-      setIsVisibleSlider(false)
-    } else {
-      setIsVisibleAspectRatio(false)
-      setIsVisibleSlider(true)
+    if (disabled) {
+      return
     }
-  }
 
-  const cropperRef = useRef<CropperRef>(null)
-
-  const handleCrop = async (ratio: AspectRatio = selectedRatio) => {
     setIsVisibleAspectRatio(false)
-
-    if (!activeImage?.id || !cropperRef.current) return
-
-    const canvas = cropperRef.current.getCanvas()
-    if (!canvas) return
-
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, 'image/jpeg', 0.92)
-    })
-
-    if (!blob) return
-
-    const fileName = activeImage.file?.name ?? activeImage.name ?? 'cropped-image.jpg'
-    const file = new File([blob], fileName, {
-      type: blob.type || activeImage.fileInfo?.type || 'image/jpeg',
-      lastModified: Date.now(),
-    })
-
-    const exported: NonNullable<CreatePostImage['exported']> = {
-      objectUrl: URL.createObjectURL(blob),
-      file,
-      fileInfo: {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-      },
-    }
-
-    onAspectRatioChange(activeImage.id, ratio)
-    onImageExported(activeImage.id, exported)
+    setIsVisibleSlider((isVisible) => !isVisible)
   }
 
   return (
     <div className={styles.cropWrapper}>
       <Cropper
+        key={activeImage?.id ?? 'empty-cropper'}
         ref={cropperRef}
         src={activeImage?.previewUrl}
         className={styles.activePreviewImage}
+        disabled={disabled}
+        onChange={handleCropperChange}
         stencilProps={{
-          aspectRatio: ASPECT_RATIOS[selectedRatio],
+          aspectRatio: ASPECT_RATIOS[activeRatio],
         }}
       />
       {isVisibleAspectRatio && (
-        <AspectButtonsBlock onSelectRatio={handleRatioSelect} selectedRatio={selectedRatio} />
+        <AspectButtonsBlock
+          disabled={disabled}
+          onSelectRatio={handleRatioSelect}
+          selectedRatio={activeRatio}
+        />
       )}
       <IconButton
+        disabled={disabled}
         onClick={handleVisibleAspectRatioChange}
         className={styles.aspectRatioButton}
         icon={AspectRatioBtn}
@@ -292,6 +456,7 @@ export function CropStep({
       />
 
       <IconButton
+        disabled={disabled}
         onClick={handleVisibleSliderChange}
         className={styles.showSwiper}
         icon={ShowSwiper}
@@ -305,14 +470,17 @@ export function CropStep({
             ref={fileInputRef}
             accept={ACCEPTED_IMAGE_TYPES_INPUT_VALUE}
             className={styles.fileInput}
+            disabled={disabled}
             multiple
             onChange={handleFileChange}
             type="file"
           />
           <div className={styles.swiper} aria-label="Selected images">
             {visibleImages?.map((image) => {
-              const imageSrc = image.exported?.objectUrl || image.previewUrl
               const isActive = image.id === activeImage?.id
+              const imageSrc = isActive
+                ? image.previewUrl
+                : (image.exported?.objectUrl ?? image.previewUrl)
 
               return (
                 <div
@@ -320,8 +488,15 @@ export function CropStep({
                   role="button"
                   className={styles.swiperItem}
                   data-active={isActive}
+                  aria-disabled={disabled}
                   onClick={() => switchActiveImage(image.id)}
-                  // onClick={() => onSetActiveImage(image.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      switchActiveImage(image.id)
+                    }
+                  }}
+                  tabIndex={disabled ? -1 : 0}
                 >
                   {imageSrc ? (
                     <>
@@ -329,9 +504,9 @@ export function CropStep({
                         className={styles.swiperImage}
                         src={imageSrc}
                         alt={image.name}
-                        unoptimized // Важно! Отключает серверную оптимизацию для Blob
-                        width={50} // Укажите примерную ширину миниатюры в пикселях
-                        height={50} // Укажите примерную высоту миниатюры в пикселях
+                        unoptimized
+                        width={50}
+                        height={50}
                       />
                       <IconButton
                         onClick={(event) => {
@@ -339,6 +514,7 @@ export function CropStep({
                           handleRemoveImage(image)
                         }}
                         className={styles.deleteImage}
+                        disabled={disabled}
                         icon={Close}
                         label="deleteImage"
                       />
@@ -354,7 +530,7 @@ export function CropStep({
                 className={styles.addImage}
                 icon={AddImage}
                 label="AddImage"
-                disabled={hasReachedImagesLimit}
+                disabled={disabled || hasReachedImagesLimit}
                 onClick={handleSelectFiles}
               />
             </div>
@@ -391,14 +567,14 @@ export function CropStep({
           icon={ArrowBackIcon}
           label={'ArrowBackIcon'}
           onClick={handlePrevImage}
-          disabled={images.length <= 1}
+          disabled={disabled || images.length <= 1}
         />
         <IconButton
           className={styles.navigationItem}
           icon={ArrowNextIcon}
           label={'ArrowNextIcon'}
           onClick={handleNextImage}
-          disabled={images.length <= 1}
+          disabled={disabled || images.length <= 1}
         />
       </div>
     </div>

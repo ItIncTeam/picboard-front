@@ -6,9 +6,9 @@
   display: flex;
   flex-direction: column;
 
-  width: 156px;
-  height: 152px;
-  padding: 10px 12px;
+  width: min(9.75rem, calc(100% - 1.5rem));
+  min-height: 9.5rem;
+  padding: 0.625rem 0.75rem;
 
   opacity: 0.8;
   background-color: var(--color-surface-secondary);
@@ -24,6 +24,10 @@
     color: var(--color-text-secondary);
 
     background: none;
+  }
+
+  & button:disabled {
+    cursor: default;
   }
 
   & button[data-active='true'] {

@@ -144,8 +144,22 @@ type UploadStepProps = {
 
 type CropStepProps = {
   activeImage: CreatePostImage | null
+  images: CreatePostImage[]
+  disabled?: boolean
+  exportRef?: Ref<CropStepHandle>
+  onSetActiveImage: (imageId: string | null) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
-  onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onImageDirty: (imageId: string) => void
+  onRemoveImage: (imageId: string) => void
+  onAddImages: (images: CreatePostImage[]) => void
+}
+
+type CropStepHandle = {
+  exportActiveImage: () => Promise<{
+    imageId: string
+    ratio: AspectRatio
+    exported: NonNullable<CreatePostImage['exported']>
+  }>
 }
 
 type FiltersStepProps = {
@@ -161,9 +175,19 @@ type PublicationStepProps = {
 }
 ```
 
-`onAspectRatioChange` and `onFilterChange` update existing per-image state fields and clear stale
-`exported` / `upload` state. This prevents publish integration from reusing a file id or temporary
-upload URL that belongs to an older edited file.
+`CropStep` owns the cropper and exposes only `exportActiveImage()` through `exportRef`.
+`CreatePostFlow` awaits the result, owns the reducer update by `image.id`, sequential image
+selection and navigation. `onImageDirty` invalidates the stale export for only the changed image.
+The former `onImageExported` callback is not the primary Crop API and remains only on the Filters
+boundary.
+
+`onAspectRatioChange`, `onImageDirty` and `onFilterChange` update existing per-image state fields
+and clear stale `exported` / `upload` state. This prevents publish integration from reusing a file
+id or temporary upload URL that belongs to an older edited file.
+
+Preview and exported object URLs are owned by one `CreatePostFlow` lifecycle. Final unmount revokes
+all URLs still owned by that instance. Every later flow mount must create new URLs; passing URLs
+from an unmounted flow instance into a new instance is outside the supported contract.
 
 ## CreatePostImage Contract
 
@@ -277,8 +301,8 @@ Owner: Dev 3
 
 Consumed by: Upload Pipeline, Publication, selectors
 
-Changed by: Dev 3 through `CropStepProps.onImageExported` or
-`FiltersStepProps.onImageExported`
+Changed by: Dev 3 through the `CropStepHandle.exportActiveImage` result committed by
+`CreatePostFlow`, or through `FiltersStepProps.onImageExported`
 
 Purpose: final edited artifact after crop/filter processing. Upload pipeline starts from
 `image.exported.file`.
