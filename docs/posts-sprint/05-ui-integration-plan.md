@@ -190,9 +190,11 @@ Differences:
 - `/` stays in the `(public)` route group and uses the public layout/header.
 - `views/public-home-page` composes `usersCount` and the first 4 posts returned by `feed` through
   the page-specific `PublicHome` query. The current gateway `feed` field is not paginated.
-- Successful server results use ISR with a 60-second revalidation window. Empty `feed` and
-  `usersCount = 0` are valid successful data; gateway failures throw into the `(public)` route
-  error boundary, whose retry re-fetches and re-renders the failed segment.
+- Public Home temporarily uses request-time rendering while gateway TLS and attachment file
+  resolution are unstable. Empty `feed` and `usersCount = 0` remain valid successful data; gateway
+  failures throw into the `(public)` route error boundary, whose retry re-fetches and re-renders the
+  failed segment. Restore ISR with `revalidate = 60` after the gateway TLS and resolver failures are
+  fixed.
 - `PostEntity` currently exposes only `ownerId`, not public author profile data. Public Home renders
   the local neutral `User`/avatar placeholder and does not store that fallback in the shared Post
   display model.
