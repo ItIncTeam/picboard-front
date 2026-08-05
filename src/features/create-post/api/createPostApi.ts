@@ -14,9 +14,8 @@ const createPostMutation = gql`
       ownerId
       description
       attachments {
-        id
         fileId
-        order
+        sortOrder
         file {
           id
           ownerId

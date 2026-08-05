@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DocumentNode, OperationDefinitionNode } from 'graphql'
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
+import { visit, type DocumentNode, type OperationDefinitionNode } from 'graphql'
 
 const apolloMocks = vi.hoisted(() => ({
   mutate: vi.fn(),
@@ -49,6 +49,27 @@ function getVariableNames(document: DocumentNode): string[] {
   )
 }
 
+function getFieldSelectionNames(document: DocumentNode, fieldName: string): string[] {
+  let fieldNames: string[] = []
+
+  visit(document, {
+    Field(node) {
+      if (node.name.value !== fieldName) {
+        return
+      }
+
+      fieldNames =
+        node.selectionSet?.selections.flatMap((selection) =>
+          selection.kind === 'Field' ? [selection.name.value] : [],
+        ) ?? []
+
+      return false
+    },
+  })
+
+  return fieldNames
+}
+
 function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
   return {
     attachments: [
@@ -64,8 +85,7 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/first.jpg',
         },
         fileId: 'file-1',
-        id: 'attachment-1',
-        order: 1,
+        sortOrder: 1,
       },
       {
         file: {
@@ -79,8 +99,7 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
           url: 'https://cdn.example/cover.png',
         },
         fileId: 'file-2',
-        id: 'attachment-2',
-        order: 0,
+        sortOrder: 0,
       },
     ],
     createdAt: '2026-07-04T12:00:00.000Z',
@@ -148,9 +167,12 @@ describe('posts GraphQL helpers', () => {
     expect(getOperationName(request.query)).toBe('Post')
     expect(getVariableNames(request.query)).toEqual(['id'])
     expect(request.variables).toEqual({ id: 'post-1' })
-    expect(request.query.loc?.source.body).toContain('query Post($id: ID!)')
-    expect(request.query.loc?.source.body).toContain('order')
-    expect(request.query.loc?.source.body).not.toContain('sortOrder')
+    expect(request.query.loc?.source.body).toContain('query Post($id: String!)')
+    expect(getFieldSelectionNames(request.query, 'attachments')).toEqual([
+      'fileId',
+      'sortOrder',
+      'file',
+    ])
   })
 
   it('allows post query to return null', async () => {
@@ -212,6 +234,18 @@ describe('posts GraphQL helpers', () => {
     expect(getOperationName(request.query)).toBe('ProfilePosts')
     expect(getVariableNames(request.query)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
+    expect(getFieldSelectionNames(request.query, 'profilePosts')).toEqual(['edges', 'pageInfo'])
+    expect(getFieldSelectionNames(request.query, 'pageInfo')).toEqual([
+      'startCursor',
+      'endCursor',
+      'hasNextPage',
+    ])
+  })
+
+  it('models File.url as non-null after the nullable file check', () => {
+    expectTypeOf<
+      NonNullable<PostEntity['attachments'][number]['file']>['url']
+    >().toEqualTypeOf<string>()
   })
 
   it.each([0, 9, 1.5])(

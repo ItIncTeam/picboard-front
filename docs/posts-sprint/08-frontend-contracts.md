@@ -480,11 +480,14 @@ Posts UI Owner
 
 Не предполагать структуру image URL.
 
-Использовать backend-confirmed display URL contract:
+Использовать backend-confirmed display URL contract после проверки nullable `attachment.file`:
 
 ```txt
 attachment.file.url
 ```
+
+`attachment.file.url` is non-null when `attachment.file` is present. Attachments with `file: null`
+must be skipped. Attachment ordering comes from `sortOrder`; the attachment itself has no `id`.
 
 Do not use:
 

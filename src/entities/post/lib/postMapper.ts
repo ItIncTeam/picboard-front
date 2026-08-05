@@ -3,9 +3,9 @@ import type { PostEntity } from '@/entities/post'
 
 export function mapPostEntityToPost(entity: PostEntity): Post {
   const images = [...entity.attachments]
-    .sort((first, second) => first.order - second.order)
+    .sort((first, second) => first.sortOrder - second.sortOrder)
     .flatMap((attachment) => {
-      if (!attachment.file?.url) {
+      if (!attachment.file) {
         return []
       }
 

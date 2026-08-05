@@ -16,7 +16,8 @@
 - `uploadUrl` предназначен только для прямого `PUT`-запроса в хранилище; **никогда не показывайте его в UI**.
 - `uploaded` ≠ `ready`; статус `ready` приходит только после вызова `completeUpload`.
 - `createPost` можно вызывать только когда все выбранные файлы имеют статус `ready`.
-- Изображения постов отображаются из `attachment.file.url`.
+- Изображения постов отображаются из `attachment.file.url` после проверки nullable
+  `attachment.file`.
 - В текущем продакшен-коде есть create-post scoped GraphQL helpers, feature-local upload service
   and default publish integration.
 
@@ -172,8 +173,8 @@
 
 **Читай:**
 
-- `PostAttachmentEntity.id`, `PostAttachmentEntity.fileId`, `PostAttachmentEntity.order`,
-  nullable `PostAttachmentEntity.file`, nullable `PostAttachmentEntity.file.url`.
+- `PostAttachmentEntity.fileId`, `PostAttachmentEntity.sortOrder`, nullable
+  `PostAttachmentEntity.file`, and non-null `PostAttachmentEntity.file.url` after the file check.
 - `profilePosts(input: { userId, first, after? })`, `feed()` and `post(id)` from
   `entities/post/api` for follow-up UI composition.
 
@@ -191,8 +192,9 @@
 
 **Готовые контракты:**
 
-- Отображай изображения через `attachment.file.url`.
-- `profilePosts` использует курсорную пагинацию: `first`, опциональный `after`; размер страницы — 8.
+- Отображай изображения через `attachment.file.url` после проверки `attachment.file`.
+- `profilePosts` использует курсорную пагинацию: `first`, опциональный `after`; frontend принимает
+  `first` от 1 до 8, а gateway schema не задаёт default.
 
 ---
 
@@ -253,6 +255,7 @@
 - `deletePost` получает `postId`.
 - `profilePosts` получает `userId`, `first` and optional `after`.
 - `feed` returns `[PostEntity!]!`.
-- `post(id: ID!)` returns `PostEntity` or `null`.
+- `post(id: String!)` returns `PostEntity` or `null`.
+- `usersCount: Int!` is available; `feed` currently has no pagination arguments.
 - GraphQL-схема, create-post wrappers and posts API foundation wrappers are present in production
   code.

@@ -27,8 +27,10 @@ Final gateway schema:
 - upload mutations: `initiateUploadBatch(input: [InitiateUploadInput!]!)` and
   `completeUpload(input: [CompleteUploadInput!]!)`;
 - posts mutations: `createPost`, `updatePostDescription`, `deletePost`;
-- posts queries: `profilePosts(input: ProfilePostsInput!)`, `feed`, `post(id: ID!)`;
-- display URL: `PostAttachmentEntity.file?.url`; nullable `file` / `url` must be tolerated.
+- posts queries: `profilePosts(input: ProfilePostsInput!)`, unpaginated `feed`,
+  `post(id: String!)`, and `usersCount: Int!`;
+- display URL: `PostAttachmentEntity.file?.url`; nullable `file` must be tolerated and `file.url`
+  is non-null after the `file` check.
 
 ### Epic 2: Posts Consumption
 
@@ -310,7 +312,7 @@ Checklist:
 - [x] Build `completeUpload` input as an array of `{ fileId }` items.
 - [x] Treat only `FileStatus.READY` as publishable.
 - [x] Keep display rendering on `PostAttachmentEntity.file?.url`; never use `uploadUrl` in post
-      skeleton UI, and skip attachments without an available display URL.
+      skeleton UI, and skip attachments with `file: null`.
 - [ ] Define cache/refetch behavior after create, update and delete.
 
 ## Что можно делать параллельно
@@ -340,7 +342,7 @@ Still not blocked by backend schema, but pending implementation/product decision
 
 - cache/refetch strategy after create, update and delete;
 - edit/delete permissions and error copy;
-- public registered users count contract;
+- Public Main access and cache policy (`usersCount: Int!` is available);
 - SSR/ISR settings for main/public pages;
 - retry/idempotency behavior for failed upload and publish steps.
-- Public latest posts and registered users count contract.
+- Public latest posts selection/access contract.

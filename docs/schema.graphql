@@ -20,10 +20,11 @@ type UserOutput {
 }
 
 type Query {
-  me: User!
+  me: User
   user(id: String!): User
+  usersCount: Int!
   feed: [PostEntity!]!
-  post(id: ID!): PostEntity
+  post(id: String!): PostEntity
   profilePosts(input: ProfilePostsInput!): PostConnection!
 }
 
@@ -124,7 +125,7 @@ input DeletePostInput {
 
 input ProfilePostsInput {
   userId: ID!
-  first: Int = 8
+  first: Int
   after: String
 }
 
@@ -167,7 +168,7 @@ type File {
   mimeType: MimeType!
   size: Int!
   status: FileStatus!
-  url: String
+  url: String!
 }
 
 type InitiateUploadPayload {
@@ -183,9 +184,8 @@ type CompleteUploadPayload {
 }
 
 type PostAttachmentEntity {
-  id: ID!
   fileId: ID!
-  order: Int!
+  sortOrder: Int!
   file: File
 }
 

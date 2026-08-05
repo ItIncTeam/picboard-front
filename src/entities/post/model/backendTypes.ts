@@ -12,14 +12,13 @@ export type File = {
   purpose: Purpose
   size: number
   status: FileStatus
-  url: string | null
+  url: string
 }
 
 export type PostAttachmentEntity = {
   file: File | null
   fileId: string
-  id: string
-  order: number
+  sortOrder: number
 }
 
 export type PostEntity = {

@@ -205,13 +205,8 @@ type ProfilePostsInput = {
 }
 ```
 
-Current backend page size:
-
-```txt
-8 posts
-```
-
-Frontend should prepare infinite scroll around cursor pagination.
+The gateway schema does not define a default for `first`. The current frontend guard accepts values
+from 1 through 8. Frontend should prepare infinite scroll around cursor pagination.
 
 ### `feed`
 
@@ -219,10 +214,12 @@ Frontend should prepare infinite scroll around cursor pagination.
 feed: [PostEntity!]!
 ```
 
+`feed` currently has no pagination arguments.
+
 ### `post`
 
 ```graphql
-post(id: ID!): PostEntity
+post(id: String!): PostEntity
 ```
 
 `post` may return `null` when the backend cannot return an entity for the provided id.
@@ -233,9 +230,8 @@ Backend-confirmed schema:
 
 ```graphql
 type PostAttachmentEntity {
-  id: ID!
   fileId: ID!
-  order: Int!
+  sortOrder: Int!
   file: File
 }
 
@@ -247,9 +243,11 @@ type File {
   mimeType: MimeType!
   size: Int!
   status: FileStatus!
-  url: String
+  url: String!
 }
 ```
+
+`PostAttachmentEntity.file` is nullable. When `file` is present, `file.url` is non-null.
 
 Frontend rendering:
 
@@ -273,6 +271,15 @@ Backend-confirmed display URL contract.
 
 Image URL is not expected to be stored directly in `Post` or `PostAttachment`. Frontend should read
 the display URL through `attachment.file.url`.
+
+### `usersCount`
+
+```graphql
+usersCount: Int!
+```
+
+The field is available for the Public Main registered-users count. Public access and cache policy
+remain integration decisions.
 
 ## Frontend State Mapping
 
