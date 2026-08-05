@@ -3,30 +3,7 @@ import { gql } from '@apollo/client'
 import { apolloClient } from '@/shared/api'
 
 import type { PostConnection, PostEntity } from '@/entities/post'
-
-const postFieldsFragment = gql`
-  fragment PostFields on PostEntity {
-    id
-    ownerId
-    description
-    attachments {
-      fileId
-      sortOrder
-      file {
-        id
-        ownerId
-        originalName
-        purpose
-        mimeType
-        size
-        status
-        url
-      }
-    }
-    createdAt
-    updatedAt
-  }
-`
+import { postFieldsFragment } from './postFragments'
 
 const feedQuery = gql`
   ${postFieldsFragment}

@@ -187,10 +187,16 @@ Differences:
 
 ### Public main page
 
-- `views/public-home-page` shows 4 latest posts and registered users count.
-- Public data uses `Homepage { usersCount feed { ... } }` with a 60 second revalidation window.
-- Do not assume auth-required fields are available to anonymous users.
-- Main/public page implementation lives in the UC-1 public home page PR.
+- `/` stays in the `(public)` route group and uses the public layout/header.
+- `views/public-home-page` composes `usersCount` and the first 4 posts returned by `feed` through
+  the page-specific `PublicHome` query. The current gateway `feed` field is not paginated.
+- Successful server results use ISR with a 60-second revalidation window. Empty `feed` and
+  `usersCount = 0` are valid successful data; gateway failures throw into the `(public)` route
+  error boundary, whose retry re-fetches and re-renders the failed segment.
+- `PostEntity` currently exposes only `ownerId`, not public author profile data. Public Home renders
+  the local neutral `User`/avatar placeholder and does not store that fallback in the shared Post
+  display model.
+- Likes, comments, bookmarks and other social actions are outside the Public Home scope.
 
 ### Details
 
@@ -225,4 +231,5 @@ Differences:
 - Close with no unsaved data: no confirm.
 - Close with unsaved data: confirm appears.
 - Profile page shows posts grid skeleton without backend calls.
-- Public main page shows latest posts/users count skeleton without backend calls.
+- Public main page renders the real `usersCount + feed` response, distinguishes a successful empty
+  feed from gateway failure, and delegates gateway failure recovery to the route error boundary.

@@ -8,6 +8,7 @@ export {
   type ProfilePostsInput,
   type UpdatePostDescriptionInput,
 } from './api/postsApi'
+export { getPublicHomeQueryData, type PublicHomeQueryData } from './api/publicHomeApi'
 export { mapPostEntitiesToPosts, mapPostEntityToPost } from './lib/postMapper'
 export type {
   File,
