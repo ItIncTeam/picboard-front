@@ -13,7 +13,6 @@ pipeline {
         IMAGE_NAME = "${env.BUILD_ID}_${env.ENV_TYPE}_${env.GIT_COMMIT}"
         DOCKER_BUILD_NAME = "${env.REGISTRY_HOSTNAME}/${env.PROJECT}:${env.IMAGE_NAME}"
         NEXT_PUBLIC_GRAPHQL_ENDPOINT = "https://gateway.picboard.space/api/v1"
-        NEXT_PUBLIC_OAUTH_BASE_URL = "https://users.picboard.space/api/v1"
         NEXT_PUBLIC_RECAPTCHA_SITE_KEY = "6Lf6RAktAAAAAN230knM9OFCF71tDc8S1IIa4N1w"
     }
 
@@ -27,7 +26,7 @@ pipeline {
             steps {
                 echo "Build image started..."
                     script {
-                        app = docker.build("${env.DOCKER_BUILD_NAME}", "--build-arg NEXT_PUBLIC_GRAPHQL_ENDPOINT=${NEXT_PUBLIC_GRAPHQL_ENDPOINT} --build-arg NEXT_PUBLIC_OAUTH_BASE_URL=${NEXT_PUBLIC_OAUTH_BASE_URL} --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY} .")
+                        app = docker.build("${env.DOCKER_BUILD_NAME}", "--build-arg NEXT_PUBLIC_GRAPHQL_ENDPOINT=${NEXT_PUBLIC_GRAPHQL_ENDPOINT} --build-arg NEXT_PUBLIC_RECAPTCHA_SITE_KEY=${NEXT_PUBLIC_RECAPTCHA_SITE_KEY} .")
                     }
                 echo "Build image finished..."
             }
