@@ -43,6 +43,7 @@ pnpm install
 
 ```env
 NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://gateway.picboard.space/api/v1
+NEXT_PUBLIC_OAUTH_BASE_URL=https://users.picboard.space/api/v1
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 ```
 
@@ -50,6 +51,7 @@ NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 
 ```env
 NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://gateway.picboard.space/api/v1
+NEXT_PUBLIC_OAUTH_BASE_URL=https://users.picboard.space/api/v1
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=YOUR_RECAPTCHA_SITE_KEY
 ```
 
@@ -71,8 +73,9 @@ http://localhost:3000/graphql
 404 Not Found
 ```
 
-`NEXT_PUBLIC_GRAPHQL_ENDPOINT` также используется для browser navigation на backend-owned Google
-и GitHub OAuth start routes.
+`NEXT_PUBLIC_OAUTH_BASE_URL` используется только для browser navigation на backend-owned Google и
+GitHub OAuth start routes. Остальные auth operations, включая `exchangeOAuthCode`, используют
+`NEXT_PUBLIC_GRAPHQL_ENDPOINT` через Apollo Client.
 
 `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` — публичный frontend site key для Google reCAPTCHA v3.
 `RECAPTCHA_SECRET_KEY` относится только к backend и не должен попадать во frontend.

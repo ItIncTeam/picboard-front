@@ -130,15 +130,15 @@ Frontend flow:
 1. Backend owns the complete Google/GitHub OAuth provider flow: provider detection, state
    validation, PKCE, provider code exchange, user creation/linking, and issuing a backend OAuth code.
 2. Frontend OAuth provider buttons redirect the browser to backend-owned OAuth start URLs built
-   from the shared `NEXT_PUBLIC_GRAPHQL_ENDPOINT` backend base URL:
-   - Google: `${NEXT_PUBLIC_GRAPHQL_ENDPOINT}/auth/google/start`
-   - GitHub: `${NEXT_PUBLIC_GRAPHQL_ENDPOINT}/auth/github/login`
+   from `NEXT_PUBLIC_OAUTH_BASE_URL=https://users.picboard.space/api/v1`:
+   - Google: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/google/start`
+   - GitHub: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/github/login`
 3. Backend redirects production provider flows to `https://picboard.space/auth/callback`.
    Local frontend origin is also configured, so local verification should use
    `http://localhost:3000/auth/callback`.
 4. Frontend route `/auth/callback` receives `/auth/callback?code=<BACKEND_CODE>`.
 5. Frontend reads only `code` from the URL and calls `exchangeOAuthCode` with
-   `OAuthExchangeCodeInput`.
+   `OAuthExchangeCodeInput` through `NEXT_PUBLIC_GRAPHQL_ENDPOINT`.
 6. Backend returns `accessToken` and `user`.
 7. Frontend stores only `accessToken` in memory, calls `authenticateWithCurrentToken`, then redirects
    to `/main`.

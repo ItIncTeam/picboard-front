@@ -12,8 +12,9 @@ describe('startOAuthProvider', () => {
     vi.restoreAllMocks()
   })
 
-  it('imports safely without the backend base URL and fails on invocation without navigating', async () => {
-    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', '')
+  it('imports safely without the OAuth base URL and fails on invocation without navigating', async () => {
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'https://gateway.example.test/api/v1')
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', '')
     const assignMock = vi.fn()
 
     vi.stubGlobal('window', {
@@ -25,16 +26,17 @@ describe('startOAuthProvider', () => {
     const startOAuthProvider = await importStartOAuthProvider()
 
     expect(() => startOAuthProvider('google')).toThrow(
-      'NEXT_PUBLIC_GRAPHQL_ENDPOINT is not configured',
+      'NEXT_PUBLIC_OAUTH_BASE_URL is not configured',
     )
     expect(assignMock).not.toHaveBeenCalled()
   })
 
   it.each([
-    ['google', 'https://backend.example.test/api/v1/auth/google/start'],
-    ['github', 'https://backend.example.test/api/v1/auth/github/login'],
+    ['google', 'https://users.example.test/api/v1/auth/google/start'],
+    ['github', 'https://users.example.test/api/v1/auth/github/login'],
   ] as const)('navigates to the configured %s start URL', async (provider, expectedUrl) => {
-    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'https://backend.example.test/api/v1')
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'https://gateway.example.test/api/v1')
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', 'https://users.example.test/api/v1')
     const assignMock = vi.fn()
 
     vi.stubGlobal('window', {
@@ -52,7 +54,7 @@ describe('startOAuthProvider', () => {
   })
 
   it('normalizes trailing slashes', async () => {
-    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'https://backend.example.test/api/v1///')
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', 'https://users.example.test/api/v1///')
     const assignMock = vi.fn()
 
     vi.stubGlobal('window', {
@@ -65,6 +67,24 @@ describe('startOAuthProvider', () => {
 
     startOAuthProvider('github')
 
-    expect(assignMock).toHaveBeenCalledWith('https://backend.example.test/api/v1/auth/github/login')
+    expect(assignMock).toHaveBeenCalledWith('https://users.example.test/api/v1/auth/github/login')
+  })
+
+  it('does not use the GraphQL endpoint for OAuth navigation', async () => {
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', 'https://gateway.example.test/api/v1')
+    vi.stubEnv('NEXT_PUBLIC_OAUTH_BASE_URL', 'https://users.example.test/api/v1')
+    const assignMock = vi.fn()
+
+    vi.stubGlobal('window', {
+      location: {
+        assign: assignMock,
+      },
+    })
+
+    const startOAuthProvider = await importStartOAuthProvider()
+
+    startOAuthProvider('google')
+
+    expect(assignMock).toHaveBeenCalledWith('https://users.example.test/api/v1/auth/google/start')
   })
 })
