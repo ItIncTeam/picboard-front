@@ -63,10 +63,11 @@ Responsibilities:
 - управлять crop area, zoom и aspect ratio;
 - поддержать aspect ratio modes из Figma: `original`, `1:1`, `4:5`, `16:9`;
 - поддержать active image navigation and media strip для multi-image posts;
-- хранить aspect ratio per image; crop coordinates/zoom остаются локальными и сбрасываются при
-  смене active image;
+- хранить aspect ratio и минимальную crop geometry (`coordinates`, `visibleArea`, `transforms`)
+  per image; viewport-dependent `boundary` / `imageSize` в state не сохраняются;
 - экспортировать текущий canvas в новый `File`, не изменяя original `file` / `previewUrl`;
-- сохранить crop result в `image.exported` по стабильному `image.id`;
+- сохранить immutable crop result в `image.cropped` по стабильному `image.id`, а для `normal`
+  filter также использовать его как текущий final `image.exported`;
 - последовательно обработать images в порядке state и перейти к filters только после успешного
   crop export всех images.
 
@@ -77,8 +78,9 @@ Responsibilities:
 - показать preview с выбранными фильтрами;
 - использовать Figma layout: preview слева, filters grid справа на desktop;
 - хранить filter settings per image;
-- не менять original file;
-- подготовить image processing pipeline для export.
+- всегда читать immutable base из `image.cropped.file`, не меняя cropped/original artifacts;
+- для `normal` переиспользовать cropped artifact, а для остальных presets записывать новый Canvas
+  export в финальный `image.exported`.
 
 ## Step: publication
 
@@ -89,6 +91,8 @@ Responsibilities:
 - собрать caption/hashtags UI;
 - валидировать description max length: `500` characters;
 - show disabled publish state when `selectCanPublish` is false;
+- disable caption editing while `isPublishing` so the visible description stays equal to the
+  publish snapshot;
 - call the default publish pipeline when publish is allowed, unless `onPublishAction` is provided
   as a shell-level override for tests/stories.
 - не использовать GraphQL Upload.
@@ -139,17 +143,10 @@ type CreatePostImage = {
   }
   previewUrl?: string
   aspectRatio: 'original' | '1:1' | '4:5' | '16:9'
+  cropGeometry?: CreatePostCropGeometry
+  cropped?: CreatePostImageArtifact
   filter: 'normal' | 'clarendon' | 'lark' | 'gingham' | 'moon'
-  exported?: {
-    file: File
-    objectUrl: string
-    fileInfo: {
-      name: string
-      size: number
-      type: string
-      lastModified: number
-    }
-  }
+  exported?: CreatePostImageArtifact
   upload?: {
     fileId?: string
     uploadUrl?: string
@@ -207,7 +204,7 @@ type CropStepProps = {
   exportRef?: Ref<CropStepHandle>
   onSetActiveImage: (imageId: string | null) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
-  onImageDirty: (imageId: string) => void
+  onCropGeometryChange: (imageId: string, geometry: CreatePostCropGeometry) => void
   onRemoveImage: (imageId: string) => void
   onAddImages: (images: CreatePostImage[]) => void
 }
@@ -216,20 +213,27 @@ type CropStepHandle = {
   exportActiveImage: () => Promise<{
     imageId: string
     ratio: AspectRatio
-    exported: NonNullable<CreatePostImage['exported']>
+    geometry: CreatePostCropGeometry
+    cropped: NonNullable<CreatePostImage['cropped']>
   }>
 }
 
 type FiltersStepProps = {
   activeImage: CreatePostImage | null
+  images: CreatePostImage[]
+  onExportingChange: (isExporting: boolean) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
 }
 
 type PublicationStepProps = {
   images: CreatePostImage[]
   caption: string
+  isPublishing: boolean
   onCaptionChange: (caption: string) => void
+  onRetryUpload: () => void
 }
 ```
 
@@ -238,30 +242,32 @@ type PublicationStepProps = {
 sequential image selection and step navigation. The former `onImageExported` callback is not the
 Crop export API; it remains a Filters boundary callback.
 
-`onAspectRatioChange`, `onImageDirty` and `onFilterChange` update existing per-image fields and
-clear stale `exported` / `upload` data, because a changed edit invalidates the previously exported
-file and any previous upload state.
+`onAspectRatioChange` clears crop geometry, cropped base, final export and upload state.
+`onCropGeometryChange` stores reducer-owned geometry by image id and clears cropped base, final
+export and upload state only when that geometry actually changes. `onFilterChange` preserves the
+immutable cropped base and clears only final `exported` / `upload` data.
 
-`CropStep` also compares the current cropper state with the signature associated with the saved
-crop object URL. The signature contains coordinates, visible area, transforms and aspect ratio; it
-does not contain layout-dependent boundary or image-size fields. A user crop/zoom/rotation change
-reports the image as dirty through `onImageDirty`; the shell clears only that image's stale
-`exported` value through the existing reducer, so sequential navigation cannot skip it.
+`CropStep` restores reducer-owned coordinates, visible area and transforms after image switch,
+remount and Filters -> Back. Artifact reuse compares that geometry plus aspect ratio. The dirty
+contract excludes layout-dependent boundary and image-size fields, so resize does not invalidate
+an unchanged crop.
 
 ## Step transitions
 
 - `upload -> crop`: currently allowed when at least one image exists.
 - `crop -> filters`: shell exports the active cropper canvas and stays on crop while an image without
-  a current crop export remains. The transition happens only after every image has `exported`.
-- `filters -> publication`: currently allowed when at least one image exists. Stricter filter/export
-  gating can be added with a selector update when real filters/export implementation lands.
+  a current `cropped` base remains. The transition happens only after every image has `cropped`;
+  current `normal` filter also exposes that artifact through final `exported`.
+- `filters -> publication`: allowed only after every image has a current final `exported` artifact
+  and no filter export is pending.
 - `publication -> publish`: allowed when `selectCanPublish` is true: publication step, at least one
   image, all images exported, caption length up to 500, and `isPublishing === false`. Backend
   integration is connected through the default publish path; `onPublishAction` is only an override.
 - Back navigation between steps should preserve selected files and settings.
-- Reset clears in-memory create state. Preview and exported object URLs are revoked by the shared
-  create-post cleanup hook on replace, remove, reset and unmount. A stale async crop result revokes
-  its newly-created object URL immediately.
+- Reset clears in-memory create state. Original preview, cropped base and final exported object URLs
+  are revoked by the shared create-post cleanup hook on replace, invalidation, remove, reset and
+  unmount. Shared URLs are deduplicated. A stale async crop result revokes its newly-created object
+  URL immediately.
 - Object URL ownership is limited to one `CreatePostFlow` lifecycle. Final unmount revokes every
   remaining URL owned by that instance. A later flow mount must create new preview/exported URLs;
   reusing URLs from an unmounted flow is unsupported.
@@ -280,6 +286,8 @@ reports the image as dirty through `onImageDirty`; the shell clears only that im
 
 Current close behavior:
 
+- route-modal Escape, backdrop and direct dismiss requests call the same `CreatePostFlow` close
+  guard as its explicit close action;
 - if `hasUnsavedData === false`: close immediately through the shell `onCloseAction`;
 - if `hasUnsavedData === true`: show Close Confirm;
 - `Discard`: reset create state, then close modal;
@@ -325,15 +333,15 @@ Navigation rules:
 - Revoke object URL when image is removed.
 - Revoke all object URLs when flow resets.
 - Revoke all object URLs on unmount.
-- For exported blobs, create separate object URLs and revoke them when replaced/reset/unmounted.
+- For cropped and final exported blobs, track every distinct object URL and revoke it only after no
+  current artifact references it.
 - Never create object URLs inside render.
 
 ## Final image export logic
 
 Frontend exports final images after crop/filter:
 
-- read original image;
-- apply crop coordinates;
+- read the immutable cropped base from `image.cropped.file`;
 - apply selected filter settings;
 - render into canvas;
 - export to Blob/File using a backend-allowed image MIME type;
@@ -371,23 +379,15 @@ Follow-up work:
 
 - update profile/feed/main caches according to agreed API/cache strategy.
 
-## Current skeleton behavior
+## Current implementation
 
-`FiltersStep` may still show a step placeholder, but must not:
-
-- add a separate `clientUploadId` field instead of using `CreatePostImage.id`;
-- match upload descriptors, completion payloads or ready file ids by array index;
-- persist draft;
-- claim filters/export is production-ready;
-- add dependencies outside dedicated dependency PRs.
-
-Upload UI, crop UI with sequential canvas export, publication UI and the default publish pipeline
-are implemented. Filters and filtered re-export remain follow-up work.
+Upload, crop, filters, publication and the default publish pipeline are implemented. Filters keep
+the selected preset and final artifact per `image.id`, always process non-normal presets from the
+immutable cropped base, reject stale async results and keep Publication navigation locked until all
+final artifacts are ready.
 
 ## Known limitations
 
-- Filters is not production-ready and still must replace the crop `image.exported.file` with a
-  filtered export before the default publish path can complete from normal UI usage.
 - Cache/refetch behavior after successful `createPost` is not defined.
 - Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
   previously uploaded files should be completed, retried or cleaned up.
@@ -401,6 +401,9 @@ The likely direction is a fullscreen wizard, but it needs a separate product/des
 implementation.
 
 image.file
+│
+▼
+image.cropped.file
 │
 ▼
 image.exported.file

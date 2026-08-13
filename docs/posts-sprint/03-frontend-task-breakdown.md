@@ -326,12 +326,10 @@ Checklist:
 ## Что нельзя делать без отдельной задачи
 
 - UI composition for post edit/delete/profile/feed/details.
-- Registered users count implementation.
 - Upload API helpers outside `features/create-post` for Create Post.
 - GraphQL Upload for media files.
 - Cache invalidation logic for posts.
-- ISR/revalidation implementation tied to real backend fields.
-- Public access assumptions beyond skeleton UI.
+- Protected main page ISR/revalidation implementation tied to real backend fields.
 
 ## Backend blockers
 
@@ -342,7 +340,6 @@ Still not blocked by backend schema, but pending implementation/product decision
 
 - cache/refetch strategy after create, update and delete;
 - edit/delete permissions and error copy;
-- Public Main access and cache policy (`usersCount: Int!` is available);
-- SSR/ISR settings for main/public pages;
+- protected main page access and cache policy;
+- Public Home ISR restoration after the gateway HTTPS certificate is fixed;
 - retry/idempotency behavior for failed upload and publish steps.
-- Public latest posts selection/access contract.

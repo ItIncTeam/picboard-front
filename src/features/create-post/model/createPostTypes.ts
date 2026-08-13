@@ -13,6 +13,31 @@ export type CreatePostImageFileInfo = {
   lastModified: number
 }
 
+export type CreatePostCropCoordinates = {
+  height: number
+  left: number
+  top: number
+  width: number
+}
+
+export type CreatePostCropGeometry = {
+  coordinates: CreatePostCropCoordinates | null
+  transforms: {
+    flip: {
+      horizontal: boolean
+      vertical: boolean
+    }
+    rotate: number
+  }
+  visibleArea: CreatePostCropCoordinates | null
+}
+
+export type CreatePostImageArtifact = {
+  file: File
+  objectUrl: string
+  fileInfo: CreatePostImageFileInfo
+}
+
 export type CreatePostUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
 
 /**
@@ -48,12 +73,10 @@ export type CreatePostImage = {
   fileInfo?: CreatePostImageFileInfo
   previewUrl?: string
   aspectRatio: AspectRatio
+  cropGeometry?: CreatePostCropGeometry
+  cropped?: CreatePostImageArtifact
   filter: ImageFilter
-  exported?: {
-    file: File
-    objectUrl: string
-    fileInfo: CreatePostImageFileInfo
-  }
+  exported?: CreatePostImageArtifact
   upload?: {
     fileId?: string
     uploadUrl?: string
@@ -82,6 +105,17 @@ export type CreatePostAction =
   | { type: 'setActiveImage'; imageId: string | null }
   | { type: 'setCaption'; caption: string }
   | { type: 'setImageAspectRatio'; aspectRatio: AspectRatio; imageId: string }
+  | {
+      type: 'setImageCropGeometry'
+      geometry: CreatePostCropGeometry
+      imageId: string
+    }
+  | {
+      type: 'setImageCropped'
+      cropped: CreatePostImageArtifact
+      geometry: CreatePostCropGeometry
+      imageId: string
+    }
   | { type: 'setImageFilter'; filter: ImageFilter; imageId: string }
   /**
    * Final file produced by crop/filter/export pipeline.

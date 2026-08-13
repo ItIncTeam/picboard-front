@@ -214,7 +214,9 @@ from 1 through 8. Frontend should prepare infinite scroll around cursor paginati
 feed: [PostEntity!]!
 ```
 
-`feed` currently has no pagination arguments.
+Backend guarantees that `feed` returns at most 4 posts ordered by `createdAt DESC`. The field has no
+pagination arguments, and infinite scroll is outside the current Public Home scope. Frontend must
+preserve the returned post order and must not own an additional feed limit or sorting rule.
 
 ### `post`
 
@@ -332,7 +334,8 @@ are implementation details, not backend schema blockers:
    and storage validation failure;
 3. whether frontend should request width/height or other media metadata in post rendering queries;
 4. cache/refetch strategy after create, edit and delete;
-5. SSR/ISR/cache requirements for `feed` and public page composition.
+5. cache requirements for protected feed composition. Public Home remains request-rendered until
+   the gateway HTTPS certificate is fixed, then returns to `revalidate = 60`.
 
 ## Implementation Boundaries
 

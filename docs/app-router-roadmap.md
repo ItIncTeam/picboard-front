@@ -152,7 +152,7 @@ widgets/public-auth-shell
 Route-based modals живут в `app/(protected)/(main)/@modal`. Они нужны для контента, который можно
 открыть отдельным URL.
 
-Сейчас подключен skeleton Create Post modal:
+Сейчас подключен Create Post modal с Upload, Crop, Filters и Publication steps:
 
 - soft navigation на `/posts/create` внутри `(main)` открывает `@modal/(.)posts/create/page.tsx`;
 - прямой заход или reload `/posts/create` рендерит обычный fallback route

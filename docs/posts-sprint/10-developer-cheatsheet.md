@@ -214,6 +214,7 @@
 **Читай:**
 
 - `activeImage`.
+- `activeImage.cropped.file` as the only filter input.
 - `activeImage.exported`.
 - `activeImage.filter`.
 
@@ -233,7 +234,6 @@
 
 **Known limitations:**
 
-- Crop/filter/export still must create `image.exported.file` before normal UI usage can publish.
 - Retry/idempotency for expired `uploadUrl`, failed storage `PUT`, failed `completeUpload` and
   failed `createPost` remains open.
 - Cache/refetch strategy after create, update and delete remains open.
@@ -254,8 +254,10 @@
 - `updatePostDescription` получает `postId` and `description`.
 - `deletePost` получает `postId`.
 - `profilePosts` получает `userId`, `first` and optional `after`.
-- `feed` returns `[PostEntity!]!`.
+- `feed` returns at most 4 `PostEntity` items ordered by `createdAt DESC`; frontend preserves this
+  order and does not apply another limit.
 - `post(id: String!)` returns `PostEntity` or `null`.
-- `usersCount: Int!` is available; `feed` currently has no pagination arguments.
+- `usersCount: Int!` returns the total user count; `feed` has no pagination arguments or Public
+  Home infinite scroll.
 - GraphQL-схема, create-post wrappers and posts API foundation wrappers are present in production
   code.

@@ -30,6 +30,12 @@ const createExportedImage = () => ({
   },
 })
 
+const cropGeometry = {
+  coordinates: { height: 320, left: 10, top: 20, width: 320 },
+  transforms: { flip: { horizontal: false, vertical: false }, rotate: 0 },
+  visibleArea: { height: 640, left: 0, top: 0, width: 640 },
+}
+
 describe('createPostReducer', () => {
   it('resets state to initial state', () => {
     const dirtyState: CreatePostState = {
@@ -229,10 +235,12 @@ describe('createPostReducer', () => {
     expect(result.hasUnsavedData).toBe(true)
   })
 
-  it('updates image aspect ratio by image id and clears stale export/upload state', () => {
+  it('updates image aspect ratio by image id and clears stale crop/export/upload state', () => {
     const exported = createExportedImage()
     const imageWithExportAndUpload: CreatePostImage = {
       ...firstImage,
+      cropGeometry,
+      cropped: exported,
       exported,
       upload: {
         fileId: 'file-1',
@@ -257,6 +265,8 @@ describe('createPostReducer', () => {
     expect(result.images[0]).toEqual({
       ...firstImage,
       aspectRatio: '16:9',
+      cropGeometry: undefined,
+      cropped: undefined,
       exported: undefined,
       upload: undefined,
     })
@@ -279,10 +289,125 @@ describe('createPostReducer', () => {
     expect(result).toBe(state)
   })
 
-  it('updates image filter by image id and clears stale export/upload state', () => {
+  it('stores crop geometry by image id without changing image order', () => {
+    const result = createPostReducer(
+      { ...createPostInitialState, images: [firstImage, secondImage] },
+      {
+        type: 'setImageCropGeometry',
+        geometry: cropGeometry,
+        imageId: secondImage.id,
+      },
+    )
+
+    expect(result.images[0]).toBe(firstImage)
+    expect(result.images[1]).toEqual({ ...secondImage, cropGeometry })
+  })
+
+  it('invalidates cropped base, final export, and upload when crop geometry changes', () => {
+    const cropped = createExportedImage()
+    const exported = { ...createExportedImage(), objectUrl: 'blob:filtered' }
+    const image: CreatePostImage = {
+      ...firstImage,
+      cropGeometry,
+      cropped,
+      exported,
+      upload: { fileId: 'file-1', status: 'ready' },
+    }
+    const nextGeometry = {
+      ...cropGeometry,
+      coordinates: { ...cropGeometry.coordinates, left: 24 },
+    }
+
+    const result = createPostReducer(
+      { ...createPostInitialState, images: [image] },
+      { type: 'setImageCropGeometry', geometry: nextGeometry, imageId: image.id },
+    )
+
+    expect(result.images[0]).toEqual({
+      ...firstImage,
+      cropGeometry: nextGeometry,
+      cropped: undefined,
+      exported: undefined,
+      upload: undefined,
+    })
+  })
+
+  it('keeps crop artifacts when crop geometry is unchanged', () => {
+    const cropped = createExportedImage()
+    const exported = { ...createExportedImage(), objectUrl: 'blob:filtered' }
+    const image: CreatePostImage = {
+      ...firstImage,
+      cropGeometry,
+      cropped,
+      exported,
+    }
+    const state = { ...createPostInitialState, images: [image] }
+
+    const result = createPostReducer(state, {
+      type: 'setImageCropGeometry',
+      geometry: {
+        coordinates: { ...cropGeometry.coordinates },
+        transforms: {
+          flip: { ...cropGeometry.transforms.flip },
+          rotate: cropGeometry.transforms.rotate,
+        },
+        visibleArea: { ...cropGeometry.visibleArea },
+      },
+      imageId: image.id,
+    })
+
+    expect(result).toBe(state)
+  })
+
+  it('stores cropped base and uses it as final export for the normal filter', () => {
+    const cropped = createExportedImage()
+
+    const result = createPostReducer(
+      { ...createPostInitialState, images: [firstImage, secondImage] },
+      {
+        type: 'setImageCropped',
+        cropped,
+        geometry: cropGeometry,
+        imageId: firstImage.id,
+      },
+    )
+
+    expect(result.images[0]).toEqual({
+      ...firstImage,
+      cropGeometry,
+      cropped,
+      exported: cropped,
+      upload: undefined,
+    })
+    expect(result.images[1]).toBe(secondImage)
+  })
+
+  it('preserves a downstream final export when the same cropped base is recommitted', () => {
+    const cropped = createExportedImage()
+    const exported = { ...createExportedImage(), objectUrl: 'blob:filtered' }
+    const image: CreatePostImage = {
+      ...firstImage,
+      cropGeometry,
+      cropped,
+      exported,
+    }
+
+    const result = createPostReducer(
+      { ...createPostInitialState, images: [image] },
+      { type: 'setImageCropped', cropped, geometry: cropGeometry, imageId: image.id },
+    )
+
+    expect(result.images[0]?.cropped).toBe(cropped)
+    expect(result.images[0]?.exported).toBe(exported)
+  })
+
+  it('updates image filter by image id, preserves cropped base, and clears final export/upload', () => {
     const exported = createExportedImage()
+    const cropped = { ...createExportedImage(), objectUrl: 'blob:cropped' }
     const imageWithExportAndUpload: CreatePostImage = {
       ...firstImage,
+      cropGeometry,
+      cropped,
       exported,
       upload: {
         fileId: 'file-1',
@@ -306,6 +431,8 @@ describe('createPostReducer', () => {
 
     expect(result.images[0]).toEqual({
       ...firstImage,
+      cropGeometry,
+      cropped,
       filter: 'moon',
       exported: undefined,
       upload: undefined,

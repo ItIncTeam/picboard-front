@@ -149,7 +149,7 @@ type CropStepProps = {
   exportRef?: Ref<CropStepHandle>
   onSetActiveImage: (imageId: string | null) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
-  onImageDirty: (imageId: string) => void
+  onCropGeometryChange: (imageId: string, geometry: CreatePostCropGeometry) => void
   onRemoveImage: (imageId: string) => void
   onAddImages: (images: CreatePostImage[]) => void
 }
@@ -158,35 +158,47 @@ type CropStepHandle = {
   exportActiveImage: () => Promise<{
     imageId: string
     ratio: AspectRatio
-    exported: NonNullable<CreatePostImage['exported']>
+    geometry: CreatePostCropGeometry
+    cropped: NonNullable<CreatePostImage['cropped']>
   }>
 }
 
 type FiltersStepProps = {
   activeImage: CreatePostImage | null
+  images: CreatePostImage[]
+  onExportingChange: (isExporting: boolean) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
 }
 
 type PublicationStepProps = {
   images: CreatePostImage[]
   caption: string
+  isPublishing: boolean
   onCaptionChange: (caption: string) => void
+  onRetryUpload: () => void
 }
 ```
 
 `CropStep` owns the cropper and exposes only `exportActiveImage()` through `exportRef`.
 `CreatePostFlow` awaits the result, owns the reducer update by `image.id`, sequential image
-selection and navigation. `onImageDirty` invalidates the stale export for only the changed image.
+selection and navigation. `onCropGeometryChange` persists geometry and invalidates stale crop and
+downstream artifacts only for the changed image.
 The former `onImageExported` callback is not the primary Crop API and remains only on the Filters
 boundary.
 
-`onAspectRatioChange`, `onImageDirty` and `onFilterChange` update existing per-image state fields
-and clear stale `exported` / `upload` state. This prevents publish integration from reusing a file
-id or temporary upload URL that belongs to an older edited file.
+`onAspectRatioChange` clears geometry, cropped base, final export and upload. A real geometry change
+does the same while excluding viewport-only boundary/image-size changes. `onFilterChange` preserves
+the immutable cropped base and clears only final `exported` / `upload` state.
 
-Preview and exported object URLs are owned by one `CreatePostFlow` lifecycle. Final unmount revokes
-all URLs still owned by that instance. Every later flow mount must create new URLs; passing URLs
+`PublicationStep` disables caption editing while `isPublishing`. Route-modal dismiss requests are
+forwarded to the existing `CreatePostFlow` close guard; the widget still owns only safe return
+navigation and does not duplicate unsaved confirmation state.
+
+Preview, cropped and final exported object URLs are owned by one `CreatePostFlow` lifecycle. Final
+unmount revokes all distinct URLs still owned by that instance. Every later flow mount must create new URLs; passing URLs
 from an unmounted flow instance into a new instance is outside the supported contract.
 
 ## CreatePostImage Contract
@@ -201,12 +213,10 @@ type CreatePostImage = {
   fileInfo?: CreatePostImageFileInfo
   previewUrl?: string
   aspectRatio: AspectRatio
+  cropGeometry?: CreatePostCropGeometry
+  cropped?: CreatePostImageArtifact
   filter: ImageFilter
-  exported?: {
-    file: File
-    objectUrl: string
-    fileInfo: CreatePostImageFileInfo
-  }
+  exported?: CreatePostImageArtifact
   upload?: {
     fileId?: string
     uploadUrl?: string
@@ -295,14 +305,25 @@ Changed by: Dev 3 through `FiltersStepProps.onFilterChange`
 Purpose: per-image filter preset. Current presets are `normal`, `clarendon`, `lark`, `gingham`,
 `moon`.
 
+### `cropGeometry`
+
+Purpose: reducer-owned per-image crop coordinates, visible area and transforms. Aspect ratio stays
+in `aspectRatio`. Viewport-dependent boundary and image size are intentionally excluded.
+
+### `cropped`
+
+Purpose: stable immutable cropped base for Filters. Crop writes it; filter changes must preserve it.
+Its object URL follows the same lifecycle ownership as preview and final exported URLs.
+
 ### `exported`
 
 Owner: Dev 3
 
 Consumed by: Upload Pipeline, Publication, selectors
 
-Changed by: Dev 3 through the `CropStepHandle.exportActiveImage` result committed by
-`CreatePostFlow`, or through `FiltersStepProps.onImageExported`
+Changed by: Crop initializes it from `cropped` for the normal filter. Filters reuses that same
+artifact for `normal` and replaces it with a Canvas export for non-normal presets through
+`FiltersStepProps.onImageExported`.
 
 Purpose: final edited artifact after crop/filter processing. Upload pipeline starts from
 `image.exported.file`.

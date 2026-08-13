@@ -160,8 +160,9 @@ Retry, resumable upload, partial publish and expired `uploadUrl` recovery are fo
 
 ## Known limitations
 
-- Crop/filter/export is not implemented yet. Normal UI usage cannot complete the publish pipeline
-  until another step creates `image.exported.file`.
+- Crop export and persistent crop state are implemented. Filters remains pending; the normal filter
+  currently exposes the cropped base as `image.exported.file`, while future filters must replace
+  only that final artifact.
 - Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
   already uploaded files should be completed, retried or cleaned up if a later storage `PUT` fails.
 - Expired `uploadUrl` recovery, retry queue, idempotency keys and resumable uploads are not

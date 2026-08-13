@@ -200,6 +200,38 @@ describe('createPostSelectors', () => {
     ])
   })
 
+  it('uses only final exported artifact when cropped base differs', () => {
+    const croppedFile = new File(['cropped'], 'cropped.jpg', { type: 'image/jpeg' })
+    const finalFile = new File(['filtered'], 'filtered.jpg', { type: 'image/jpeg' })
+    const image = createExportedImage({
+      cropped: {
+        file: croppedFile,
+        fileInfo: {
+          lastModified: croppedFile.lastModified,
+          name: croppedFile.name,
+          size: croppedFile.size,
+          type: croppedFile.type,
+        },
+        objectUrl: 'blob:cropped',
+      },
+      exported: {
+        file: finalFile,
+        fileInfo: {
+          lastModified: finalFile.lastModified,
+          name: finalFile.name,
+          size: finalFile.size,
+          type: finalFile.type,
+        },
+        objectUrl: 'blob:filtered',
+      },
+      filter: 'moon',
+    })
+
+    expect(
+      selectUploadCandidates({ ...createPostInitialState, images: [image] })[0]?.exportedFile,
+    ).toBe(finalFile)
+  })
+
   it('preserves image order for upload candidates', () => {
     const firstImage = createExportedImage({ id: 'image-1' })
     const secondImage = createExportedImage({ id: 'image-2' })

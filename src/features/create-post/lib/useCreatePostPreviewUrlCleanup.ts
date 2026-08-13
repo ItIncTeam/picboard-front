@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import type { CreatePostImage } from '../model/createPostTypes'
 
 /**
- * Owns preview and exported object URLs for one CreatePostFlow lifecycle.
+ * Owns preview, cropped, and final exported object URLs for one CreatePostFlow lifecycle.
  * Final unmount revokes every remaining URL; a later flow instance must create new URLs instead
  * of reusing values owned by the unmounted instance.
  */
@@ -17,6 +17,10 @@ export function useCreatePostPreviewUrlCleanup(images: CreatePostImage[]) {
     images.forEach((image) => {
       if (image.previewUrl) {
         nextObjectUrls.add(image.previewUrl)
+      }
+
+      if (image.cropped?.objectUrl) {
+        nextObjectUrls.add(image.cropped.objectUrl)
       }
 
       if (image.exported?.objectUrl) {

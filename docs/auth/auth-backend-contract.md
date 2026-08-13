@@ -213,18 +213,19 @@ Frontend decision:
 `/auth/callback?code=<BACKEND_CODE>`. Frontend does not exchange Google/GitHub provider codes
 directly and does not send provider state, PKCE verifier, client id, scope, or refresh token.
 
-The frontend uses separate public base URLs for GraphQL and OAuth browser navigation:
+The frontend uses separate public backend base URLs for GraphQL and OAuth browser navigation:
 
-- GraphQL: `NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://gateway.picboard.space/api/v1`
-- OAuth: `NEXT_PUBLIC_OAUTH_BASE_URL=https://users.picboard.space/api/v1`
+- `NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://gateway.picboard.space/api/v1`
+- `NEXT_PUBLIC_OAUTH_BASE_URL=https://users.picboard.space/api/v1`
 
-The users service owns the backend OAuth start routes:
+OAuth browser navigation uses these backend-owned start paths:
 
 - Google: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/google/start`
 - GitHub: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/github/login`
 
-The gateway currently does not proxy these routes; `/api/v1/auth/*` on the gateway is handled as
-GraphQL. OAuth browser navigation must not be derived from `NEXT_PUBLIC_GRAPHQL_ENDPOINT`.
+OAuth browser navigation reads `NEXT_PUBLIC_OAUTH_BASE_URL` when the provider flow starts. All
+GraphQL operations, including `exchangeOAuthCode`, continue to use
+`NEXT_PUBLIC_GRAPHQL_ENDPOINT`.
 
 Backend redirects production provider flows to `https://picboard.space/auth/callback`. Local
 frontend origin is also configured, so local verification should use
