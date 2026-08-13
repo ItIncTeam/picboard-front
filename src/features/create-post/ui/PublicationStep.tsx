@@ -158,6 +158,7 @@ export function PublicationStep({
           <TextArea
             className={styles.textArea}
             classNameLabel={styles.descriptionLabel}
+            disabled={isPublishing}
             error={isCaptionOverLimit ? CAPTION_MAX_LENGTH_ERROR : null}
             label="Add publication descriptions"
             onChange={(event) => onCaptionChange(event.target.value)}

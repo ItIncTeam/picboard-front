@@ -343,6 +343,14 @@ describe('PublicationStep', () => {
     expect(uploadingView.container.textContent).toContain('Uploading...')
   })
 
+  it('disables caption editing while publishing', () => {
+    const view = renderPublicationStep({ caption: 'Visible caption', isPublishing: true })
+
+    mountedRoots.push(view)
+
+    expect(view.container.querySelector('textarea')?.disabled).toBe(true)
+  })
+
   it('shows failed upload errors with retry action', () => {
     const view = renderPublicationStep({
       images: [

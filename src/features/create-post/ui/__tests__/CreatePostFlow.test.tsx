@@ -6,6 +6,7 @@ import {
   createPostInitialState,
   type AspectRatio,
   type CreatePostAction,
+  type CreatePostCropGeometry,
   type CreatePostImage,
   type CreatePostState,
   type ImageFilter,
@@ -27,21 +28,26 @@ type CropStepBoundaryProps = {
   exportRef?: React.Ref<{ exportActiveImage: () => Promise<CropExportResult> }>
   images: CreatePostImage[]
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
-  onImageDirty: (imageId: string) => void
+  onCropGeometryChange: (imageId: string, geometry: CreatePostCropGeometry) => void
   onRemoveImage: (imageId: string) => void
   onSetActiveImage: (imageId: string | null) => void
 }
 
 type CropExportResult = {
-  exported: NonNullable<CreatePostImage['exported']>
+  cropped: NonNullable<CreatePostImage['cropped']>
+  geometry: CreatePostCropGeometry
   imageId: string
   ratio: AspectRatio
 }
 
 type FiltersStepBoundaryProps = {
   activeImage: CreatePostImage | null
+  images: CreatePostImage[]
+  onExportingChange: (isExporting: boolean) => void
   onFilterChange: (imageId: string, filter: ImageFilter) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
+  onRemoveImage: (imageId: string) => void
+  onSetActiveImage: (imageId: string | null) => void
 }
 
 type PublicationStepBoundaryProps = {
@@ -67,6 +73,12 @@ const publishMocks = vi.hoisted(() => ({
 const cropExportMocks = vi.hoisted(() => ({
   exportActiveImage: vi.fn<() => Promise<CropExportResult>>(),
 }))
+
+const cropGeometry: CreatePostCropGeometry = {
+  coordinates: { height: 320, left: 10, top: 20, width: 320 },
+  transforms: { flip: { horizontal: false, vertical: false }, rotate: 0 },
+  visibleArea: { height: 640, left: 0, top: 0, width: 640 },
+}
 
 vi.mock('@/shared/assets', () => ({
   ArrowBackIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
@@ -734,6 +746,29 @@ describe('CreatePostFlow', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
   })
 
+  it('revokes distinct preview, cropped, and final URLs when an image is removed', async () => {
+    const cropped = { ...createExportedPayload(), objectUrl: 'blob:removed-cropped' }
+    const exported = { ...createExportedPayload(), objectUrl: 'blob:removed-final' }
+    const image = createImage({
+      cropGeometry,
+      cropped,
+      exported,
+      previewUrl: 'blob:removed-preview',
+    })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'crop' }),
+    })
+    mountedRoots.push(view)
+
+    act(() => stepBoundaries.crop?.onRemoveImage(image.id))
+    await act(async () => Promise.resolve())
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(3)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(cropped.objectUrl)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(exported.objectUrl)
+  })
+
   it('revokes remaining preview object URLs on flow unmount', async () => {
     const firstImage = createImageWithPreview('first-image', 'blob:first-image')
     const secondImage = createImageWithPreview('second-image', 'blob:second-image')
@@ -756,8 +791,11 @@ describe('CreatePostFlow', () => {
   })
 
   it('keeps current object URLs through StrictMode effect replay and revokes them on final unmount', async () => {
+    const exportedImage = createExportedImage()
+    const cropped = { ...createExportedPayload(), objectUrl: 'blob:strict-cropped' }
     const image = {
-      ...createExportedImage(),
+      ...exportedImage,
+      cropped,
       previewUrl: 'blob:strict-original',
     }
     const view = renderCreatePostFlow({
@@ -773,8 +811,9 @@ describe('CreatePostFlow', () => {
     view.container.remove()
     await act(async () => Promise.resolve())
 
-    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2)
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(3)
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(cropped.objectUrl)
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.exported?.objectUrl)
   })
 
@@ -831,8 +870,10 @@ describe('CreatePostFlow', () => {
   })
 
   it('revokes preview and exported object URLs when the flow is reset', async () => {
+    const cropped = { ...createExportedPayload(), objectUrl: 'blob:cropped-base' }
     const image = {
       ...createExportedImage(),
+      cropped,
       previewUrl: 'blob:original-preview',
     }
     publishMocks.uploadCreatePostImages.mockResolvedValueOnce(['file-1'])
@@ -849,7 +890,28 @@ describe('CreatePostFlow', () => {
     await clickButtonAndFlush(getButton(view.container, 'Publish'))
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.previewUrl)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(cropped.objectUrl)
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.exported?.objectUrl)
+  })
+
+  it('does not revoke a cropped base when filter change clears the same final artifact', async () => {
+    const cropped = { ...createExportedPayload(), objectUrl: 'blob:shared-crop-and-final' }
+    const image = createImage({
+      cropGeometry,
+      cropped,
+      exported: cropped,
+    })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'filters' }),
+    })
+    mountedRoots.push(view)
+
+    act(() => stepBoundaries.filters?.onFilterChange(image.id, 'moon'))
+    await act(async () => Promise.resolve())
+
+    expect(stepBoundaries.filters?.activeImage?.cropped).toBe(cropped)
+    expect(stepBoundaries.filters?.activeImage?.exported).toBeUndefined()
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(cropped.objectUrl)
   })
 
   it('does not revoke preview object URL when moving from upload to crop step', () => {
@@ -934,7 +996,12 @@ describe('CreatePostFlow', () => {
     expect(stepBoundaries.crop?.activeImage?.aspectRatio).toBe('16:9')
     expect(stepBoundaries.crop?.activeImage?.exported).toBeUndefined()
 
-    act(() => stepBoundaries.crop?.onImageDirty(image.id))
+    act(() =>
+      stepBoundaries.crop?.onCropGeometryChange(image.id, {
+        ...cropGeometry,
+        coordinates: { ...cropGeometry.coordinates!, left: 24 },
+      }),
+    )
 
     expect(stepBoundaries.crop?.activeImage?.exported).toBeUndefined()
   })
@@ -946,8 +1013,18 @@ describe('CreatePostFlow', () => {
     const secondExport = { ...createExportedPayload(), objectUrl: 'blob:edited-2' }
 
     cropExportMocks.exportActiveImage
-      .mockResolvedValueOnce({ exported: firstExport, imageId: firstImage.id, ratio: '1:1' })
-      .mockResolvedValueOnce({ exported: secondExport, imageId: secondImage.id, ratio: '4:5' })
+      .mockResolvedValueOnce({
+        cropped: firstExport,
+        geometry: cropGeometry,
+        imageId: firstImage.id,
+        ratio: '1:1',
+      })
+      .mockResolvedValueOnce({
+        cropped: secondExport,
+        geometry: cropGeometry,
+        imageId: secondImage.id,
+        ratio: '4:5',
+      })
 
     const view = renderCreatePostFlow({
       initialState: createState({
@@ -972,12 +1049,54 @@ describe('CreatePostFlow', () => {
     expect(cropExportMocks.exportActiveImage).toHaveBeenCalledTimes(2)
   })
 
+  it('preserves crop geometry and cropped base through Filters back to Crop', async () => {
+    const image = createImage()
+    const cropped = createExportedPayload()
+    cropExportMocks.exportActiveImage.mockResolvedValue({
+      cropped,
+      geometry: cropGeometry,
+      imageId: image.id,
+      ratio: image.aspectRatio,
+    })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'crop' }),
+    })
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Next'))
+
+    expect(getHeaderTitle(view.container)).toBe('Filters')
+    expect(stepBoundaries.filters?.activeImage).toEqual(
+      expect.objectContaining({
+        cropGeometry,
+        cropped,
+        exported: cropped,
+        id: image.id,
+      }),
+    )
+
+    clickButton(getButton(view.container, 'Back'))
+
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
+    expect(stepBoundaries.crop?.activeImage).toEqual(
+      expect.objectContaining({ cropGeometry, cropped, exported: cropped, id: image.id }),
+    )
+
+    await clickButtonAndFlush(getButton(view.container, 'Next'))
+
+    expect(getHeaderTitle(view.container)).toBe('Filters')
+    expect(stepBoundaries.filters?.activeImage?.cropped).toBe(cropped)
+    expect(stepBoundaries.filters?.activeImage?.exported).toBe(cropped)
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(cropped.objectUrl)
+  })
+
   it('returns to a previously exported image when its crop becomes dirty', async () => {
     const firstImage = createExportedImage()
     const secondImage = createImage({ id: 'image-2' })
     const secondExport = { ...createExportedPayload(), objectUrl: 'blob:edited-2' }
     cropExportMocks.exportActiveImage.mockResolvedValueOnce({
-      exported: secondExport,
+      cropped: secondExport,
+      geometry: cropGeometry,
       imageId: secondImage.id,
       ratio: secondImage.aspectRatio,
     })
@@ -990,7 +1109,12 @@ describe('CreatePostFlow', () => {
     })
     mountedRoots.push(view)
 
-    act(() => stepBoundaries.crop?.onImageDirty(firstImage.id))
+    act(() =>
+      stepBoundaries.crop?.onCropGeometryChange(firstImage.id, {
+        ...cropGeometry,
+        coordinates: { ...cropGeometry.coordinates!, left: 24 },
+      }),
+    )
     act(() => stepBoundaries.crop?.onSetActiveImage(secondImage.id))
     await clickButtonAndFlush(getButton(view.container, 'Next'))
 
@@ -1031,7 +1155,8 @@ describe('CreatePostFlow', () => {
 
     await act(async () => {
       deferred.resolve({
-        exported: createExportedPayload(),
+        cropped: createExportedPayload(),
+        geometry: cropGeometry,
         imageId: image.id,
         ratio: image.aspectRatio,
       })
@@ -1076,7 +1201,8 @@ describe('CreatePostFlow', () => {
 
     await act(async () => {
       deferred.resolve({
-        exported: staleExport,
+        cropped: staleExport,
+        geometry: cropGeometry,
         imageId: firstImage.id,
         ratio: firstImage.aspectRatio,
       })
@@ -1109,7 +1235,8 @@ describe('CreatePostFlow', () => {
 
     await act(async () => {
       deferred.resolve({
-        exported: staleExport,
+        cropped: staleExport,
+        geometry: cropGeometry,
         imageId: firstImage.id,
         ratio: firstImage.aspectRatio,
       })
@@ -1147,7 +1274,8 @@ describe('CreatePostFlow', () => {
 
     await act(async () => {
       latestDeferred.resolve({
-        exported: latestExport,
+        cropped: latestExport,
+        geometry: cropGeometry,
         imageId: secondImage.id,
         ratio: secondImage.aspectRatio,
       })
@@ -1155,7 +1283,8 @@ describe('CreatePostFlow', () => {
     })
     await act(async () => {
       firstDeferred.resolve({
-        exported: staleExport,
+        cropped: staleExport,
+        geometry: cropGeometry,
         imageId: firstImage.id,
         ratio: firstImage.aspectRatio,
       })
@@ -1187,7 +1316,8 @@ describe('CreatePostFlow', () => {
 
     await act(async () => {
       deferred.resolve({
-        exported: staleExport,
+        cropped: staleExport,
+        geometry: cropGeometry,
         imageId: image.id,
         ratio: image.aspectRatio,
       })
@@ -1209,6 +1339,36 @@ describe('CreatePostFlow', () => {
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(image.exported?.objectUrl)
     expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(replacement.objectUrl)
+  })
+
+  it('revokes stale cropped and final URLs when a changed crop is committed', async () => {
+    const previousCropped = { ...createExportedPayload(), objectUrl: 'blob:previous-cropped' }
+    const previousFinal = { ...createExportedPayload(), objectUrl: 'blob:previous-final' }
+    const nextCropped = { ...createExportedPayload(), objectUrl: 'blob:next-cropped' }
+    const image = createImage({
+      cropGeometry,
+      cropped: previousCropped,
+      exported: previousFinal,
+    })
+    cropExportMocks.exportActiveImage.mockResolvedValueOnce({
+      cropped: nextCropped,
+      geometry: {
+        ...cropGeometry,
+        coordinates: { ...cropGeometry.coordinates!, left: 24 },
+      },
+      imageId: image.id,
+      ratio: image.aspectRatio,
+    })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'crop' }),
+    })
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Next'))
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(previousCropped.objectUrl)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(previousFinal.objectUrl)
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(nextCropped.objectUrl)
   })
 
   it('passes active image and filter callbacks to FiltersStep', () => {
@@ -1239,6 +1399,88 @@ describe('CreatePostFlow', () => {
     })
 
     expect(stepBoundaries.filters?.activeImage?.exported).toBe(exported)
+  })
+
+  it('disables Filters Next while the selected final export is missing or pending', () => {
+    const cropped = createExportedPayload()
+    const image = createImage({ cropped, exported: undefined, filter: 'moon' })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'filters' }),
+    })
+    mountedRoots.push(view)
+
+    expect(getButton(view.container, 'Next').disabled).toBe(true)
+
+    act(() => stepBoundaries.filters?.onExportingChange(true))
+    act(() => stepBoundaries.filters?.onImageExported(image.id, createExportedPayload()))
+
+    expect(getButton(view.container, 'Next').disabled).toBe(true)
+
+    act(() => stepBoundaries.filters?.onExportingChange(false))
+
+    expect(getButton(view.container, 'Next').disabled).toBe(false)
+  })
+
+  it('allows Back while a filter export is pending', () => {
+    const cropped = createExportedPayload()
+    const image = createImage({ cropped, exported: undefined, filter: 'moon' })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'filters' }),
+    })
+    mountedRoots.push(view)
+
+    act(() => stepBoundaries.filters?.onExportingChange(true))
+    clickButton(getButton(view.container, 'Back'))
+
+    expect(getHeaderTitle(view.container)).toBe('Cropping')
+  })
+
+  it('preserves a filtered export through Filters to Crop and back', async () => {
+    const cropped = createExportedPayload()
+    const filtered = { ...createExportedPayload(), objectUrl: 'blob:filtered-moon' }
+    const image = createImage({
+      cropGeometry,
+      cropped,
+      exported: filtered,
+      filter: 'moon',
+    })
+    cropExportMocks.exportActiveImage.mockResolvedValueOnce({
+      cropped,
+      geometry: cropGeometry,
+      imageId: image.id,
+      ratio: image.aspectRatio,
+    })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'filters' }),
+    })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Back'))
+    await clickButtonAndFlush(getButton(view.container, 'Next'))
+
+    expect(getHeaderTitle(view.container)).toBe('Filters')
+    expect(stepBoundaries.filters?.activeImage).toEqual(
+      expect.objectContaining({ cropped, exported: filtered, filter: 'moon' }),
+    )
+  })
+
+  it('reuses cropped as final and cleans up the previous filter export when Normal is selected', async () => {
+    const cropped = { ...createExportedPayload(), objectUrl: 'blob:normal-cropped' }
+    const filtered = { ...createExportedPayload(), objectUrl: 'blob:previous-filtered' }
+    const image = createImage({ cropped, exported: filtered, filter: 'moon' })
+    const view = renderCreatePostFlow({
+      initialState: createState({ activeImageId: image.id, images: [image], step: 'filters' }),
+    })
+    mountedRoots.push(view)
+
+    act(() => stepBoundaries.filters?.onFilterChange(image.id, 'normal'))
+    act(() => stepBoundaries.filters?.onImageExported(image.id, cropped))
+    await act(async () => Promise.resolve())
+
+    expect(stepBoundaries.filters?.activeImage?.cropped).toBe(cropped)
+    expect(stepBoundaries.filters?.activeImage?.exported).toBe(cropped)
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith(filtered.objectUrl)
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(cropped.objectUrl)
   })
 
   it('passes publication data and caption callback to PublicationStep', () => {
@@ -1316,6 +1558,50 @@ describe('CreatePostFlow', () => {
         step: 'publication',
       }),
     )
+  })
+
+  it('locks the visible caption snapshot and duplicate publish while publishing', async () => {
+    const uploadReady = createDeferred<string[]>()
+    const image = createExportedImage()
+    const initialState = createState({
+      activeImageId: image.id,
+      caption: 'Visible caption',
+      images: [image],
+      step: 'publication',
+    })
+
+    publishMocks.uploadCreatePostImages.mockReturnValueOnce(uploadReady.promise)
+    publishMocks.createPost.mockResolvedValueOnce({})
+
+    const view = renderCreatePostFlow({ initialState })
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
+
+    expect(stepBoundaries.publication?.isPublishing).toBe(true)
+
+    act(() => stepBoundaries.publication?.onCaptionChange('Late caption'))
+
+    expect(stepBoundaries.publication?.caption).toBe('Visible caption')
+
+    const publishButton = getButton(view.container, 'Publish')
+
+    expect(publishButton.disabled).toBe(true)
+    enableButtonForProgrammaticClick(publishButton)
+    clickButton(publishButton)
+
+    expect(publishMocks.uploadCreatePostImages).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      uploadReady.resolve(['file-1'])
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(publishMocks.createPost).toHaveBeenCalledWith({
+      description: 'Visible caption',
+      fileIds: ['file-1'],
+    })
   })
 
   it('retries publish through the publication boundary', async () => {

@@ -38,7 +38,10 @@ export { uploadCreatePostImages } from './model/createPostUploadService'
 export type {
   AspectRatio,
   CreatePostAction,
+  CreatePostCropCoordinates,
+  CreatePostCropGeometry,
   CreatePostImage,
+  CreatePostImageArtifact,
   CreatePostImageFileInfo,
   CreatePostState,
   CreatePostStep,

@@ -1,6 +1,11 @@
 'use client'
 
-import type { AspectRatio, CreatePostImage } from '@/features/create-post'
+import type {
+  AspectRatio,
+  CreatePostCropGeometry,
+  CreatePostImage,
+  CreatePostImageArtifact,
+} from '@/features/create-post'
 import type { ChangeEvent, Ref } from 'react'
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
@@ -41,13 +46,14 @@ export type CropStepProps = {
   images: CreatePostImage[]
   onSetActiveImage: (imageId: string | null) => void
   onAspectRatioChange: (imageId: string, aspectRatio: AspectRatio) => void
-  onImageDirty: (imageId: string) => void
+  onCropGeometryChange: (imageId: string, geometry: CreatePostCropGeometry) => void
   onRemoveImage: (imageId: string) => void
   onAddImages: (images: CreatePostImage[]) => void
 }
 
 export type CropExportResult = {
-  exported: NonNullable<CreatePostImage['exported']>
+  cropped: CreatePostImageArtifact
+  geometry: CreatePostCropGeometry
   imageId: string
   ratio: AspectRatio
 }
@@ -70,17 +76,23 @@ const ASPECT_RATIOS: Record<AspectRatio, number | undefined> = {
   '16:9': 16 / 9,
 }
 
-function getCropperStateSignature(cropper: CropperRef, ratio: AspectRatio): string | null {
+function getCropGeometry(cropper: CropperRef): CreatePostCropGeometry | null {
   const state = cropper.getState()
 
   return state
-    ? JSON.stringify({
+    ? {
         coordinates: state.coordinates,
-        ratio,
         transforms: state.transforms,
         visibleArea: state.visibleArea,
-      })
+      }
     : null
+}
+
+function getCropGeometrySignature(
+  geometry: CreatePostCropGeometry | undefined,
+  ratio: AspectRatio,
+): string | null {
+  return geometry ? JSON.stringify({ ...geometry, ratio }) : null
 }
 
 function getExportMimeType(image: CreatePostImage): 'image/jpeg' | 'image/png' {
@@ -113,7 +125,7 @@ export function CropStep({
   images,
   onSetActiveImage,
   onAspectRatioChange,
-  onImageDirty,
+  onCropGeometryChange,
   onRemoveImage,
   onAddImages,
 }: CropStepProps) {
@@ -124,10 +136,8 @@ export function CropStep({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mountedRef = useRef(false)
   const activeImageRef = useRef(activeImage)
+  const restoredCroppersRef = useRef(new WeakSet<CropperRef>())
   const exportRequestIdRef = useRef(0)
-  const exportedStateRef = useRef(
-    new Map<string, { objectUrl: string; signature: string | null }>(),
-  )
   const [errors, setErrors] = useState<string[]>([])
 
   useEffect(() => {
@@ -163,16 +173,21 @@ export function CropStep({
       throw new Error('Crop preview is not ready. Please try again.')
     }
 
-    const signature = getCropperStateSignature(cropper, image.aspectRatio)
-    const exportedState = exportedStateRef.current.get(image.id)
-    const canReuseExport =
-      Boolean(image.exported) &&
-      exportedState?.objectUrl === image.exported?.objectUrl &&
-      exportedState?.signature === signature
+    const geometry = getCropGeometry(cropper)
 
-    if (canReuseExport && image.exported) {
+    if (!geometry) {
+      throw new Error('Crop preview is not ready. Please try again.')
+    }
+
+    const signature = getCropGeometrySignature(geometry, image.aspectRatio)
+    const canReuseExport =
+      Boolean(image.cropped) &&
+      getCropGeometrySignature(image.cropGeometry, image.aspectRatio) === signature
+
+    if (canReuseExport && image.cropped) {
       return {
-        exported: image.exported,
+        cropped: image.cropped,
+        geometry,
         imageId: image.id,
         ratio: image.aspectRatio,
       }
@@ -205,12 +220,11 @@ export function CropStep({
       throw new CropExportCancelledError()
     }
 
-    exportedStateRef.current.set(image.id, { objectUrl, signature })
-
     return {
       imageId: image.id,
       ratio: image.aspectRatio,
-      exported: {
+      geometry,
+      cropped: {
         objectUrl,
         file,
         fileInfo: {
@@ -226,24 +240,45 @@ export function CropStep({
   useImperativeHandle(exportRef, () => ({ exportActiveImage }), [exportActiveImage])
 
   const handleCropperChange = (cropper: CropperRef) => {
-    const image = activeImageRef.current
+    const image = activeImage
+    const geometry = getCropGeometry(cropper)
 
-    if (!image?.exported) {
+    if (!image || !geometry) {
       return
     }
 
-    const exportedState = exportedStateRef.current.get(image.id)
+    if (image.cropGeometry && !restoredCroppersRef.current.has(cropper)) {
+      return
+    }
 
     if (
-      !exportedState ||
-      exportedState.objectUrl !== image.exported.objectUrl ||
-      exportedState.signature === getCropperStateSignature(cropper, image.aspectRatio)
+      getCropGeometrySignature(image.cropGeometry, image.aspectRatio) ===
+      getCropGeometrySignature(geometry, image.aspectRatio)
     ) {
       return
     }
 
-    exportedStateRef.current.delete(image.id)
-    onImageDirty(image.id)
+    onCropGeometryChange(image.id, geometry)
+  }
+
+  const handleCropperReady = (cropper: CropperRef) => {
+    const geometry = activeImage?.cropGeometry
+
+    if (!geometry) {
+      return
+    }
+
+    restoredCroppersRef.current.add(cropper)
+    cropper.setState((state) =>
+      state
+        ? {
+            ...state,
+            coordinates: geometry.coordinates,
+            transforms: geometry.transforms,
+            visibleArea: geometry.visibleArea,
+          }
+        : state,
+    )
   }
 
   const switchActiveImage = (imageId: string | null) => {
@@ -354,7 +389,6 @@ export function CropStep({
     const nextImages = images.filter((item) => item.id !== image.id)
 
     onRemoveImage(image.id)
-    exportedStateRef.current.delete(image.id)
 
     if (activeImage?.id !== image.id) {
       return
@@ -435,6 +469,7 @@ export function CropStep({
         className={styles.activePreviewImage}
         disabled={disabled}
         onChange={handleCropperChange}
+        onReady={handleCropperReady}
         stencilProps={{
           aspectRatio: ASPECT_RATIOS[activeRatio],
         }}
@@ -480,7 +515,7 @@ export function CropStep({
               const isActive = image.id === activeImage?.id
               const imageSrc = isActive
                 ? image.previewUrl
-                : (image.exported?.objectUrl ?? image.previewUrl)
+                : (image.cropped?.objectUrl ?? image.previewUrl)
 
               return (
                 <div

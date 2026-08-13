@@ -187,9 +187,12 @@ Final gateway schema details:
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
 - UI composition for `profilePosts`, `feed`, `post`, `updatePostDescription` and `deletePost`:
   follow-up implementation PRs after the API foundation.
-- SSR/ISR settings для main/public pages: после cache requirements.
+- SSR/ISR settings for the protected main page: after cache requirements. Public Home uses
+  request-time rendering until the gateway HTTPS certificate is fixed, then returns to
+  `revalidate = 60`.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
-- Infinite scroll: follow-up implementation around confirmed cursor pagination and dependency PR.
+- Infinite scroll for cursor-paginated profile posts: follow-up implementation and dependency PR.
+  Public Home has no pagination or infinite scroll.
 - Moderation, reports, comments, likes: не входят в этот posts sprint slice, если отдельно не
   добавлены в backlog.
 

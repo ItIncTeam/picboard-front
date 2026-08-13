@@ -1,5 +1,11 @@
 import { CREATE_POST_INITIAL_STEP, CREATE_POST_STEPS } from '../lib/createPostConstants'
-import type { CreatePostAction, CreatePostState, CreatePostStep } from './createPostTypes'
+import type {
+  CreatePostAction,
+  CreatePostCropCoordinates,
+  CreatePostCropGeometry,
+  CreatePostState,
+  CreatePostStep,
+} from './createPostTypes'
 
 export const createPostInitialState: CreatePostState = {
   step: CREATE_POST_INITIAL_STEP,
@@ -88,7 +94,80 @@ export function createPostReducer(
         return {
           ...image,
           aspectRatio: action.aspectRatio,
+          cropGeometry: undefined,
+          cropped: undefined,
           exported: undefined,
+          upload: undefined,
+        }
+      })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+        hasUnsavedData: true,
+      }
+    }
+
+    case 'setImageCropGeometry': {
+      let hasChanged = false
+
+      const nextImages = state.images.map((image) => {
+        if (
+          image.id !== action.imageId ||
+          areCropGeometriesEqual(image.cropGeometry, action.geometry)
+        ) {
+          return image
+        }
+
+        hasChanged = true
+
+        return {
+          ...image,
+          cropGeometry: action.geometry,
+          cropped: undefined,
+          exported: undefined,
+          upload: undefined,
+        }
+      })
+
+      if (!hasChanged) {
+        return state
+      }
+
+      return {
+        ...state,
+        images: nextImages,
+        hasUnsavedData: true,
+      }
+    }
+
+    case 'setImageCropped': {
+      let hasChanged = false
+
+      const nextImages = state.images.map((image) => {
+        if (image.id !== action.imageId) {
+          return image
+        }
+
+        const isSameCrop =
+          image.cropped === action.cropped &&
+          areCropGeometriesEqual(image.cropGeometry, action.geometry)
+
+        if (isSameCrop) {
+          return image
+        }
+
+        hasChanged = true
+
+        return {
+          ...image,
+          cropGeometry: action.geometry,
+          cropped: action.cropped,
+          exported: image.filter === 'normal' ? action.cropped : undefined,
           upload: undefined,
         }
       })
@@ -244,4 +323,37 @@ function getAdjacentStep(currentStep: CreatePostStep, offset: -1 | 1): CreatePos
   const nextIndex = Math.min(Math.max(currentIndex + offset, 0), CREATE_POST_STEPS.length - 1)
 
   return CREATE_POST_STEPS[nextIndex]
+}
+
+function areCropCoordinatesEqual(
+  first: CreatePostCropCoordinates | null | undefined,
+  second: CreatePostCropCoordinates | null | undefined,
+): boolean {
+  if (first === second) {
+    return true
+  }
+
+  if (!first || !second) {
+    return false
+  }
+
+  return (
+    first.height === second.height &&
+    first.left === second.left &&
+    first.top === second.top &&
+    first.width === second.width
+  )
+}
+
+function areCropGeometriesEqual(
+  first: CreatePostCropGeometry | undefined,
+  second: CreatePostCropGeometry,
+): boolean {
+  return (
+    areCropCoordinatesEqual(first?.coordinates, second.coordinates) &&
+    areCropCoordinatesEqual(first?.visibleArea, second.visibleArea) &&
+    first?.transforms.rotate === second.transforms.rotate &&
+    first?.transforms.flip.horizontal === second.transforms.flip.horizontal &&
+    first?.transforms.flip.vertical === second.transforms.flip.vertical
+  )
 }

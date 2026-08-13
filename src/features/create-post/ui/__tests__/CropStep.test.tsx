@@ -2,7 +2,7 @@ import { act, createRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { AspectRatio, CreatePostImage } from '@/features/create-post'
+import type { AspectRatio, CreatePostCropGeometry, CreatePostImage } from '@/features/create-post'
 
 import { CropStep, type CropStepHandle } from '../CropStep'
 
@@ -22,6 +22,8 @@ type CanvasController = {
 
 const cropperMocks = vi.hoisted(() => ({
   canvas: null as HTMLCanvasElement | null,
+  changeBeforeReady: false,
+  restoredStates: [] as CropperState[],
   state: {
     boundary: { height: 640, width: 640 },
     coordinates: { height: 320, left: 10, top: 20, width: 320 },
@@ -38,21 +40,44 @@ vi.mock('react-advanced-cropper', async () => {
     Cropper: React.forwardRef(function MockCropper(
       {
         onChange,
+        onReady,
         src,
         stencilProps,
       }: {
         onChange?: (cropper: unknown) => void
+        onReady?: (cropper: unknown) => void
         src?: string
         stencilProps?: { aspectRatio?: number }
       },
       ref: React.ForwardedRef<unknown>,
     ) {
-      const cropper = {
-        getCanvas: () => cropperMocks.canvas,
-        getState: () => cropperMocks.state,
-      }
+      const cropper = React.useMemo(
+        () => ({
+          getCanvas: () => cropperMocks.canvas,
+          getState: () => cropperMocks.state,
+          setState: (
+            modifier: CropperState | ((state: CropperState | null) => CropperState | null) | null,
+          ) => {
+            const nextState =
+              typeof modifier === 'function' ? modifier(cropperMocks.state) : modifier
+
+            if (nextState) {
+              cropperMocks.state = nextState
+              cropperMocks.restoredStates.push(nextState)
+            }
+          },
+        }),
+        [],
+      )
 
       React.useImperativeHandle(ref, () => cropper)
+      React.useEffect(() => {
+        if (cropperMocks.changeBeforeReady) {
+          onChange?.(cropper)
+        }
+
+        onReady?.(cropper)
+      }, [cropper, onChange, onReady])
 
       return (
         <button
@@ -119,7 +144,7 @@ type TestCropStepProps = {
   activeImage: CreatePostImage | null
   images: CreatePostImage[]
   onAspectRatioChange?: (imageId: string, ratio: AspectRatio) => void
-  onImageDirty?: (imageId: string) => void
+  onCropGeometryChange?: (imageId: string, geometry: CreatePostCropGeometry) => void
   onRemoveImage?: (imageId: string) => void
   onSetActiveImage?: (imageId: string | null) => void
 }
@@ -196,7 +221,7 @@ function renderCropStep(
         images={nextProps.images}
         onAddImages={() => undefined}
         onAspectRatioChange={nextProps.onAspectRatioChange ?? (() => undefined)}
-        onImageDirty={nextProps.onImageDirty ?? (() => undefined)}
+        onCropGeometryChange={nextProps.onCropGeometryChange ?? (() => undefined)}
         onRemoveImage={nextProps.onRemoveImage ?? (() => undefined)}
         onSetActiveImage={nextProps.onSetActiveImage ?? (() => undefined)}
       />,
@@ -258,10 +283,17 @@ function StatefulCropStep({
           current.map((image) => (image.id === imageId ? { ...image, aspectRatio } : image)),
         )
       }
-      onImageDirty={(imageId) =>
+      onCropGeometryChange={(imageId, cropGeometry) =>
         setImages((current) =>
           current.map((image) =>
-            image.id === imageId ? { ...image, exported: undefined } : image,
+            image.id === imageId
+              ? {
+                  ...image,
+                  cropGeometry,
+                  cropped: undefined,
+                  exported: undefined,
+                }
+              : image,
           ),
         )
       }
@@ -316,6 +348,8 @@ describe('CropStep export boundary', () => {
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     cropperMocks.canvas = null
+    cropperMocks.changeBeforeReady = false
+    cropperMocks.restoredStates = []
     cropperMocks.state = {
       boundary: { height: 640, width: 640 },
       coordinates: { height: 320, left: 10, top: 20, width: 320 },
@@ -362,8 +396,8 @@ describe('CropStep export boundary', () => {
 
     expect(result?.imageId).toBe(image.id)
     expect(result?.ratio).toBe('1:1')
-    expect(result?.exported.file).not.toBe(image.file)
-    expect(result?.exported.file.type).toBe('image/jpeg')
+    expect(result?.cropped.file).not.toBe(image.file)
+    expect(result?.cropped.file.type).toBe('image/jpeg')
     expect(image.file && (await image.file.text())).toBe('original-image-1')
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
   })
@@ -444,25 +478,30 @@ describe('CropStep export boundary', () => {
   })
 
   it('reuses an unchanged export and re-encodes after crop coordinates change', async () => {
-    const onImageDirty = vi.fn()
+    const onCropGeometryChange = vi.fn()
     const image = createImage('image-1')
     const controller = createCanvasController()
     cropperMocks.canvas = controller.canvas
-    const view = renderCropStep({ activeImage: image, images: [image], onImageDirty })
+    const view = renderCropStep({ activeImage: image, images: [image], onCropGeometryChange })
     views.push(view)
     const initialExportPromise = view.exportRef.current?.exportActiveImage()
     controller.resolve(new Blob(['initial'], { type: 'image/jpeg' }))
     const initialExport = await initialExportPromise
-    const exportedImage = { ...image, exported: initialExport?.exported }
+    const exportedImage = {
+      ...image,
+      cropGeometry: initialExport?.geometry,
+      cropped: initialExport?.cropped,
+      exported: initialExport?.cropped,
+    }
 
     view.rerender({
       activeImage: exportedImage,
       images: [exportedImage],
-      onImageDirty,
+      onCropGeometryChange,
     })
 
     expect(await view.exportRef.current?.exportActiveImage()).toEqual(
-      expect.objectContaining({ exported: initialExport?.exported }),
+      expect.objectContaining({ cropped: initialExport?.cropped }),
     )
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
 
@@ -472,27 +511,32 @@ describe('CropStep export boundary', () => {
     }
     clickButton(view.container, 'Change cropper')
 
-    expect(onImageDirty).toHaveBeenCalledWith(image.id)
+    expect(onCropGeometryChange).toHaveBeenCalledWith(image.id, expect.any(Object))
 
     const dirtyExport = view.exportRef.current?.exportActiveImage()
 
-    expect((await dirtyExport)?.exported).not.toBe(initialExport?.exported)
+    expect((await dirtyExport)?.cropped).not.toBe(initialExport?.cropped)
     expect(URL.createObjectURL).toHaveBeenCalledTimes(2)
   })
 
   it('does not invalidate an export when only boundary and image size change', async () => {
-    const onImageDirty = vi.fn()
+    const onCropGeometryChange = vi.fn()
     const image = createImage('image-1')
     const controller = createCanvasController()
     cropperMocks.canvas = controller.canvas
-    const view = renderCropStep({ activeImage: image, images: [image], onImageDirty })
+    const view = renderCropStep({ activeImage: image, images: [image], onCropGeometryChange })
     views.push(view)
     const initialExportPromise = view.exportRef.current?.exportActiveImage()
     controller.resolve(new Blob(['initial'], { type: 'image/jpeg' }))
     const initialExport = await initialExportPromise
-    const exportedImage = { ...image, exported: initialExport?.exported }
+    const exportedImage = {
+      ...image,
+      cropGeometry: initialExport?.geometry,
+      cropped: initialExport?.cropped,
+      exported: initialExport?.cropped,
+    }
 
-    view.rerender({ activeImage: exportedImage, images: [exportedImage], onImageDirty })
+    view.rerender({ activeImage: exportedImage, images: [exportedImage], onCropGeometryChange })
     cropperMocks.state = {
       ...cropperMocks.state,
       boundary: { height: 400, width: 320 },
@@ -500,9 +544,9 @@ describe('CropStep export boundary', () => {
     }
     clickButton(view.container, 'Change cropper')
 
-    expect(onImageDirty).not.toHaveBeenCalled()
+    expect(onCropGeometryChange).not.toHaveBeenCalled()
     expect(await view.exportRef.current?.exportActiveImage()).toEqual(
-      expect.objectContaining({ exported: initialExport?.exported }),
+      expect.objectContaining({ cropped: initialExport?.cropped }),
     )
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
   })
@@ -520,7 +564,12 @@ describe('CropStep export boundary', () => {
     const initialExportPromise = view.exportRef.current?.exportActiveImage()
     controller.resolve(new Blob(['initial'], { type: 'image/jpeg' }))
     const initialExport = await initialExportPromise
-    const exportedFirstImage = { ...firstImage, exported: initialExport?.exported }
+    const exportedFirstImage = {
+      ...firstImage,
+      cropGeometry: initialExport?.geometry,
+      cropped: initialExport?.cropped,
+      exported: initialExport?.cropped,
+    }
 
     view.rerender({
       activeImage: exportedFirstImage,
@@ -536,9 +585,112 @@ describe('CropStep export boundary', () => {
     })
 
     expect(await view.exportRef.current?.exportActiveImage()).toEqual(
-      expect.objectContaining({ exported: initialExport?.exported }),
+      expect.objectContaining({ cropped: initialExport?.cropped }),
     )
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores reducer-owned geometry when switching images and returning', () => {
+    const firstGeometry: CreatePostCropGeometry = {
+      coordinates: { height: 240, left: 31, top: 41, width: 260 },
+      transforms: { flip: { horizontal: true, vertical: false }, rotate: 90 },
+      visibleArea: { height: 500, left: 12, top: 14, width: 520 },
+    }
+    const secondGeometry: CreatePostCropGeometry = {
+      coordinates: { height: 180, left: 51, top: 61, width: 200 },
+      transforms: { flip: { horizontal: false, vertical: true }, rotate: 180 },
+      visibleArea: { height: 420, left: 22, top: 24, width: 440 },
+    }
+    const firstImage = { ...createImage('image-1'), cropGeometry: firstGeometry }
+    const secondImage = { ...createImage('image-2'), cropGeometry: secondGeometry }
+    const view = renderCropStep({
+      activeImage: firstImage,
+      images: [firstImage, secondImage],
+    })
+    views.push(view)
+
+    expect(cropperMocks.state.coordinates).toEqual(firstGeometry.coordinates)
+    expect(cropperMocks.state.visibleArea).toEqual(firstGeometry.visibleArea)
+    expect(cropperMocks.state.transforms).toEqual(firstGeometry.transforms)
+
+    view.rerender({ activeImage: secondImage, images: [firstImage, secondImage] })
+    expect(cropperMocks.state.coordinates).toEqual(secondGeometry.coordinates)
+
+    view.rerender({ activeImage: firstImage, images: [firstImage, secondImage] })
+    expect(cropperMocks.state.coordinates).toEqual(firstGeometry.coordinates)
+    expect(cropperMocks.state.visibleArea).toEqual(firstGeometry.visibleArea)
+    expect(cropperMocks.state.transforms).toEqual(firstGeometry.transforms)
+  })
+
+  it('restores geometry after remount without replacing an unchanged cropped artifact', async () => {
+    const cropped = createExportedPayloadForCropStep()
+    const geometry: CreatePostCropGeometry = {
+      coordinates: { height: 230, left: 33, top: 44, width: 250 },
+      transforms: { flip: { horizontal: true, vertical: false }, rotate: 90 },
+      visibleArea: { height: 510, left: 13, top: 15, width: 530 },
+    }
+    const image = {
+      ...createImage('image-1'),
+      cropGeometry: geometry,
+      cropped,
+      exported: cropped,
+    }
+    const firstView = renderCropStep({ activeImage: image, images: [image] })
+
+    act(() => firstView.root.unmount())
+    firstView.container.remove()
+
+    cropperMocks.state = {
+      boundary: { height: 400, width: 320 },
+      coordinates: { height: 100, left: 0, top: 0, width: 100 },
+      imageSize: { height: 800, width: 800 },
+      transforms: { flip: { horizontal: false, vertical: false }, rotate: 0 },
+      visibleArea: { height: 320, left: 0, top: 0, width: 320 },
+    }
+
+    const remountedView = renderCropStep({ activeImage: image, images: [image] })
+    views.push(remountedView)
+
+    const result = await remountedView.exportRef.current?.exportActiveImage()
+
+    expect(cropperMocks.state.boundary).toEqual({ height: 400, width: 320 })
+    expect(cropperMocks.state.imageSize).toEqual({ height: 800, width: 800 })
+    expect(cropperMocks.state.coordinates).toEqual(geometry.coordinates)
+    expect(cropperMocks.state.visibleArea).toEqual(geometry.visibleArea)
+    expect(cropperMocks.state.transforms).toEqual(geometry.transforms)
+    expect(result?.cropped).toBe(cropped)
+    expect(URL.createObjectURL).not.toHaveBeenCalled()
+  })
+
+  it('ignores default cropper change emitted before persisted geometry is restored', () => {
+    const onCropGeometryChange = vi.fn()
+    const geometry: CreatePostCropGeometry = {
+      coordinates: { height: 230, left: 33, top: 44, width: 250 },
+      transforms: { flip: { horizontal: true, vertical: false }, rotate: 90 },
+      visibleArea: { height: 510, left: 13, top: 15, width: 530 },
+    }
+    const cropped = createExportedPayloadForCropStep()
+    const image = {
+      ...createImage('image-1'),
+      cropGeometry: geometry,
+      cropped,
+      exported: cropped,
+    }
+    cropperMocks.changeBeforeReady = true
+    cropperMocks.state = {
+      ...cropperMocks.state,
+      coordinates: { height: 100, left: 0, top: 0, width: 100 },
+    }
+
+    const view = renderCropStep({
+      activeImage: image,
+      images: [image],
+      onCropGeometryChange,
+    })
+    views.push(view)
+
+    expect(onCropGeometryChange).not.toHaveBeenCalled()
+    expect(cropperMocks.state.coordinates).toEqual(geometry.coordinates)
   })
 
   it('allows only the latest overlapping export request to complete', async () => {

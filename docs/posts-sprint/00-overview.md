@@ -129,16 +129,18 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 - Default publish integration in `CreatePostFlow` with publishing and error states.
 - `PublicationStep` UI with exported image preview, caption textarea, character counter and
   description validation.
+- Public Home integration with total `usersCount` and the backend-owned feed of at most 4 posts in
+  `createdAt DESC` order.
 
 ### In Progress
 
 - Filters implementation and filtered image export. Crop canvas export is implemented.
-- Posts profile/details/feed composition on top of existing post display skeletons.
+- Posts profile/details/protected-feed composition on top of existing post display skeletons.
 
 ### Not Started
 
 - Draft persistence architecture and implementation.
-- Main/public page SSR/ISR integration.
+- Protected main page feed/cache integration.
 - Infinite scroll integration.
 
 ## Known limitations
@@ -150,8 +152,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
 - Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
   `completeUpload` and failed `createPost` remains open.
-- The gateway exposes `usersCount: Int!`; its Public Main UI integration remains separate work.
-- SSR/ISR/cache requirements for main/public posts surfaces are not confirmed.
+- Public Home temporarily uses request-time rendering because the gateway HTTPS certificate is
+  invalid. Restore `revalidate = 60` and verify the production build after the certificate is fixed.
 
 ## Целевая архитектура
 
