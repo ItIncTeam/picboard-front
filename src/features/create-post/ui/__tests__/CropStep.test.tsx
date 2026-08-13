@@ -143,6 +143,7 @@ type RenderResult = {
 type TestCropStepProps = {
   activeImage: CreatePostImage | null
   images: CreatePostImage[]
+  onAddImages?: (images: CreatePostImage[]) => void
   onAspectRatioChange?: (imageId: string, ratio: AspectRatio) => void
   onCropGeometryChange?: (imageId: string, geometry: CreatePostCropGeometry) => void
   onRemoveImage?: (imageId: string) => void
@@ -219,7 +220,7 @@ function renderCropStep(
         disabled={false}
         exportRef={exportRef}
         images={nextProps.images}
-        onAddImages={() => undefined}
+        onAddImages={nextProps.onAddImages ?? (() => undefined)}
         onAspectRatioChange={nextProps.onAspectRatioChange ?? (() => undefined)}
         onCropGeometryChange={nextProps.onCropGeometryChange ?? (() => undefined)}
         onRemoveImage={nextProps.onRemoveImage ?? (() => undefined)}
@@ -248,6 +249,12 @@ function clickButton(container: HTMLElement, name: string) {
   }
 
   act(() => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+}
+
+function queryButton(container: HTMLElement, name: string): HTMLButtonElement | undefined {
+  return Array.from(container.querySelectorAll('button')).find(
+    (item) => item.textContent === name || item.getAttribute('aria-label') === name,
+  )
 }
 
 function getMockCropper(container: HTMLElement): HTMLButtonElement {
@@ -376,6 +383,183 @@ describe('CropStep export boundary', () => {
       container.remove()
     })
     views.length = 0
+  })
+
+  it('opens and closes the aspect ratio menu and exposes its expanded state', () => {
+    const image = createImage('image-1')
+    const view = renderCropStep({ activeImage: image, images: [image] })
+    views.push(view)
+
+    const toggle = queryButton(view.container, 'AspectRatio')
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+
+    clickButton(view.container, 'AspectRatio')
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(queryButton(view.container, 'Оригинал')).toBeDefined()
+
+    clickButton(view.container, 'AspectRatio')
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+  })
+
+  it('keeps the aspect ratio and gallery panels mutually exclusive', () => {
+    const image = createImage('image-1')
+    const view = renderCropStep({ activeImage: image, images: [image] })
+    views.push(view)
+
+    clickButton(view.container, 'showSwiper')
+    expect(view.container.querySelector('[aria-label="Selected images"]')).not.toBeNull()
+
+    clickButton(view.container, 'AspectRatio')
+    expect(view.container.querySelector('[aria-label="Selected images"]')).toBeNull()
+    expect(queryButton(view.container, 'Оригинал')).toBeDefined()
+
+    clickButton(view.container, 'showSwiper')
+    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+    expect(view.container.querySelector('[aria-label="Selected images"]')).not.toBeNull()
+  })
+
+  it.each<AspectRatio>(['original', '1:1', '4:5', '16:9'])(
+    'selects %s for the active image and keeps the menu open',
+    (ratio) => {
+      const onAspectRatioChange = vi.fn()
+      const image = createImage('image-1', ratio === 'original' ? '1:1' : 'original')
+      const view = renderCropStep({
+        activeImage: image,
+        images: [image],
+        onAspectRatioChange,
+      })
+      views.push(view)
+
+      clickButton(view.container, 'AspectRatio')
+      clickButton(view.container, ratio === 'original' ? 'Оригинал' : ratio)
+
+      expect(onAspectRatioChange).toHaveBeenCalledWith(image.id, ratio)
+      expect(queryButton(view.container, 'Оригинал')).toBeDefined()
+      expect(queryButton(view.container, 'AspectRatio')).toHaveAttribute('aria-expanded', 'true')
+    },
+  )
+
+  it('opens and closes the selected images gallery', () => {
+    const image = createImage('image-1')
+    const view = renderCropStep({ activeImage: image, images: [image] })
+    views.push(view)
+
+    const toggle = queryButton(view.container, 'showSwiper')
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+
+    clickButton(view.container, 'showSwiper')
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(view.container.querySelector('[aria-label="Selected images"]')).not.toBeNull()
+
+    clickButton(view.container, 'showSwiper')
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(view.container.querySelector('[aria-label="Selected images"]')).toBeNull()
+  })
+
+  it('switches the active image from a gallery thumbnail', () => {
+    const images = [createImage('A'), createImage('B')]
+    const view = renderStatefulCropStep(images, images[0].id)
+    views.push(view)
+
+    clickButton(view.container, 'showSwiper')
+    const secondThumbnail = view.container
+      .querySelector(`img[alt="${images[1].name}"]`)
+      ?.closest<HTMLElement>('[role="button"]')
+
+    act(() => secondThumbnail?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    expect(getMockCropper(view.container)).toHaveAttribute('data-cropper-src', images[1].previewUrl)
+  })
+
+  it('adds valid images through the existing hidden file input path', () => {
+    const onAddImages = vi.fn()
+    const image = createImage('image-1')
+    const view = renderCropStep({ activeImage: image, images: [image], onAddImages })
+    views.push(view)
+
+    clickButton(view.container, 'showSwiper')
+    clickButton(view.container, 'AddImage')
+
+    const input = view.container.querySelector<HTMLInputElement>('input[type="file"]')
+    const file = new File(['new-image'], 'new-image.png', { type: 'image/png' })
+
+    if (!input) {
+      throw new Error('Expected hidden file input.')
+    }
+
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [file],
+    })
+    act(() => input.dispatchEvent(new Event('change', { bubbles: true })))
+
+    expect(onAddImages).toHaveBeenCalledTimes(1)
+    expect(onAddImages).toHaveBeenCalledWith([
+      expect.objectContaining({
+        aspectRatio: 'original',
+        file,
+        filter: 'normal',
+        name: file.name,
+      }),
+    ])
+  })
+
+  it('shows only Next for the first image and does not wrap backwards', () => {
+    const images = [createImage('A'), createImage('B'), createImage('C')]
+    const onSetActiveImage = vi.fn()
+    const view = renderCropStep({
+      activeImage: images[0],
+      images,
+      onSetActiveImage,
+    })
+    views.push(view)
+
+    expect(queryButton(view.container, 'ArrowBackIcon')).toBeUndefined()
+    expect(queryButton(view.container, 'ArrowNextIcon')).toBeDefined()
+
+    clickButton(view.container, 'ArrowNextIcon')
+    expect(onSetActiveImage).toHaveBeenCalledWith(images[1].id)
+  })
+
+  it('shows both navigation directions for a middle image', () => {
+    const images = [createImage('A'), createImage('B'), createImage('C')]
+    const view = renderCropStep({ activeImage: images[1], images })
+    views.push(view)
+
+    expect(queryButton(view.container, 'ArrowBackIcon')).toBeDefined()
+    expect(queryButton(view.container, 'ArrowNextIcon')).toBeDefined()
+  })
+
+  it('shows only Prev for the last image and does not wrap forwards', () => {
+    const images = [createImage('A'), createImage('B'), createImage('C')]
+    const onSetActiveImage = vi.fn()
+    const view = renderCropStep({
+      activeImage: images[2],
+      images,
+      onSetActiveImage,
+    })
+    views.push(view)
+
+    expect(queryButton(view.container, 'ArrowBackIcon')).toBeDefined()
+    expect(queryButton(view.container, 'ArrowNextIcon')).toBeUndefined()
+
+    clickButton(view.container, 'ArrowBackIcon')
+    expect(onSetActiveImage).toHaveBeenCalledWith(images[1].id)
+  })
+
+  it('hides both navigation buttons for one image', () => {
+    const image = createImage('image-1')
+    const view = renderCropStep({ activeImage: image, images: [image] })
+    views.push(view)
+
+    expect(queryButton(view.container, 'ArrowBackIcon')).toBeUndefined()
+    expect(queryButton(view.container, 'ArrowNextIcon')).toBeUndefined()
   })
 
   it('exports the current canvas without mutating the original image', async () => {
