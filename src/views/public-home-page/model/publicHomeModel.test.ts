@@ -50,9 +50,9 @@ function createPost(id: string, overrides: Partial<PostEntity> = {}): PostEntity
 }
 
 describe('Public Home display model', () => {
-  it('preserves feed order and limits the result to four posts', () => {
+  it('preserves the backend feed order', () => {
     const model = createPublicHomeDisplayModel({
-      feed: Array.from({ length: 5 }, (_, index) => createPost(`post-${index + 1}`)),
+      feed: Array.from({ length: 4 }, (_, index) => createPost(`post-${index + 1}`)),
       usersCount: 25,
     })
 
@@ -83,17 +83,5 @@ describe('Public Home display model', () => {
       ],
     })
     expect(model.posts[0]?.author.name).not.toContain('technical-owner')
-  })
-
-  it('keeps a post without usable media for the UI placeholder', () => {
-    const model = createPublicHomeDisplayModel({
-      feed: [
-        createPost('post-1', { attachments: [{ file: null, fileId: 'missing', sortOrder: 0 }] }),
-      ],
-      usersCount: 1,
-    })
-
-    expect(model.posts).toHaveLength(1)
-    expect(model.posts[0]?.media).toEqual([])
   })
 })

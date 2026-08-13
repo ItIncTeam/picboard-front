@@ -188,13 +188,13 @@ Differences:
 ### Public main page
 
 - `/` stays in the `(public)` route group and uses the public layout/header.
-- `views/public-home-page` composes `usersCount` and the first 4 posts returned by `feed` through
-  the page-specific `PublicHome` query. The current gateway `feed` field is not paginated.
-- Public Home temporarily uses request-time rendering while gateway TLS and attachment file
-  resolution are unstable. Empty `feed` and `usersCount = 0` remain valid successful data; gateway
-  failures throw into the `(public)` route error boundary, whose retry re-fetches and re-renders the
-  failed segment. Restore ISR with `revalidate = 60` after the gateway TLS and resolver failures are
-  fixed.
+- `views/public-home-page` composes `usersCount` and `feed` through the page-specific `PublicHome`
+  query. Backend returns at most 4 posts ordered by `createdAt DESC`; frontend preserves that order
+  and does not apply another limit. Public Home has no pagination or infinite scroll.
+- Public Home temporarily uses request-time rendering while the gateway HTTPS certificate remains
+  invalid. Empty `feed` and `usersCount = 0` remain valid successful data; gateway failures throw
+  into the `(public)` route error boundary, whose retry re-fetches and re-renders the failed segment.
+  Restore ISR with `revalidate = 60` and verify the production build after the certificate is fixed.
 - `PostEntity` currently exposes only `ownerId`, not public author profile data. Public Home renders
   the local neutral `User`/avatar placeholder and does not store that fallback in the shared Post
   display model.
@@ -214,7 +214,8 @@ Differences:
 - Object URL lifecycle: revoke on remove/reset/unmount.
 - Crop/filter export helpers: output exists and respects selected settings.
 - Upload readiness selectors: require final exported files, without calling backend.
-- Modal close behavior: no unsaved data closes; unsaved data opens confirm.
+- Modal Escape, backdrop and direct dismiss use the Create flow close guard: no unsaved data closes;
+  unsaved data opens the existing confirm.
 - Fallback page renders same flow without modal close controls.
 - Post grid renders empty/loading/error/success states.
 - Delete confirm calls close/cancel handlers correctly before backend integration.

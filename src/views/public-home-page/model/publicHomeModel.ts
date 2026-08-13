@@ -6,10 +6,8 @@ export type PublicHomeDisplayModel = {
   usersCount: number
 }
 
-const PUBLIC_HOME_POSTS_LIMIT = 4
-
 export function createPublicHomeDisplayModel(data: PublicHomeQueryData): PublicHomeDisplayModel {
-  const posts = mapPostEntitiesToPosts(data.feed.slice(0, PUBLIC_HOME_POSTS_LIMIT)).map((post) => ({
+  const posts = mapPostEntitiesToPosts(data.feed).map((post) => ({
     author: {
       avatarUrl: null,
       name: 'User',
