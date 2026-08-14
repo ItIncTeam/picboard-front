@@ -1,7 +1,8 @@
 .root {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
-  min-height: min(31.4375rem, calc(100vh - 8rem));
+  grid-template-columns: minmax(0, 51fr) minmax(0, 50fr);
+  height: 100%;
+  min-height: 0;
 }
 
 .previewPanel {
@@ -95,7 +96,6 @@
 }
 
 .filterPanel {
-  overflow-y: auto;
   display: grid;
   gap: 1rem;
   align-content: start;
@@ -150,9 +150,10 @@
   color: var(--color-danger-500);
 }
 
-@media (width <= 640px) {
+@media (width <= 680px) {
   .root {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .filterPanel {
