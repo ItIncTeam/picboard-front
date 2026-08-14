@@ -118,8 +118,9 @@ export function SignInForm({ onSuccessAction }: SignInFormProps) {
           render={({ field, fieldState }) => (
             <Input
               {...field}
-              autoComplete="email"
+              autoComplete="username"
               error={fieldState.error?.message}
+              id="sign-in-email"
               label={t.auth.signIn.email}
               onChange={(event) => {
                 clearRootError()
@@ -140,6 +141,7 @@ export function SignInForm({ onSuccessAction }: SignInFormProps) {
               autoComplete="current-password"
               error={fieldState.error?.message}
               Icon={isPasswordVisible ? CloseEyeIcon : OpenEyeIcon}
+              id="sign-in-password"
               label={t.auth.signIn.password}
               onChange={(event) => {
                 clearRootError()
