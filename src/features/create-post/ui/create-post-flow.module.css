@@ -2,16 +2,15 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
 
-  width: min(100%, clamp(20rem, 82vw, 30.75rem));
-  min-height: min(35.25rem, calc(100vh - 2rem));
-  max-height: min(35.25rem, calc(100vh - 2rem));
+  width: min(30.75rem, calc(100vw - 2rem));
+  height: min(35.25rem, calc(100vh - 2rem));
+  height: min(35.25rem, calc(100dvh - 2rem));
 
   background-color: var(--color-surface-elevated);
 }
 
 .root[data-size='wide'] {
-  width: min(100%, clamp(30.75rem, 82vw, 60.75rem));
-  min-height: auto;
+  width: min(60.75rem, calc(100vw - 2rem));
 }
 
 .header {
@@ -76,7 +75,9 @@
 
 .body {
   overflow: hidden auto;
+  overscroll-behavior: contain;
   display: grid;
+
   min-width: 0;
   min-height: 0;
 }
@@ -91,13 +92,9 @@
 @media (width <= 640px) {
   .root,
   .root[data-size='wide'] {
-    width: min(100%, calc(100vw - 1.5rem));
-    min-height: min(35.25rem, calc(100vh - 1.5rem));
-    max-height: calc(100vh - 1.5rem);
-  }
-
-  .root[data-size='wide'] {
-    min-height: auto;
+    width: calc(100vw - 1.5rem);
+    height: min(35.25rem, calc(100vh - 1.5rem));
+    height: min(35.25rem, calc(100dvh - 1.5rem));
   }
 
   .header {

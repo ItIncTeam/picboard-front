@@ -60,9 +60,12 @@ helpers не добавляются.
 Responsibilities:
 
 - показать выбранное изображение в `react-advanced-cropper`;
-- управлять crop area, zoom и aspect ratio;
+- управлять crop area и aspect ratio; zoom остается отдельным follow-up до подтверждения product
+  semantics;
 - поддержать aspect ratio modes из Figma: `original`, `1:1`, `4:5`, `16:9`;
 - поддержать active image navigation and media strip для multi-image posts;
+- ограничивать image navigation границами массива: первая image не показывает Previous, последняя
+  не показывает Next;
 - хранить aspect ratio и минимальную crop geometry (`coordinates`, `visibleArea`, `transforms`)
   per image; viewport-dependent `boundary` / `imageSize` в state не сохраняются;
 - экспортировать текущий canvas в новый `File`, не изменяя original `file` / `previewUrl`;

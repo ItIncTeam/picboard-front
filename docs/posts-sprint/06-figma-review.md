@@ -57,7 +57,8 @@ strip.
 Implementation implication:
 
 - active image should be part of create flow state;
-- carousel controls should update `activeImageId`;
+- carousel controls should update `activeImageId` and use bounded navigation without wrapping from
+  the last image to the first or from the first image to the last;
 - media order must be preserved in state;
 - `embla-carousel-react` should be added only in a dedicated dependency PR, after the static
   structure is in place.
@@ -175,6 +176,9 @@ Project direction:
 - do not add a new icon dependency in this sprint task;
 - add missing icons as local SVG assets/components only when implementation reaches that control;
 - keep icon buttons accessible with `aria-label`.
+
+Zoom is not implemented yet. Its control and reducer behavior remain a product follow-up until zoom
+step, range and reset semantics are confirmed; do not render a non-functional Figma control.
 
 ## FSD placement
 

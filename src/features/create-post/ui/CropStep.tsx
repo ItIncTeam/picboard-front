@@ -132,6 +132,11 @@ export function CropStep({
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
   const [isVisibleSlider, setIsVisibleSlider] = useState(false)
   const activeRatio = activeImage?.aspectRatio ?? 'original'
+  const activeImageIndex = activeImage
+    ? images.findIndex((image) => image.id === activeImage.id)
+    : -1
+  const canNavigatePrevious = activeImageIndex > 0
+  const canNavigateNext = activeImageIndex >= 0 && activeImageIndex < images.length - 1
   const cropperRef = useRef<CropperRef>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mountedRef = useRef(false)
@@ -423,23 +428,15 @@ export function CropStep({
   }
 
   const handleNextImage = () => {
-    if (disabled || !activeImage?.id || images.length <= 1) return
+    if (disabled || !canNavigateNext) return
 
-    const currentIndex = images.findIndex((image) => image.id === activeImage.id)
-    if (currentIndex === -1) return
-
-    const nextIndex = (currentIndex + 1) % images.length
-    switchActiveImage(images[nextIndex].id)
+    switchActiveImage(images[activeImageIndex + 1].id)
   }
 
   const handlePrevImage = () => {
-    if (disabled || !activeImage?.id || images.length <= 1) return
+    if (disabled || !canNavigatePrevious) return
 
-    const currentIndex = images.findIndex((image) => image.id === activeImage.id)
-    if (currentIndex === -1) return
-
-    const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1
-    switchActiveImage(images[prevIndex].id)
+    switchActiveImage(images[activeImageIndex - 1].id)
   }
 
   const handleVisibleAspectRatioChange = () => {
@@ -488,6 +485,7 @@ export function CropStep({
         icon={AspectRatioBtn}
         label="AspectRatio"
         data-active={isVisibleAspectRatio}
+        aria-expanded={isVisibleAspectRatio}
       />
 
       <IconButton
@@ -497,6 +495,7 @@ export function CropStep({
         icon={ShowSwiper}
         label="showSwiper"
         data-active={isVisibleSlider}
+        aria-expanded={isVisibleSlider}
       />
 
       {isVisibleSlider && (
@@ -510,81 +509,83 @@ export function CropStep({
             onChange={handleFileChange}
             type="file"
           />
-          <div className={styles.swiper} aria-label="Selected images">
-            {visibleImages?.map((image) => {
-              const isActive = image.id === activeImage?.id
-              const imageSrc = isActive
-                ? image.previewUrl
-                : (image.cropped?.objectUrl ?? image.previewUrl)
+          <div className={styles.galleryPanel}>
+            <div className={styles.swiper} aria-label="Selected images">
+              {visibleImages.map((image) => {
+                const isActive = image.id === activeImage?.id
+                const imageSrc = isActive
+                  ? image.previewUrl
+                  : (image.cropped?.objectUrl ?? image.previewUrl)
 
-              return (
-                <div
-                  key={image.id}
-                  role="button"
-                  className={styles.swiperItem}
-                  data-active={isActive}
-                  aria-disabled={disabled}
-                  onClick={() => switchActiveImage(image.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      switchActiveImage(image.id)
-                    }
-                  }}
-                  tabIndex={disabled ? -1 : 0}
-                >
-                  {imageSrc ? (
-                    <>
-                      <Image
-                        className={styles.swiperImage}
-                        src={imageSrc}
-                        alt={image.name}
-                        unoptimized
-                        width={50}
-                        height={50}
-                      />
-                      <IconButton
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          handleRemoveImage(image)
-                        }}
-                        className={styles.deleteImage}
-                        disabled={disabled}
-                        icon={Close}
-                        label="deleteImage"
-                      />
-                    </>
-                  ) : (
-                    <span className={styles.swiperPlaceholder}>{image.name}</span>
-                  )}
-                </div>
-              )
-            })}
-            <div className={styles.wrapperAddImage}>
-              <IconButton
-                className={styles.addImage}
-                icon={AddImage}
-                label="AddImage"
-                disabled={disabled || hasReachedImagesLimit}
-                onClick={handleSelectFiles}
-              />
-            </div>
-          </div>
-
-          <div className={styles.paginationWrapper} aria-label="Pagination item">
-            {images.map((image) => {
-              const isActive = image.id === activeImage?.id
-
-              return (
+                return (
+                  <div
+                    key={image.id}
+                    role="button"
+                    className={styles.swiperItem}
+                    data-active={isActive}
+                    aria-disabled={disabled}
+                    onClick={() => switchActiveImage(image.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        switchActiveImage(image.id)
+                      }
+                    }}
+                    tabIndex={disabled ? -1 : 0}
+                  >
+                    {imageSrc ? (
+                      <>
+                        <Image
+                          className={styles.swiperImage}
+                          src={imageSrc}
+                          alt={image.name}
+                          unoptimized
+                          width={80}
+                          height={82}
+                        />
+                        <IconButton
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleRemoveImage(image)
+                          }}
+                          className={styles.deleteImage}
+                          disabled={disabled}
+                          icon={Close}
+                          label="deleteImage"
+                        />
+                      </>
+                    ) : (
+                      <span className={styles.swiperPlaceholder}>{image.name}</span>
+                    )}
+                  </div>
+                )
+              })}
+              <div className={styles.wrapperAddImage}>
                 <IconButton
-                  key={image.id}
-                  icon={Dot}
-                  className={styles.paginationItem}
-                  label="Dot"
-                  data-active={isActive}
+                  className={styles.addImage}
+                  icon={AddImage}
+                  label="AddImage"
+                  disabled={disabled || hasReachedImagesLimit}
+                  onClick={handleSelectFiles}
                 />
-              )
-            })}
+              </div>
+            </div>
+
+            <div className={styles.paginationWrapper} aria-label="Pagination item">
+              {images.map((image) => {
+                const isActive = image.id === activeImage?.id
+
+                return (
+                  <IconButton
+                    key={image.id}
+                    icon={Dot}
+                    className={styles.paginationItem}
+                    label="Dot"
+                    data-active={isActive}
+                  />
+                )
+              })}
+            </div>
           </div>
           {errors.length > 0 && (
             <ul className={styles.errors} aria-live="polite">
@@ -597,20 +598,26 @@ export function CropStep({
       )}
 
       <div className={styles.navigationWrapper}>
-        <IconButton
-          className={styles.navigationItem}
-          icon={ArrowBackIcon}
-          label={'ArrowBackIcon'}
-          onClick={handlePrevImage}
-          disabled={disabled || images.length <= 1}
-        />
-        <IconButton
-          className={styles.navigationItem}
-          icon={ArrowNextIcon}
-          label={'ArrowNextIcon'}
-          onClick={handleNextImage}
-          disabled={disabled || images.length <= 1}
-        />
+        {canNavigatePrevious && (
+          <IconButton
+            className={styles.navigationItem}
+            icon={ArrowBackIcon}
+            label="ArrowBackIcon"
+            onClick={handlePrevImage}
+            disabled={disabled}
+            data-direction="previous"
+          />
+        )}
+        {canNavigateNext && (
+          <IconButton
+            className={styles.navigationItem}
+            icon={ArrowNextIcon}
+            label="ArrowNextIcon"
+            onClick={handleNextImage}
+            disabled={disabled}
+            data-direction="next"
+          />
+        )}
       </div>
     </div>
   )
