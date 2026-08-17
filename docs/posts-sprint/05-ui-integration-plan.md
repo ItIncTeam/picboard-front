@@ -182,8 +182,12 @@ Differences:
 
 ### Main protected page
 
-- `views/main-page` or `views/feed-page` composes authenticated feed/main content.
-- SSR/ISR decisions wait for backend query contract and cache requirements.
+- `/main` is the canonical authenticated home. `views/main-page` composes the current global
+  latest-four `feed` with Apollo `useQuery`, preserving backend order and using the shared auth
+  refresh/retry links.
+- `/feed` has no distinct personalized contract and redirects to `/main` for compatibility.
+- The protected feed does not use raw server fetch or ISR because the access token is memory-only.
+  Pagination and personalized/social semantics remain backend-unsupported.
 
 ### Public main page
 
@@ -222,7 +226,7 @@ Differences:
 
 ## Manual QA checklist
 
-- Open `/feed` or `/main`, click Create in Sidebar.
+- Open `/main`, click Create in Sidebar. Confirm `/feed` redirects to `/main` for compatibility.
 - Confirm URL becomes `/posts/create`.
 - Confirm Create renders as modal over main layout.
 - Close modal and confirm previous route is restored.

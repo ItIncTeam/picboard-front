@@ -1,5 +1,5 @@
-import { FeedPage } from '@/views/feed-page/feed-page'
+import { redirect } from 'next/navigation'
 
 export default function Page() {
-  return <FeedPage />
+  redirect('/main')
 }

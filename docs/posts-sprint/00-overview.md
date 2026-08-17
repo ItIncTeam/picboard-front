@@ -133,16 +133,17 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   `createdAt DESC` order.
 - Public Home ISR with `revalidate = 60`, restored after the gateway HTTPS/TLS certificate blocker
   was resolved.
+- Authenticated `/main` composition through Apollo `useQuery` and the existing global latest-four
+  `feed`; `/feed` is a compatibility redirect to `/main`.
 
 ### In Progress
 
 - Filters implementation and filtered image export. Crop canvas export is implemented.
-- Posts profile/details/protected-feed composition on top of existing post display skeletons.
+- Posts profile/details composition on top of existing post display skeletons.
 
 ### Not Started
 
 - Draft persistence architecture and implementation.
-- Protected main page feed/cache integration.
 - Infinite scroll integration.
 
 ## Known limitations
@@ -174,7 +175,7 @@ views/
 
 widgets/
   create-post-modal
-  posts-feed       -> follow-up, after profile/main composition decision
+  posts-feed       -> only if a future personalized feed contract needs reusable composition
   post-grid        -> only if grid becomes a widget-level composition
 
 features/
@@ -201,7 +202,8 @@ Rules:
 2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
 3. Compose post details and integrate `post(id: String!)`.
 4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
-5. Add main feed composition through `feed`.
+5. Main feed composition through `feed` is complete; keep `/feed` as a compatibility redirect until
+   a separate personalized feed contract exists.
 6. Plan and implement cache/refetch behavior for create, edit and delete.
 7. Add infinite scroll around `PostConnection.pageInfo` after profile integration.
 8. Revisit draft persistence only if sprint capacity remains and product confirms behavior.

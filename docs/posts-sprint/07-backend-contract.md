@@ -205,7 +205,7 @@ type ProfilePostsInput = {
 }
 ```
 
-The gateway schema does not define a default for `first`. The current frontend guard accepts values
+The live gateway schema defines `first = 8`. The current frontend guard accepts explicit values
 from 1 through 8. Frontend should prepare infinite scroll around cursor pagination.
 
 ### `feed`
@@ -217,6 +217,10 @@ feed: [PostEntity!]!
 Backend guarantees that `feed` returns at most 4 posts ordered by `createdAt DESC`. The field has no
 pagination arguments, and infinite scroll is outside the current Public Home scope. Frontend must
 preserve the returned post order and must not own an additional feed limit or sorting rule.
+
+The backend currently exposes no separate authenticated/personalized feed. Authenticated `/main`
+therefore uses this same global latest-four field through Apollo Client, while `/feed` redirects to
+`/main`. Author profile, likes, comments, bookmarks and follow state are not part of this contract.
 
 ### `post`
 
@@ -334,8 +338,9 @@ are implementation details, not backend schema blockers:
    and storage validation failure;
 3. whether frontend should request width/height or other media metadata in post rendering queries;
 4. cache/refetch strategy after create, edit and delete;
-5. cache requirements for protected feed composition. Public Home is independent of that work and
-   uses ISR with `revalidate = 60` after the gateway HTTPS/TLS certificate blocker was resolved.
+5. cache/refetch behavior after a successful create for the active Apollo `Feed` query. Public Home
+   is independent and uses ISR with `revalidate = 60` after the gateway HTTPS/TLS certificate
+   blocker was resolved.
 
 ## Implementation Boundaries
 

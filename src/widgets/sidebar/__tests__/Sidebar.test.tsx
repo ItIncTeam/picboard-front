@@ -9,7 +9,7 @@ import { I18nProvider } from '@/shared/lib/i18n'
 import { Sidebar } from '../Sidebar'
 
 const navigationMocks = vi.hoisted(() => ({
-  pathname: '/feed',
+  pathname: '/main',
   searchParams: new URLSearchParams(),
 }))
 
@@ -106,6 +106,8 @@ describe('Sidebar', () => {
     }
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+    navigationMocks.pathname = '/main'
+    navigationMocks.searchParams = new URLSearchParams()
     await page.viewport(1024, 768)
   })
 
@@ -119,6 +121,17 @@ describe('Sidebar', () => {
     })
 
     mountedRoots.length = 0
+  })
+
+  it('links Feed to the canonical main route and marks it active on main', () => {
+    const view = renderSidebar(true)
+
+    mountedRoots.push(view)
+
+    const feedLink = view.container.querySelector('nav a')
+
+    expect(feedLink?.getAttribute('href')).toBe('/main')
+    expect(feedLink?.getAttribute('aria-current')).toBe('page')
   })
 
   it('keeps navigation icons on the same horizontal axis while collapsing', async () => {

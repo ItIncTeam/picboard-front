@@ -54,7 +54,7 @@ type SidebarProps = {
 
 const items: SidebarItem[] = [
   {
-    href: '/feed',
+    href: '/main',
     icons: {
       active: HomeFilledIcon,
       inactive: HomeIcon,

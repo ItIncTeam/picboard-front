@@ -194,7 +194,7 @@
 
 - Отображай изображения через `attachment.file.url` после проверки `attachment.file`.
 - `profilePosts` использует курсорную пагинацию: `first`, опциональный `after`; frontend принимает
-  `first` от 1 до 8, а gateway schema не задаёт default.
+  explicit `first` от 1 до 8, а live gateway schema использует default 8.
 
 ---
 
@@ -256,6 +256,8 @@
 - `profilePosts` получает `userId`, `first` and optional `after`.
 - `feed` returns at most 4 `PostEntity` items ordered by `createdAt DESC`; frontend preserves this
   order and does not apply another limit.
+- Authenticated `/main` reads that same global feed through Apollo Client; `/feed` redirects to
+  `/main` until a separate personalized contract exists.
 - `post(id: String!)` returns `PostEntity` or `null`.
 - `usersCount: Int!` returns the total user count; `feed` has no pagination arguments or Public
   Home infinite scroll.
