@@ -191,10 +191,10 @@ Differences:
 - `views/public-home-page` composes `usersCount` and `feed` through the page-specific `PublicHome`
   query. Backend returns at most 4 posts ordered by `createdAt DESC`; frontend preserves that order
   and does not apply another limit. Public Home has no pagination or infinite scroll.
-- Public Home temporarily uses request-time rendering while the gateway HTTPS certificate remains
-  invalid. Empty `feed` and `usersCount = 0` remain valid successful data; gateway failures throw
-  into the `(public)` route error boundary, whose retry re-fetches and re-renders the failed segment.
-  Restore ISR with `revalidate = 60` and verify the production build after the certificate is fixed.
+- The gateway HTTPS/TLS certificate blocker is resolved, so Public Home uses ISR with
+  `revalidate = 60`. Empty `feed` and `usersCount = 0` remain valid successful data; gateway
+  failures throw into the `(public)` route error boundary, whose retry re-fetches and re-renders the
+  failed segment.
 - `PostEntity` currently exposes only `ownerId`, not public author profile data. Public Home renders
   the local neutral `User`/avatar placeholder and does not store that fallback in the shared Post
   display model.

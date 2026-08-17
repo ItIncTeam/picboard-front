@@ -334,8 +334,8 @@ are implementation details, not backend schema blockers:
    and storage validation failure;
 3. whether frontend should request width/height or other media metadata in post rendering queries;
 4. cache/refetch strategy after create, edit and delete;
-5. cache requirements for protected feed composition. Public Home remains request-rendered until
-   the gateway HTTPS certificate is fixed, then returns to `revalidate = 60`.
+5. cache requirements for protected feed composition. Public Home is independent of that work and
+   uses ISR with `revalidate = 60` after the gateway HTTPS/TLS certificate blocker was resolved.
 
 ## Implementation Boundaries
 
