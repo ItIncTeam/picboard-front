@@ -312,7 +312,7 @@ fields is still pending.
 
 ## Publish Pipeline
 
-Future frontend flow:
+Current frontend flow:
 
 1. Collect exported files.
 2. Build `initiateUploadBatch` input.
@@ -323,9 +323,10 @@ Future frontend flow:
 7. Call `completeUpload`.
 8. Verify `READY` status for every selected file.
 9. Call `createPost`.
-10. Update Apollo cache or refetch.
-11. Reset `CreatePostState`.
-12. Close modal.
+10. Start isolated post-create synchronization: evict `ROOT_QUERY.feed`, refetch the active Apollo
+    `Feed` query and call fixed-path `revalidatePath('/')` through a Server Action.
+11. Reset `CreatePostState` and close without waiting for synchronization.
+12. Log Feed and Public Home synchronization failures separately without exposing publish retry.
 
 ## Current Open Integration Questions
 
@@ -337,10 +338,13 @@ are implementation details, not backend schema blockers:
 2. backend error codes/messages for unsupported type, file too large, too many files, auth failure
    and storage validation failure;
 3. whether frontend should request width/height or other media metadata in post rendering queries;
-4. cache/refetch strategy after create, edit and delete;
-5. cache/refetch behavior after a successful create for the active Apollo `Feed` query. Public Home
-   is independent and uses ISR with `revalidate = 60` after the gateway HTTPS/TLS certificate
-   blocker was resolved.
+4. cache/refetch strategy after edit and delete;
+5. profile posts synchronization after create. The active Apollo `Feed` query is refetched after a
+   successful create, while Public Home is invalidated independently and keeps ISR with
+   `revalidate = 60`.
+
+Live verification of this successful post-create path remains blocked while backend `createPost`
+returns `Files service timeout`.
 
 ## Implementation Boundaries
 

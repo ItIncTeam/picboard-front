@@ -67,6 +67,7 @@ const stepBoundaries = vi.hoisted(() => ({
 
 const publishMocks = vi.hoisted(() => ({
   createPost: vi.fn(),
+  synchronizeCreatedPost: vi.fn(),
   uploadCreatePostImages: vi.fn(),
 }))
 
@@ -91,6 +92,10 @@ vi.mock('../../api/createPostApi', () => ({
 
 vi.mock('../../model/createPostUploadService', () => ({
   uploadCreatePostImages: publishMocks.uploadCreatePostImages,
+}))
+
+vi.mock('../../model/synchronizeCreatedPost', () => ({
+  synchronizeCreatedPost: publishMocks.synchronizeCreatedPost,
 }))
 
 vi.mock('@/shared/ui/button', () => ({
@@ -385,6 +390,8 @@ describe('CreatePostFlow', () => {
       writable: true,
     })
     publishMocks.createPost.mockReset()
+    publishMocks.synchronizeCreatedPost.mockReset()
+    publishMocks.synchronizeCreatedPost.mockResolvedValue(undefined)
     publishMocks.uploadCreatePostImages.mockReset()
     cropExportMocks.exportActiveImage.mockReset()
   })
@@ -1765,7 +1772,84 @@ describe('CreatePostFlow', () => {
       description: 'Ready to publish',
       fileIds: ['file-1'],
     })
+    expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledWith('post-1')
+    expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledTimes(1)
+    expect(getHeaderTitle(view.container)).toBe('Add Photo')
     expect(onCloseAction).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes as published when post-create synchronization rejects', async () => {
+    const synchronizationError = new Error('Feed synchronization failed.')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const onCloseAction = vi.fn()
+    const image = createExportedImage()
+
+    publishMocks.uploadCreatePostImages.mockResolvedValueOnce(['file-1'])
+    publishMocks.createPost.mockResolvedValueOnce({
+      id: 'post-1',
+      ownerId: 'user-1',
+      description: null,
+      attachments: [],
+      createdAt: '2026-07-04T12:00:00.000Z',
+      updatedAt: '2026-07-04T12:00:00.000Z',
+    })
+    publishMocks.synchronizeCreatedPost.mockRejectedValueOnce(synchronizationError)
+
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'publication',
+      }),
+      onCloseAction,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
+
+    expect(publishMocks.uploadCreatePostImages).toHaveBeenCalledTimes(1)
+    expect(publishMocks.createPost).toHaveBeenCalledTimes(1)
+    expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledTimes(1)
+    expect(onCloseAction).toHaveBeenCalledTimes(1)
+    expect(view.container.querySelector('[role="alert"]')).toBeNull()
+    expect(queryButton(view.container, 'Publish')).toBeNull()
+    expect(getHeaderTitle(view.container)).toBe('Add Photo')
+    expect(consoleError).toHaveBeenCalledWith(
+      '[CreatePost] unexpected post-create synchronization failure',
+      {
+        postId: 'post-1',
+        reason: synchronizationError,
+      },
+    )
+  })
+
+  it('keeps the flow open and skips synchronization when createPost fails', async () => {
+    const onCloseAction = vi.fn()
+    const image = createExportedImage()
+
+    publishMocks.uploadCreatePostImages.mockResolvedValueOnce(['file-1'])
+    publishMocks.createPost.mockRejectedValueOnce(new Error('Post creation failed.'))
+
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'publication',
+      }),
+      onCloseAction,
+    })
+
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
+
+    expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
+      'Post creation failed.',
+    )
+    expect(stepBoundaries.publication?.isPublishing).toBe(false)
+    expect(publishMocks.synchronizeCreatedPost).not.toHaveBeenCalled()
+    expect(onCloseAction).not.toHaveBeenCalled()
   })
 
   it('shows publish error when default publish fails', async () => {
@@ -1789,5 +1873,6 @@ describe('CreatePostFlow', () => {
       'Storage upload failed.',
     )
     expect(publishMocks.createPost).not.toHaveBeenCalled()
+    expect(publishMocks.synchronizeCreatedPost).not.toHaveBeenCalled()
   })
 })

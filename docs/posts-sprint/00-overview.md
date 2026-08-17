@@ -135,6 +135,9 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   was resolved.
 - Authenticated `/main` composition through Apollo `useQuery` and the existing global latest-four
   `feed`; `/feed` is a compatibility redirect to `/main`.
+- Successful `createPost` starts non-blocking post-create synchronization: Apollo evicts only
+  `ROOT_QUERY.feed` and refetches an active `Feed`, while a fixed-path Server Action invalidates
+  Public Home. Synchronization failures are logged and never reopen the publish flow.
 
 ### In Progress
 
@@ -150,7 +153,10 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 - Crop canvas export is production-ready, including sequential multi-image processing and async
   stale-result protection. Full end-to-end Create Post still depends on the filters export PR.
-- Apollo cache/refetch behavior after create, update and delete is not defined.
+- Apollo cache/refetch behavior after update and delete is not defined; profile synchronization
+  after create remains separate follow-up work.
+- Live verification of successful post-create synchronization is blocked while backend
+  `createPost` returns `Files service timeout`.
 - Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
 - Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed

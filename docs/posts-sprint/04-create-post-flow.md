@@ -373,14 +373,16 @@ Backend create integration is implemented in the current Create Post flow:
 - call `completeUpload` with uploaded files as `CompleteUploadInput[]`, one `{ fileId }` item per
   successfully uploaded file;
 - call `createPost` only after every selected file is `READY`;
+- after successful `createPost`, evict only `ROOT_QUERY.feed`, refetch the active Apollo `Feed`
+  query and invalidate Public Home through fixed-path `revalidatePath('/')`;
+- run Feed synchronization and Public Home invalidation as isolated background work that cannot
+  turn an already successful create into a publish error;
 - reset and close through the current modal/page shell after successful `createPost`.
 
 Do not add GraphQL Upload, binary upload through GraphQL, order-based descriptor mapping, display
 usage of `uploadUrl` for display or fake GraphQL operations.
 
-Follow-up work:
-
-- update profile/feed/main caches according to agreed API/cache strategy.
+Profile post synchronization remains separate follow-up work.
 
 ## Current implementation
 
@@ -391,7 +393,8 @@ final artifacts are ready.
 
 ## Known limitations
 
-- Cache/refetch behavior after successful `createPost` is not defined.
+- Live verification of successful post-create synchronization is blocked while the backend
+  `createPost` flow returns `Files service timeout`.
 - Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
   previously uploaded files should be completed, retried or cleaned up.
 - Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
