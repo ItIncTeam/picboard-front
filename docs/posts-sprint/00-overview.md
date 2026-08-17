@@ -210,7 +210,7 @@ Rules:
 4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
 5. Main feed composition through `feed` is complete; keep `/feed` as a compatibility redirect until
    a separate personalized feed contract exists.
-6. Plan and implement cache/refetch behavior for create, edit and delete.
+6. Plan and implement cache/refetch behavior for edit and delete.
 7. Add infinite scroll around `PostConnection.pageInfo` after profile integration.
 8. Revisit draft persistence only if sprint capacity remains and product confirms behavior.
 

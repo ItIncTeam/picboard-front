@@ -407,6 +407,7 @@ describe('CreatePostFlow', () => {
 
     await act(async () => Promise.resolve())
     mountedRoots.length = 0
+    vi.restoreAllMocks()
   })
 
   it('closes immediately without confirmation when there is no unsaved data', () => {
