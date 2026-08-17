@@ -336,10 +336,12 @@ Checklist:
 Gateway schema is synchronized with the current Posts contract. `completeUpload` still requires
 `READY` before `createPost`.
 
+The gateway HTTPS/TLS certificate blocker is resolved, and Public Home uses ISR with
+`revalidate = 60`.
+
 Still not blocked by backend schema, but pending implementation/product decisions:
 
 - cache/refetch strategy after create, update and delete;
 - edit/delete permissions and error copy;
 - protected main page access and cache policy;
-- Public Home ISR restoration after the gateway HTTPS certificate is fixed;
 - retry/idempotency behavior for failed upload and publish steps.

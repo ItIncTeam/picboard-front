@@ -131,6 +131,8 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   description validation.
 - Public Home integration with total `usersCount` and the backend-owned feed of at most 4 posts in
   `createdAt DESC` order.
+- Public Home ISR with `revalidate = 60`, restored after the gateway HTTPS/TLS certificate blocker
+  was resolved.
 
 ### In Progress
 
@@ -152,8 +154,6 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
 - Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
   `completeUpload` and failed `createPost` remains open.
-- Public Home temporarily uses request-time rendering because the gateway HTTPS certificate is
-  invalid. Restore `revalidate = 60` and verify the production build after the certificate is fixed.
 
 ## Целевая архитектура
 
