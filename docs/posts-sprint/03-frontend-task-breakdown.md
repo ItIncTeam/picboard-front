@@ -214,7 +214,8 @@ Goal: подготовить первый UI skeleton для отображен�
 Scope: only posts display skeleton. Dev 4 does not work on create-post upload, crop, filters,
 state shape or publish pipeline in this sprint split.
 
-Status: Completed for the first display skeleton. Route composition and API integration are
+Status: Completed for the first display skeleton. The separate FRONT-152 composition PR connects
+the existing global `feed` to canonical `/main` through Apollo Client and keeps profile/details as
 follow-ups.
 
 Checklist:
@@ -251,7 +252,7 @@ Follow-up PRs:
 - Post details route composition.
 - Edit post skeleton.
 - Delete post confirm skeleton.
-- Main/public page skeleton.
+- Profile/details route composition.
 - Infinite scroll after cursor pagination integration planning and `react-intersection-observer`
   dependency PR.
 

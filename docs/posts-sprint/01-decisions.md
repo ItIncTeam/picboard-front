@@ -48,8 +48,11 @@
   non-null, and frontend skips attachments with `file: null`.
 - Upload limits are confirmed: `image/jpeg` and `image/png`, 1-10 images, maximum `20 MB` per file.
 - Post description is optional and limited to 500 characters.
-- `profilePosts` uses cursor pagination with `{ first, after? }`; the gateway defines no default for
-  `first`, and the current frontend guard accepts values from 1 through 8.
+- `profilePosts` uses cursor pagination with `{ first, after? }`; the live gateway schema defaults
+  `first` to 8, and the current frontend guard accepts explicit values from 1 through 8.
+- `/main` is the canonical authenticated home and reads the existing global latest-four `feed`
+  reactively through Apollo Client. `/feed` is a compatibility redirect to `/main` until backend
+  exposes distinct personalized feed semantics.
 - Sprint is split into Epic 1: Create Post Wizard and Epic 2: Posts Consumption.
 - Dev 1 is Create Flow Owner and owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
 - Dev 2 and Dev 3 do not change create-post state shape without Dev 1 approval.
@@ -185,11 +188,11 @@ Final gateway schema details:
 
 - Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
 - Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
-- UI composition for `profilePosts`, `feed`, `post`, `updatePostDescription` and `deletePost`:
-  follow-up implementation PRs after the API foundation.
-- SSR/ISR settings for the protected main page: after cache requirements. Public Home is independent
-  of that decision and uses ISR with `revalidate = 60` after the gateway HTTPS/TLS certificate
-  blocker was resolved.
+- UI composition for `profilePosts`, `post`, `updatePostDescription` and `deletePost`: follow-up
+  implementation PRs after the API foundation. The current global `feed` composition is implemented
+  on `/main` through Apollo Client rather than protected SSR/ISR.
+- Public Home remains independent and uses ISR with `revalidate = 60` after the gateway HTTPS/TLS
+  certificate blocker was resolved.
 - Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
 - Infinite scroll for cursor-paginated profile posts: follow-up implementation and dependency PR.
   Public Home has no pagination or infinite scroll.

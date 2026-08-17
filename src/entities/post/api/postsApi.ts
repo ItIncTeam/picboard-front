@@ -5,7 +5,7 @@ import { apolloClient } from '@/shared/api'
 import type { PostConnection, PostEntity } from '@/entities/post'
 import { postFieldsFragment } from './postFragments'
 
-const feedQuery = gql`
+export const feedQuery = gql`
   ${postFieldsFragment}
 
   query Feed {
@@ -76,7 +76,7 @@ export type DeletePostInput = {
   postId: string
 }
 
-type FeedResponse = {
+export type FeedQueryData = {
   feed: PostEntity[]
 }
 
@@ -120,7 +120,7 @@ function assertProfilePostsFirst(first: number | undefined): void {
 }
 
 export const feed = async (): Promise<PostEntity[]> => {
-  const response = await apolloClient.query<FeedResponse>({
+  const response = await apolloClient.query<FeedQueryData>({
     query: feedQuery,
   })
 

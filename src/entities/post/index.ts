@@ -1,10 +1,12 @@
 export {
   deletePost,
   feed,
+  feedQuery,
   post,
   profilePosts,
   updatePostDescription,
   type DeletePostInput,
+  type FeedQueryData,
   type ProfilePostsInput,
   type UpdatePostDescriptionInput,
 } from './api/postsApi'
