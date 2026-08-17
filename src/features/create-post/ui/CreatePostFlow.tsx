@@ -12,6 +12,7 @@ import { Text, Title } from '@/shared/ui/typography'
 import { CREATE_POST_STEPS } from '../lib/createPostConstants'
 import { createPost } from '../api/createPostApi'
 import { useCreatePostPreviewUrlCleanup } from '../lib/useCreatePostPreviewUrlCleanup'
+import { synchronizeCreatedPost } from '../model/synchronizeCreatedPost'
 import { createPostInitialState, createPostReducer } from '@/features/create-post'
 import { uploadCreatePostImages } from '@/features/create-post'
 import {
@@ -272,25 +273,44 @@ export function CreatePostFlow({
     setPublishError(null)
     dispatch({ type: 'setPublishing', isPublishing: true })
 
-    try {
-      if (onPublishAction) {
+    if (onPublishAction) {
+      try {
         await onPublishAction(state)
-
-        return
+      } catch (error) {
+        setPublishError(error instanceof Error ? error.message : 'Post publishing failed.')
+      } finally {
+        dispatch({ type: 'setPublishing', isPublishing: false })
       }
 
+      return
+    }
+
+    let createdPostId: string
+
+    try {
       const fileIds = await uploadCreatePostImages(state, { dispatch })
       const description = state.caption.trim() || undefined
+      const createdPost = await createPost({ description, fileIds })
 
-      await createPost({ description, fileIds })
-
-      dispatch({ type: 'reset' })
-      onCloseAction?.()
+      createdPostId = createdPost.id
     } catch (error) {
       setPublishError(error instanceof Error ? error.message : 'Post publishing failed.')
-    } finally {
       dispatch({ type: 'setPublishing', isPublishing: false })
+
+      return
     }
+
+    const synchronization = synchronizeCreatedPost(createdPostId)
+
+    dispatch({ type: 'reset' })
+    onCloseAction?.()
+
+    void synchronization.catch((error: unknown) => {
+      console.error('[CreatePost] unexpected post-create synchronization failure', {
+        postId: createdPostId,
+        reason: error,
+      })
+    })
   }
 
   const handleClose = () => {
