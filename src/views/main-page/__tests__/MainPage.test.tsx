@@ -1,14 +1,15 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
-import type { PostEntity } from '@/entities/post'
+import type { FeedQueryData, PostEntity } from '@/entities/post'
 
 import { MainPage } from '../MainPage'
 
 type QueryResult = {
-  data?: { feed: PostEntity[] }
+  data?: FeedQueryData
   error?: Error
   loading: boolean
   refetch: ReturnType<typeof vi.fn>
@@ -82,9 +83,13 @@ function createPost(id: string, overrides: Partial<PostEntity> = {}): PostEntity
   }
 }
 
-function renderMainPage(): RenderResult {
+function renderMainPage(availableWidth?: number): RenderResult {
   const container = document.createElement('div')
   const root = createRoot(container)
+
+  if (availableWidth) {
+    container.style.width = `${availableWidth}px`
+  }
 
   document.body.append(container)
 
@@ -130,7 +135,7 @@ describe('MainPage', () => {
 
   it('preserves backend order and renders sorted attachments through the carousel', () => {
     apolloMocks.result = {
-      data: { feed: [createPost('post-2'), createPost('post-1')] },
+      data: { feed: [createPost('post-2'), createPost('post-1')], usersCount: 9213 },
       loading: false,
       refetch,
     }
@@ -139,6 +144,9 @@ describe('MainPage', () => {
     mountedRoots.push(view)
 
     const cards = Array.from(view.container.querySelectorAll('article'))
+    expect(view.container.querySelector('[aria-label="9213 registered users"]')).toBeInstanceOf(
+      HTMLElement,
+    )
     expect(cards.map((card) => card.dataset.postId)).toEqual(['post-2', 'post-1'])
 
     const firstCard = cards[0]
@@ -157,12 +165,15 @@ describe('MainPage', () => {
   })
 
   it('renders an authenticated empty state for an empty successful feed', () => {
-    apolloMocks.result = { data: { feed: [] }, loading: false, refetch }
+    apolloMocks.result = { data: { feed: [], usersCount: 0 }, loading: false, refetch }
 
     const view = renderMainPage()
     mountedRoots.push(view)
 
     expect(view.container.textContent).toContain('No publications yet')
+    expect(view.container.querySelector('[aria-label="0 registered users"]')).toBeInstanceOf(
+      HTMLElement,
+    )
     expect(view.container.textContent).not.toContain("Couldn't load publications")
   })
 
@@ -192,6 +203,7 @@ describe('MainPage', () => {
             attachments: [{ file: null, fileId: 'missing-file', sortOrder: 0 }],
           }),
         ],
+        usersCount: 1,
       },
       loading: false,
       refetch,
@@ -205,4 +217,88 @@ describe('MainPage', () => {
       HTMLElement,
     )
   })
+
+  it.each([
+    {
+      availableWidth: 1172,
+      columns: 4,
+      mode: 'expanded',
+      viewportHeight: 900,
+      viewportWidth: 1440,
+    },
+    {
+      availableWidth: 1012,
+      columns: 4,
+      mode: 'expanded',
+      viewportHeight: 800,
+      viewportWidth: 1280,
+    },
+    { availableWidth: 756, columns: 3, mode: 'expanded', viewportHeight: 768, viewportWidth: 1024 },
+    { availableWidth: 632, columns: 2, mode: 'expanded', viewportHeight: 700, viewportWidth: 900 },
+    { availableWidth: 500, columns: 2, mode: 'expanded', viewportHeight: 667, viewportWidth: 768 },
+    {
+      availableWidth: 1320,
+      columns: 4,
+      mode: 'collapsed',
+      viewportHeight: 900,
+      viewportWidth: 1440,
+    },
+    {
+      availableWidth: 1160,
+      columns: 4,
+      mode: 'collapsed',
+      viewportHeight: 800,
+      viewportWidth: 1280,
+    },
+    {
+      availableWidth: 904,
+      columns: 3,
+      mode: 'collapsed',
+      viewportHeight: 768,
+      viewportWidth: 1024,
+    },
+    { availableWidth: 804, columns: 3, mode: 'collapsed', viewportHeight: 700, viewportWidth: 900 },
+    { availableWidth: 648, columns: 2, mode: 'collapsed', viewportHeight: 667, viewportWidth: 768 },
+    { availableWidth: 358, columns: 1, mode: 'mobile', viewportHeight: 844, viewportWidth: 390 },
+  ])(
+    'fits $columns columns at $viewportWidth x $viewportHeight with $mode navigation',
+    async ({ availableWidth, columns, mode, viewportHeight, viewportWidth }) => {
+      await page.viewport(viewportWidth, viewportHeight)
+      apolloMocks.result = {
+        data: {
+          feed: [
+            createPost('post-1'),
+            createPost('post-2'),
+            createPost('post-3'),
+            createPost('post-4'),
+          ],
+          usersCount: 9213,
+        },
+        loading: false,
+        refetch,
+      }
+
+      const view = renderMainPage(availableWidth)
+      mountedRoots.push(view)
+
+      const root = view.container.querySelector<HTMLElement>('section')
+      const counter = view.container.querySelector<HTMLElement>(
+        '[aria-label="9213 registered users"]',
+      )
+      const grid = view.container.querySelector<HTMLElement>('[data-testid="public-posts-grid"]')
+      const firstCard = view.container.querySelector<HTMLElement>('article')
+      const renderedColumns = grid
+        ? getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length
+        : 0
+
+      expect(renderedColumns).toBe(columns)
+      expect(root?.getBoundingClientRect().width).toBeLessThanOrEqual(972)
+      expect(counter?.getBoundingClientRect().width).toBe(grid?.getBoundingClientRect().width)
+      expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
+
+      if (mode !== 'mobile') {
+        expect(firstCard?.getBoundingClientRect().width).toBeLessThanOrEqual(234)
+      }
+    },
+  )
 })

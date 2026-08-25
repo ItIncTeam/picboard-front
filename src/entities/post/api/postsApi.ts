@@ -9,6 +9,7 @@ export const feedQuery = gql`
   ${postFieldsFragment}
 
   query Feed {
+    usersCount
     feed {
       ...PostFields
     }
@@ -78,6 +79,7 @@ export type DeletePostInput = {
 
 export type FeedQueryData = {
   feed: PostEntity[]
+  usersCount: number
 }
 
 type PostResponse = {

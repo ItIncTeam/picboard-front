@@ -49,6 +49,12 @@ function getVariableNames(document: DocumentNode): string[] {
   )
 }
 
+function getRootFieldSelectionNames(document: DocumentNode): string[] {
+  return getOperationDefinition(document).selectionSet.selections.flatMap((selection) =>
+    selection.kind === 'Field' ? [selection.name.value] : [],
+  )
+}
+
 function getFieldSelectionNames(document: DocumentNode, fieldName: string): string[] {
   let fieldNames: string[] = []
 
@@ -123,6 +129,7 @@ describe('posts GraphQL helpers', () => {
     apolloMocks.query.mockResolvedValueOnce({
       data: {
         feed: payload,
+        usersCount: 9213,
       },
     })
 
@@ -131,6 +138,7 @@ describe('posts GraphQL helpers', () => {
     const request = apolloMocks.query.mock.calls[0]?.[0]
 
     expect(getOperationName(request.query)).toBe('Feed')
+    expect(getRootFieldSelectionNames(request.query)).toEqual(['usersCount', 'feed'])
     expect(getVariableNames(request.query)).toEqual([])
     expect(request.variables).toBeUndefined()
   })

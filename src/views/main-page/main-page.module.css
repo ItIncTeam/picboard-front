@@ -1,6 +1,36 @@
 .root {
-  width: min(100%, 1020px);
-  margin: 0 auto;
+  container-type: inline-size;
+  display: grid;
+  gap: 36px;
+
+  width: min(100%, 972px);
+  margin: 0;
+}
+
+.feed {
+  min-width: 0;
+}
+
+.feed :global([data-testid='public-posts-grid']) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container (width >= 480px) {
+  .feed :global([data-testid='public-posts-grid']) {
+    grid-template-columns: repeat(2, minmax(0, 234px));
+  }
+}
+
+@container (width >= 726px) {
+  .feed :global([data-testid='public-posts-grid']) {
+    grid-template-columns: repeat(3, minmax(0, 234px));
+  }
+}
+
+@container (width >= 972px) {
+  .feed :global([data-testid='public-posts-grid']) {
+    grid-template-columns: repeat(4, minmax(0, 234px));
+  }
 }
 
 .visuallyHidden {

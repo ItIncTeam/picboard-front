@@ -5,6 +5,7 @@ import { useQuery } from '@apollo/client/react'
 import { feedQuery, mapPostEntitiesToPosts, PostGrid, type FeedQueryData } from '@/entities/post'
 import { PublicPostsGrid } from '@/widgets/public-posts-grid'
 import type { PublicPostCardModel } from '@/widgets/public-post-card'
+import { RegisteredUsersCounter } from '@/widgets/registered-users-counter'
 
 import styles from './main-page.module.css'
 
@@ -44,7 +45,8 @@ export function MainPage() {
       <h1 className={styles.visuallyHidden} id="main-feed-title">
         Latest posts
       </h1>
-      {content}
+      {data ? <RegisteredUsersCounter usersCount={data.usersCount} /> : null}
+      <div className={styles.feed}>{content}</div>
     </section>
   )
 }

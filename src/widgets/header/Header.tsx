@@ -64,17 +64,19 @@ export function Header({
         )}
         <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix[role]} />
         <div className={styles.actions}>
-          <IconButton
-            disabled
-            icon={BellIcon}
-            indicatorCount={notificationsCount}
-            label={
-              hasNotifications
-                ? `${notificationsCount} unread notifications. Notifications are not available yet.`
-                : t.header.notificationsUnavailable
-            }
-            tooltip={t.header.notificationsUnavailable}
-          />
+          {isAuthenticated && (
+            <IconButton
+              disabled
+              icon={BellIcon}
+              indicatorCount={notificationsCount}
+              label={
+                hasNotifications
+                  ? `${notificationsCount} unread notifications. Notifications are not available yet.`
+                  : t.header.notificationsUnavailable
+              }
+              tooltip={t.header.notificationsUnavailable}
+            />
+          )}
 
           <LanguageSwitcher />
           {showAuthActions && (
