@@ -92,10 +92,12 @@ Protected layout не читает cookies, не вызывает backend нап
 
 `src/app/(protected)/(main)/layout.tsx` держит основной protected segment и slot `@modal`.
 
-`/main` — canonical authenticated home. Его `views/main-page` получает текущий global `feed` через
-Apollo Client, чтобы использовать memory-only access token и общий refresh/retry pipeline. `/feed`
-пока не имеет отдельного personalized backend contract и остается compatibility redirect на
-`/main`; Sidebar также ведет на `/main`.
+`/main` — canonical authenticated home. Его `views/main-page` получает текущие `usersCount` и global
+`feed` одним Apollo Client operation, чтобы использовать memory-only access token и общий
+refresh/retry pipeline. Страница переиспользует общий `RegisteredUsersCounter` и feed-card widgets;
+Public Home при этом сохраняет отдельный server/ISR data path. `/feed` пока не имеет отдельного
+personalized backend contract и остается compatibility redirect на `/main`; Sidebar также ведет на
+`/main`.
 
 `settings/layout.tsx` и `admin/layout.tsx` занимают места под будущие section shells. Пока они
 легкие.

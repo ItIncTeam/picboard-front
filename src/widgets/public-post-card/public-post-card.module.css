@@ -125,7 +125,7 @@
 .authorName {
   overflow: hidden;
 
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-md);
   text-overflow: ellipsis;
@@ -141,7 +141,7 @@
 .description {
   margin: 0;
 
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   line-height: var(--line-height-md);
   color: var(--color-text-primary);
   overflow-wrap: anywhere;
@@ -150,7 +150,11 @@
 .descriptionButton {
   padding: 0;
   border: 0;
+
   color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-position: from-font;
+
   background: transparent;
 }
 
