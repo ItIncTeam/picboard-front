@@ -13,6 +13,10 @@ const navigationMocks = vi.hoisted(() => ({
   searchParams: new URLSearchParams(),
 }))
 
+const sessionMocks = vi.hoisted(() => ({
+  userId: 'current-user-id',
+}))
+
 vi.mock('next/navigation', () => ({
   usePathname: () => navigationMocks.pathname,
   useSearchParams: () => navigationMocks.searchParams,
@@ -25,6 +29,13 @@ vi.mock('next/link', () => ({
 
 vi.mock('@/features/auth/logout-button', () => ({
   LogoutButton: () => null,
+}))
+
+vi.mock('@/features/auth/session-management', () => ({
+  useSession: () => ({
+    status: 'authenticated',
+    user: { id: sessionMocks.userId },
+  }),
 }))
 
 vi.mock('@/shared/assets', () => {
@@ -108,6 +119,7 @@ describe('Sidebar', () => {
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     navigationMocks.pathname = '/main'
     navigationMocks.searchParams = new URLSearchParams()
+    sessionMocks.userId = 'current-user-id'
     await page.viewport(1024, 768)
   })
 
@@ -132,6 +144,20 @@ describe('Sidebar', () => {
 
     expect(feedLink?.getAttribute('href')).toBe('/main')
     expect(feedLink?.getAttribute('aria-current')).toBe('page')
+  })
+
+  it('builds My Profile href from the current session user id', () => {
+    sessionMocks.userId = 'user/id with spaces'
+    const view = renderSidebar(true)
+
+    mountedRoots.push(view)
+
+    const profileLink = Array.from(view.container.querySelectorAll('nav a')).find((link) =>
+      link.getAttribute('href')?.startsWith('/profile/'),
+    )
+
+    expect(profileLink?.getAttribute('href')).toBe('/profile/user%2Fid%20with%20spaces')
+    expect(profileLink?.getAttribute('href')).not.toContain('/profile/me')
   })
 
   it('keeps navigation icons on the same horizontal axis while collapsing', async () => {

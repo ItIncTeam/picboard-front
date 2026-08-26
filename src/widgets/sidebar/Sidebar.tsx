@@ -4,6 +4,7 @@ import { ChevronLeftIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
 
 import { LogoutButton } from '@/features/auth/logout-button'
+import { useSession } from '@/features/auth/session-management'
 import {
   BookmarkFilledIcon,
   BookmarkIcon,
@@ -70,7 +71,7 @@ const items: SidebarItem[] = [
     labelKey: 'create',
   },
   {
-    href: '/profile/me',
+    href: '/profile',
     icons: {
       active: PersonFilledIcon,
       inactive: PersonIcon,
@@ -122,6 +123,7 @@ const isActiveItem = (item: SidebarItem, pathname: string) => {
 
 export function Sidebar({ isMobile, isOpen, onCloseAction, onToggleSidebarAction }: SidebarProps) {
   const pathname = usePathname()
+  const { user } = useSession()
   const { t } = useI18n()
   const searchParams = useSearchParams()
 
@@ -129,9 +131,21 @@ export function Sidebar({ isMobile, isOpen, onCloseAction, onToggleSidebarAction
   const returnTo = `${pathname}${currentSearch ? `?${currentSearch}` : ''}`
 
   const createPostHref = `/posts/create?returnTo=${encodeURIComponent(returnTo)}`
+  const myProfileHref = user ? `/profile/${encodeURIComponent(user.id)}` : '/main'
   const isHiddenOnMobile = isMobile && !isOpen
   const isMobileSidebarOpen = isMobile && isOpen
   const shouldShowCollapsedTooltips = !isMobile && !isOpen
+  const getItemHref = (item: SidebarItem) => {
+    if (item.href === '/posts/create') {
+      return createPostHref
+    }
+
+    if (item.href === '/profile') {
+      return myProfileHref
+    }
+
+    return item.href
+  }
   const closeAfterMobileNavigation = () => {
     if (isMobile) {
       onCloseAction()
@@ -180,7 +194,7 @@ export function Sidebar({ isMobile, isOpen, onCloseAction, onToggleSidebarAction
                   aria-current={isActive ? 'page' : undefined}
                   className={styles.link}
                   data-active={isActive}
-                  href={item.href === '/posts/create' ? createPostHref : item.href}
+                  href={getItemHref(item)}
                   onClick={closeAfterMobileNavigation}
                 >
                   <Icon aria-hidden className={styles.icon} focusable="false" />

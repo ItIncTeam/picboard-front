@@ -218,6 +218,11 @@ Status: Completed for the first display skeleton. The separate FRONT-152 composi
 the existing global `feed` to canonical `/main` through Apollo Client and keeps profile/details as
 follow-ups.
 
+FRONT-150 completes the profile composition: `/profile/[userId]` is public, loads `user(id)` and
+`profilePosts(first: 8)`, renders owner-only Profile Settings and appends cursor pages through a
+native IntersectionObserver. Publication previews link to the canonical `/posts/[postId]` route;
+Post details remains a follow-up.
+
 Checklist:
 
 - [x] Подготовить `entities/post` display types. Они не являются backend contract.
@@ -230,16 +235,16 @@ Checklist:
 - [x] Не добавлять edit/delete UI в first skeleton PR.
 - [x] Не добавлять main/public page UI в first skeleton PR.
 - [x] Не добавлять infinite scroll dependency в first skeleton PR.
-- [ ] Документировать follow-up manual QA scenarios для profile/details.
+- [x] Integrate the profile route with loading, error, empty and success states.
+- [x] Add cursor pagination in pages of 8 without frontend sorting or slicing.
+- [ ] Документировать follow-up manual QA scenarios для details.
 
 Dependencies:
 
 - Может стартовать параллельно с Dev 1.
 - API integration blocked by implementation PR scope, not by missing profile pagination contract.
 - `profilePosts` uses cursor pagination with `{ first, after? }` and current page size 8.
-- Profile/details route composition can follow after skeleton components are available.
-- Infinite scroll implementation waits for follow-up dependency PR and cursor pagination
-  integration.
+- Details route composition can follow after skeleton components are available.
 
 Parallel work:
 
@@ -248,13 +253,9 @@ Parallel work:
 
 Follow-up PRs:
 
-- Profile own posts composition.
 - Post details route composition.
 - Edit post skeleton.
 - Delete post confirm skeleton.
-- Profile/details route composition.
-- Infinite scroll after cursor pagination integration planning and `react-intersection-observer`
-  dependency PR.
 
 ## Dev 5: Filters And Canvas Export
 

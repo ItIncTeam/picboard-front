@@ -17,6 +17,18 @@
   background: var(--color-surface-secondary);
 }
 
+.postLink {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.postLink:focus-visible {
+  outline: 2px solid var(--color-text-primary);
+  outline-offset: -2px;
+}
+
 .postImage {
   object-fit: cover;
 }

@@ -175,10 +175,13 @@ Differences:
 
 ### Profile
 
-- `views/profile-page` composes profile header and posts section.
-- `PostGrid` receives `profilePosts` data after backend integration.
-- Infinite scroll waits for cursor pagination integration and `react-intersection-observer`
-  dependency PR.
+- `views/profile-page` composes the public user header and posts section.
+- `/profile/[userId]` lives in the public `(profile)` route group; anonymous users receive the
+  public shell and authenticated users retain the reusable app Header/Sidebar shell.
+- `PostGrid` receives mapped `profilePosts` data in backend order.
+- The first request uses `first: 8`; a native `IntersectionObserver` requests subsequent cursor
+  pages with `after: pageInfo.endCursor`, so no additional dependency is required.
+- Sidebar My Profile uses the current session user id and does not issue another `me` request.
 
 ### Main protected page
 

@@ -1,1 +1,1 @@
-// Placeholder - not implemented yet
+export { getUser, type PublicUser } from './api/usersApi'

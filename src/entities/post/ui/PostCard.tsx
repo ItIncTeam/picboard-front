@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 import type { Post } from '@/entities/post'
 import styles from './post.module.css'
@@ -14,15 +15,25 @@ export function PostCard({ post, showCaption = false }: PostCardProps) {
   return (
     <article className={styles.card}>
       <div className={styles.imageSlot}>
-        {primaryImage ? (
-          <Image
-            alt={primaryImage.alt}
-            className={styles.postImage}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            src={primaryImage.url}
-            unoptimized
-          />
+        {post ? (
+          <Link
+            aria-label={`View post ${post.id}`}
+            className={styles.postLink}
+            href={`/posts/${post.id}`}
+          >
+            {primaryImage ? (
+              <Image
+                alt={primaryImage.alt}
+                className={styles.postImage}
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                src={primaryImage.url}
+                unoptimized
+              />
+            ) : (
+              <span className={styles.placeholder}>Post image</span>
+            )}
+          </Link>
         ) : (
           <span className={styles.placeholder}>Post image</span>
         )}

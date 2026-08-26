@@ -30,6 +30,10 @@ src/app/
         registration/page.tsx
         password-recovery/page.tsx
 
+  (profile)/
+    layout.tsx
+    profile/[userId]/page.tsx
+
   (protected)/
     layout.tsx
     (main)/
@@ -44,7 +48,6 @@ src/app/
       search/page.tsx
       favorites/page.tsx
       statistics/page.tsx
-      profile/[userId]/page.tsx
       profile/[userId]/followers/page.tsx
       profile/[userId]/subscriptions/page.tsx
       settings/layout.tsx
@@ -76,6 +79,13 @@ Root layout не содержит route-specific UI, redirects, role checks ил
 `src/app/(public)/layout.tsx` содержит публичный визуальный shell: `PublicHeader` и общий `<main>`.
 Здесь нет auth-логики.
 
+`src/app/(profile)/layout.tsx` содержит публичную profile boundary без
+`ProtectedRouteBoundary`. Во время client session bootstrap shell резервирует место header, но не
+показывает guest или authenticated navigation. После bootstrap `/profile/[userId]` доступен
+anonymous users с public header, а authenticated user видит тот же reusable `AdaptiveAppShell`, что
+и protected main routes: authorized Header и Sidebar. Profile layout не читает cookies и не делает
+redirect.
+
 `src/app/(protected)/layout.tsx` оборачивает `children` в `ProtectedRouteBoundary`.
 `ProtectedRouteBoundary` использует client session state из `SessionProvider`:
 
@@ -90,7 +100,10 @@ Protected layout не читает cookies, не вызывает backend нап
 входа `/auth/sign-in` валидирует `returnTo`: значение должно начинаться с `/`, не начинаться с `//`
 и не начинаться с `/auth`. Небезопасные значения fallback-ятся на `/main`.
 
-`src/app/(protected)/(main)/layout.tsx` держит основной protected segment и slot `@modal`.
+`src/app/(protected)/(main)/layout.tsx` держит основной protected segment и slot `@modal`. Его
+визуальный Header/Sidebar shell реализован reusable widget `widgets/adaptive-app-shell`, чтобы
+authenticated profile route сохранял тот же app shell без помещения public profile под auth
+boundary.
 
 `/main` — canonical authenticated home. Его `views/main-page` получает текущие `usersCount` и global
 `feed` одним Apollo Client operation, чтобы использовать memory-only access token и общий
@@ -172,6 +185,16 @@ Posts sprint planning: [Posts Sprint Overview](./posts-sprint/00-overview.md).
 Local UI modals живут рядом с feature или widget. Это confirmations, dropdowns и маленькие dialogs.
 
 Пока не добавляем общий modal manager.
+
+## Public Profile
+
+Route adapter передает реальный dynamic `userId` в `views/profile-page`. View загружает public
+`user(id)` и первые 8 `profilePosts`, затем использует `IntersectionObserver` и cursor
+`pageInfo.endCursor` для следующих страниц по 8 без frontend sorting или slicing.
+
+Sidebar строит My Profile URL из уже загруженного `SessionProvider.user.id`; отдельный `me` query
+для ссылки не выполняется. Owner-only `Profile Settings` определяется сравнением session user id с
+route user id.
 
 ## Providers
 
