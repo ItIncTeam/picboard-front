@@ -1,4 +1,4 @@
-import { MainLayoutShell } from './MainLayoutShell'
+import { AdaptiveAppShell } from '@/widgets/adaptive-app-shell'
 
 export default function MainLayout({
   children,
@@ -9,7 +9,7 @@ export default function MainLayout({
 }>) {
   return (
     <>
-      <MainLayoutShell>{children}</MainLayoutShell>
+      <AdaptiveAppShell authenticated>{children}</AdaptiveAppShell>
       {modal}
     </>
   )

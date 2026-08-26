@@ -135,19 +135,19 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   was resolved.
 - Authenticated `/main` composition through Apollo `useQuery` and the existing global latest-four
   `feed`; `/feed` is a compatibility redirect to `/main`.
+- Public `/profile/[userId]` composition with `user(id)`, owner-only Profile Settings and
+  cursor-paginated `profilePosts` in pages of 8 through native `IntersectionObserver`.
 - Successful `createPost` starts non-blocking post-create synchronization: Apollo evicts only
   `ROOT_QUERY.feed` and refetches an active `Feed`, while a fixed-path Server Action invalidates
   Public Home. Synchronization failures are logged and never reopen the publish flow.
 
 ### In Progress
 
-- Filters implementation and filtered image export. Crop canvas export is implemented.
-- Posts profile/details composition on top of existing post display skeletons.
+- Post details composition on top of the existing post display skeleton.
 
 ### Not Started
 
 - Draft persistence architecture and implementation.
-- Infinite scroll integration.
 
 ## Known limitations
 
@@ -166,11 +166,12 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 ```txt
 app/
+  (profile)/
+    profile/[userId]/page.tsx        -> public profile posts composition
   (protected)/(main)/
     @modal/(.)posts/create/page.tsx  -> route modal adapter
     posts/create/page.tsx            -> fallback page adapter
     posts/[postId]/page.tsx          -> post details route
-    profile/[userId]/page.tsx        -> profile posts composition
   (public)/page.tsx                  -> public main page
 
 views/
@@ -205,14 +206,12 @@ Rules:
 ## Roadmap To End Of Sprint
 
 1. Finish filters and filtered `File` export on top of the implemented crop canvas export.
-2. Compose profile posts with `PostGrid` and integrate `profilePosts(input)` cursor pagination.
-3. Compose post details and integrate `post(id: String!)`.
-4. Add edit/delete flows through `updatePostDescription` and `deletePost`.
-5. Main feed composition through `feed` is complete; keep `/feed` as a compatibility redirect until
+2. Compose post details and integrate `post(id: String!)`.
+3. Add edit/delete flows through `updatePostDescription` and `deletePost`.
+4. Main feed composition through `feed` is complete; keep `/feed` as a compatibility redirect until
    a separate personalized feed contract exists.
-6. Plan and implement cache/refetch behavior for edit and delete.
-7. Add infinite scroll around `PostConnection.pageInfo` after profile integration.
-8. Revisit draft persistence only if sprint capacity remains and product confirms behavior.
+5. Plan and implement cache/refetch behavior for edit and delete.
+6. Revisit draft persistence only if sprint capacity remains and product confirms behavior.
 
 ## Current team tasks
 
