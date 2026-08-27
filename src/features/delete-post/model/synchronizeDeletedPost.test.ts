@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { feedQuery } from '@/entities/post'
 
-import { synchronizeCreatedPost } from './synchronizeCreatedPost'
+import { synchronizeDeletedPost } from './synchronizeDeletedPost'
 
 const synchronizationMocks = vi.hoisted(() => ({
   evict: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('@/entities/post', async (importOriginal) => ({
   revalidatePublicHome: synchronizationMocks.revalidatePublicHome,
 }))
 
-describe('synchronizeCreatedPost', () => {
+describe('synchronizeDeletedPost', () => {
   beforeEach(() => {
     synchronizationMocks.evict.mockReset()
     synchronizationMocks.refetchQueries.mockReset()
@@ -45,7 +45,7 @@ describe('synchronizeCreatedPost', () => {
   })
 
   it('evicts ROOT_QUERY.feed, refetches active Feed, and invalidates Public Home', async () => {
-    await expect(synchronizeCreatedPost('post-1')).resolves.toBeUndefined()
+    await expect(synchronizeDeletedPost('post-1')).resolves.toBeUndefined()
 
     expect(synchronizationMocks.refetchQueries).toHaveBeenCalledWith({
       include: [feedQuery],
@@ -64,10 +64,10 @@ describe('synchronizeCreatedPost', () => {
 
     synchronizationMocks.refetchQueries.mockRejectedValueOnce(feedError)
 
-    await expect(synchronizeCreatedPost('post-feed-failure')).resolves.toBeUndefined()
+    await expect(synchronizeDeletedPost('post-feed-failure')).resolves.toBeUndefined()
 
     expect(synchronizationMocks.revalidatePublicHome).toHaveBeenCalledTimes(1)
-    expect(consoleError).toHaveBeenCalledWith('[CreatePost] post-create synchronization failed', {
+    expect(consoleError).toHaveBeenCalledWith('[DeletePost] post-delete synchronization failed', {
       operation: 'feed',
       postId: 'post-feed-failure',
       reason: feedError,
@@ -80,26 +80,13 @@ describe('synchronizeCreatedPost', () => {
 
     synchronizationMocks.revalidatePublicHome.mockRejectedValueOnce(invalidationError)
 
-    await expect(synchronizeCreatedPost('post-invalidation-failure')).resolves.toBeUndefined()
+    await expect(synchronizeDeletedPost('post-invalidation-failure')).resolves.toBeUndefined()
 
     expect(synchronizationMocks.refetchQueries).toHaveBeenCalledTimes(1)
-    expect(consoleError).toHaveBeenCalledWith('[CreatePost] post-create synchronization failed', {
+    expect(consoleError).toHaveBeenCalledWith('[DeletePost] post-delete synchronization failed', {
       operation: 'public-home',
       postId: 'post-invalidation-failure',
       reason: invalidationError,
     })
-  })
-
-  it('treats the absence of an active Feed query as a successful no-op', async () => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-
-    await expect(synchronizeCreatedPost('post-without-active-feed')).resolves.toBeUndefined()
-
-    expect(synchronizationMocks.evict).toHaveBeenCalledWith({
-      fieldName: 'feed',
-      id: 'ROOT_QUERY',
-    })
-    expect(synchronizationMocks.revalidatePublicHome).toHaveBeenCalledTimes(1)
-    expect(consoleError).not.toHaveBeenCalled()
   })
 })

@@ -1,7 +1,7 @@
 import { feedQuery, revalidatePublicHome } from '@/entities/post'
 import { apolloClient } from '@/shared/api'
 
-type PostCreateSyncOperation = 'feed' | 'public-home'
+type PostDeleteSyncOperation = 'feed' | 'public-home'
 
 function startSyncOperation(operation: () => PromiseLike<unknown> | unknown): Promise<unknown> {
   try {
@@ -11,15 +11,15 @@ function startSyncOperation(operation: () => PromiseLike<unknown> | unknown): Pr
   }
 }
 
-function logSyncFailure(operation: PostCreateSyncOperation, postId: string, reason: unknown): void {
-  console.error('[CreatePost] post-create synchronization failed', {
+function logSyncFailure(operation: PostDeleteSyncOperation, postId: string, reason: unknown): void {
+  console.error('[DeletePost] post-delete synchronization failed', {
     operation,
     postId,
     reason,
   })
 }
 
-export async function synchronizeCreatedPost(postId: string): Promise<void> {
+export async function synchronizeDeletedPost(postId: string): Promise<void> {
   const feedSync = startSyncOperation(() =>
     apolloClient.refetchQueries({
       include: [feedQuery],

@@ -16,7 +16,7 @@ export type DeletePostConfirmProps = {
   postId: string
   deletePostAction?: DeletePostAction
   onCloseAction: () => void
-  onDeletedAction: () => void
+  onDeletedAction: () => void | Promise<void>
 }
 
 const defaultErrorMessage = 'Post deletion failed. Please try again.'
@@ -59,7 +59,7 @@ export function DeletePostConfirm({
         throw new Error(defaultErrorMessage)
       }
 
-      onDeletedAction()
+      await onDeletedAction()
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
       setIsDeleting(false)
