@@ -14,6 +14,11 @@ vi.mock('@/widgets/sidebar', () => ({
   Sidebar: () => <aside data-testid="sidebar">Sidebar</aside>,
 }))
 
+vi.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a>,
+}))
+
 vi.mock('next/image', () => ({
   __esModule: true,
   default: ({ alt, src }: { alt: string; src: string }) => (

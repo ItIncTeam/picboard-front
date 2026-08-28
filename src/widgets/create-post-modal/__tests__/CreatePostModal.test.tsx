@@ -9,6 +9,10 @@ const navigationMocks = vi.hoisted(() => ({
   searchParams: new URLSearchParams({ returnTo: '/profile?tab=posts' }),
 }))
 
+vi.mock('@/features/create-post/model/synchronizeCreatedPost', () => ({
+  synchronizeCreatedPost: () => Promise.resolve(),
+}))
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: navigationMocks.replace }),
   useSearchParams: () => navigationMocks.searchParams,
