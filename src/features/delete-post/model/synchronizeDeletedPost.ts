@@ -1,8 +1,8 @@
-import { feedQuery } from '@/entities/post'
+import { feedQuery, profilePostsQuery } from '@/entities/post'
 import { revalidatePublicHome } from '@/entities/post/server'
 import { apolloClient } from '@/shared/api'
 
-type PostCreateSyncOperation = 'feed' | 'public-home'
+type PostDeleteSyncOperation = 'feed' | 'public-home'
 
 function startSyncOperation(operation: () => PromiseLike<unknown> | unknown): Promise<unknown> {
   try {
@@ -12,21 +12,34 @@ function startSyncOperation(operation: () => PromiseLike<unknown> | unknown): Pr
   }
 }
 
-function logSyncFailure(operation: PostCreateSyncOperation, postId: string, reason: unknown): void {
-  console.error('[CreatePost] post-create synchronization failed', {
+function logSyncFailure(operation: PostDeleteSyncOperation, postId: string, reason: unknown): void {
+  console.error('[DeletePost] post-delete synchronization failed', {
     operation,
     postId,
     reason,
   })
 }
 
-export async function synchronizeCreatedPost(postId: string): Promise<void> {
+export async function synchronizeDeletedPost(postId: string): Promise<void> {
   const feedSync = startSyncOperation(() =>
     apolloClient.refetchQueries({
-      include: [feedQuery],
+      include: [feedQuery, profilePostsQuery],
       updateCache(cache) {
+        const postCacheId = cache.identify({
+          __typename: 'PostEntity',
+          id: postId,
+        })
+
+        if (postCacheId) {
+          cache.evict({ id: postCacheId })
+        }
+
         cache.evict({
           fieldName: 'feed',
+          id: 'ROOT_QUERY',
+        })
+        cache.evict({
+          fieldName: 'profilePosts',
           id: 'ROOT_QUERY',
         })
       },

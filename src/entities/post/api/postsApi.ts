@@ -26,7 +26,7 @@ const postQuery = gql`
   }
 `
 
-const profilePostsQuery = gql`
+export const profilePostsQuery = gql`
   ${postFieldsFragment}
 
   query ProfilePosts($input: ProfilePostsInput!) {
