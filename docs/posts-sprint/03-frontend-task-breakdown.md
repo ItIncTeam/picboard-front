@@ -315,7 +315,9 @@ Checklist:
 - [x] Treat only `FileStatus.READY` as publishable.
 - [x] Keep display rendering on `PostAttachmentEntity.file?.url`; never use `uploadUrl` in post
       skeleton UI, and skip attachments with `file: null`.
-- [ ] Define cache/refetch behavior after create, update and delete.
+- [x] Define delete cache/refetch behavior for Feed, Profile posts, Public Home and cached Post
+      details.
+- [ ] Define cache/refetch behavior after create and update.
 
 ## Что можно делать параллельно
 
@@ -330,7 +332,7 @@ Checklist:
 - UI composition for post edit/delete/profile/feed/details.
 - Upload API helpers outside `features/create-post` for Create Post.
 - GraphQL Upload for media files.
-- Cache invalidation logic for posts.
+- Cache invalidation logic for posts outside dedicated create/delete integration tasks.
 - Protected main page ISR/revalidation implementation tied to real backend fields.
 
 ## Backend blockers
@@ -343,7 +345,7 @@ The gateway HTTPS/TLS certificate blocker is resolved, and Public Home uses ISR 
 
 Still not blocked by backend schema, but pending implementation/product decisions:
 
-- cache/refetch strategy after create, update and delete;
+- cache/refetch strategy after create and update;
 - edit/delete permissions and error copy;
 - protected main page access and cache policy;
 - retry/idempotency behavior for failed upload and publish steps.

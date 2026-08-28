@@ -17,8 +17,7 @@ vi.mock('@/shared/api', () => ({
   },
 }))
 
-vi.mock('@/entities/post', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/entities/post')>()),
+vi.mock('@/entities/post/server', () => ({
   revalidatePublicHome: synchronizationMocks.revalidatePublicHome,
 }))
 

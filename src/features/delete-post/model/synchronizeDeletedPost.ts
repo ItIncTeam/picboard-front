@@ -1,4 +1,5 @@
-import { feedQuery, profilePostsQuery, revalidatePublicHome } from '@/entities/post'
+import { feedQuery, profilePostsQuery } from '@/entities/post'
+import { revalidatePublicHome } from '@/entities/post/server'
 import { apolloClient } from '@/shared/api'
 
 type PostDeleteSyncOperation = 'feed' | 'public-home'

@@ -143,7 +143,8 @@ Use only for primitives and infrastructure:
 - Exposes the Delete Post trigger boundary for future owner-only Post Details menu integration.
 - Uses shared modal/dialog primitives for confirmation.
 - Calls the existing `deletePost` API through the post entity public API.
-- After a successful delete, synchronizes cached Feed/Profile posts and invalidates Public Home.
+- After a successful delete, synchronizes cached Feed/Profile posts and invalidates Public Home
+  through the post entity server-only entrypoint.
 - Always redirects to `/main` after a successful delete, even if post-success synchronization or
   callbacks fail.
 - Does not own owner checks or the three-dots menu; Post Details owns that gate.

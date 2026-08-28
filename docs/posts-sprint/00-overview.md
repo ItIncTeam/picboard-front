@@ -153,8 +153,9 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 - Crop canvas export is production-ready, including sequential multi-image processing and async
   stale-result protection. Full end-to-end Create Post still depends on the filters export PR.
-- Apollo cache/refetch behavior after update and delete is not defined; profile synchronization
-  after create remains separate follow-up work.
+- Apollo cache/refetch behavior after delete is implemented for Feed, Profile posts, Public Home
+  and cached Post details. Update cache/refetch strategy and profile synchronization after create
+  remain separate follow-up work.
 - Live verification of successful post-create synchronization is blocked while backend
   `createPost` returns `Files service timeout`.
 - Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
@@ -207,10 +208,11 @@ Rules:
 
 1. Finish filters and filtered `File` export on top of the implemented crop canvas export.
 2. Compose post details and integrate `post(id: String!)`.
-3. Add edit/delete flows through `updatePostDescription` and `deletePost`.
+3. Add edit flow through `updatePostDescription` and integrate the prepared delete flow with Post
+   Details.
 4. Main feed composition through `feed` is complete; keep `/feed` as a compatibility redirect until
    a separate personalized feed contract exists.
-5. Plan and implement cache/refetch behavior for edit and delete.
+5. Plan and implement cache/refetch behavior for edit.
 6. Revisit draft persistence only if sprint capacity remains and product confirms behavior.
 
 ## Current team tasks
@@ -221,8 +223,7 @@ Rules:
   integration.
 - Current create/upload integration is implemented for `initiateUploadBatch`, storage `PUT`,
   `completeUpload` and `createPost`.
-- Next backend/API work is non-create posts operations, cache/refetch strategy and edit/delete
-  integration.
+- Next backend/API work is edit cache/refetch strategy and Post Details integration for edit/delete.
 
 ### Dev 2
 

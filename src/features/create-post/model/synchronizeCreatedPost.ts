@@ -1,4 +1,5 @@
-import { feedQuery, revalidatePublicHome } from '@/entities/post'
+import { feedQuery } from '@/entities/post'
+import { revalidatePublicHome } from '@/entities/post/server'
 import { apolloClient } from '@/shared/api'
 
 type PostCreateSyncOperation = 'feed' | 'public-home'

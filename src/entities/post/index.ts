@@ -12,7 +12,6 @@ export {
   type UpdatePostDescriptionInput,
 } from './api/postsApi'
 export { getPublicHomeQueryData, type PublicHomeQueryData } from './api/publicHomeApi'
-export { revalidatePublicHome } from './api/revalidatePublicHome'
 export { mapPostEntitiesToPosts, mapPostEntityToPost } from './lib/postMapper'
 export type {
   File,

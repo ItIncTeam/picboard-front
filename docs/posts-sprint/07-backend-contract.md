@@ -340,7 +340,8 @@ Current frontend flow:
    re-enable deleting the same post.
 5. Apollo cache evicts the deleted `PostEntity`, `ROOT_QUERY.feed` and `ROOT_QUERY.profilePosts`.
 6. Active `Feed` and `ProfilePosts` queries are refetched when present.
-7. Public Home is invalidated through fixed-path `revalidatePath('/')`.
+7. Public Home is invalidated through fixed-path `revalidatePath('/')` exposed from the post entity
+   server-only entrypoint.
 8. The flow redirects to `/main` after successful deletion regardless of post-success callback or
    synchronization failures.
 
