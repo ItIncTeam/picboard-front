@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import { deletePost } from '@/entities/post/api/postsApi'
+import { deletePost } from '@/entities/post'
 import { Button } from '@/shared/ui/button'
 import { Modal } from '@/shared/ui/modal'
 import { Text } from '@/shared/ui/typography'
@@ -70,12 +70,14 @@ export function DeletePostConfirm({
     setHasDeleted(true)
     setIsDeleting(false)
 
-    void Promise.resolve(onDeletedAction()).catch((error: unknown) => {
-      console.error('[DeletePost] post-delete success handler failed', {
-        postId,
-        reason: error,
+    void Promise.resolve()
+      .then(onDeletedAction)
+      .catch((error: unknown) => {
+        console.error('[DeletePost] post-delete success handler failed', {
+          postId,
+          reason: error,
+        })
       })
-    })
   }
 
   return (

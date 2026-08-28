@@ -137,12 +137,16 @@ Use only for primitives and infrastructure:
 - Adds update mutation only after backend contract is clarified for edit behavior.
 - Follow-up PR, not part of the first Posts Consumption skeleton.
 
-### `DeletePostConfirm`
+### `DeletePostFlow`
 
 - Lives in `features/delete-post`.
-- Uses shared modal/dialog primitives.
-- Adds delete mutation only after backend contract is clarified for delete behavior.
-- Follow-up PR, not part of the first Posts Consumption skeleton.
+- Exposes the Delete Post trigger boundary for future owner-only Post Details menu integration.
+- Uses shared modal/dialog primitives for confirmation.
+- Calls the existing `deletePost` API through the post entity public API.
+- After a successful delete, synchronizes cached Feed/Profile posts and invalidates Public Home.
+- Always redirects to `/main` after a successful delete, even if post-success synchronization or
+  callbacks fail.
+- Does not own owner checks or the three-dots menu; Post Details owns that gate.
 
 ### `CreatePostCloseConfirm`
 

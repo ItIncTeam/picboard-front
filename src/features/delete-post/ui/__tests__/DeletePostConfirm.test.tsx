@@ -4,6 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DeletePostConfirm, type DeletePostAction } from '../DeletePostConfirm'
 
+const postApiMocks = vi.hoisted(() => ({
+  deletePost: vi.fn(),
+}))
+
+vi.mock('@/entities/post', () => ({
+  deletePost: postApiMocks.deletePost,
+}))
+
 vi.mock('@/shared/ui/button', () => ({
   Button: ({
     asChild: _asChild,
@@ -138,6 +146,8 @@ describe('DeletePostConfirm', () => {
     }
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+    postApiMocks.deletePost.mockReset()
+    postApiMocks.deletePost.mockResolvedValue(true)
   })
 
   afterEach(() => {
@@ -226,6 +236,30 @@ describe('DeletePostConfirm', () => {
     expect(deletePostAction).toHaveBeenCalledTimes(1)
     expect(consoleError).toHaveBeenCalledWith('[DeletePost] post-delete success handler failed', {
       postId: 'post-8',
+      reason: successHandlerError,
+    })
+  })
+
+  it('catches a synchronous success handler throw without showing a deletion error', async () => {
+    const successHandlerError = new Error('Synchronous callback failed.')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const deletePostAction = vi.fn<DeletePostAction>().mockResolvedValue(true)
+    const onDeletedAction = vi.fn(() => {
+      throw successHandlerError
+    })
+    const view = renderDeletePostConfirm({ deletePostAction, onDeletedAction, postId: 'post-9' })
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(view.container.querySelector('[role="alert"]')).toBeNull()
+    expect(getButton(view.container, 'Yes').disabled).toBe(true)
+    expect(deletePostAction).toHaveBeenCalledTimes(1)
+    expect(consoleError).toHaveBeenCalledWith('[DeletePost] post-delete success handler failed', {
+      postId: 'post-9',
       reason: successHandlerError,
     })
   })

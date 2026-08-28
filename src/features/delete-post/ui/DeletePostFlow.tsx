@@ -41,8 +41,12 @@ export function DeletePostFlow({
 
   const handleDeleted = async () => {
     setIsConfirmOpen(false)
-    await synchronizePostDeletionAction(postId)
-    await onDeletedAction?.()
+
+    await Promise.allSettled([
+      Promise.resolve().then(() => synchronizePostDeletionAction(postId)),
+      Promise.resolve().then(() => onDeletedAction?.()),
+    ])
+
     router.replace('/main')
   }
 

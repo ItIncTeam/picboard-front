@@ -328,6 +328,22 @@ Current frontend flow:
 11. Reset `CreatePostState` and close without waiting for synchronization.
 12. Log Feed and Public Home synchronization failures separately without exposing publish retry.
 
+## Delete Pipeline
+
+Current frontend flow:
+
+1. Owner-only Post Details menu will open the independent `features/delete-post` flow after Post
+   Details integration.
+2. `DeletePostConfirm` calls the existing `deletePost(input: { postId })` mutation.
+3. Delete mutation errors are shown as deletion errors and keep the user on the post.
+4. After a successful delete, post-success synchronization errors are logged/isolated and do not
+   re-enable deleting the same post.
+5. Apollo cache evicts the deleted `PostEntity`, `ROOT_QUERY.feed` and `ROOT_QUERY.profilePosts`.
+6. Active `Feed` and `ProfilePosts` queries are refetched when present.
+7. Public Home is invalidated through fixed-path `revalidatePath('/')`.
+8. The flow redirects to `/main` after successful deletion regardless of post-success callback or
+   synchronization failures.
+
 ## Current Open Integration Questions
 
 The operation names, input names and entity names above are no longer blocked. Remaining questions
@@ -338,7 +354,7 @@ are implementation details, not backend schema blockers:
 2. backend error codes/messages for unsupported type, file too large, too many files, auth failure
    and storage validation failure;
 3. whether frontend should request width/height or other media metadata in post rendering queries;
-4. cache/refetch strategy after edit and delete;
+4. cache/refetch strategy after edit;
 5. profile posts synchronization after create. The active Apollo `Feed` query is refetched after a
    successful create, while Public Home is invalidated independently and keeps ISR with
    `revalidate = 60`.

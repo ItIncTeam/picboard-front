@@ -24,6 +24,15 @@ export async function synchronizeDeletedPost(postId: string): Promise<void> {
     apolloClient.refetchQueries({
       include: [feedQuery, profilePostsQuery],
       updateCache(cache) {
+        const postCacheId = cache.identify({
+          __typename: 'PostEntity',
+          id: postId,
+        })
+
+        if (postCacheId) {
+          cache.evict({ id: postCacheId })
+        }
+
         cache.evict({
           fieldName: 'feed',
           id: 'ROOT_QUERY',

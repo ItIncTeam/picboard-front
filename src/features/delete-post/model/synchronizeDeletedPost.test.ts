@@ -6,6 +6,7 @@ import { synchronizeDeletedPost } from './synchronizeDeletedPost'
 
 const synchronizationMocks = vi.hoisted(() => ({
   evict: vi.fn(),
+  identify: vi.fn(),
   refetchQueries: vi.fn(),
   revalidatePublicHome: vi.fn(),
 }))
@@ -24,15 +25,23 @@ vi.mock('@/entities/post', async (importOriginal) => ({
 describe('synchronizeDeletedPost', () => {
   beforeEach(() => {
     synchronizationMocks.evict.mockReset()
+    synchronizationMocks.identify.mockReset()
+    synchronizationMocks.identify.mockReturnValue('PostEntity:post-1')
     synchronizationMocks.refetchQueries.mockReset()
     synchronizationMocks.revalidatePublicHome.mockReset()
     synchronizationMocks.refetchQueries.mockImplementation(
       ({
         updateCache,
       }: {
-        updateCache: (cache: { evict: typeof synchronizationMocks.evict }) => void
+        updateCache: (cache: {
+          evict: typeof synchronizationMocks.evict
+          identify: typeof synchronizationMocks.identify
+        }) => void
       }) => {
-        updateCache({ evict: synchronizationMocks.evict })
+        updateCache({
+          evict: synchronizationMocks.evict,
+          identify: synchronizationMocks.identify,
+        })
 
         return Promise.resolve([])
       },
@@ -56,6 +65,18 @@ describe('synchronizeDeletedPost', () => {
       id: 'ROOT_QUERY',
     })
     expect(synchronizationMocks.revalidatePublicHome).toHaveBeenCalledTimes(1)
+  })
+
+  it('evicts the deleted PostEntity so post details cannot read it from cache', async () => {
+    await expect(synchronizeDeletedPost('post-1')).resolves.toBeUndefined()
+
+    expect(synchronizationMocks.identify).toHaveBeenCalledWith({
+      __typename: 'PostEntity',
+      id: 'post-1',
+    })
+    expect(synchronizationMocks.evict).toHaveBeenCalledWith({
+      id: 'PostEntity:post-1',
+    })
   })
 
   it('evicts profile posts so a deleted post does not stay on profile pages', async () => {

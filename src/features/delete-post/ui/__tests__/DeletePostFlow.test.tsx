@@ -14,8 +14,16 @@ const synchronizationMocks = vi.hoisted(() => ({
   synchronizeDeletedPost: vi.fn(),
 }))
 
+const postApiMocks = vi.hoisted(() => ({
+  deletePost: vi.fn(),
+}))
+
 vi.mock('next/navigation', () => ({
   useRouter: () => navigationMocks.router,
+}))
+
+vi.mock('@/entities/post', () => ({
+  deletePost: postApiMocks.deletePost,
 }))
 
 vi.mock('../../model/synchronizeDeletedPost', () => ({
@@ -133,6 +141,27 @@ async function clickButtonAndFlush(button: HTMLButtonElement) {
   })
 }
 
+async function waitFor(assertion: () => void): Promise<void> {
+  const timeoutAt = Date.now() + 1000
+  let lastError: unknown
+
+  while (Date.now() < timeoutAt) {
+    try {
+      assertion()
+      return
+    } catch (error) {
+      lastError = error
+      await act(async () => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 10)
+        })
+      })
+    }
+  }
+
+  throw lastError
+}
+
 describe('DeletePostFlow', () => {
   const mountedRoots: RenderResult[] = []
 
@@ -143,6 +172,8 @@ describe('DeletePostFlow', () => {
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     navigationMocks.router.replace.mockReset()
+    postApiMocks.deletePost.mockReset()
+    postApiMocks.deletePost.mockResolvedValue(true)
     synchronizationMocks.synchronizeDeletedPost.mockReset()
     synchronizationMocks.synchronizeDeletedPost.mockResolvedValue(undefined)
   })
@@ -199,6 +230,63 @@ describe('DeletePostFlow', () => {
     expect(synchronizePostDeletionAction).toHaveBeenCalledWith('post-7')
     expect(onDeletedAction).toHaveBeenCalledTimes(1)
     expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
+  })
+
+  it('redirects to main when the success callback rejects after deletion', async () => {
+    const deletePostAction = vi.fn().mockResolvedValue(true)
+    const onDeletedAction = vi.fn().mockRejectedValue(new Error('Callback failed.'))
+    const synchronizePostDeletionAction = vi.fn().mockResolvedValue(undefined)
+    const view = renderDeletePostFlow({
+      deletePostAction,
+      onDeletedAction,
+      synchronizePostDeletionAction,
+    })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Delete Post'))
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+
+    await waitFor(() => {
+      expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
+      expect(navigationMocks.router.replace).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('redirects to main when the success callback throws synchronously after deletion', async () => {
+    const deletePostAction = vi.fn().mockResolvedValue(true)
+    const onDeletedAction = vi.fn(() => {
+      throw new Error('Synchronous callback failed.')
+    })
+    const synchronizePostDeletionAction = vi.fn().mockResolvedValue(undefined)
+    const view = renderDeletePostFlow({
+      deletePostAction,
+      onDeletedAction,
+      synchronizePostDeletionAction,
+    })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Delete Post'))
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+
+    await waitFor(() => {
+      expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
+      expect(navigationMocks.router.replace).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('redirects to main when synchronization fails after deletion', async () => {
+    const deletePostAction = vi.fn().mockResolvedValue(true)
+    const synchronizePostDeletionAction = vi.fn().mockRejectedValue(new Error('Sync failed.'))
+    const view = renderDeletePostFlow({ deletePostAction, synchronizePostDeletionAction })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Delete Post'))
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+
+    await waitFor(() => {
+      expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
+      expect(navigationMocks.router.replace).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('keeps the user on the post and skips synchronization when deletion fails', async () => {
