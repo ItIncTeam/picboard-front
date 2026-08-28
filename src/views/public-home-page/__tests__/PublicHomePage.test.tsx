@@ -7,6 +7,11 @@ import '@/app/globals.css'
 import type { PublicPostCardModel } from '@/widgets/public-post-card'
 import { PublicHomeContent } from '../PublicHomePage'
 
+vi.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children, ...props }: React.ComponentProps<'a'>) => <a {...props}>{children}</a>,
+}))
+
 vi.mock('next/image', () => ({
   __esModule: true,
   default: ({ alt, src }: { alt: string; src: string }) => (
