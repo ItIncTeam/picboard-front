@@ -4,6 +4,7 @@ export {
   feedQuery,
   post,
   profilePosts,
+  profilePostsQuery,
   updatePostDescription,
   type DeletePostInput,
   type FeedQueryData,

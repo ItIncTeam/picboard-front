@@ -17,7 +17,6 @@ export type DeletePostFlowProps = {
   postId: string
   children?: (props: DeletePostTriggerProps) => ReactNode
   deletePostAction?: DeletePostAction
-  onCloseDetailsAction?: () => void
   onDeletedAction?: () => void | Promise<void>
   synchronizePostDeletionAction?: (postId: string) => Promise<void>
 }
@@ -25,7 +24,6 @@ export type DeletePostFlowProps = {
 export function DeletePostFlow({
   children,
   deletePostAction,
-  onCloseDetailsAction,
   onDeletedAction,
   postId,
   synchronizePostDeletionAction = synchronizeDeletedPost,
@@ -43,7 +41,6 @@ export function DeletePostFlow({
 
   const handleDeleted = async () => {
     setIsConfirmOpen(false)
-    onCloseDetailsAction?.()
     await synchronizePostDeletionAction(postId)
     await onDeletedAction?.()
     router.replace('/main')

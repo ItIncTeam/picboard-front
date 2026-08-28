@@ -33,6 +33,7 @@ export function DeletePostConfirm({
   postId,
 }: DeletePostConfirmProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [hasDeleted, setHasDeleted] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleClose = () => {
@@ -41,11 +42,12 @@ export function DeletePostConfirm({
     }
 
     setErrorMessage(null)
+    setHasDeleted(false)
     onCloseAction()
   }
 
   const handleConfirmDelete = async () => {
-    if (isDeleting) {
+    if (isDeleting || hasDeleted) {
       return
     }
 
@@ -58,12 +60,22 @@ export function DeletePostConfirm({
       if (!isDeleted) {
         throw new Error(defaultErrorMessage)
       }
-
-      await onDeletedAction()
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
       setIsDeleting(false)
+
+      return
     }
+
+    setHasDeleted(true)
+    setIsDeleting(false)
+
+    void Promise.resolve(onDeletedAction()).catch((error: unknown) => {
+      console.error('[DeletePost] post-delete success handler failed', {
+        postId,
+        reason: error,
+      })
+    })
   }
 
   return (
@@ -89,7 +101,7 @@ export function DeletePostConfirm({
           </Button>
 
           <Button
-            disabled={isDeleting}
+            disabled={isDeleting || hasDeleted}
             loading={isDeleting}
             loadingText="Deleting"
             onClick={handleConfirmDelete}

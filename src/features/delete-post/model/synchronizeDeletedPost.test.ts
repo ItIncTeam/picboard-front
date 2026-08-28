@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { feedQuery } from '@/entities/post'
+import { feedQuery, profilePostsQuery } from '@/entities/post'
 
 import { synchronizeDeletedPost } from './synchronizeDeletedPost'
 
@@ -48,7 +48,7 @@ describe('synchronizeDeletedPost', () => {
     await expect(synchronizeDeletedPost('post-1')).resolves.toBeUndefined()
 
     expect(synchronizationMocks.refetchQueries).toHaveBeenCalledWith({
-      include: [feedQuery],
+      include: [feedQuery, profilePostsQuery],
       updateCache: expect.any(Function),
     })
     expect(synchronizationMocks.evict).toHaveBeenCalledWith({
@@ -56,6 +56,15 @@ describe('synchronizeDeletedPost', () => {
       id: 'ROOT_QUERY',
     })
     expect(synchronizationMocks.revalidatePublicHome).toHaveBeenCalledTimes(1)
+  })
+
+  it('evicts profile posts so a deleted post does not stay on profile pages', async () => {
+    await expect(synchronizeDeletedPost('profile-post')).resolves.toBeUndefined()
+
+    expect(synchronizationMocks.evict).toHaveBeenCalledWith({
+      fieldName: 'profilePosts',
+      id: 'ROOT_QUERY',
+    })
   })
 
   it('isolates and identifies a Feed synchronization failure', async () => {

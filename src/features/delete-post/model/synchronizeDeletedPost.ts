@@ -1,4 +1,4 @@
-import { feedQuery, revalidatePublicHome } from '@/entities/post'
+import { feedQuery, profilePostsQuery, revalidatePublicHome } from '@/entities/post'
 import { apolloClient } from '@/shared/api'
 
 type PostDeleteSyncOperation = 'feed' | 'public-home'
@@ -22,10 +22,14 @@ function logSyncFailure(operation: PostDeleteSyncOperation, postId: string, reas
 export async function synchronizeDeletedPost(postId: string): Promise<void> {
   const feedSync = startSyncOperation(() =>
     apolloClient.refetchQueries({
-      include: [feedQuery],
+      include: [feedQuery, profilePostsQuery],
       updateCache(cache) {
         cache.evict({
           fieldName: 'feed',
+          id: 'ROOT_QUERY',
+        })
+        cache.evict({
+          fieldName: 'profilePosts',
           id: 'ROOT_QUERY',
         })
       },

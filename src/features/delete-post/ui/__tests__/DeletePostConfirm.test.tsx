@@ -205,6 +205,31 @@ describe('DeletePostConfirm', () => {
     expect(onDeletedAction).toHaveBeenCalledTimes(1)
   })
 
+  it('does not show a deletion error or allow another delete when the success handler fails', async () => {
+    const successHandlerError = new Error('Feed synchronization failed.')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const deletePostAction = vi.fn<DeletePostAction>().mockResolvedValue(true)
+    const onDeletedAction = vi.fn().mockRejectedValue(successHandlerError)
+    const view = renderDeletePostConfirm({ deletePostAction, onDeletedAction, postId: 'post-8' })
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(view.container.querySelector('[role="alert"]')).toBeNull()
+    expect(getButton(view.container, 'Yes').disabled).toBe(true)
+
+    clickButton(getButton(view.container, 'Yes'))
+
+    expect(deletePostAction).toHaveBeenCalledTimes(1)
+    expect(consoleError).toHaveBeenCalledWith('[DeletePost] post-delete success handler failed', {
+      postId: 'post-8',
+      reason: successHandlerError,
+    })
+  })
+
   it('blocks duplicate delete while request is pending', async () => {
     const deletion = createDeferred<boolean>()
     const deletePostAction = vi.fn<DeletePostAction>().mockReturnValue(deletion.promise)

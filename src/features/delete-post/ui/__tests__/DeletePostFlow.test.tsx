@@ -180,14 +180,12 @@ describe('DeletePostFlow', () => {
     expect(view.container.querySelector('[role="dialog"]')).toBeInstanceOf(HTMLElement)
   })
 
-  it('deletes, closes details, synchronizes app state, and redirects to main', async () => {
+  it('deletes, synchronizes app state, and redirects to main', async () => {
     const deletePostAction = vi.fn().mockResolvedValue(true)
-    const onCloseDetailsAction = vi.fn()
     const onDeletedAction = vi.fn()
     const synchronizePostDeletionAction = vi.fn().mockResolvedValue(undefined)
     const view = renderDeletePostFlow({
       deletePostAction,
-      onCloseDetailsAction,
       onDeletedAction,
       postId: 'post-7',
       synchronizePostDeletionAction,
@@ -198,7 +196,6 @@ describe('DeletePostFlow', () => {
     await clickButtonAndFlush(getButton(view.container, 'Yes'))
 
     expect(deletePostAction).toHaveBeenCalledWith({ postId: 'post-7' })
-    expect(onCloseDetailsAction).toHaveBeenCalledTimes(1)
     expect(synchronizePostDeletionAction).toHaveBeenCalledWith('post-7')
     expect(onDeletedAction).toHaveBeenCalledTimes(1)
     expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
