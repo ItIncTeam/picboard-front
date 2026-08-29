@@ -8,6 +8,7 @@ import { IconButton } from '@/shared/ui/icon-button'
 import styles from './edit-post-menu.module.css'
 
 type EditPostMenuProps = {
+  onDeleteAction?: () => void
   onEditAction: () => void
 }
 
@@ -17,7 +18,7 @@ function PostActionsIcon({
   return <DotsHorizontalIcon aria-hidden className={className} />
 }
 
-export function EditPostMenu({ onEditAction }: EditPostMenuProps) {
+export function EditPostMenu({ onDeleteAction, onEditAction }: EditPostMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -46,6 +47,11 @@ export function EditPostMenu({ onEditAction }: EditPostMenuProps) {
     onEditAction()
   }
 
+  const handleDelete = () => {
+    setIsOpen(false)
+    onDeleteAction?.()
+  }
+
   return (
     <div className={styles.root} ref={rootRef}>
       <IconButton
@@ -61,6 +67,11 @@ export function EditPostMenu({ onEditAction }: EditPostMenuProps) {
           <button className={styles.item} onClick={handleEdit} role="menuitem" type="button">
             Edit Post
           </button>
+          {onDeleteAction ? (
+            <button className={styles.item} onClick={handleDelete} role="menuitem" type="button">
+              Delete Post
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

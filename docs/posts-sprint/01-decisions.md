@@ -6,6 +6,8 @@
 - `/posts/create` остается fallback page для direct open/reload.
 - Create modal close использует explicit `returnTo` query parameter from Sidebar navigation.
 - `router.back()` не используется для Create modal close.
+- Post details close использует существующий `getSafeReturnToPath` с fallback `/main`; `router.back()`
+  для `/posts/[postId]` не используется.
 - Auth routes and self `/posts/create` routes запрещены как close return target.
 - Close fallback route is `/main`.
 - Draft переносится в конец спринта; команда отдельно думает над его реализацией.

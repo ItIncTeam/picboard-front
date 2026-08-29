@@ -13,7 +13,12 @@ const apiMocks = vi.hoisted(() => ({
 }))
 
 const navigationMocks = vi.hoisted(() => ({
-  back: vi.fn(),
+  replace: vi.fn(),
+  searchParams: new URLSearchParams(),
+}))
+
+const synchronizationMocks = vi.hoisted(() => ({
+  synchronizeUpdatedPost: vi.fn(),
 }))
 
 const sessionMocks = vi.hoisted(() => ({
@@ -39,7 +44,12 @@ vi.mock('@/features/auth/session-management', () => ({
 }))
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ back: navigationMocks.back }),
+  useRouter: () => ({ replace: navigationMocks.replace }),
+  useSearchParams: () => navigationMocks.searchParams,
+}))
+
+vi.mock('@/features/edit-post/model/synchronizeUpdatedPost', () => ({
+  synchronizeUpdatedPost: synchronizationMocks.synchronizeUpdatedPost,
 }))
 
 vi.mock('next/link', () => ({
@@ -169,7 +179,10 @@ describe('PostDetailsPage', () => {
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     apiMocks.post.mockReset()
     apiMocks.updatePostDescription.mockReset()
-    navigationMocks.back.mockReset()
+    navigationMocks.replace.mockReset()
+    navigationMocks.searchParams = new URLSearchParams()
+    synchronizationMocks.synchronizeUpdatedPost.mockReset()
+    synchronizationMocks.synchronizeUpdatedPost.mockResolvedValue(undefined)
     sessionMocks.status = 'anonymous'
     sessionMocks.userId = null
   })
@@ -290,7 +303,69 @@ describe('PostDetailsPage', () => {
         postId: 'post-1',
       })
       expect(document.body.querySelector('textarea')).toBeNull()
+      expect(getDialogText()).toContain('Updated description')
     })
+    expect(synchronizationMocks.synchronizeUpdatedPost).toHaveBeenCalledWith('post-1')
+  })
+
+  it('hides Edit Post for an authenticated user who does not own the post', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'other-user'
+    apiMocks.post.mockResolvedValue(createPost())
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
+  })
+
+  it('closes a direct post link to /main', async () => {
+    apiMocks.post.mockResolvedValue(createPost())
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
+    })
+
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/main')
+  })
+
+  it('closes to a safe returnTo path', async () => {
+    apiMocks.post.mockResolvedValue(createPost())
+    navigationMocks.searchParams = new URLSearchParams({ returnTo: '/profile/user-1' })
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
+    })
+
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/user-1')
+  })
+
+  it('falls back to /main when returnTo is unsafe', async () => {
+    apiMocks.post.mockResolvedValue(createPost())
+    navigationMocks.searchParams = new URLSearchParams({ returnTo: '//evil.example' })
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
+    })
+
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/main')
   })
 
   it('asks for confirmation when closing a dirty edit form', async () => {

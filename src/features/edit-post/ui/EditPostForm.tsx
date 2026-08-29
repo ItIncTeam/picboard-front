@@ -8,6 +8,7 @@ import { Modal } from '@/shared/ui/modal'
 import { TextArea } from '@/shared/ui/text-area/TextArea'
 
 import { EDIT_POST_DESCRIPTION_MAX_LENGTH } from '../lib/editPostConstants'
+import { synchronizeUpdatedPost } from '../model/synchronizeUpdatedPost'
 import { EditPostCloseConfirm } from './EditPostCloseConfirm'
 import styles from './edit-post-form.module.css'
 
@@ -17,6 +18,7 @@ type EditPostFormProps = {
   onCloseAction: () => void
   onSavedAction: (post: PostEntity) => void
   postId: string
+  synchronizePostUpdateAction?: (postId: string) => Promise<void>
 }
 
 const DESCRIPTION_MAX_LENGTH_ERROR = `Maximum number of characters ${EDIT_POST_DESCRIPTION_MAX_LENGTH}`
@@ -33,6 +35,7 @@ export function EditPostForm({
   onCloseAction,
   onSavedAction,
   postId,
+  synchronizePostUpdateAction = synchronizeUpdatedPost,
 }: EditPostFormProps) {
   const [draft, setDraft] = useState(description)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
@@ -70,6 +73,13 @@ export function EditPostForm({
       })
 
       onSavedAction(payload)
+
+      void synchronizePostUpdateAction(postId).catch((error: unknown) => {
+        console.error('[EditPost] unexpected post-update synchronization failure', {
+          postId,
+          reason: error,
+        })
+      })
     } catch (error) {
       setSaveError(getErrorMessage(error))
       setIsSaving(false)

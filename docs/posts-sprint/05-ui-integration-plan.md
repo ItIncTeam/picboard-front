@@ -137,6 +137,12 @@ Use only for primitives and infrastructure:
 - Tracks dirty state: close without changes dismisses immediately; dirty close shows confirmation.
 - After a successful save the user stays on `/posts/[postId]` and the visible post updates without a
   reload.
+- After a successful save, invalidates Public Home through `revalidatePublicHome` (same Create/Delete
+  pattern, including Feed cache eviction). A revalidation failure is logged and does not turn the
+  successful save into a UI error.
+- `EditPostMenu` is the single owner `...` menu. It always exposes Edit Post and can render Delete
+  Post beside it when `onDeleteAction` is passed. Owner gating stays in Post Details; the menu does
+  not check ownership again.
 
 ### `DeletePostFlow`
 
@@ -220,7 +226,10 @@ Differences:
 - Author name and avatar stay local fallbacks (`User` / `U`) until the backend exposes author data.
   The page does not call `user(id)` for the post owner.
 - Owner-only Edit Post is gated by comparing `SessionProvider.user.id` with `PostEntity.ownerId`.
-- Delete remains out of this composition and is owned by the separate delete-post follow-up.
+- Close uses `getSafeReturnToPath` with fallback `/main`. Direct `/posts/[postId]` without `returnTo`
+  goes to `/main`; `router.back()` is not used.
+- Delete remains out of this composition and is owned by the separate delete-post follow-up. The
+  owner `...` menu already has a slot for Delete Post next to Edit Post.
 
 ## Testing checklist
 

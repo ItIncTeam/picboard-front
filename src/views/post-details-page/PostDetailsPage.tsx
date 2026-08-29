@@ -1,12 +1,13 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 import { mapPostEntityToPost, post, PostDetails, PostGrid, type PostEntity } from '@/entities/post'
 import { useSession } from '@/features/auth/session-management'
 import { EditPostForm, EditPostMenu } from '@/features/edit-post'
 import { Close } from '@/shared/assets'
+import { getSafeReturnToPath } from '@/shared/lib/auth'
 import { IconButton } from '@/shared/ui/icon-button'
 import { Modal } from '@/shared/ui/modal'
 import { formatRelativePostTime, PublicPostCarousel } from '@/widgets/public-post-card'
@@ -33,6 +34,7 @@ export function PostDetailsPage({ postId }: PostDetailsPageProps) {
 
 function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { status: sessionStatus, user: sessionUser } = useSession()
   const [postState, setPostState] = useState<PostDetailsState>({ postId, status: 'loading' })
   const [retryVersion, setRetryVersion] = useState(0)
@@ -73,7 +75,7 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
     postState.postId === postId ? postState : { postId, status: 'loading' }
 
   const closePage = () => {
-    router.back()
+    router.replace(getSafeReturnToPath(searchParams.get('returnTo')))
   }
 
   if (currentState.status === 'loading') {
