@@ -258,9 +258,11 @@ describe('ProfilePage', () => {
         image.getAttribute('alt'),
       ),
     ).toEqual(['newest-post.jpg', 'older-post.jpg'])
-    expect(view.container.querySelector('a[href="/posts/newest-post"]')).toBeInstanceOf(
-      HTMLAnchorElement,
-    )
+    expect(
+      view.container.querySelector(
+        'a[href="/posts/newest-post?returnTo=%2Fprofile%2Fprofile-user"]',
+      ),
+    ).toBeInstanceOf(HTMLAnchorElement)
   })
 
   it('renders an error state and retries the initial request', async () => {

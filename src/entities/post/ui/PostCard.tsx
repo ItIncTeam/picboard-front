@@ -6,10 +6,19 @@ import styles from './post.module.css'
 
 type PostCardProps = {
   post?: Post
+  returnTo?: string
   showCaption?: boolean
 }
 
-export function PostCard({ post, showCaption = false }: PostCardProps) {
+function getPostDetailsHref(postId: string, returnTo?: string): string {
+  if (!returnTo) {
+    return `/posts/${postId}`
+  }
+
+  return `/posts/${postId}?${new URLSearchParams({ returnTo }).toString()}`
+}
+
+export function PostCard({ post, returnTo, showCaption = false }: PostCardProps) {
   const primaryImage = post?.images[0]
 
   return (
@@ -19,7 +28,7 @@ export function PostCard({ post, showCaption = false }: PostCardProps) {
           <Link
             aria-label={`View post ${post.id}`}
             className={styles.postLink}
-            href={`/posts/${post.id}`}
+            href={getPostDetailsHref(post.id, returnTo)}
           >
             {primaryImage ? (
               <Image

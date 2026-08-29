@@ -208,7 +208,9 @@ describe('EditPostForm', () => {
   })
 
   it('shows a save error and keeps the form open when the mutation fails', async () => {
-    apiMocks.updatePostDescription.mockRejectedValue(new Error('Gateway unavailable'))
+    apiMocks.updatePostDescription
+      .mockRejectedValueOnce(new Error('Gateway unavailable'))
+      .mockResolvedValueOnce(createPost())
     const onSavedAction = vi.fn()
     const view = renderForm({ onSavedAction })
     mountedRoots.push(view)
@@ -223,6 +225,14 @@ describe('EditPostForm', () => {
     await waitFor(() => expect(getDialogText()).toContain('Gateway unavailable'))
     expect(onSavedAction).not.toHaveBeenCalled()
     expect(document.body.querySelector('textarea')).toBeInstanceOf(HTMLTextAreaElement)
+
+    act(() => {
+      clickSave()
+    })
+
+    await waitFor(() => expect(onSavedAction).toHaveBeenCalledTimes(1))
+    expect(apiMocks.updatePostDescription).toHaveBeenCalledTimes(2)
+    expect(getDialogText()).not.toContain('Gateway unavailable')
   })
 
   it('ignores a second Save click while the first save is in flight', async () => {

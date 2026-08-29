@@ -244,8 +244,8 @@ Rules:
 - Profile posts composition is complete.
 - Post details composition loads `post(id)` on `/posts/[postId]` and owner Edit Post uses
   `updatePostDescription`, then invalidates Public Home through `revalidatePublicHome`. Close uses
-  `getSafeReturnToPath` with fallback `/main`. Delete remains a separate follow-up behind the same
-  owner `...` menu.
+  `getSafeReturnToPath` with fallback `/main`. Profile cards pass `returnTo=/profile/[userId]`.
+  Delete remains a separate follow-up behind the same owner `...` menu.
 - Render attachments only from `PostAttachmentEntity.file?.url`; skip attachments with `file: null`.
 
 ### Dev 5

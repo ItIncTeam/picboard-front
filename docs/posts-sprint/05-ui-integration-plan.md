@@ -228,6 +228,8 @@ Differences:
 - Owner-only Edit Post is gated by comparing `SessionProvider.user.id` with `PostEntity.ownerId`.
 - Close uses `getSafeReturnToPath` with fallback `/main`. Direct `/posts/[postId]` without `returnTo`
   goes to `/main`; `router.back()` is not used.
+- Profile `PostGrid` passes `returnTo=/profile/[userId]` into `PostCard`, so closing details returns
+  to that profile. Other grids omit `returnTo` and keep the `/main` fallback.
 - Delete remains out of this composition and is owned by the separate delete-post follow-up. The
   owner `...` menu already has a slot for Delete Post next to Edit Post.
 
