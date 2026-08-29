@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CreatePostImage, ImageFilter } from '@/features/create-post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { FiltersStep } from '../FiltersStep'
 
@@ -132,7 +133,9 @@ function renderFilters(
   document.body.append(container)
   act(() => {
     root.render(
-      <FiltersHarness initialActiveImageId={activeImageId} initialImages={initialImages} />,
+      <I18nProvider>
+        <FiltersHarness initialActiveImageId={activeImageId} initialImages={initialImages} />
+      </I18nProvider>,
     )
   })
 

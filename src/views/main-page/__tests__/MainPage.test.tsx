@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
 import type { FeedQueryData, PostEntity } from '@/entities/post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { MainPage } from '../MainPage'
 
@@ -104,7 +105,11 @@ function renderMainPage(availableWidth?: number): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<MainPage />)
+    root.render(
+      <I18nProvider>
+        <MainPage />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

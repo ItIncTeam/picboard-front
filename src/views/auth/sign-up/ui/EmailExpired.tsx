@@ -5,6 +5,7 @@ import { type SyntheticEvent, useState } from 'react'
 
 import { emailConfirmationResending } from '@/features/auth/confirm-registration'
 import { ExpiredSignUpImage } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Text, Title } from '@/shared/ui/typography'
@@ -17,13 +18,12 @@ type EmailExpiredProps = {
   email?: string
 }
 
-const fallbackErrorMessage = 'Verification link resending failed. Please try again.'
-
-const getErrorMessage = (error: unknown) => {
+const getErrorMessage = (error: unknown, fallbackErrorMessage: string) => {
   return error instanceof Error && error.message.length > 0 ? error.message : fallbackErrorMessage
 }
 
 export function EmailExpired({ email }: EmailExpiredProps) {
+  const { t } = useI18n()
   const [emailValue, setEmailValue] = useState(email ?? '')
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -45,9 +45,9 @@ export function EmailExpired({ email }: EmailExpiredProps) {
 
     try {
       await emailConfirmationResending({ email: trimmedEmail })
-      setSuccessMessage('Verification link has been sent')
+      setSuccessMessage(t.auth.signUp.resendVerificationSuccess)
     } catch (submitError) {
-      setError(getErrorMessage(submitError))
+      setError(getErrorMessage(submitError, t.auth.signUp.resendVerificationFallbackError))
     } finally {
       setIsLoading(false)
     }
@@ -58,11 +58,9 @@ export function EmailExpired({ email }: EmailExpiredProps) {
       <section className={layoutStyles.root}>
         <div className={layoutStyles.content}>
           <div className={layoutStyles.header}>
-            <Title level="h1">Email verification link expired</Title>
+            <Title level="h1">{t.auth.signUp.verificationExpiredTitle}</Title>
 
-            <Text>
-              Looks like the verification link has expired. Not to worry, we can send the link again
-            </Text>
+            <Text>{t.auth.signUp.verificationExpiredDescription}</Text>
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit} noValidate>
@@ -71,7 +69,7 @@ export function EmailExpired({ email }: EmailExpiredProps) {
                 autoComplete="email"
                 disabled={isLoading}
                 error={error}
-                label="Email"
+                label={t.auth.signUp.email}
                 onChange={(event) => {
                   setEmailValue(event.target.value)
                   setError('')
@@ -93,16 +91,16 @@ export function EmailExpired({ email }: EmailExpiredProps) {
               className={styles.submitButton}
               disabled={!canSubmit}
               loading={isLoading}
-              loadingText="Sending..."
+              loadingText={t.auth.signUp.resendingVerificationLink}
               type="submit"
             >
-              Resend verification link
+              {t.auth.signUp.resendVerificationLink}
             </Button>
           </form>
         </div>
 
         <Image
-          alt="Verification link expired illustration"
+          alt={t.auth.signUp.verificationExpiredAlt}
           className={styles.illustration}
           height={352}
           sizes="474px"

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 
 import { ArrowBackIcon, ArrowNextIcon, Dot } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { IconButton } from '@/shared/ui/icon-button'
 import { TextArea } from '@/shared/ui/text-area/TextArea'
@@ -21,39 +22,50 @@ export type PublicationStepProps = {
   onRetryUpload: () => void
 }
 
-const CAPTION_MAX_LENGTH_ERROR = `Maximum number of characters ${CREATE_POST_CAPTION_MAX_LENGTH}`
-const EXPORT_PREVIEW_NOT_READY_MESSAGE = 'Final preview is not ready'
-const NO_IMAGES_PREVIEW_MESSAGE = 'Add and export images to preview publication.'
-
 function getPublicationPreviewUrl(image: CreatePostImage | undefined): string | undefined {
   return image?.exported?.objectUrl
 }
 
-function getPreviewPlaceholderMessage(images: CreatePostImage[]): string {
+function getPreviewPlaceholderMessage(
+  images: CreatePostImage[],
+  messages: {
+    noImagesPreview: string
+    previewNotReady: string
+  },
+): string {
   if (images.length === 0) {
-    return NO_IMAGES_PREVIEW_MESSAGE
+    return messages.noImagesPreview
   }
 
-  return EXPORT_PREVIEW_NOT_READY_MESSAGE
+  return messages.previewNotReady
 }
 
-function getUploadStatusLabel(image: CreatePostImage): string {
+function getUploadStatusLabel(
+  image: CreatePostImage,
+  labels: {
+    failed: string
+    processing: string
+    ready: string
+    uploading: string
+    waiting: string
+  },
+): string {
   switch (image.upload?.status) {
     case 'uploading':
-      return 'Uploading'
+      return labels.uploading
     case 'uploaded':
-      return 'Processing'
+      return labels.processing
     case 'ready':
-      return 'Ready'
+      return labels.ready
     case 'failed':
-      return 'Failed'
+      return labels.failed
     default:
-      return 'Waiting'
+      return labels.waiting
   }
 }
 
-function getUploadErrorMessage(image: CreatePostImage): string {
-  return image.upload?.error ?? `${image.name} upload failed.`
+function getUploadErrorMessage(image: CreatePostImage, uploadFailedSuffix: string): string {
+  return image.upload?.error ?? `${image.name} ${uploadFailedSuffix}`
 }
 
 export function PublicationStep({
@@ -63,6 +75,7 @@ export function PublicationStep({
   onCaptionChange,
   onRetryUpload,
 }: PublicationStepProps) {
+  const { t } = useI18n()
   const [activeIndex, setActiveIndex] = useState(0)
   const safeActiveIndex =
     images.length === 0 ? 0 : Math.min(activeIndex, Math.max(images.length - 1, 0))
@@ -72,6 +85,7 @@ export function PublicationStep({
   const hasMultipleImages = images.length > 1
   const hasUploadError = failedImages.length > 0
   const isCaptionOverLimit = caption.length > CREATE_POST_CAPTION_MAX_LENGTH
+  const captionMaxLengthError = `${t.createPost.publication.maxCharactersPrefix} ${CREATE_POST_CAPTION_MAX_LENGTH}`
   const isUploading = images.some((image) => image.upload?.status === 'uploading')
   const showProgress = isPublishing || isUploading
 
@@ -100,11 +114,11 @@ export function PublicationStep({
   }
 
   return (
-    <section className={styles.root} aria-label="Publication">
+    <section className={styles.root} aria-label={t.createPost.publication.ariaLabel}>
       <div className={styles.previewPanel}>
         {activePreviewUrl ? (
           <Image
-            alt={activeImage?.name ?? 'Publication preview'}
+            alt={activeImage?.name ?? t.createPost.publication.previewAlt}
             className={styles.previewImage}
             fill
             priority
@@ -114,7 +128,10 @@ export function PublicationStep({
           />
         ) : (
           <p className={styles.previewPlaceholder} role="status">
-            {getPreviewPlaceholderMessage(images)}
+            {getPreviewPlaceholderMessage(images, {
+              noImagesPreview: t.createPost.publication.noImagesPreview,
+              previewNotReady: t.createPost.publication.previewNotReady,
+            })}
           </p>
         )}
 
@@ -124,18 +141,22 @@ export function PublicationStep({
               <IconButton
                 className={styles.navigationItem}
                 icon={ArrowBackIcon}
-                label="Previous image"
+                label={t.createPost.crop.previousImage}
                 onClick={handlePrevImage}
               />
               <IconButton
                 className={styles.navigationItem}
                 icon={ArrowNextIcon}
-                label="Next image"
+                label={t.createPost.crop.nextImage}
                 onClick={handleNextImage}
               />
             </div>
 
-            <div aria-label="Image pagination" className={styles.paginationWrapper} role="tablist">
+            <div
+              aria-label={t.createPost.publication.imagePagination}
+              className={styles.paginationWrapper}
+              role="tablist"
+            >
               {images.map((image, index) => (
                 <IconButton
                   key={image.id}
@@ -143,7 +164,7 @@ export function PublicationStep({
                   className={styles.paginationItem}
                   data-active={index === safeActiveIndex}
                   icon={Dot}
-                  label={`Image ${index + 1}`}
+                  label={`${t.createPost.publication.imagePrefix} ${index + 1}`}
                   onClick={() => setActiveIndex(index)}
                   role="tab"
                 />
@@ -159,10 +180,10 @@ export function PublicationStep({
             className={styles.textArea}
             classNameLabel={styles.descriptionLabel}
             disabled={isPublishing}
-            error={isCaptionOverLimit ? CAPTION_MAX_LENGTH_ERROR : null}
-            label="Add publication descriptions"
+            error={isCaptionOverLimit ? captionMaxLengthError : null}
+            label={t.createPost.publication.captionLabel}
             onChange={(event) => onCaptionChange(event.target.value)}
-            placeholder="Text-area"
+            placeholder={t.createPost.publication.captionPlaceholder}
             value={caption}
           />
           <span aria-live="polite" className={styles.counter} data-over-limit={isCaptionOverLimit}>
@@ -174,7 +195,9 @@ export function PublicationStep({
           {showProgress && (
             <div className={styles.progress} aria-live="polite">
               <Text as="p" className={styles.progressText} size="sm">
-                {isPublishing ? 'Publishing...' : 'Uploading...'}
+                {isPublishing
+                  ? t.createPost.publication.publishing
+                  : t.createPost.publication.uploading}
               </Text>
               <div className={styles.progressTrack} aria-hidden>
                 <span className={styles.progressIndicator} />
@@ -184,9 +207,9 @@ export function PublicationStep({
 
           <div className={styles.statusBlock}>
             <Text as="p" className={styles.statusTitle} size="md">
-              Upload status
+              {t.createPost.publication.uploadStatus}
             </Text>
-            <ul className={styles.statusList} aria-label="Upload status">
+            <ul className={styles.statusList} aria-label={t.createPost.publication.uploadStatus}>
               {images.map((image) => (
                 <li
                   className={styles.statusItem}
@@ -194,7 +217,9 @@ export function PublicationStep({
                   key={image.id}
                 >
                   <span className={styles.fileName}>{image.name}</span>
-                  <span className={styles.statusValue}>{getUploadStatusLabel(image)}</span>
+                  <span className={styles.statusValue}>
+                    {getUploadStatusLabel(image, t.createPost.publication.statuses)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -203,11 +228,13 @@ export function PublicationStep({
           {hasUploadError && (
             <div className={styles.errorBlock} role="alert">
               <Text as="p" className={styles.errorTitle} size="md">
-                Upload failed. Please try again.
+                {t.createPost.publication.uploadFailed}
               </Text>
               <ul className={styles.errorList}>
                 {failedImages.map((image) => (
-                  <li key={image.id}>{getUploadErrorMessage(image)}</li>
+                  <li key={image.id}>
+                    {getUploadErrorMessage(image, t.createPost.publication.uploadFailedSuffix)}
+                  </li>
                 ))}
               </ul>
               <Button
@@ -217,7 +244,7 @@ export function PublicationStep({
                 type="button"
                 variant="outlined"
               >
-                Retry
+                {t.createPost.actions.retry}
               </Button>
             </div>
           )}

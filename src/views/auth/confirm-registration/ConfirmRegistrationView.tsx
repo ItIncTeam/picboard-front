@@ -9,6 +9,7 @@ import {
   resolveEmailConfirmationOutcome,
 } from '@/features/auth/confirm-registration'
 import { getSignUpConfirmedHref, getSignUpExpiredHref } from '@/shared/lib/auth'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Text, Title } from '@/shared/ui/typography'
 import { AuthFormCard } from '@/views/auth/ui/auth-form-card'
@@ -16,11 +17,10 @@ import { AuthViewShell } from '@/widgets/auth-view-shell'
 
 import styles from './confirm-registration-view.module.css'
 
-const loadingMessage = 'Verifying your confirmation link...'
-
 function ConfirmRegistrationViewContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t } = useI18n()
   const code = useMemo(() => searchParams.get('code')?.trim() ?? '', [searchParams])
   const confirmedCodeRef = useRef<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -78,7 +78,7 @@ function ConfirmRegistrationViewContent() {
       <AuthViewShell>
         <AuthFormCard>
           <Title level="h1" className={styles.title}>
-            Registration Confirmation
+            {t.auth.confirmRegistration.title}
           </Title>
 
           <div className={styles.content}>
@@ -87,7 +87,9 @@ function ConfirmRegistrationViewContent() {
             </Text>
 
             <Button asChild className={styles.action}>
-              <NextLink href={getSignUpExpiredHref()}>Request a new verification link</NextLink>
+              <NextLink href={getSignUpExpiredHref()}>
+                {t.auth.confirmRegistration.requestNewLink}
+              </NextLink>
             </Button>
           </div>
         </AuthFormCard>
@@ -99,12 +101,12 @@ function ConfirmRegistrationViewContent() {
     <AuthViewShell>
       <AuthFormCard>
         <Title level="h1" className={styles.title}>
-          Registration Confirmation
+          {t.auth.confirmRegistration.title}
         </Title>
 
         <div className={styles.content}>
           <Text aria-live="polite" className={styles.message}>
-            {loadingMessage}
+            {t.auth.confirmRegistration.loading}
           </Text>
         </div>
       </AuthFormCard>

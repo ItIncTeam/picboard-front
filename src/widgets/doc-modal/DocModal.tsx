@@ -4,10 +4,11 @@ import { useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 
 import { ArrowBackIcon } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { Title } from '@/shared/ui/typography'
 
 import styles from './doc-modal.module.css'
-import { docModalConfig, type DocModalKind } from './model/docModalConfig'
+import { type DocModalKind } from './model/docModalConfig'
 import { renderDocBody } from './model/renderDocBody'
 
 type DocModalProps = {
@@ -16,8 +17,9 @@ type DocModalProps = {
 }
 
 export function DocModal({ kind, onCloseAction }: DocModalProps) {
+  const { language, t } = useI18n()
   const titleId = useId()
-  const { title } = docModalConfig[kind]
+  const title = t.widgets.docModal.titles[kind]
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -49,7 +51,7 @@ export function DocModal({ kind, onCloseAction }: DocModalProps) {
       >
         <button autoFocus className={styles.backLink} onClick={onCloseAction} type="button">
           <ArrowBackIcon aria-hidden className={styles.backIcon} />
-          <span className={styles.backLabel}>Back to Sign Up</span>
+          <span className={styles.backLabel}>{t.widgets.docModal.backToSignUp}</span>
         </button>
 
         <div className={styles.docColumn}>
@@ -57,7 +59,7 @@ export function DocModal({ kind, onCloseAction }: DocModalProps) {
             {title}
           </Title>
 
-          <div className={styles.body}>{renderDocBody(kind)}</div>
+          <div className={styles.body}>{renderDocBody(kind, language)}</div>
         </div>
       </section>
     </div>,

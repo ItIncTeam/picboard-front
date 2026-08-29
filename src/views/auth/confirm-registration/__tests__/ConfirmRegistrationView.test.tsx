@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getSignUpConfirmedHref, getSignUpExpiredHref } from '@/shared/lib/auth'
+import { I18nProvider } from '@/shared/lib/i18n'
 import type * as ConfirmRegistrationModule from '@/features/auth/confirm-registration'
 
 import { ConfirmRegistrationView } from '../ConfirmRegistrationView'
@@ -53,7 +54,11 @@ function renderView(searchParams: URLSearchParams): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<ConfirmRegistrationView />)
+    root.render(
+      <I18nProvider>
+        <ConfirmRegistrationView />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

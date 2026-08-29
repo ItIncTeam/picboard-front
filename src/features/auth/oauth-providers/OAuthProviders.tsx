@@ -2,6 +2,7 @@
 
 import { GithubIcon, GoogleIcon } from '@/shared/assets'
 import { startOAuthProvider, type OAuthIntent, type OAuthProvider } from '@/features/auth/oauth'
+import { useI18n } from '@/shared/lib/i18n'
 import { IconButton } from '@/shared/ui/icon-button'
 
 import styles from './oauth-providers.module.css'
@@ -11,7 +12,11 @@ type OAuthProvidersProps = {
 }
 
 export function OAuthProviders({ intent }: OAuthProvidersProps) {
-  const actionText = intent === 'signIn' ? 'Sign in' : 'Sign up'
+  const { t } = useI18n()
+  const googleLabel =
+    intent === 'signIn' ? t.auth.oauth.signInWithGoogle : t.auth.oauth.signUpWithGoogle
+  const githubLabel =
+    intent === 'signIn' ? t.auth.oauth.signInWithGithub : t.auth.oauth.signUpWithGithub
 
   const handleProviderClick = (provider: OAuthProvider) => {
     startOAuthProvider(provider)
@@ -23,14 +28,14 @@ export function OAuthProviders({ intent }: OAuthProvidersProps) {
         <IconButton
           className={styles.iconButton}
           icon={GoogleIcon}
-          label={`${actionText} with Google`}
+          label={googleLabel}
           onClick={() => handleProviderClick('google')}
         />
 
         <IconButton
           className={styles.iconButton}
           icon={GithubIcon}
-          label={`${actionText} with GitHub`}
+          label={githubLabel}
           onClick={() => handleProviderClick('github')}
         />
       </div>

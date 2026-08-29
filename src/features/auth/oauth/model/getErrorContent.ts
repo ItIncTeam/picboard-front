@@ -1,42 +1,35 @@
+import type { Dictionary } from '@/shared/lib/i18n/dictionaries'
+
 type OAuthErrorContent = {
   message: string
   title: string
 }
 
 const errorContentByCode = {
-  invalid_state: {
-    message: 'Your sign-in session expired or became invalid. Please start again.',
-    title: 'Session expired',
-  },
-  no_code: {
-    message: 'We did not receive a valid sign-in response. Please try again.',
-    title: 'Sign-in failed',
-  },
-  no_pkce_verifier: {
-    message: 'Your sign-in attempt expired before it finished. Please try again.',
-    title: 'Sign-in expired',
-  },
-  unverified_email: {
-    message:
-      'Your Google account email is not verified. Please verify it or use another sign-in method.',
-    title: 'Email is not verified',
-  },
-  unknown: {
-    message: 'We could not complete Google sign-in. Please try again.',
-    title: 'Something went wrong',
-  },
-} as const satisfies Record<string, OAuthErrorContent>
+  invalid_state: 'invalidState',
+  no_code: 'noCode',
+  no_pkce_verifier: 'noPkceVerifier',
+  unverified_email: 'unverifiedEmail',
+  unknown: 'unknown',
+} as const
 
 type OAuthErrorCode = keyof typeof errorContentByCode
+type OAuthErrorDictionaryKey = (typeof errorContentByCode)[OAuthErrorCode]
 
 const isOAuthErrorCode = (code: string): code is OAuthErrorCode => {
   return code in errorContentByCode
 }
 
-export const getErrorContent = (code: string | null): OAuthErrorContent => {
-  if (code && isOAuthErrorCode(code)) {
-    return errorContentByCode[code]
-  }
+const getContent = (
+  errors: Dictionary['auth']['oauth']['errors'],
+  key: OAuthErrorDictionaryKey,
+): OAuthErrorContent => ({
+  message: errors[`${key}Message`],
+  title: errors[`${key}Title`],
+})
 
-  return errorContentByCode.unknown
+export const getErrorContent = (code: string | null, t: Dictionary): OAuthErrorContent => {
+  const key = code && isOAuthErrorCode(code) ? errorContentByCode[code] : errorContentByCode.unknown
+
+  return getContent(t.auth.oauth.errors, key)
 }

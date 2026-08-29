@@ -1,5 +1,8 @@
+'use client'
+
 import type { ReactNode } from 'react'
 
+import { useI18n } from '@/shared/lib/i18n'
 import type { PostAuthor } from '../model/backendTypes'
 import styles from './post.module.css'
 
@@ -20,16 +23,21 @@ export function PostDetails({
   headerAction,
   media,
 }: PostDetailsProps) {
+  const { t } = useI18n()
   const authorName = author.displayName?.trim() || author.username
   const avatarFallback = authorName.charAt(0).toUpperCase()
 
   return (
-    <article aria-label="Post details" className={styles.details}>
+    <article aria-label={t.posts.details.ariaLabel} className={styles.details}>
       <div className={styles.media}>{media}</div>
 
       <div className={styles.detailsBody}>
         <header className={styles.authorRow}>
-          <span aria-label={`${authorName} avatar`} className={styles.avatar} role="img">
+          <span
+            aria-label={`${authorName} ${t.profile.avatarSuffix}`}
+            className={styles.avatar}
+            role="img"
+          >
             {avatarFallback}
           </span>
           <span className={styles.authorName}>{authorName}</span>

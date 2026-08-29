@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CreatePostImage } from '@/features/create-post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { UploadStep, type UploadStepProps } from '../UploadStep'
 
@@ -76,13 +77,15 @@ function renderUploadStep(props: Partial<UploadStepProps> = {}): UploadStepRende
 
   act(() => {
     root.render(
-      <UploadStep
-        activeImageId={props.activeImageId ?? null}
-        images={props.images ?? []}
-        onAddImages={props.onAddImages ?? onAddImages}
-        onRemoveImage={props.onRemoveImage ?? onRemoveImage}
-        onSetActiveImage={props.onSetActiveImage ?? onSetActiveImage}
-      />,
+      <I18nProvider>
+        <UploadStep
+          activeImageId={props.activeImageId ?? null}
+          images={props.images ?? []}
+          onAddImages={props.onAddImages ?? onAddImages}
+          onRemoveImage={props.onRemoveImage ?? onRemoveImage}
+          onSetActiveImage={props.onSetActiveImage ?? onSetActiveImage}
+        />
+      </I18nProvider>,
     )
   })
 

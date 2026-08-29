@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import type { CreatePostImage, CreatePostImageArtifact, ImageFilter } from '@/features/create-post'
 import { CREATE_POST_FILTERS } from '@/features/create-post/lib/createPostConstants'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Text } from '@/shared/ui/typography'
 
@@ -42,7 +43,11 @@ function getExportMimeType(file: File): 'image/jpeg' | 'image/png' {
   return file.type === 'image/png' ? 'image/png' : 'image/jpeg'
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image/png') {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  mimeType: 'image/jpeg' | 'image/png',
+  errorMessage: string,
+) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -51,7 +56,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image
           return
         }
 
-        reject(new Error('Could not export the filtered image. Please try again.'))
+        reject(new Error(errorMessage))
       },
       mimeType,
       mimeType === 'image/jpeg' ? 0.92 : undefined,
@@ -62,6 +67,10 @@ function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image
 async function exportFilteredImage(
   cropped: CreatePostImageArtifact,
   filter: Exclude<ImageFilter, 'normal'>,
+  messages: {
+    exportFailed: string
+    unsupportedBrowser: string
+  },
 ): Promise<CreatePostImageArtifact> {
   const bitmap = await createImageBitmap(cropped.file)
   const canvas = document.createElement('canvas')
@@ -69,7 +78,7 @@ async function exportFilteredImage(
 
   if (!context) {
     bitmap.close()
-    throw new Error('Image filters are not supported in this browser.')
+    throw new Error(messages.unsupportedBrowser)
   }
 
   canvas.width = bitmap.width
@@ -83,7 +92,7 @@ async function exportFilteredImage(
   }
 
   const mimeType = getExportMimeType(cropped.file)
-  const blob = await canvasToBlob(canvas, mimeType)
+  const blob = await canvasToBlob(canvas, mimeType, messages.exportFailed)
   const file = new File([blob], cropped.file.name, {
     lastModified: Date.now(),
     type: blob.type || mimeType,
@@ -110,6 +119,7 @@ export function FiltersStep({
   onRemoveImage,
   onSetActiveImage,
 }: FiltersStepProps) {
+  const { t } = useI18n()
   const [exportState, setExportState] = useState<FilterExportState>({
     error: null,
     key: null,
@@ -124,7 +134,7 @@ export function FiltersStep({
   let error: string | null = null
 
   if (activeImage && !activeImage.cropped) {
-    error = 'Crop this image before applying a filter.'
+    error = t.createPost.filters.cropFirst
   } else if (exportState.key === exportKey) {
     error = exportState.error
   }
@@ -178,7 +188,10 @@ export function FiltersStep({
         setExportState({ error: null, key: exportKey, status: 'pending' })
         onExportingChange(true)
 
-        return exportFilteredImage(cropped, filter)
+        return exportFilteredImage(cropped, filter, {
+          exportFailed: t.createPost.filters.exportFailed,
+          unsupportedBrowser: t.createPost.filters.unsupportedBrowser,
+        })
       })
       .then((artifact) => {
         if (!artifact) {
@@ -201,9 +214,7 @@ export function FiltersStep({
 
         setExportState({
           error:
-            exportError instanceof Error
-              ? exportError.message
-              : 'Could not export the filtered image. Please try again.',
+            exportError instanceof Error ? exportError.message : t.createPost.filters.exportFailed,
           key: exportKey,
           status: 'idle',
         })
@@ -215,12 +226,12 @@ export function FiltersStep({
       requestIdRef.current += 1
       onExportingChange(false)
     }
-  }, [activeImage, exportKey, onExportingChange, onImageExported, retryVersion])
+  }, [activeImage, exportKey, onExportingChange, onImageExported, retryVersion, t])
 
   const activePreview = activeImage?.cropped?.objectUrl
 
   return (
-    <section className={styles.root} aria-label="Image filters">
+    <section className={styles.root} aria-label={t.createPost.filters.ariaLabel}>
       <div className={styles.previewPanel}>
         {activeImage && activePreview ? (
           <Image
@@ -234,12 +245,12 @@ export function FiltersStep({
           />
         ) : (
           <Text as="p" className={styles.placeholder} size="sm">
-            Select a cropped image to apply filters.
+            {t.createPost.filters.placeholder}
           </Text>
         )}
 
         {images.length > 0 && (
-          <ul className={styles.imageList} aria-label="Selected images">
+          <ul className={styles.imageList} aria-label={t.createPost.filters.selectedImages}>
             {images.map((image) => {
               const imageSource = image.cropped?.objectUrl
 
@@ -250,7 +261,7 @@ export function FiltersStep({
                   data-active={image.id === activeImage?.id}
                 >
                   <button
-                    aria-label={`Select image ${image.id}`}
+                    aria-label={`${t.createPost.filters.selectImagePrefix} ${image.id}`}
                     aria-pressed={image.id === activeImage?.id}
                     className={styles.imageButton}
                     onClick={() => onSetActiveImage(image.id)}
@@ -269,7 +280,7 @@ export function FiltersStep({
                     )}
                   </button>
                   <button
-                    aria-label={`Remove image ${image.id}`}
+                    aria-label={`${t.createPost.filters.removeImagePrefix} ${image.id}`}
                     className={styles.removeButton}
                     onClick={() => onRemoveImage(image.id)}
                     type="button"
@@ -285,9 +296,9 @@ export function FiltersStep({
 
       <div className={styles.filterPanel}>
         <Text as="p" className={styles.panelTitle} size="md">
-          Filters
+          {t.createPost.filters.title}
         </Text>
-        <div className={styles.filterList} aria-label="Available filters">
+        <div className={styles.filterList} aria-label={t.createPost.filters.availableFilters}>
           {CREATE_POST_FILTERS.map((filter) => (
             <button
               key={filter}
@@ -304,7 +315,7 @@ export function FiltersStep({
 
         {isExporting && (
           <Text as="p" className={styles.status} role="status" size="sm">
-            Applying filter…
+            {t.createPost.filters.applying}
           </Text>
         )}
         {error && (
@@ -314,7 +325,7 @@ export function FiltersStep({
             </Text>
             {activeImage?.cropped && activeImage.filter !== 'normal' && (
               <Button onClick={() => setRetryVersion((version) => version + 1)} type="button">
-                Retry
+                {t.createPost.actions.retry}
               </Button>
             )}
           </div>

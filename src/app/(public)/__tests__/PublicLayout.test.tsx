@@ -27,6 +27,7 @@ vi.mock('next/image', () => ({
   ),
 }))
 
+import { I18nProvider } from '@/shared/lib/i18n'
 import { PublicHomeContent } from '@/views/public-home-page/PublicHomePage'
 import PublicLayout from '../layout'
 
@@ -62,9 +63,11 @@ describe('Public route layout composition', () => {
 
     act(() => {
       root.render(
-        <PublicLayout>
-          <PublicHomeContent data={{ posts: [], usersCount: 0 }} />
-        </PublicLayout>,
+        <I18nProvider>
+          <PublicLayout>
+            <PublicHomeContent data={{ posts: [], usersCount: 0 }} />
+          </PublicLayout>
+        </I18nProvider>,
       )
     })
     mountedRoots.push({ container, root })

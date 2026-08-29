@@ -5,6 +5,9 @@ import clsx from 'clsx'
 import type { ComponentPropsWithoutRef } from 'react'
 import { useMemo, useState } from 'react'
 
+import { useI18n } from '@/shared/lib/i18n'
+import type { Dictionary } from '@/shared/lib/i18n/dictionaries'
+
 import s from './date-picker.module.css'
 
 type DatePickerMode = 'single' | 'range'
@@ -80,6 +83,7 @@ export const DatePicker = ({
   className,
   ...rest
 }: Props) => {
+  const { language, t } = useI18n()
   const isDisabled = disabled || state === 'disabled'
   const isError = Boolean(errorMessage) || state === 'error'
   const [isOpen, setIsOpen] = useState(defaultOpen)
@@ -93,9 +97,10 @@ export const DatePicker = ({
 
   const calendarDays = useMemo(() => getCalendarDays(visibleMonth, today), [today, visibleMonth])
   const displayValue = getDisplayValue(selectedValue, mode)
-  const resolvedLabel = label ?? (mode === 'range' ? 'Date range' : 'Date')
+  const resolvedLabel =
+    label ?? (mode === 'range' ? t.ui.datePicker.dateRange : t.ui.datePicker.date)
   const resolvedErrorMessage =
-    errorMessage ?? (state === 'error' ? getDefaultErrorMessage(mode) : '')
+    errorMessage ?? (state === 'error' ? getDefaultErrorMessage(mode, t) : '')
 
   const handlePreviousMonth = (): void => {
     setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))
@@ -143,10 +148,12 @@ export const DatePicker = ({
       {isOpen && (
         <div className={s.datePicker__popup}>
           <div className={s.datePicker__header}>
-            <span className={s.datePicker__monthTitle}>{formatMonthTitle(visibleMonth)}</span>
+            <span className={s.datePicker__monthTitle}>
+              {formatMonthTitle(visibleMonth, language)}
+            </span>
             <div className={s.datePicker__navigation}>
               <button
-                aria-label="Previous month"
+                aria-label={t.ui.datePicker.previousMonth}
                 className={s.datePicker__navigationButton}
                 type="button"
                 onClick={handlePreviousMonth}
@@ -154,7 +161,7 @@ export const DatePicker = ({
                 <ChevronLeftIcon />
               </button>
               <button
-                aria-label="Next month"
+                aria-label={t.ui.datePicker.nextMonth}
                 className={s.datePicker__navigationButton}
                 type="button"
                 onClick={handleNextMonth}
@@ -336,16 +343,16 @@ const getNextValue = (
   return { from: value.from, to: date }
 }
 
-const getDefaultErrorMessage = (mode: DatePickerMode): string => {
-  return mode === 'range' ? 'Error, select current month or last month' : 'Error!'
+const getDefaultErrorMessage = (mode: DatePickerMode, t: Dictionary): string => {
+  return mode === 'range' ? t.ui.datePicker.rangeError : t.ui.datePicker.defaultError
 }
 
 const addMonths = (date: Date, months: number): Date => {
   return new Date(date.getFullYear(), date.getMonth() + months, 1)
 }
 
-const formatMonthTitle = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
+const formatMonthTitle = (date: Date, language: string): string => {
+  return new Intl.DateTimeFormat(language, {
     month: 'long',
     year: 'numeric',
   }).format(date)

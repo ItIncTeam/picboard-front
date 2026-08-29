@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '@/app/globals.css'
 import type { PostConnection, PostEntity, ProfilePostsQueryData } from '@/entities/post'
 import type { PublicUser } from '@/entities/user'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { ProfilePage } from '../ProfilePage'
 
@@ -173,7 +174,13 @@ function renderProfile(userId = 'profile-user'): RenderResult {
   const root = createRoot(container)
 
   document.body.append(container)
-  act(() => root.render(<ProfilePage userId={userId} />))
+  act(() =>
+    root.render(
+      <I18nProvider>
+        <ProfilePage userId={userId} />
+      </I18nProvider>,
+    ),
+  )
 
   return { container, root }
 }
@@ -318,7 +325,9 @@ describe('ProfilePage', () => {
     const view = renderProfile()
     mountedRoots.push(view)
 
-    await waitFor(() => expect(view.container.textContent).toContain('Profile unavailable'))
+    await waitFor(() =>
+      expect(view.container.textContent).toContain('Profile loading failed. Please try again.'),
+    )
 
     act(() => {
       Array.from(view.container.querySelectorAll('button'))
@@ -894,7 +903,13 @@ describe('ProfilePage', () => {
       profilePosts: createConnection([createPost('second-user-post')]),
     }
     apiMocks.result.variables = { input: { first: 8, userId: 'second-user' } }
-    act(() => view.root.render(<ProfilePage userId="second-user" />))
+    act(() =>
+      view.root.render(
+        <I18nProvider>
+          <ProfilePage userId="second-user" />
+        </I18nProvider>,
+      ),
+    )
 
     await waitFor(() => expect(view.container.textContent).toContain('second-user'))
     stalePage.resolve(createConnection([createPost('stale-post')]))

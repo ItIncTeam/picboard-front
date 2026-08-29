@@ -25,11 +25,6 @@ const logoHref: Record<HeaderRole, string> = {
   superAdmin: '/admin/users',
 }
 
-const logoSuffix: Partial<Record<HeaderRole, string>> = {
-  admin: 'Admin',
-  superAdmin: 'SuperAdmin',
-}
-
 export function Header({
   isSidebarOpen = false,
   notificationsCount = 0,
@@ -41,6 +36,10 @@ export function Header({
   const showAuthActions = !isAuthenticated
   const showSidebarTrigger = isAuthenticated && onToggleSidebarAction
   const { t } = useI18n()
+  const logoSuffix: Partial<Record<HeaderRole, string>> = {
+    admin: t.header.adminSuffix,
+    superAdmin: t.header.superAdminSuffix,
+  }
 
   return (
     <header className={styles.root}>
@@ -71,7 +70,7 @@ export function Header({
               indicatorCount={notificationsCount}
               label={
                 hasNotifications
-                  ? `${notificationsCount} unread notifications. Notifications are not available yet.`
+                  ? `${notificationsCount} ${t.header.unreadNotifications}. ${t.header.notificationsUnavailable}`
                   : t.header.notificationsUnavailable
               }
               tooltip={t.header.notificationsUnavailable}

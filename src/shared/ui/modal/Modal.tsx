@@ -1,8 +1,11 @@
+'use client'
+
 import * as Dialog from '@radix-ui/react-dialog'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 
 import { Close } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { IconButton } from '@/shared/ui/icon-button'
 
 import styles from './modal.module.css'
@@ -28,6 +31,8 @@ export function Modal({
   onCloseAction,
   open,
 }: ModalProps) {
+  const { t } = useI18n()
+
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       onCloseAction()
@@ -41,7 +46,7 @@ export function Modal({
         <Dialog.Content className={clsx(styles.content, className)}>
           {!hideCloseButton && (
             <Dialog.Close asChild>
-              <IconButton className={styles.closeButton} icon={Close} label="Close" />
+              <IconButton className={styles.closeButton} icon={Close} label={t.ui.close} />
             </Dialog.Close>
           )}
 

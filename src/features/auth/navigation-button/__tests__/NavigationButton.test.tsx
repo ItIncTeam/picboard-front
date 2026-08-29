@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
 import { NavigationButton } from '../NavigationButton'
 
 vi.mock('next/link', () => ({
@@ -29,7 +30,11 @@ function renderNavigationButton(): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<NavigationButton />)
+    root.render(
+      <I18nProvider>
+        <NavigationButton />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

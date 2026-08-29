@@ -14,6 +14,7 @@ import { Cropper } from 'react-advanced-cropper'
 import 'react-advanced-cropper/dist/style.css'
 import styles from './crop-step.module.css'
 import { IconButton } from '@/shared/ui'
+import { useI18n } from '@/shared/lib/i18n'
 import {
   AddImage,
   ArrowBackIcon,
@@ -32,12 +33,6 @@ const ACCEPTED_IMAGE_TYPES_INPUT_VALUE = ACCEPTED_IMAGE_TYPES.join(',')
 const MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
 const MAX_IMAGES_COUNT = 10
 const MAX_VISIBLE_IMAGES = 3
-
-function getAvailableSlotsMessage(availableSlots: number): string {
-  return availableSlots === 1
-    ? 'Only 1 more photo can be added.'
-    : `Only ${availableSlots} more photos can be added.`
-}
 
 export type CropStepProps = {
   activeImage: CreatePostImage | null
@@ -101,7 +96,11 @@ function getExportMimeType(image: CreatePostImage): 'image/jpeg' | 'image/png' {
   return originalType === 'image/png' ? 'image/png' : 'image/jpeg'
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image/png') {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  mimeType: 'image/jpeg' | 'image/png',
+  errorMessage: string,
+) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -110,7 +109,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image
           return
         }
 
-        reject(new Error('Could not export the cropped image. Please try again.'))
+        reject(new Error(errorMessage))
       },
       mimeType,
       mimeType === 'image/jpeg' ? 0.92 : undefined,
@@ -129,6 +128,7 @@ export function CropStep({
   onRemoveImage,
   onAddImages,
 }: CropStepProps) {
+  const { t } = useI18n()
   const [isVisibleAspectRatio, setIsVisibleAspectRatio] = useState(false)
   const [isVisibleSlider, setIsVisibleSlider] = useState(false)
   const activeRatio = activeImage?.aspectRatio ?? 'original'
@@ -175,13 +175,13 @@ export function CropStep({
     const cropper = cropperRef.current
 
     if (!image?.id || !cropper) {
-      throw new Error('Crop preview is not ready. Please try again.')
+      throw new Error(t.createPost.crop.previewNotReady)
     }
 
     const geometry = getCropGeometry(cropper)
 
     if (!geometry) {
-      throw new Error('Crop preview is not ready. Please try again.')
+      throw new Error(t.createPost.crop.previewNotReady)
     }
 
     const signature = getCropGeometrySignature(geometry, image.aspectRatio)
@@ -201,13 +201,13 @@ export function CropStep({
     const canvas = cropper.getCanvas()
 
     if (!canvas) {
-      throw new Error('Crop preview is not ready. Please try again.')
+      throw new Error(t.createPost.crop.previewNotReady)
     }
 
     const requestId = exportRequestIdRef.current + 1
     exportRequestIdRef.current = requestId
     const mimeType = getExportMimeType(image)
-    const blob = await canvasToBlob(canvas, mimeType)
+    const blob = await canvasToBlob(canvas, mimeType, t.createPost.crop.exportFailed)
 
     if (!isExportRequestCurrent(requestId, image.id)) {
       throw new CropExportCancelledError()
@@ -240,7 +240,7 @@ export function CropStep({
         },
       },
     }
-  }, [isExportRequestCurrent])
+  }, [isExportRequestCurrent, t.createPost.crop.exportFailed, t.createPost.crop.previewNotReady])
 
   useImperativeHandle(exportRef, () => ({ exportActiveImage }), [exportActiveImage])
 
@@ -301,7 +301,7 @@ export function CropStep({
     }
 
     if (hasReachedImagesLimit) {
-      setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
+      setErrors([t.createPost.upload.imageLimit])
 
       return
     }
@@ -340,13 +340,17 @@ export function CropStep({
     const nextErrors: string[] = []
 
     if (availableSlots <= 0) {
-      setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
+      setErrors([t.createPost.upload.imageLimit])
 
       return
     }
 
     if (selectedFiles.length > availableSlots) {
-      nextErrors.push(getAvailableSlotsMessage(availableSlots))
+      nextErrors.push(
+        availableSlots === 1
+          ? t.createPost.upload.oneMorePhoto
+          : `${t.createPost.upload.morePhotosPrefix} ${availableSlots} ${t.createPost.upload.morePhotosSuffix}`,
+      )
     }
 
     const filesForValidation = selectedFiles.slice(0, Math.max(availableSlots, 0))
@@ -354,13 +358,13 @@ export function CropStep({
       const hasAcceptedType = ACCEPTED_IMAGE_TYPES.some((imageType) => imageType === file.type)
 
       if (!hasAcceptedType) {
-        nextErrors.push(`${file.name} must be JPEG or PNG.`)
+        nextErrors.push(`${file.name} ${t.createPost.upload.unsupportedTypeSuffix}`)
 
         return false
       }
 
       if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        nextErrors.push(`${file.name} must be 20 MB or smaller.`)
+        nextErrors.push(`${file.name} ${t.createPost.upload.maxSizeSuffix}`)
 
         return false
       }
@@ -483,7 +487,7 @@ export function CropStep({
         onClick={handleVisibleAspectRatioChange}
         className={styles.aspectRatioButton}
         icon={AspectRatioBtn}
-        label="AspectRatio"
+        label={t.createPost.crop.aspectRatio}
         data-active={isVisibleAspectRatio}
         aria-expanded={isVisibleAspectRatio}
       />
@@ -493,7 +497,7 @@ export function CropStep({
         onClick={handleVisibleSliderChange}
         className={styles.showSwiper}
         icon={ShowSwiper}
-        label="showSwiper"
+        label={t.createPost.actions.showImages}
         data-active={isVisibleSlider}
         aria-expanded={isVisibleSlider}
       />
@@ -510,7 +514,7 @@ export function CropStep({
             type="file"
           />
           <div className={styles.galleryPanel}>
-            <div className={styles.swiper} aria-label="Selected images">
+            <div className={styles.swiper} aria-label={t.createPost.crop.selectedImages}>
               {visibleImages.map((image) => {
                 const isActive = image.id === activeImage?.id
                 const imageSrc = isActive
@@ -551,7 +555,7 @@ export function CropStep({
                           className={styles.deleteImage}
                           disabled={disabled}
                           icon={Close}
-                          label="deleteImage"
+                          label={t.createPost.actions.deleteImage}
                         />
                       </>
                     ) : (
@@ -564,14 +568,14 @@ export function CropStep({
                 <IconButton
                   className={styles.addImage}
                   icon={AddImage}
-                  label="AddImage"
+                  label={t.createPost.actions.addImage}
                   disabled={disabled || hasReachedImagesLimit}
                   onClick={handleSelectFiles}
                 />
               </div>
             </div>
 
-            <div className={styles.paginationWrapper} aria-label="Pagination item">
+            <div className={styles.paginationWrapper} aria-label={t.createPost.crop.paginationItem}>
               {images.map((image) => {
                 const isActive = image.id === activeImage?.id
 
@@ -580,7 +584,7 @@ export function CropStep({
                     key={image.id}
                     icon={Dot}
                     className={styles.paginationItem}
-                    label="Dot"
+                    label={t.createPost.crop.paginationItem}
                     data-active={isActive}
                   />
                 )
@@ -602,7 +606,7 @@ export function CropStep({
           <IconButton
             className={styles.navigationItem}
             icon={ArrowBackIcon}
-            label="ArrowBackIcon"
+            label={t.createPost.crop.previousImage}
             onClick={handlePrevImage}
             disabled={disabled}
             data-direction="previous"
@@ -612,7 +616,7 @@ export function CropStep({
           <IconButton
             className={styles.navigationItem}
             icon={ArrowNextIcon}
-            label="ArrowNextIcon"
+            label={t.createPost.crop.nextImage}
             onClick={handleNextImage}
             disabled={disabled}
             data-direction="next"

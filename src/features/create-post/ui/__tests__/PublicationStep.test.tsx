@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CreatePostImage } from '@/features/create-post'
 import { CREATE_POST_CAPTION_MAX_LENGTH } from '@/features/create-post/lib/createPostConstants'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { PublicationStep, type PublicationStepProps } from '../PublicationStep'
 
@@ -125,13 +126,15 @@ function renderPublicationStep(props: Partial<PublicationStepProps> = {}): Rende
 
   act(() => {
     root.render(
-      <PublicationStep
-        caption={props.caption ?? ''}
-        images={props.images ?? [createExportedImage('image-1')]}
-        isPublishing={props.isPublishing ?? false}
-        onCaptionChange={props.onCaptionChange ?? onCaptionChange}
-        onRetryUpload={props.onRetryUpload ?? onRetryUpload}
-      />,
+      <I18nProvider>
+        <PublicationStep
+          caption={props.caption ?? ''}
+          images={props.images ?? [createExportedImage('image-1')]}
+          isPublishing={props.isPublishing ?? false}
+          onCaptionChange={props.onCaptionChange ?? onCaptionChange}
+          onRetryUpload={props.onRetryUpload ?? onRetryUpload}
+        />
+      </I18nProvider>,
     )
   })
 

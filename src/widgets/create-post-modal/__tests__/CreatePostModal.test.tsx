@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
 import { CreatePostModal } from '../CreatePostModal'
 
 const navigationMocks = vi.hoisted(() => ({
@@ -58,7 +59,13 @@ function renderCreatePostModal(): RenderResult {
   const root = createRoot(container)
 
   document.body.append(container)
-  act(() => root.render(<CreatePostModal />))
+  act(() =>
+    root.render(
+      <I18nProvider>
+        <CreatePostModal />
+      </I18nProvider>,
+    ),
+  )
 
   return { container, root }
 }

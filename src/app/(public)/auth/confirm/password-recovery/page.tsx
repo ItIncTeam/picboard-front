@@ -4,7 +4,7 @@ import { ConfirmPasswordRecoveryView } from '@/views/auth/confirm-password-recov
 
 export default function ConfirmPasswordRecoveryPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={null}>
       <ConfirmPasswordRecoveryView />
     </Suspense>
   )

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 
 import type { PostImage } from '@/entities/post'
+import { useI18n } from '@/shared/lib/i18n'
 import styles from '../public-post-card.module.css'
 
 type PublicPostCarouselFit = 'contain' | 'cover'
@@ -26,6 +27,7 @@ export function PublicPostCarousel({
   media,
   onActiveIndexChange,
 }: PublicPostCarouselProps) {
+  const { t } = useI18n()
   const [uncontrolledIndex, setUncontrolledIndex] = useState(0)
   const lastIndex = Math.max(media.length - 1, 0)
   const requestedIndex = onActiveIndexChange ? (activeIndexProp ?? 0) : uncontrolledIndex
@@ -44,8 +46,12 @@ export function PublicPostCarousel({
 
   if (!activeMedia) {
     return (
-      <div className={styles.mediaPlaceholder} role="img" aria-label="Post media unavailable">
-        <span>Photo unavailable</span>
+      <div
+        className={styles.mediaPlaceholder}
+        role="img"
+        aria-label={t.widgets.publicPostCard.mediaUnavailable}
+      >
+        <span>{t.widgets.publicPostCard.photoUnavailable}</span>
       </div>
     )
   }
@@ -61,7 +67,7 @@ export function PublicPostCarousel({
   return (
     <div className={styles.carousel} data-fit={fit}>
       <Image
-        alt={activeMedia.alt || 'Public post image'}
+        alt={activeMedia.alt || t.widgets.publicPostCard.imageAlt}
         className={styles.mediaImage}
         fill
         sizes={fit === 'contain' ? DETAILS_IMAGE_SIZES : THUMBNAIL_IMAGE_SIZES}
@@ -72,7 +78,7 @@ export function PublicPostCarousel({
       {hasMultipleMedia ? (
         <>
           <button
-            aria-label="Show previous image"
+            aria-label={t.widgets.publicPostCard.previousImage}
             className={`${styles.carouselButton} ${styles.previousButton}`}
             onClick={showPrevious}
             type="button"
@@ -80,17 +86,19 @@ export function PublicPostCarousel({
             <ChevronLeftIcon aria-hidden />
           </button>
           <button
-            aria-label="Show next image"
+            aria-label={t.widgets.publicPostCard.nextImage}
             className={`${styles.carouselButton} ${styles.nextButton}`}
             onClick={showNext}
             type="button"
           >
             <ChevronRightIcon aria-hidden />
           </button>
-          <div className={styles.pagination} aria-label="Choose image">
+          <div className={styles.pagination} aria-label={t.widgets.publicPostCard.chooseImage}>
             {media.map((item, index) => (
               <button
-                aria-label={`Show image ${index + 1} of ${media.length}`}
+                aria-label={`${t.widgets.publicPostCard.showImage} ${index + 1} ${
+                  t.widgets.publicPostCard.imageOf
+                } ${media.length}`}
                 aria-pressed={index === safeActiveIndex}
                 className={styles.paginationDot}
                 key={item.id}

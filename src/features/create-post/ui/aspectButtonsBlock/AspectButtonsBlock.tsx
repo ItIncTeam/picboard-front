@@ -1,6 +1,9 @@
+'use client'
+
 import styles from './aspect-button-block.module.css'
 import { AspectRatio16_9, AspectRatio1_1, AspectRatio4_5, AspectRatioOrigin } from '@/shared/assets'
 import type { AspectRatio } from '@/features/create-post'
+import { useI18n } from '@/shared/lib/i18n'
 
 type Props = {
   disabled?: boolean
@@ -9,6 +12,8 @@ type Props = {
 }
 
 export const AspectButtonsBlock = ({ disabled = false, onSelectRatio, selectedRatio }: Props) => {
+  const { t } = useI18n()
+
   return (
     <div className={styles.aspectButtonBlock}>
       <button
@@ -17,7 +22,7 @@ export const AspectButtonsBlock = ({ disabled = false, onSelectRatio, selectedRa
         onClick={() => onSelectRatio('original')}
         data-active={selectedRatio === 'original'}
       >
-        <span>Оригинал</span>
+        <span>{t.createPost.crop.originalAspectRatio}</span>
         <AspectRatioOrigin width="18px" height="18px" />
       </button>
       <button

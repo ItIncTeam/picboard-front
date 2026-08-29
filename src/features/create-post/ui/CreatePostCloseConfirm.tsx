@@ -1,3 +1,6 @@
+'use client'
+
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Modal } from '@/shared/ui/modal'
 import { Text } from '@/shared/ui/typography'
@@ -15,26 +18,25 @@ export function CreatePostCloseConfirm({
   onDiscardAction,
   onKeepEditingAction,
 }: CreatePostCloseConfirmProps) {
+  const { t } = useI18n()
+
   return (
     <Modal
       className={styles.modal}
-      modalTitle="Close publication creation"
+      modalTitle={t.createPost.closeConfirm.title}
       onCloseAction={onKeepEditingAction}
       open={open}
     >
       <div className={styles.content}>
-        <Text>
-          Do you really want to close the creation of a publication? If you close everything will be
-          deleted.
-        </Text>
+        <Text>{t.createPost.closeConfirm.description}</Text>
 
         <div className={styles.actions}>
           <Button type="button" variant="textButton" onClick={onDiscardAction}>
-            Discard
+            {t.createPost.actions.discard}
           </Button>
 
           <Button type="button" onClick={onKeepEditingAction}>
-            Keep editing
+            {t.createPost.actions.keepEditing}
           </Button>
         </div>
       </div>

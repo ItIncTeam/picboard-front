@@ -4,7 +4,7 @@ import { CreateNewPasswordPage } from '@/views/create-new-password-page'
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={null}>
       <CreateNewPasswordPage />
     </Suspense>
   )
