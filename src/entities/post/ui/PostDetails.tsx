@@ -1,23 +1,47 @@
-import type { Post } from '@/entities/post'
-import { PostCard } from './PostCard'
+import type { ReactNode } from 'react'
+
 import styles from './post.module.css'
 
 type PostDetailsProps = {
-  post?: Post
+  authorName: string
+  caption?: string
+  createdAt?: string
+  createdAtLabel?: string
+  headerAction?: ReactNode
+  media: ReactNode
 }
 
-export function PostDetails({ post }: PostDetailsProps) {
+export function PostDetails({
+  authorName,
+  caption,
+  createdAt,
+  createdAtLabel,
+  headerAction,
+  media,
+}: PostDetailsProps) {
   return (
-    <section className={styles.details} aria-label="Post details">
-      <PostCard post={post} />
+    <article aria-label="Post details" className={styles.details}>
+      <div className={styles.media}>{media}</div>
 
       <div className={styles.detailsBody}>
-        <h2 className={styles.detailsTitle}>Post details</h2>
-        <p className={styles.caption}>
-          {post?.caption ?? 'Details skeleton. getPostById is blocked by backend contract.'}
-        </p>
-        {post?.createdAtLabel && <p className={styles.meta}>{post.createdAtLabel}</p>}
+        <header className={styles.authorRow}>
+          <span aria-hidden className={styles.avatar}>
+            U
+          </span>
+          <span className={styles.authorName}>{authorName}</span>
+          {headerAction ? <div className={styles.headerActions}>{headerAction}</div> : null}
+        </header>
+
+        <div className={styles.detailsContent}>
+          {caption ? <p className={styles.detailsCaption}>{caption}</p> : null}
+        </div>
+
+        {createdAtLabel ? (
+          <time className={styles.detailsMeta} dateTime={createdAt}>
+            {createdAtLabel}
+          </time>
+        ) : null}
       </div>
-    </section>
+    </article>
   )
 }

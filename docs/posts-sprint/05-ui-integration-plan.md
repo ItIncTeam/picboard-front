@@ -27,7 +27,7 @@ Use for page composition:
 - `views/profile-page`;
 - `views/main-page`;
 - `views/public-home-page`;
-- future `views/post-details-page` if details route grows beyond current placeholder.
+- `views/post-details-page`.
 
 ### `widgets/`
 
@@ -126,16 +126,17 @@ Use only for primitives and infrastructure:
 
 ### `PostDetails`
 
-- Lives in `entities/post/ui` for first skeleton.
-- Route-level composition can move into `views/post-details-page` later if details grows beyond the
-  entity display boundary.
+- Lives in `entities/post/ui`.
+- Displays carousel slot, fallback author, description and date.
+- Route-level loading, owner menu and edit composition live in `views/post-details-page`.
 
 ### `EditPostForm`
 
 - Lives in `features/edit-post`.
-- Starts as skeleton without mutation.
-- Adds update mutation only after backend contract is clarified for edit behavior.
-- Follow-up PR, not part of the first Posts Consumption skeleton.
+- Edits only `description` through `updatePostDescription`, with a 500-character limit.
+- Tracks dirty state: close without changes dismisses immediately; dirty close shows confirmation.
+- After a successful save the user stays on `/posts/[postId]` and the visible post updates without a
+  reload.
 
 ### `DeletePostFlow`
 
@@ -214,10 +215,12 @@ Differences:
 
 ### Details
 
-- `posts/[postId]/page.tsx` stays thin.
-- Details view uses post details query after that contract is clarified.
-- Edit/delete actions should be gated by backend viewer permissions such as `canEdit/canDelete` if
-  provided.
+- `posts/[postId]/page.tsx` stays thin and passes `postId` into `views/post-details-page`.
+- Details view loads the existing `post(id)` wrapper and maps attachments through `mapPostEntityToPost`.
+- Author name and avatar stay local fallbacks (`User` / `U`) until the backend exposes author data.
+  The page does not call `user(id)` for the post owner.
+- Owner-only Edit Post is gated by comparing `SessionProvider.user.id` with `PostEntity.ownerId`.
+- Delete remains out of this composition and is owned by the separate delete-post follow-up.
 
 ## Testing checklist
 

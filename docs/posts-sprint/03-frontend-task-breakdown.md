@@ -220,8 +220,7 @@ follow-ups.
 
 FRONT-150 completes the profile composition: `/profile/[userId]` is public, loads `user(id)` and
 `profilePosts(first: 8)`, renders owner-only Profile Settings and appends cursor pages through a
-native IntersectionObserver. Publication previews link to the canonical `/posts/[postId]` route;
-Post details remains a follow-up.
+native IntersectionObserver. Publication previews link to the canonical `/posts/[postId]` route.
 
 Checklist:
 
@@ -237,6 +236,8 @@ Checklist:
 - [x] Не добавлять infinite scroll dependency в first skeleton PR.
 - [x] Integrate the profile route with loading, error, empty and success states.
 - [x] Add cursor pagination in pages of 8 without frontend sorting or slicing.
+- [x] Compose `posts/[postId]` with `post(id)`, loading, error and not-found states.
+- [x] Add owner Edit Post through `updatePostDescription`; description only, max 500 characters.
 - [ ] Документировать follow-up manual QA scenarios для details.
 
 Dependencies:
@@ -253,8 +254,6 @@ Parallel work:
 
 Follow-up PRs:
 
-- Post details route composition.
-- Edit post skeleton.
 - Delete post confirm skeleton.
 
 ## Dev 5: Filters And Canvas Export

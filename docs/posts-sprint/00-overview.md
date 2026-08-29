@@ -180,6 +180,7 @@ views/
   profile-page
   main-page
   public-home-page
+  post-details-page
 
 widgets/
   create-post-modal
@@ -188,8 +189,8 @@ widgets/
 
 features/
   create-post
-  edit-post        -> follow-up PR after details skeleton/backend contract
-  delete-post      -> follow-up PR after details skeleton/backend contract
+  edit-post
+  delete-post      -> follow-up PR after post details/backend contract
 
 entities/
   post
@@ -240,9 +241,10 @@ Rules:
 
 ### Dev 4
 
-- Finish posts consumption skeleton and profile/details composition.
+- Profile posts composition is complete.
+- Post details composition loads `post(id)` on `/posts/[postId]` and owner Edit Post uses
+  `updatePostDescription`. Delete remains a separate follow-up.
 - Render attachments only from `PostAttachmentEntity.file?.url`; skip attachments with `file: null`.
-- Integrate `profilePosts` after Dev 1 provides API operations/wrappers.
 
 ### Dev 5
 
