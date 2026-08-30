@@ -265,7 +265,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
       <div className={styles.publications}>
         <h2 className={styles.publicationsTitle}>Publications</h2>
-        <PostGrid posts={posts} />
+        <PostGrid posts={posts} returnTo={`/profile/${userId}`} />
 
         {loadMoreError && (
           <div className={styles.loadMoreError} role="alert">

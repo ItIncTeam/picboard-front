@@ -196,6 +196,16 @@ Sidebar строит My Profile URL из уже загруженного `Sessio
 для ссылки не выполняется. Owner-only `Profile Settings` определяется сравнением session user id с
 route user id.
 
+## Post details
+
+Route adapter передает `postId` в `views/post-details-page`. View загружает существующий `post(id)`,
+показывает carousel / description / дату и fallback автора `User`. Owner-only `Edit Post`
+определяется сравнением session user id с `PostEntity.ownerId`. Закрытие использует существующий
+`getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. `router.back()` для details не
+используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Меню `...` одно на
+владельца и уже принимает соседний `Delete Post` без второй проверки владельца; сам delete flow в
+этот route пока не входит.
+
 ## Providers
 
 Не создаем общий provider на весь проект без причины.

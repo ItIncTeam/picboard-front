@@ -14,6 +14,7 @@ type PostGridProps = {
   isError?: boolean
   errorMessage?: string
   onRetry?: () => void
+  returnTo?: string
   skeletonCount?: number
 }
 
@@ -23,6 +24,7 @@ export function PostGrid({
   isError = false,
   errorMessage,
   onRetry,
+  returnTo,
   skeletonCount = DEFAULT_SKELETON_COUNT,
 }: PostGridProps) {
   if (isLoading) {
@@ -63,7 +65,7 @@ export function PostGrid({
   return (
     <div className={styles.grid}>
       {posts.map((post) => {
-        return <PostCard key={post.id} post={post} />
+        return <PostCard key={post.id} post={post} returnTo={returnTo} />
       })}
     </div>
   )

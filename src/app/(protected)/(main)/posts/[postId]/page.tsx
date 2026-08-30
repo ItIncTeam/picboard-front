@@ -1,5 +1,7 @@
-import { MainSectionPage } from '@/views/main-section-page'
+import { PostDetailsPage } from '@/views/post-details-page'
 
-export default function Page() {
-  return <MainSectionPage section="post-details" />
+export default async function Page({ params }: PageProps<'/posts/[postId]'>) {
+  const { postId } = await params
+
+  return <PostDetailsPage postId={postId} />
 }
