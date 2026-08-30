@@ -20,13 +20,25 @@ function logSyncFailure(operation: PostCreateSyncOperation, postId: string, reas
   })
 }
 
-export async function synchronizeCreatedPost(postId: string): Promise<void> {
+const PROFILE_POSTS_PAGE_SIZE = 8
+
+export async function synchronizeCreatedPost(postId: string, ownerId: string): Promise<void> {
   const feedSync = startSyncOperation(() =>
     apolloClient.refetchQueries({
       include: [feedQuery],
       updateCache(cache) {
         cache.evict({
           fieldName: 'feed',
+          id: 'ROOT_QUERY',
+        })
+        cache.evict({
+          args: {
+            input: {
+              first: PROFILE_POSTS_PAGE_SIZE,
+              userId: ownerId,
+            },
+          },
+          fieldName: 'profilePosts',
           id: 'ROOT_QUERY',
         })
       },
