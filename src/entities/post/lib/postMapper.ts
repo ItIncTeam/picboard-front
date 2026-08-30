@@ -20,7 +20,8 @@ export function mapPostEntityToPost(entity: PostEntity): Post {
 
   return {
     id: entity.id,
-    // Backend PostEntity does not expose username/displayName yet.
+    // TODO: Replace fallback author data when PostEntity exposes author info.
+    // Avoid per-post user(ownerId) requests in feeds to prevent N+1 queries.
     authorName: entity.ownerId,
     caption: entity.description ?? undefined,
     createdAtLabel: entity.createdAt,
