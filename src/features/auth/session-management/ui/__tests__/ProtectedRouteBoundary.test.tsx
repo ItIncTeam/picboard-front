@@ -83,8 +83,8 @@ describe('ProtectedRouteBoundary', () => {
     expect(view.container.textContent).not.toContain('Protected content')
   })
 
-  it('redirects anonymous users to sign in', () => {
-    window.history.pushState({}, '', '/feed')
+  it.each(['/main', '/posts/post-1'])('redirects anonymous users from %s to sign in', (route) => {
+    window.history.pushState({}, '', route)
     sessionMocks.status = 'anonymous'
 
     const view = renderProtectedRouteBoundary()
@@ -92,7 +92,9 @@ describe('ProtectedRouteBoundary', () => {
     mountedRoots.push(view)
 
     expect(view.container.textContent).toContain('Redirecting to sign in...')
-    expect(navigationMocks.replace).toHaveBeenCalledWith('/auth/sign-in?returnTo=%2Ffeed')
+    expect(navigationMocks.replace).toHaveBeenCalledWith(
+      `/auth/sign-in?returnTo=${encodeURIComponent(route)}`,
+    )
   })
 
   it('preserves protected route query params in returnTo', () => {
