@@ -1,4 +1,4 @@
-import { feedQuery } from '@/entities/post'
+import { feedQuery, PROFILE_POSTS_PAGE_SIZE } from '@/entities/post'
 import { revalidatePublicHome } from '@/entities/post/server'
 import { apolloClient } from '@/shared/api'
 
@@ -19,8 +19,6 @@ function logSyncFailure(operation: PostCreateSyncOperation, postId: string, reas
     reason,
   })
 }
-
-const PROFILE_POSTS_PAGE_SIZE = 8
 
 export async function synchronizeCreatedPost(postId: string, ownerId: string): Promise<void> {
   const feedSync = startSyncOperation(() =>

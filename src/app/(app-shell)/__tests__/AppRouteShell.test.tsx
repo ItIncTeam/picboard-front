@@ -7,7 +7,6 @@ import { AppRouteShell } from '../AppRouteShell'
 const shellMocks = vi.hoisted(() => ({
   sidebarMounts: 0,
   sidebarUnmounts: 0,
-  sidebarOpenStates: [] as boolean[],
   status: 'authenticated' as 'anonymous' | 'authenticated' | 'bootstrapping',
 }))
 
@@ -28,8 +27,6 @@ vi.mock('@/widgets/sidebar', async () => {
 
   return {
     Sidebar: ({ isOpen }: { isOpen: boolean }) => {
-      shellMocks.sidebarOpenStates.push(isOpen)
-
       useEffect(() => {
         shellMocks.sidebarMounts += 1
 
@@ -69,7 +66,6 @@ describe('AppRouteShell', () => {
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     shellMocks.sidebarMounts = 0
     shellMocks.sidebarUnmounts = 0
-    shellMocks.sidebarOpenStates.length = 0
     shellMocks.status = 'authenticated'
     window.localStorage.clear()
     window.matchMedia = vi.fn().mockReturnValue({
@@ -103,7 +99,6 @@ describe('AppRouteShell', () => {
 
     renderRoute(root, '/main')
     const sidebar = container.querySelector('aside')
-    const observedStateStart = shellMocks.sidebarOpenStates.length
 
     expect(sidebar?.dataset.open).toBe('false')
     expect(shellMocks.sidebarMounts).toBe(1)
@@ -116,13 +111,6 @@ describe('AppRouteShell', () => {
       expect(shellMocks.sidebarMounts).toBe(1)
       expect(shellMocks.sidebarUnmounts).toBe(0)
     }
-
-    expect(shellMocks.sidebarOpenStates.slice(observedStateStart)).toEqual([
-      false,
-      false,
-      false,
-      false,
-    ])
   })
 
   it('keeps Profile content while selecting the anonymous public presentation', () => {

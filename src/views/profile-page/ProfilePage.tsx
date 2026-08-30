@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   mapPostEntitiesToPosts,
   PostGrid,
+  PROFILE_POSTS_PAGE_SIZE,
   profilePosts,
   type PageInfo,
   type PostEntity,
@@ -17,8 +18,6 @@ import { Button } from '@/shared/ui/button'
 import { RoutePlaceholder } from '@/views/route-placeholder'
 
 import styles from './profile-page.module.css'
-
-const PROFILE_POSTS_PAGE_SIZE = 8
 
 type ProfilePageProps = {
   userId: string

@@ -99,7 +99,7 @@ type DeletePostResponse = {
 }
 
 const POST_DESCRIPTION_MAX_LENGTH = 500
-const PROFILE_POSTS_FIRST_MAX = 8
+export const PROFILE_POSTS_PAGE_SIZE = 8
 
 function assertDescriptionLength(description: string | null | undefined): void {
   if (
@@ -116,8 +116,8 @@ function assertProfilePostsFirst(first: number | undefined): void {
     return
   }
 
-  if (!Number.isInteger(first) || first < 1 || first > PROFILE_POSTS_FIRST_MAX) {
-    throw new Error(`profilePosts.first must be an integer from 1 to ${PROFILE_POSTS_FIRST_MAX}.`)
+  if (!Number.isInteger(first) || first < 1 || first > PROFILE_POSTS_PAGE_SIZE) {
+    throw new Error(`profilePosts.first must be an integer from 1 to ${PROFILE_POSTS_PAGE_SIZE}.`)
   }
 }
 
