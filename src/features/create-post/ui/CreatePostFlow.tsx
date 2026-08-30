@@ -286,6 +286,7 @@ export function CreatePostFlow({
     }
 
     let createdPostId: string
+    let createdPostOwnerId: string
 
     try {
       const fileIds = await uploadCreatePostImages(state, { dispatch })
@@ -293,6 +294,7 @@ export function CreatePostFlow({
       const createdPost = await createPost({ description, fileIds })
 
       createdPostId = createdPost.id
+      createdPostOwnerId = createdPost.ownerId
     } catch (error) {
       setPublishError(error instanceof Error ? error.message : 'Post publishing failed.')
       dispatch({ type: 'setPublishing', isPublishing: false })
@@ -300,7 +302,7 @@ export function CreatePostFlow({
       return
     }
 
-    const synchronization = synchronizeCreatedPost(createdPostId)
+    const synchronization = synchronizeCreatedPost(createdPostId, createdPostOwnerId)
 
     dispatch({ type: 'reset' })
     onCloseAction?.()

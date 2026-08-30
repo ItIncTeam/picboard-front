@@ -1773,7 +1773,7 @@ describe('CreatePostFlow', () => {
       description: 'Ready to publish',
       fileIds: ['file-1'],
     })
-    expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledWith('post-1')
+    expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledWith('post-1', 'user-1')
     expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledTimes(1)
     expect(getHeaderTitle(view.container)).toBe('Add Photo')
     expect(onCloseAction).toHaveBeenCalledTimes(1)
@@ -1811,6 +1811,7 @@ describe('CreatePostFlow', () => {
 
     expect(publishMocks.uploadCreatePostImages).toHaveBeenCalledTimes(1)
     expect(publishMocks.createPost).toHaveBeenCalledTimes(1)
+    expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledWith('post-1', 'user-1')
     expect(publishMocks.synchronizeCreatedPost).toHaveBeenCalledTimes(1)
     expect(onCloseAction).toHaveBeenCalledTimes(1)
     expect(view.container.querySelector('[role="alert"]')).toBeNull()
