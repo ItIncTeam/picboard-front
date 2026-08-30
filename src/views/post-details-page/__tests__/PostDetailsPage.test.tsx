@@ -8,6 +8,7 @@ import type { PostEntity } from '@/entities/post'
 import { PostDetailsPage } from '../PostDetailsPage'
 
 const apiMocks = vi.hoisted(() => ({
+  deletePost: vi.fn(),
   post: vi.fn(),
   updatePostDescription: vi.fn(),
 }))
@@ -18,6 +19,7 @@ const navigationMocks = vi.hoisted(() => ({
 }))
 
 const synchronizationMocks = vi.hoisted(() => ({
+  synchronizeDeletedPost: vi.fn(),
   synchronizeUpdatedPost: vi.fn(),
 }))
 
@@ -31,6 +33,7 @@ vi.mock('@/entities/post/api/postsApi', async (importOriginal) => {
 
   return {
     ...actual,
+    deletePost: apiMocks.deletePost,
     post: apiMocks.post,
     updatePostDescription: apiMocks.updatePostDescription,
   }
@@ -50,6 +53,10 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/features/edit-post/model/synchronizeUpdatedPost', () => ({
   synchronizeUpdatedPost: synchronizationMocks.synchronizeUpdatedPost,
+}))
+
+vi.mock('@/features/delete-post/model/synchronizeDeletedPost', () => ({
+  synchronizeDeletedPost: synchronizationMocks.synchronizeDeletedPost,
 }))
 
 vi.mock('next/link', () => ({
@@ -177,10 +184,13 @@ describe('PostDetailsPage', () => {
     }
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+    apiMocks.deletePost.mockReset()
     apiMocks.post.mockReset()
     apiMocks.updatePostDescription.mockReset()
     navigationMocks.replace.mockReset()
     navigationMocks.searchParams = new URLSearchParams()
+    synchronizationMocks.synchronizeDeletedPost.mockReset()
+    synchronizationMocks.synchronizeDeletedPost.mockResolvedValue(undefined)
     synchronizationMocks.synchronizeUpdatedPost.mockReset()
     synchronizationMocks.synchronizeUpdatedPost.mockResolvedValue(undefined)
     sessionMocks.status = 'anonymous'
@@ -308,7 +318,45 @@ describe('PostDetailsPage', () => {
     expect(synchronizationMocks.synchronizeUpdatedPost).toHaveBeenCalledWith('post-1')
   })
 
-  it('hides Edit Post for an authenticated user who does not own the post', async () => {
+  it('lets the post owner delete through the existing menu and delete flow', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.post.mockResolvedValue(createPost())
+    apiMocks.deletePost.mockResolvedValue(true)
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Delete Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Delete Post')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(getDialogText()).toContain('Are you sure you want to delete this post?'),
+    )
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Yes')
+        ?.click()
+    })
+
+    await waitFor(() => expect(navigationMocks.replace).toHaveBeenCalledWith('/main'))
+    expect(apiMocks.deletePost).toHaveBeenCalledWith({ postId: 'post-1' })
+    expect(synchronizationMocks.synchronizeDeletedPost).toHaveBeenCalledWith('post-1')
+  })
+
+  it('hides Edit and Delete actions for an authenticated user who does not own the post', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'other-user'
     apiMocks.post.mockResolvedValue(createPost())
@@ -319,6 +367,7 @@ describe('PostDetailsPage', () => {
     await waitFor(() => expect(getDialogText()).toContain('Original description'))
 
     expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
+    expect(getDialogText()).not.toContain('Delete Post')
   })
 
   it('closes a direct post link to /main', async () => {

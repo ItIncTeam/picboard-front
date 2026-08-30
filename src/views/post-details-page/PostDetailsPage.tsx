@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { mapPostEntityToPost, post, PostDetails, PostGrid, type PostEntity } from '@/entities/post'
 import { useSession } from '@/features/auth/session-management'
+import { DeletePostFlow } from '@/features/delete-post'
 import { EditPostForm, EditPostMenu } from '@/features/edit-post'
 import { Close } from '@/shared/assets'
 import { getSafeReturnToPath } from '@/shared/lib/auth'
@@ -136,7 +137,16 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
           createdAtLabel={formatRelativePostTime(currentState.entity.createdAt)}
           headerAction={
             <>
-              {isOwner ? <EditPostMenu onEditAction={() => setIsEditOpen(true)} /> : null}
+              {isOwner ? (
+                <DeletePostFlow postId={currentState.entity.id}>
+                  {({ openDeleteConfirmAction }) => (
+                    <EditPostMenu
+                      onDeleteAction={openDeleteConfirmAction}
+                      onEditAction={() => setIsEditOpen(true)}
+                    />
+                  )}
+                </DeletePostFlow>
+              ) : null}
               <IconButton icon={Close} label="Close" onClick={closePage} />
             </>
           }

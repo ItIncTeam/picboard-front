@@ -6,7 +6,9 @@ Shared frontend state and selector contracts are defined in
 [Frontend Contracts](./08-frontend-contracts.md).
 
 Production code contains create-post scoped GraphQL helpers, the feature-local upload service and
-default publish integration. Apollo cache updates and feed/profile refresh strategy are follow-ups.
+default publish integration. Successful publish evicts Feed and the created post owner's first
+Profile posts page, refetches the active Feed query and invalidates Public Home without blocking
+the completed publish.
 
 ## Target Structure
 
@@ -167,5 +169,6 @@ Retry, resumable upload, partial publish and expired `uploadUrl` recovery are fo
   already uploaded files should be completed, retried or cleaned up if a later storage `PUT` fails.
 - Expired `uploadUrl` recovery, retry queue, idempotency keys and resumable uploads are not
   defined.
-- Apollo cache/refetch behavior after successful `createPost` is not defined.
+- Successful `createPost` uses the targeted Feed/Profile/Public Home synchronization described
+  above; synchronization failure is isolated from publish success.
 - Backend error codes/messages for storage validation failures are not finalized.

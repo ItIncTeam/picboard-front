@@ -3,6 +3,7 @@ export {
   feed,
   feedQuery,
   post,
+  PROFILE_POSTS_PAGE_SIZE,
   profilePosts,
   profilePostsQuery,
   updatePostDescription,

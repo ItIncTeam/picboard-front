@@ -1,13 +1,15 @@
 'use client'
 
+import { type ReactNode } from 'react'
+
 import { useSession } from '@/features/auth/session-management'
 import { AdaptiveAppShell } from '@/widgets/adaptive-app-shell'
 
-type ProfileRouteShellProps = Readonly<{
-  children: React.ReactNode
+type AppRouteShellProps = Readonly<{
+  children: ReactNode
 }>
 
-export function ProfileRouteShell({ children }: ProfileRouteShellProps) {
+export function AppRouteShell({ children }: AppRouteShellProps) {
   const { status } = useSession()
   const isAuthenticated = status === 'authenticated'
   const isBootstrapping = status === 'bootstrapping'

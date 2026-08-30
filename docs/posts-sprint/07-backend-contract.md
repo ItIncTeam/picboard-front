@@ -323,8 +323,9 @@ Current frontend flow:
 7. Call `completeUpload`.
 8. Verify `READY` status for every selected file.
 9. Call `createPost`.
-10. Start isolated post-create synchronization: evict `ROOT_QUERY.feed`, refetch the active Apollo
-    `Feed` query and call fixed-path `revalidatePath('/')` through a Server Action.
+10. Start isolated post-create synchronization: evict `ROOT_QUERY.feed` and the created post
+    owner's first `profilePosts(first: 8)` page, refetch the active Apollo `Feed` query and call
+    fixed-path `revalidatePath('/')` through a Server Action.
 11. Reset `CreatePostState` and close without waiting for synchronization.
 12. Log Feed and Public Home synchronization failures separately without exposing publish retry.
 
@@ -332,8 +333,8 @@ Current frontend flow:
 
 Current frontend flow:
 
-1. Owner-only Post Details menu will open the independent `features/delete-post` flow after Post
-   Details integration.
+1. Owner-only Post Details menu opens the independent `features/delete-post` flow through its
+   trigger boundary.
 2. `DeletePostConfirm` calls the existing `deletePost(input: { postId })` mutation.
 3. Delete mutation errors are shown as deletion errors and keep the user on the post.
 4. After a successful delete, post-success synchronization errors are logged/isolated and do not
@@ -354,14 +355,7 @@ are implementation details, not backend schema blockers:
    `completeUpload`, and failed `createPost`;
 2. backend error codes/messages for unsupported type, file too large, too many files, auth failure
    and storage validation failure;
-3. whether frontend should request width/height or other media metadata in post rendering queries;
-4. cache/refetch strategy after edit;
-5. profile posts synchronization after create. The active Apollo `Feed` query is refetched after a
-   successful create, while Public Home is invalidated independently and keeps ISR with
-   `revalidate = 60`.
-
-Live verification of this successful post-create path remains blocked while backend `createPost`
-returns `Files service timeout`.
+3. whether frontend should request width/height or other media metadata in post rendering queries.
 
 ## Implementation Boundaries
 
