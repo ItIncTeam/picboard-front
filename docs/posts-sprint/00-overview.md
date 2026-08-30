@@ -153,11 +153,9 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
 
 - Crop canvas export is production-ready, including sequential multi-image processing and async
   stale-result protection. Full end-to-end Create Post still depends on the filters export PR.
-- Apollo cache/refetch behavior after delete is implemented for Feed, Profile posts, Public Home
-  and cached Post details. Update cache/refetch strategy and profile synchronization after create
-  remain separate follow-up work.
-- Live verification of successful post-create synchronization is blocked while backend
-  `createPost` returns `Files service timeout`.
+- Apollo synchronization is implemented for create, edit and delete. Create evicts Feed and the
+  created post owner's first `profilePosts(first: 8)` page; all mutations invalidate Public Home.
+  Delete also evicts cached Post details and Profile posts.
 - Partial upload failure behavior is fail-fast. Whether already uploaded files should be completed,
   retried or cleaned up after a later `PUT` failure needs backend/product clarification.
 - Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
@@ -190,7 +188,7 @@ widgets/
 features/
   create-post
   edit-post
-  delete-post      -> follow-up PR after post details/backend contract
+  delete-post      -> owner-only Post Details menu and confirmation flow
 
 entities/
   post
@@ -245,7 +243,8 @@ Rules:
 - Post details composition loads `post(id)` on `/posts/[postId]` and owner Edit Post uses
   `updatePostDescription`, then invalidates Public Home through `revalidatePublicHome`. Close uses
   `getSafeReturnToPath` with fallback `/main`. Profile cards pass `returnTo=/profile/[userId]`.
-  Delete remains a separate follow-up behind the same owner `...` menu.
+  The same owner `...` menu opens `DeletePostFlow`; successful deletion synchronizes cached post
+  surfaces and redirects to `/main`.
 - Render attachments only from `PostAttachmentEntity.file?.url`; skip attachments with `file: null`.
 
 ### Dev 5

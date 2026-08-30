@@ -147,7 +147,7 @@ Use only for primitives and infrastructure:
 ### `DeletePostFlow`
 
 - Lives in `features/delete-post`.
-- Exposes the Delete Post trigger boundary for future owner-only Post Details menu integration.
+- Exposes the Delete Post trigger boundary used by the owner-only Post Details menu.
 - Uses shared modal/dialog primitives for confirmation.
 - Calls the existing `deletePost` API through the post entity public API.
 - After a successful delete, synchronizes cached Feed/Profile posts and invalidates Public Home
@@ -230,8 +230,8 @@ Differences:
   goes to `/main`; `router.back()` is not used.
 - Profile `PostGrid` passes `returnTo=/profile/[userId]` into `PostCard`, so closing details returns
   to that profile. Other grids omit `returnTo` and keep the `/main` fallback.
-- Delete remains out of this composition and is owned by the separate delete-post follow-up. The
-  owner `...` menu already has a slot for Delete Post next to Edit Post.
+- The owner `...` menu passes its Delete action to `DeletePostFlow`; the flow owns confirmation,
+  mutation, synchronization and redirect without another ownership check.
 
 ## Testing checklist
 

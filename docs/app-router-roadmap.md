@@ -203,8 +203,8 @@ Route adapter передает `postId` в `views/post-details-page`. View за�
 определяется сравнением session user id с `PostEntity.ownerId`. Закрытие использует существующий
 `getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. `router.back()` для details не
 используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Меню `...` одно на
-владельца и уже принимает соседний `Delete Post` без второй проверки владельца; сам delete flow в
-этот route пока не входит.
+владельца и передаёт соседний `Delete Post` в `DeletePostFlow` без второй проверки владельца;
+confirmation, synchronization и redirect остаются внутри delete flow.
 
 ## Providers
 

@@ -236,7 +236,8 @@
 
 - Retry/idempotency for expired `uploadUrl`, failed storage `PUT`, failed `completeUpload` and
   failed `createPost` remains open.
-- Cache/refetch strategy after create, update and delete remains open.
+- Create, update and delete use targeted Feed/Profile cache synchronization and Public Home
+  invalidation; post-success synchronization does not turn a successful mutation into failure.
 
 ---
 
