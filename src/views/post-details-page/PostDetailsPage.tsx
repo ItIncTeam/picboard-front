@@ -117,7 +117,7 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
   const isOwner =
     sessionStatus === 'authenticated' && sessionUser?.id === currentState.entity.ownerId
 
-  const renderCarousel = () => <PublicPostCarousel media={displayPost.images} />
+  const renderCarousel = () => <PublicPostCarousel fit="contain" media={displayPost.images} />
 
   return (
     <>

@@ -21,6 +21,10 @@
   object-fit: cover;
 }
 
+.carousel[data-fit='contain'] .mediaImage {
+  object-fit: contain;
+}
+
 .mediaPlaceholder {
   display: grid;
   place-items: center;
