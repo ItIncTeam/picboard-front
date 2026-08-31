@@ -263,6 +263,7 @@ describe('PostDetailsPage', () => {
       'B',
     )
     expect(document.body.querySelector('img[alt="beach.jpg"]')).toBeInstanceOf(HTMLImageElement)
+    expect(document.body.querySelector('[data-fit="contain"]')).toBeInstanceOf(HTMLDivElement)
     expect(document.body.querySelector('button[aria-label="Show next image"]')).toBeInstanceOf(
       HTMLButtonElement,
     )

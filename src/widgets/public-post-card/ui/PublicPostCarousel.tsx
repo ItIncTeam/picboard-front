@@ -7,11 +7,18 @@ import { useState } from 'react'
 import type { PostImage } from '@/entities/post'
 import styles from '../public-post-card.module.css'
 
+type PublicPostCarouselFit = 'contain' | 'cover'
+
 type PublicPostCarouselProps = {
+  fit?: PublicPostCarouselFit
   media: PostImage[]
 }
 
-export function PublicPostCarousel({ media }: PublicPostCarouselProps) {
+const THUMBNAIL_IMAGE_SIZES =
+  '(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 45vw, 234px'
+const DETAILS_IMAGE_SIZES = '(max-width: 720px) 100vw, 50vw'
+
+export function PublicPostCarousel({ fit = 'cover', media }: PublicPostCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const hasMultipleMedia = media.length > 1
   const safeActiveIndex = Math.min(activeIndex, Math.max(media.length - 1, 0))
@@ -34,12 +41,12 @@ export function PublicPostCarousel({ media }: PublicPostCarouselProps) {
   }
 
   return (
-    <div className={styles.carousel}>
+    <div className={styles.carousel} data-fit={fit}>
       <Image
         alt={activeMedia.alt || 'Public post image'}
         className={styles.mediaImage}
         fill
-        sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 45vw, 234px"
+        sizes={fit === 'contain' ? DETAILS_IMAGE_SIZES : THUMBNAIL_IMAGE_SIZES}
         src={activeMedia.url}
         unoptimized
       />

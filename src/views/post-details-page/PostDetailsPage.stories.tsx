@@ -26,9 +26,9 @@ export default meta
 type Story = StoryObj
 
 const storyImages: PostImage[] = [
-  { alt: 'Story post image 1', id: 'story-image-1', url: '/storybook/post-1.svg' },
-  { alt: 'Story post image 2', id: 'story-image-2', url: '/storybook/post-2.svg' },
-  { alt: 'Story post image 3', id: 'story-image-3', url: '/storybook/post-3.svg' },
+  { alt: '16:9 landscape fixture', id: 'story-image-1', url: '/storybook/post-16-9.svg' },
+  { alt: '4:5 portrait fixture', id: 'story-image-2', url: '/storybook/post-4-5.svg' },
+  { alt: '1:1 square fixture', id: 'story-image-3', url: '/storybook/post-1.svg' },
 ]
 
 const createdAt = '2026-08-28T12:00:00.000Z'
@@ -67,7 +67,7 @@ function PostDetailsPreview({ startInEdit = false }: { startInEdit?: boolean }) 
   const [entity, setEntity] = useState(() => createMockPostEntity('Publication description'))
   const [isEditOpen, setIsEditOpen] = useState(startInEdit)
 
-  const renderCarousel = () => <PublicPostCarousel media={storyImages} />
+  const renderCarousel = () => <PublicPostCarousel fit="contain" media={storyImages} />
 
   return (
     <>

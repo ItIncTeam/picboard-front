@@ -129,6 +129,8 @@ Use only for primitives and infrastructure:
 - Lives in `entities/post/ui`.
 - Displays carousel slot, mapped post author, description and date.
 - Route-level loading, owner menu and edit composition live in `views/post-details-page`.
+- Details and Edit reuse `PublicPostCarousel` with `fit="contain"` so the cropped export is not
+  recropped. Public Home keeps the default thumbnail `cover` slot.
 
 ### `EditPostForm`
 
