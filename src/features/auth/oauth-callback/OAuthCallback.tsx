@@ -30,7 +30,7 @@ export function OAuthCallback() {
 
   return (
     <section className={styles.root} aria-busy={isLoading || undefined}>
-      {isLoading && !errorCode && !providerError ? (
+      {!errorCode && !providerError ? (
         <>
           <Title level="h1">Completing sign in</Title>
           <Text color="var(--color-text-secondary)">

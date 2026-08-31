@@ -95,6 +95,15 @@ describe('OAuthCallback', () => {
     expect(oauthMocks.completeOAuthAuth).toHaveBeenCalledWith({ code: 'backend-code' })
   })
 
+  it('shows completing state before exchange reports an error', () => {
+    const view = renderOAuthCallback(new URLSearchParams({ code: 'backend-code' }))
+
+    mountedRoots.push(view)
+
+    expect(view.container.textContent).toContain('Completing sign in')
+    expect(view.container.textContent).not.toContain('Something went wrong')
+  })
+
   it('shows missing-code content when hook reports no_code', () => {
     oauthMocks.errorCode = 'no_code'
 
