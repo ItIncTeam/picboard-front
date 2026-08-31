@@ -10,6 +10,8 @@ export {
   type DeletePostInput,
   type FeedQueryData,
   type ProfilePostsInput,
+  type ProfilePostsQueryData,
+  type ProfilePostsQueryVariables,
   type UpdatePostDescriptionInput,
 } from './api/postsApi'
 export { getPublicHomeQueryData, type PublicHomeQueryData } from './api/publicHomeApi'

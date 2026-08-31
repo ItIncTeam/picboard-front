@@ -86,8 +86,12 @@ type PostResponse = {
   post: PostEntity | null
 }
 
-type ProfilePostsResponse = {
+export type ProfilePostsQueryData = {
   profilePosts: PostConnection
+}
+
+export type ProfilePostsQueryVariables = {
+  input: ProfilePostsInput
 }
 
 type UpdatePostDescriptionResponse = {
@@ -153,7 +157,7 @@ export const post = async (id: string): Promise<PostEntity | null> => {
 export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnection> => {
   assertProfilePostsFirst(input.first)
 
-  const response = await apolloClient.query<ProfilePostsResponse, { input: ProfilePostsInput }>({
+  const response = await apolloClient.query<ProfilePostsQueryData, ProfilePostsQueryVariables>({
     query: profilePostsQuery,
     variables: {
       input,

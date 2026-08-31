@@ -17,11 +17,15 @@ type QueryResult = {
 
 const apolloMocks = vi.hoisted(() => ({
   result: null as unknown as QueryResult,
+  useQuery: vi.fn(),
 }))
 
 vi.mock('@apollo/client/react', () => ({
   ApolloProvider: ({ children }: { children: React.ReactNode }) => children,
-  useQuery: () => apolloMocks.result,
+  useQuery: (...args: unknown[]) => {
+    apolloMocks.useQuery(...args)
+    return apolloMocks.result
+  },
 }))
 
 vi.mock('next/link', () => ({
@@ -117,6 +121,7 @@ describe('MainPage', () => {
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     refetch.mockClear()
+    apolloMocks.useQuery.mockReset()
     apolloMocks.result = { loading: false, refetch }
   })
 
@@ -137,6 +142,73 @@ describe('MainPage', () => {
     expect(view.container.querySelector('[aria-label="Loading publications"]')).toBeInstanceOf(
       HTMLElement,
     )
+  })
+
+  it('polls the feed every minute through Apollo', () => {
+    const view = renderMainPage()
+    mountedRoots.push(view)
+
+    expect(apolloMocks.useQuery).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        notifyOnNetworkStatusChange: false,
+        pollInterval: 60_000,
+      }),
+    )
+  })
+
+  it('keeps usable feed data visible while Apollo refreshes it', () => {
+    apolloMocks.result = {
+      data: { feed: [createPost('existing-post')], usersCount: 1 },
+      loading: true,
+      refetch,
+    }
+
+    const view = renderMainPage()
+    mountedRoots.push(view)
+
+    expect(view.container.querySelector('[data-post-id="existing-post"]')).toBeInstanceOf(
+      HTMLElement,
+    )
+    expect(view.container.querySelector('[aria-label="Loading publications"]')).toBeNull()
+  })
+
+  it('keeps usable feed data visible after a transient background error', () => {
+    apolloMocks.result = {
+      data: { feed: [createPost('existing-post')], usersCount: 1 },
+      error: new Error('Polling failed'),
+      loading: false,
+      refetch,
+    }
+
+    const view = renderMainPage()
+    mountedRoots.push(view)
+
+    expect(view.container.querySelector('[data-post-id="existing-post"]')).toBeInstanceOf(
+      HTMLElement,
+    )
+    expect(view.container.textContent).not.toContain("Couldn't load publications")
+  })
+
+  it('renders a fresh polling result without remounting the feed', () => {
+    apolloMocks.result = {
+      data: { feed: [createPost('existing-post')], usersCount: 1 },
+      loading: false,
+      refetch,
+    }
+    const view = renderMainPage()
+    mountedRoots.push(view)
+
+    apolloMocks.result = {
+      data: { feed: [createPost('new-post'), createPost('existing-post')], usersCount: 1 },
+      loading: false,
+      refetch,
+    }
+    act(() => view.root.render(<MainPage />))
+
+    expect(
+      Array.from(view.container.querySelectorAll('article')).map((card) => card.dataset.postId),
+    ).toEqual(['new-post', 'existing-post'])
   })
 
   it('preserves backend order and renders sorted attachments through the carousel', () => {
@@ -200,6 +272,31 @@ describe('MainPage', () => {
     })
 
     expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the feed error state without an unhandled rejection when manual Retry fails', async () => {
+    const retryPromise = Promise.reject(new Error('Retry failed'))
+    const retryCatch = vi.spyOn(retryPromise, 'catch')
+    const rejectedRefetch = vi.fn(() => retryPromise)
+    apolloMocks.result = {
+      error: new Error('Gateway unavailable'),
+      loading: false,
+      refetch: rejectedRefetch,
+    }
+
+    const view = renderMainPage()
+    mountedRoots.push(view)
+
+    await act(async () => {
+      Array.from(view.container.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Try again')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    expect(rejectedRefetch).toHaveBeenCalledTimes(1)
+    expect(retryCatch).toHaveBeenCalledTimes(1)
+    expect(view.container.textContent).toContain("Couldn't load publications")
   })
 
   it('skips nullable files without breaking the feed card', () => {

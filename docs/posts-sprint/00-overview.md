@@ -133,13 +133,15 @@ Posts Sprint GraphQL operations must use the gateway endpoint for the active env
   `createdAt DESC` order.
 - Public Home ISR with `revalidate = 60`, restored after the gateway HTTPS/TLS certificate blocker
   was resolved.
-- Authenticated `/main` composition through Apollo `useQuery` and the existing global latest-four
-  `feed`; `/feed` is a compatibility redirect to `/main`.
-- Public `/profile/[userId]` composition with `user(id)`, owner-only Profile Settings and
-  cursor-paginated `profilePosts` in pages of 8 through native `IntersectionObserver`.
-- Successful `createPost` starts non-blocking post-create synchronization: Apollo evicts only
-  `ROOT_QUERY.feed` and refetches an active `Feed`, while a fixed-path Server Action invalidates
-  Public Home. Synchronization failures are logged and never reopen the publish flow.
+- Authenticated `/main` composition through Apollo `useQuery` with 60-second polling and the
+  existing global latest-four `feed`; `/feed` is a compatibility redirect to `/main`.
+- Public `/profile/[userId]` composition with `user(id)`, owner-only Profile Settings, an active
+  60-second-polled first `profilePosts` page and cursor pagination through native
+  `IntersectionObserver` plus Apollo `fetchMore`.
+- Successful `createPost` starts non-blocking post-create synchronization: Apollo evicts
+  `ROOT_QUERY.feed` and the owner's first Profile page, refetches affected active Feed/Profile
+  queries, while a fixed-path Server Action invalidates Public Home. Synchronization failures are
+  logged and never reopen the publish flow.
 
 ### In Progress
 

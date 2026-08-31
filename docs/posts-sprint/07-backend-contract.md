@@ -343,8 +343,8 @@ Current frontend flow:
 8. Verify `READY` status for every selected file.
 9. Call `createPost`.
 10. Start isolated post-create synchronization: evict `ROOT_QUERY.feed` and the created post
-    owner's first `profilePosts(first: 8)` page, refetch the active Apollo `Feed` query and call
-    fixed-path `revalidatePath('/')` through a Server Action.
+    owner's first `profilePosts(first: 8)` page, refetch the affected active Apollo Feed/Profile
+    queries and call fixed-path `revalidatePath('/')` through a Server Action.
 11. Reset `CreatePostState` and close without waiting for synchronization.
 12. Log Feed and Public Home synchronization failures separately without exposing publish retry.
 
