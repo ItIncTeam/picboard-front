@@ -274,6 +274,31 @@ describe('MainPage', () => {
     expect(refetch).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps the feed error state without an unhandled rejection when manual Retry fails', async () => {
+    const retryPromise = Promise.reject(new Error('Retry failed'))
+    const retryCatch = vi.spyOn(retryPromise, 'catch')
+    const rejectedRefetch = vi.fn(() => retryPromise)
+    apolloMocks.result = {
+      error: new Error('Gateway unavailable'),
+      loading: false,
+      refetch: rejectedRefetch,
+    }
+
+    const view = renderMainPage()
+    mountedRoots.push(view)
+
+    await act(async () => {
+      Array.from(view.container.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Try again')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    expect(rejectedRefetch).toHaveBeenCalledTimes(1)
+    expect(retryCatch).toHaveBeenCalledTimes(1)
+    expect(view.container.textContent).toContain("Couldn't load publications")
+  })
+
   it('skips nullable files without breaking the feed card', () => {
     apolloMocks.result = {
       data: {

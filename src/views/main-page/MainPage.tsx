@@ -26,7 +26,7 @@ export function MainPage() {
   })
 
   const retryFeed = () => {
-    void refetch()
+    void refetch().catch(() => undefined)
   }
 
   let content: React.ReactNode
