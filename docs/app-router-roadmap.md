@@ -193,9 +193,13 @@ Local UI modals живут рядом с feature или widget. Это confirmat
 
 ## Public Profile
 
-Route adapter передает реальный dynamic `userId` в `views/profile-page`. View загружает public
-`user(id)` и первые 8 `profilePosts`, затем использует `IntersectionObserver` и cursor
-`pageInfo.endCursor` для следующих страниц по 8 без frontend sorting или slicing.
+Route adapter передает реальный dynamic `userId` в `views/profile-page`. View отдельно загружает
+public `user(id)`, а первые 8 `profilePosts` держит активным Apollo query с polling раз в 60 секунд.
+`IntersectionObserver` и `fetchMore` загружают следующие страницы по cursor `pageInfo.endCursor`;
+видимая история старых страниц сохраняется локально с dedupe по post id. Если состав или порядок
+первой страницы меняется, вытесненные posts переносятся в историю, а cursor chain перестраивается
+от актуального `firstPage.pageInfo.endCursor`. Opaque backend cursors не считаются стабильными после
+вставок в начало connection.
 
 Sidebar строит My Profile URL из уже загруженного `SessionProvider.user.id`; отдельный `me` query
 для ссылки не выполняется. Owner-only `Profile Settings` определяется сравнением session user id с

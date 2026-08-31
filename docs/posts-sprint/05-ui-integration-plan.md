@@ -190,16 +190,24 @@ Differences:
 - `views/profile-page` composes the public user header and posts section.
 - `/profile/[userId]` lives in the public `(profile)` route group; anonymous users receive the
   public shell and authenticated users retain the reusable app Header/Sidebar shell.
-- `PostGrid` receives mapped `profilePosts` data in backend order.
-- The first request uses `first: 8`; a native `IntersectionObserver` requests subsequent cursor
-  pages with `after: pageInfo.endCursor`, so no additional dependency is required.
+- `PostGrid` receives mapped `profilePosts` data in backend order. The first `first: 8` page is an
+  active Apollo query and polls every 60 seconds, so targeted cache eviction after create refetches
+  an already mounted Profile immediately.
+- A native `IntersectionObserver` requests subsequent cursor pages through Apollo `fetchMore`.
+  Locally retained pagination data consists of visible older-post history, the current cursor-chain
+  `pageInfo` and a previous-first-page reconciliation snapshot. Rendering still uses only the
+  current Apollo first page plus deduplicated history. When the ordered first-page ids change,
+  displaced posts move into history and pagination restarts from the current first-page
+  `endCursor`; the frontend does not assume opaque backend cursors remain stable after head inserts.
+  An unchanged ordered id list keeps the existing cursor chain.
 - Sidebar My Profile uses the current session user id and does not issue another `me` request.
 
 ### Main protected page
 
 - `/main` is the canonical authenticated home. `views/main-page` composes the current global
   latest-four `feed` with Apollo `useQuery`, preserving backend order and using the shared auth
-  refresh/retry links.
+  refresh/retry links. The active query polls every 60 seconds and keeps usable cached data visible
+  while a poll is in flight.
 - `/feed` has no distinct personalized contract and redirects to `/main` for compatibility.
 - The protected feed does not use raw server fetch or ISR because the access token is memory-only.
   Pagination and personalized/social semantics remain backend-unsupported.

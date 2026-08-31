@@ -20,7 +20,10 @@ function toPublicPostCardModels(data: FeedQueryData): PublicPostCardModel[] {
 }
 
 export function MainPage() {
-  const { data, error, loading, refetch } = useQuery<FeedQueryData>(feedQuery)
+  const { data, error, loading, refetch } = useQuery<FeedQueryData>(feedQuery, {
+    notifyOnNetworkStatusChange: false,
+    pollInterval: 60_000,
+  })
 
   const retryFeed = () => {
     void refetch()
@@ -28,9 +31,9 @@ export function MainPage() {
 
   let content: React.ReactNode
 
-  if (loading) {
+  if (loading && !data) {
     content = <PostGrid isLoading skeletonCount={4} />
-  } else if (error) {
+  } else if (error && !data) {
     content = <PostGrid isError onRetry={retryFeed} />
   } else {
     const posts = data ? toPublicPostCardModels(data) : []
