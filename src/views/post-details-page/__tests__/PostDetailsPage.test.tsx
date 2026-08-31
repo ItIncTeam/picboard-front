@@ -367,6 +367,81 @@ describe('PostDetailsPage', () => {
     expect(synchronizationMocks.synchronizeDeletedPost).toHaveBeenCalledWith('post-1')
   })
 
+  it('deletes back to a safe returnTo path from profile', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.post.mockResolvedValue(createPost())
+    apiMocks.deletePost.mockResolvedValue(true)
+    navigationMocks.searchParams = new URLSearchParams({ returnTo: '/profile/user-1' })
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Delete Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Delete Post')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(getDialogText()).toContain('Are you sure you want to delete this post?'),
+    )
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Yes')
+        ?.click()
+    })
+
+    await waitFor(() => expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/user-1'))
+    expect(apiMocks.deletePost).toHaveBeenCalledWith({ postId: 'post-1' })
+  })
+
+  it('falls back to /main when deleting with an unsafe returnTo', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.post.mockResolvedValue(createPost())
+    apiMocks.deletePost.mockResolvedValue(true)
+    navigationMocks.searchParams = new URLSearchParams({ returnTo: '//evil.example' })
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Delete Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Delete Post')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(getDialogText()).toContain('Are you sure you want to delete this post?'),
+    )
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Yes')
+        ?.click()
+    })
+
+    await waitFor(() => expect(navigationMocks.replace).toHaveBeenCalledWith('/main'))
+  })
+
   it('hides Edit and Delete actions for an authenticated user who does not own the post', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'other-user'

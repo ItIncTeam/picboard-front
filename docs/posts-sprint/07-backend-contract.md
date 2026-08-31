@@ -362,8 +362,9 @@ Current frontend flow:
 6. Active `Feed` and `ProfilePosts` queries are refetched when present.
 7. Public Home is invalidated through fixed-path `revalidatePath('/')` exposed from the post entity
    server-only entrypoint.
-8. The flow redirects to `/main` after successful deletion regardless of post-success callback or
-   synchronization failures.
+8. After successful deletion the flow redirects to the sanitized `returnTo` from Post Details,
+   otherwise `/main`. Missing or unsafe `returnTo` falls back to `/main` regardless of post-success
+   callback or synchronization failures.
 
 ## Current Open Integration Questions
 

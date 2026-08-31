@@ -246,7 +246,7 @@ Rules:
   `updatePostDescription`, then invalidates Public Home through `revalidatePublicHome`. Close uses
   `getSafeReturnToPath` with fallback `/main`. Profile cards pass `returnTo=/profile/[userId]`.
   The same owner `...` menu opens `DeletePostFlow`; successful deletion synchronizes cached post
-  surfaces and redirects to `/main`.
+  surfaces and returns through the same sanitized `returnTo` as close.
 - Render attachments only from `PostAttachmentEntity.file?.url`; skip attachments with `file: null`.
 
 ### Dev 5

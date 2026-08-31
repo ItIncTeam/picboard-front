@@ -211,9 +211,10 @@ Route adapter передает `postId` в `views/post-details-page`. View за�
 показывает carousel / description / дату и fallback автора `User`. Owner-only `Edit Post`
 определяется сравнением session user id с `PostEntity.ownerId`. Закрытие использует существующий
 `getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. `router.back()` для details не
-используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Меню `...` одно на
-владельца и передаёт соседний `Delete Post` в `DeletePostFlow` без второй проверки владельца;
-confirmation, synchronization и redirect остаются внутри delete flow.
+используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Close и успешный
+delete используют один и тот же sanitized `returnTo`. Меню `...` одно на владельца и передаёт соседний
+`Delete Post` в `DeletePostFlow` без второй проверки владельца; confirmation, synchronization и
+redirect остаются внутри delete flow, а view передаёт уже безопасный `returnTo`.
 
 ## Providers
 
