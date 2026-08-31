@@ -2,8 +2,8 @@
 
 Create Post должен работать в двух shell:
 
-- route-based modal: `app/(protected)/(main)/@modal/(.)posts/create/page.tsx`;
-- fallback page: `app/(protected)/(main)/posts/create/page.tsx`.
+- route-based modal: `app/(app-shell)/@modal/(.)posts/create/page.tsx`;
+- fallback page: `app/(app-shell)/(protected)/(main)/posts/create/page.tsx`.
 
 Оба shell должны использовать один и тот же `CreatePostFlow` из `features/create-post`.
 
@@ -373,8 +373,9 @@ Backend create integration is implemented in the current Create Post flow:
 - call `completeUpload` with uploaded files as `CompleteUploadInput[]`, one `{ fileId }` item per
   successfully uploaded file;
 - call `createPost` only after every selected file is `READY`;
-- after successful `createPost`, evict only `ROOT_QUERY.feed`, refetch the active Apollo `Feed`
-  query and invalidate Public Home through fixed-path `revalidatePath('/')`;
+- after successful `createPost`, evict `ROOT_QUERY.feed` and the owner's first Profile page,
+  refetch affected active Apollo Feed/Profile queries and invalidate Public Home through fixed-path
+  `revalidatePath('/')`;
 - run Feed synchronization and Public Home invalidation as isolated background work that cannot
   turn an already successful create into a publish error;
 - reset and close through the current modal/page shell after successful `createPost`.
@@ -382,7 +383,7 @@ Backend create integration is implemented in the current Create Post flow:
 Do not add GraphQL Upload, binary upload through GraphQL, order-based descriptor mapping, display
 usage of `uploadUrl` for display or fake GraphQL operations.
 
-Profile post synchronization remains separate follow-up work.
+Profile post synchronization is part of the implemented publish flow.
 
 ## Current implementation
 
@@ -391,20 +392,12 @@ the selected preset and final artifact per `image.id`, always process non-normal
 immutable cropped base, reject stale async results and keep Publication navigation locked until all
 final artifacts are ready.
 
-## Known limitations
+## Known follow-ups / non-blockers
 
-- Live verification of successful post-create synchronization is blocked while the backend
-  `createPost` flow returns `Files service timeout`.
 - Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
-  previously uploaded files should be completed, retried or cleaned up.
+  previously uploaded or orphan `READY` files should be completed, retried or cleaned up.
 - Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
   `completeUpload` and failed `createPost` remains open.
-
-## Mobile behavior
-
-Desktop behavior is confirmed as a route-based modal over `(main)`. Mobile behavior is not confirmed.
-The likely direction is a fullscreen wizard, but it needs a separate product/design decision before
-implementation.
 
 image.file
 │

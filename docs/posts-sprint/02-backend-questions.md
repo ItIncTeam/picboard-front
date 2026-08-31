@@ -1,11 +1,10 @@
 # Backend Questions For Posts Sprint
 
-Этот документ отделяет уже подтвержденный backend contract от вопросов, которые всё еще нельзя
-додумывать на frontend.
+Этот документ фиксирует ответы на исходные backend questions Posts sprint.
 
 Create Post production code now includes create-post scoped GraphQL helpers, the feature-local
-upload service and default publish integration. Apollo cache logic and non-create posts operations
-remain follow-up implementation work.
+upload service and default publish integration. Posts queries, mutations, Apollo synchronization
+and Public Home integration are implemented.
 
 Full confirmed contract: [Posts Backend Contract](./07-backend-contract.md).
 
@@ -255,34 +254,22 @@ Backend-confirmed display URL contract.
 
 Frontend must not use `uploadUrl` as a display URL.
 
-## Remaining Questions
+## Handoff status
 
-No schema names are open for the current Posts Sprint handoff. Remaining items are implementation
-or product/cache details.
+No schema or integration blockers remain for the completed Posts sprint.
 
 ## Known limitations
 
 - Retry/idempotency strategy is still open for expired `uploadUrl`, failed storage `PUT`, failed
-  `completeUpload` and failed `createPost`.
+  `completeUpload`, failed `createPost` and orphan `READY` file cleanup.
 - Partial upload failure behavior is not confirmed. Current frontend upload service fails fast if a
   storage `PUT` fails.
-- Backend error codes/messages are not finalized for unsupported type, oversized file, too many
-  files, auth failure and storage validation failure.
-- Cache/refetch strategy is not finalized for create, update, delete, profile, feed and details
-  surfaces.
-- Public access and composition rules for the Public Main data remain product/integration work;
-  the count field itself is available as `usersCount: Int!`.
+- Backend avatar data exposes `profilePictureFileId`, but no usable display URL contract.
 
-## Follow-up Questions
+## Known follow-ups / non-blockers
 
-These are not blockers for documenting the current backend contract, but should be clarified before
-production integration:
+These require separate backend/product decisions:
 
 - retry/idempotency strategy for expired `uploadUrl`, failed storage `PUT`, failed
-  `completeUpload`, and failed `createPost`;
-- backend error codes/messages for unsupported type, file too large, too many files, auth failure
-  and storage validation failure;
-- whether frontend should request width/height or other media metadata in posts queries;
-- edit/delete permissions and error model;
-- cache/refetch strategy for create, update, delete, profile, feed and details surfaces;
-- public access and cache policy for Public Main queries.
+  `completeUpload` and failed `createPost`, including orphan `READY` file cleanup;
+- a usable avatar display URL contract.

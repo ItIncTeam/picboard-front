@@ -185,10 +185,10 @@ step, range and reset semantics are confirmed; do not render a non-functional Fi
 Recommended placement:
 
 ```txt
-app/(protected)/(main)/@modal/(.)posts/create/page.tsx
+app/(app-shell)/@modal/(.)posts/create/page.tsx
   Thin route adapter.
 
-app/(protected)/(main)/posts/create/page.tsx
+app/(app-shell)/(protected)/(main)/posts/create/page.tsx
   Thin fallback route adapter.
 
 widgets/create-post-modal
@@ -213,13 +213,16 @@ State ownership:
 - Dev 2 and Dev 3 should build upload/crop/filter UI against that contract.
 - Any shared state shape change needs agreement with Dev 1 before implementation.
 
-## Recommended implementation order
+## Historical implementation order
+
+The sequence below is complete for the current Posts scope except for zoom, which remains
+product-defined and non-blocking.
 
 1. Convert the current skeleton into a real `CreatePostFlow` shell with static step layout.
 2. Match the modal header, back/next controls and desktop dimensions from Figma.
 3. Add upload selection and object URL lifecycle.
 4. Add crop step with `react-advanced-cropper`.
-5. Add aspect ratio menu and zoom controls.
+5. Add the aspect ratio menu; keep zoom out until its product semantics are defined.
 6. Add multi-image media strip and carousel behavior.
 7. Add filters grid and preview.
 8. Add final edited `File` export.
@@ -242,26 +245,7 @@ State ownership:
   schema and Apollo work.
 - Using GraphQL Upload would contradict the backend-confirmed direct storage upload architecture.
 
-## Open product questions
+## Remaining product boundary
 
-- Should mobile render as a full-screen create flow instead of a desktop-sized centered modal?
-- Should the UI language be English, Russian, or current app locale? Figma currently mixes strings.
-- Which filter presets are required for MVP, and do they need exact Instagram-style parity?
-- Should users be allowed to reorder images in MVP?
-- After successful publish, should the user stay on the current page, go to profile, or open the new
-  post details route?
-- Should the fallback `/posts/create` page look like a full page wizard or keep the same modal-sized
-  card centered in page content?
-
-## Team recommendations
-
-- Keep the first implementation PR visual but non-functional: modal shell, header, static steps and
-  no dependencies.
-- Keep the first Posts Consumption PR limited to `entities/post`, `PostCard`, `PostGrid` and
-  `PostDetails`.
-- Split dependency installation into separate PRs with clear usage immediately following.
-- Treat Dev 1 as Create Flow Owner for `CreatePostState`, `CreatePostImage` and `CreatePostStep`
-  to avoid upload/crop/filter PRs inventing incompatible local models.
-- Dev 2/3 should not change the shared state shape without Dev 1 approval.
-- Review Figma text before implementation and do not copy mixed-language strings blindly.
-- Move edit/delete, Main Page and infinite scroll into follow-up PRs.
+The Figma review has no open Posts sprint blocker. Create zoom remains intentionally unimplemented
+until product defines its step, range and reset semantics.

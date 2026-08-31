@@ -4,6 +4,9 @@ This plan maps posts sprint code to the current FSD-like project structure. It f
 [Architecture](../architecture.md), [Layer Ownership](../layer-ownership.md), and
 [App Router roadmap](../app-router-roadmap.md).
 
+Status: implemented and verified. The Posts sprint is complete and the final integration review is
+`DEV READY`.
+
 Create Post Figma notes are tracked in [Create Post Figma Review](./06-figma-review.md).
 
 ## FSD placement
@@ -12,10 +15,9 @@ Create Post Figma notes are tracked in [Create Post Figma Review](./06-figma-rev
 
 Use for route adapters and modal slots only:
 
-- `src/app/(protected)/(main)/@modal/(.)posts/create/page.tsx`;
-- `src/app/(protected)/(main)/posts/create/page.tsx`;
-- `src/app/(protected)/(main)/posts/[postId]/page.tsx`;
-- future route adapters if needed.
+- `src/app/(app-shell)/@modal/(.)posts/create/page.tsx`;
+- `src/app/(app-shell)/(protected)/(main)/posts/create/page.tsx`;
+- `src/app/(app-shell)/(protected)/(main)/posts/[postId]/page.tsx`.
 
 Do not put forms, API calls, stores or complex UI in `app/`.
 
@@ -34,9 +36,8 @@ Use for page composition:
 Use for large UI composition:
 
 - `widgets/create-post-modal`;
-- `widgets/posts-feed`;
-- `widgets/post-grid` if shared between profile and public/main;
-- future profile posts section widget if profile page needs a dedicated block.
+- `widgets/public-post-card`;
+- `widgets/public-posts-grid`.
 
 ### `features/`
 
@@ -48,12 +49,12 @@ Use for user actions:
 
 ### `entities/`
 
-Use first for frontend display skeletons, then for post data model after backend integration starts:
+Use for the shared Post model, mapping, API and entity UI:
 
 - `entities/post`;
-- `Post`, `PostImage`, `PostCard`, `PostGrid`, `PostDetails` as frontend display skeletons;
-- frontend mappers and type guards later if needed;
-- query fragments/types only after schema is agreed.
+- backend and mapped `Post` types;
+- GraphQL fragments and typed operations;
+- `PostCard`, `PostGrid` and `PostDetails`.
 
 ### `shared/`
 
@@ -80,18 +81,16 @@ Use only for primitives and infrastructure:
 - Lives in `features/create-post`.
 - Handles file selection, validation and object URL creation.
 - Does not call backend.
-- Owned by Dev 2.
-- Does not add real upload API helpers in upload UI work unless that PR explicitly owns backend
-  integration.
+- Upload API helpers and orchestration remain in the parent feature API/model boundaries.
 - Does not use GraphQL Upload.
 
 ### `CropStep`
 
 - Lives in `features/create-post`.
-- Uses `react-advanced-cropper` after dependency PR.
+- Uses `react-advanced-cropper`.
 - Saves crop settings into create flow state.
-- Owns crop toolbar, aspect ratio menu, zoom controls, active image navigation and media strip.
-- Owned by Dev 3 together with final edited `File` export.
+- Owns crop toolbar, aspect ratio menu, active image navigation and media strip.
+- Zoom remains outside the implemented scope until product semantics are defined.
 
 ### `FiltersStep`
 
@@ -105,9 +104,9 @@ Use only for primitives and infrastructure:
 
 - Lives in `features/create-post`.
 - Handles caption/tags UI and publish boundary.
-- Calls backend only after contract and API layer exist.
-- Future publish pipeline is: exported `File` -> `initiateUploadBatch` -> direct storage `PUT` ->
-  `completeUpload` -> `createPost`.
+- Keeps backend calls in the parent feature flow rather than in the step UI.
+- The implemented publish pipeline is: exported `File` -> `initiateUploadBatch` -> direct storage
+  `PUT` -> `completeUpload` -> `createPost`.
 
 ### `PostGrid`
 
@@ -165,8 +164,8 @@ Use only for primitives and infrastructure:
 - Lives in `features/create-post` or locally under `widgets/create-post-modal` depending on where
   `hasUnsavedData` is owned.
 - Opens only when `hasUnsavedData === true`.
-- Uses `Discard` and `Keep editing` until draft persistence is explicitly designed.
-- Does not implement `Save draft` in early sprint PRs.
+- Uses `Discard` and `Keep editing`.
+- Does not implement draft persistence.
 
 ## Modal and fallback page sharing
 
@@ -183,8 +182,8 @@ Differences:
 - modal shell owns desktop route-modal dimensions and may adjust width by step;
 - fallback page owns page-level spacing/title;
 - create flow owns state and step UI;
-- backend integration later lives in feature/model/api boundaries, not in route adapters;
-- backend integration must use `initiateUploadBatch`, direct storage `PUT`, `completeUpload`
+- backend integration lives in feature/model/api boundaries, not in route adapters;
+- backend integration uses `initiateUploadBatch`, direct storage `PUT`, `completeUpload`
   and `createPost`, not GraphQL Upload.
 
 ## Profile, main and details backend integration
@@ -257,7 +256,7 @@ Differences:
   unsaved data opens the existing confirm.
 - Fallback page renders same flow without modal close controls.
 - Post grid renders empty/loading/error/success states.
-- Delete confirm calls close/cancel handlers correctly before backend integration.
+- Delete confirm covers close/cancel, mutation failure and successful synchronization/navigation.
 - Delete redirects through `getSafeReturnToPath`: profile `returnTo` stays on profile, missing or
   unsafe `returnTo` falls back to `/main`.
 
@@ -274,6 +273,6 @@ Differences:
 - Remove selected image and verify preview disappears.
 - Close with no unsaved data: no confirm.
 - Close with unsaved data: confirm appears.
-- Profile page shows posts grid skeleton without backend calls.
+- Profile page loads the active first posts page and appends further pages through infinite scroll.
 - Public main page renders the real `usersCount + feed` response, distinguishes a successful empty
   feed from gateway failure, and delegates gateway failure recovery to the route error boundary.

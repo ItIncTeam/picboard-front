@@ -2,8 +2,8 @@
 
 Source of truth: backend-confirmed Posts Sprint contract.
 
-This document fixes the frontend integration target. Current implementation status is tracked in
-the sprint overview, frontend contracts and upload service plan.
+This document records the implemented frontend integration contract. The Posts sprint is complete;
+final status is tracked in the sprint overview.
 
 ## Gateway Endpoint
 
@@ -303,18 +303,18 @@ the display URL through `attachment.file.url`.
 usersCount: Int!
 ```
 
-The field is available for the Public Main registered-users count. Public access and cache policy
-remain integration decisions.
+The field is used by the implemented Public Home registered-users count. Public Home uses server
+rendering with ISR `revalidate = 60`.
 
 ## Frontend State Mapping
 
-Current target mapping:
+Current mapping:
 
 - `CreatePostImage.id` maps to backend `clientUploadId`;
 - `CreatePostImage.exported.file` is the file used for upload.
 
-Future backend integration state should track upload progress without treating temporary upload URLs
-as display URLs:
+Frontend integration state tracks upload progress without treating temporary upload URLs as display
+URLs:
 
 ```ts
 type CreatePostUploadIntegrationState = {
@@ -326,8 +326,7 @@ type CreatePostUploadIntegrationState = {
 }
 ```
 
-This state shape exists in current frontend types. The backend upload pipeline that writes these
-fields is still pending.
+This state shape is used by the implemented upload pipeline.
 
 ## Publish Pipeline
 
@@ -366,22 +365,18 @@ Current frontend flow:
    otherwise `/main`. Missing or unsafe `returnTo` falls back to `/main` regardless of post-success
    callback or synchronization failures.
 
-## Current Open Integration Questions
+## Known follow-ups / non-blockers
 
-The operation names, input names and entity names above are no longer blocked. Remaining questions
-are implementation details, not backend schema blockers:
+The implemented Posts contract is not blocked. Remaining questions require separate backend/product
+decisions:
 
 1. retry/idempotency strategy for expired `uploadUrl`, failed storage `PUT`, failed
-   `completeUpload`, and failed `createPost`;
-2. backend error codes/messages for unsupported type, file too large, too many files, auth failure
-   and storage validation failure;
-3. whether frontend should request width/height or other media metadata in post rendering queries.
+   `completeUpload` and failed `createPost`, including cleanup of orphan `READY` files;
+2. a usable avatar display URL contract instead of only `profilePictureFileId`.
 
-## Implementation Boundaries
+## Current invariants
 
-Do not change production code until the implementation PR starts.
-
-Do not add:
+Do not introduce:
 
 - GraphQL Upload;
 - binary upload through GraphQL;
