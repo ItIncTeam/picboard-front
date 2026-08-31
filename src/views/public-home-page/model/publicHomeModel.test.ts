@@ -40,6 +40,12 @@ function createPost(id: string, overrides: Partial<PostEntity> = {}): PostEntity
         sortOrder: 0,
       },
     ],
+    author: {
+      displayName: '  Public Author  ',
+      id: `owner-${id}`,
+      profilePictureFileId: 'avatar-file-id',
+      username: `author_${id}`,
+    },
     createdAt: '2026-08-05T10:00:00.000Z',
     description: `Description ${id}`,
     id,
@@ -60,7 +66,7 @@ describe('Public Home display model', () => {
     expect(model.usersCount).toBe(25)
   })
 
-  it('keeps every usable media item in sortOrder and applies a neutral author fallback', () => {
+  it('keeps every usable media item in sortOrder and maps the backend author', () => {
     const model = createPublicHomeDisplayModel({
       feed: [createPost('post-1')],
       usersCount: 1,
@@ -68,8 +74,10 @@ describe('Public Home display model', () => {
 
     expect(model.posts[0]).toMatchObject({
       author: {
-        avatarUrl: null,
-        name: 'User',
+        displayName: '  Public Author  ',
+        id: 'owner-post-1',
+        profilePictureFileId: 'avatar-file-id',
+        username: 'author_post-1',
       },
       media: [
         {
@@ -82,6 +90,6 @@ describe('Public Home display model', () => {
         },
       ],
     })
-    expect(model.posts[0]?.author.name).not.toContain('technical-owner')
+    expect(model.posts[0]?.author.username).not.toContain('technical-owner')
   })
 })

@@ -23,6 +23,7 @@ export type {
   MimeType as PostFileMimeType,
   PageInfo,
   PostAttachmentEntity,
+  PostAuthor,
   PostConnection,
   PostEdge,
   PostEntity,

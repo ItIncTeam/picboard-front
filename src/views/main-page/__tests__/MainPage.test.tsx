@@ -74,6 +74,12 @@ function createPost(id: string, overrides: Partial<PostEntity> = {}): PostEntity
         sortOrder: 0,
       },
     ],
+    author: {
+      displayName: null,
+      id: 'owner-1',
+      profilePictureFileId: 'avatar-file-1',
+      username: 'backend_author',
+    },
     createdAt: '2026-08-17T12:00:00.000Z',
     description: `Description ${id}`,
     id,
@@ -161,7 +167,8 @@ describe('MainPage', () => {
 
     expect(firstCard?.querySelector('img')?.getAttribute('alt')).toBe('post-2-second.jpg')
     expect(firstCard?.textContent).toContain('Description post-2')
-    expect(firstCard?.textContent).toContain('User')
+    expect(firstCard?.textContent).toContain('backend_author')
+    expect(firstCard?.querySelector('[aria-label="backend_author avatar"]')?.textContent).toBe('B')
   })
 
   it('renders an authenticated empty state for an empty successful feed', () => {

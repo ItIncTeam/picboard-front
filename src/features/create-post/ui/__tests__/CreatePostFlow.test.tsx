@@ -1750,6 +1750,12 @@ describe('CreatePostFlow', () => {
       ownerId: 'user-1',
       description: 'Ready to publish',
       attachments: [],
+      author: {
+        displayName: 'Backend Author',
+        id: 'user-1',
+        profilePictureFileId: null,
+        username: 'backend_author',
+      },
       createdAt: '2026-07-04T12:00:00.000Z',
       updatedAt: '2026-07-04T12:00:00.000Z',
     })
@@ -1791,6 +1797,12 @@ describe('CreatePostFlow', () => {
       ownerId: 'user-1',
       description: null,
       attachments: [],
+      author: {
+        displayName: 'Backend Author',
+        id: 'user-1',
+        profilePictureFileId: null,
+        username: 'backend_author',
+      },
       createdAt: '2026-07-04T12:00:00.000Z',
       updatedAt: '2026-07-04T12:00:00.000Z',
     })

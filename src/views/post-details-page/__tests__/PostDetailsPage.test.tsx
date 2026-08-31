@@ -113,6 +113,12 @@ function createPost(overrides: Partial<PostEntity> = {}): PostEntity {
         sortOrder: 1,
       },
     ],
+    author: {
+      displayName: 'Backend Author',
+      id: 'owner-1',
+      profilePictureFileId: 'avatar-file-1',
+      username: 'backend_author',
+    },
     createdAt: '2026-08-20T12:00:00.000Z',
     description: 'Original description',
     id: 'post-1',
@@ -244,7 +250,7 @@ describe('PostDetailsPage', () => {
     expect(apiMocks.post).toHaveBeenCalledTimes(2)
   })
 
-  it('renders carousel, fallback author, description and date', async () => {
+  it('renders carousel, backend author, description and date', async () => {
     apiMocks.post.mockResolvedValue(createPost())
 
     const view = renderPage()
@@ -252,7 +258,10 @@ describe('PostDetailsPage', () => {
 
     await waitFor(() => expect(getDialogText()).toContain('Original description'))
 
-    expect(getDialogText()).toContain('User')
+    expect(getDialogText()).toContain('Backend Author')
+    expect(document.body.querySelector('[aria-label="Backend Author avatar"]')?.textContent).toBe(
+      'B',
+    )
     expect(document.body.querySelector('img[alt="beach.jpg"]')).toBeInstanceOf(HTMLImageElement)
     expect(document.body.querySelector('button[aria-label="Show next image"]')).toBeInstanceOf(
       HTMLButtonElement,
@@ -260,7 +269,7 @@ describe('PostDetailsPage', () => {
     expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
   })
 
-  it('shows Edit Post only to the post owner and saves the description', async () => {
+  it('uses ownerId for owner actions and keeps backend author presentation in edit mode', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
     apiMocks.post.mockResolvedValue(createPost())
@@ -286,6 +295,7 @@ describe('PostDetailsPage', () => {
     })
 
     await waitFor(() => expect(getDialogText()).toContain('Save Changes'))
+    expect(getEditDialog().textContent).toContain('Backend Author')
 
     const textArea = document.body.querySelector('textarea')
 

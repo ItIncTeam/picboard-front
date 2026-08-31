@@ -21,7 +21,12 @@ type RenderResult = {
 }
 
 const post: PublicPostCardModel = {
-  author: { avatarUrl: null, name: 'User' },
+  author: {
+    displayName: '  Backend Author  ',
+    id: 'owner-1',
+    profilePictureFileId: 'avatar-file-1',
+    username: 'backend_author',
+  },
   createdAt: 'invalid',
   description: 'A'.repeat(120),
   id: 'post-1',
@@ -63,7 +68,7 @@ describe('PublicPostCard', () => {
     mountedRoots.push(view)
 
     const authorName = Array.from(view.container.querySelectorAll('span')).find(
-      (element) => element.textContent === 'User',
+      (element) => element.textContent === 'Backend Author',
     )
     const description = view.container.querySelector('p')
     const toggle = Array.from(view.container.querySelectorAll('button')).find(
@@ -76,6 +81,9 @@ describe('PublicPostCard', () => {
     expect(getComputedStyle(description as Element).fontSize).toBe('14px')
     expect(getComputedStyle(description as Element).lineHeight).toBe('24px')
     expect(getComputedStyle(toggle as Element).textDecorationLine).toBe('underline')
+    expect(view.container.querySelector('[aria-label="Backend Author avatar"]')?.textContent).toBe(
+      'B',
+    )
 
     act(() => toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 

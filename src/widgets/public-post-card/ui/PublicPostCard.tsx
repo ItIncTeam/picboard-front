@@ -1,5 +1,3 @@
-import Image from 'next/image'
-
 import { formatRelativePostTime } from '../lib/formatRelativePostTime'
 import type { PublicPostCardModel } from '../model/types'
 import styles from '../public-post-card.module.css'
@@ -11,19 +9,18 @@ type PublicPostCardProps = {
 }
 
 export function PublicPostCard({ post }: PublicPostCardProps) {
+  const authorName = post.author.displayName?.trim() || post.author.username
+  const avatarFallback = authorName.charAt(0).toUpperCase()
+
   return (
     <article className={styles.card} data-post-id={post.id}>
       <PublicPostCarousel media={post.media} />
 
       <div className={styles.authorRow}>
-        <span className={styles.avatar}>
-          {post.author.avatarUrl ? (
-            <Image alt="" fill sizes="36px" src={post.author.avatarUrl} unoptimized />
-          ) : (
-            <span aria-hidden>U</span>
-          )}
+        <span aria-label={`${authorName} avatar`} className={styles.avatar} role="img">
+          <span aria-hidden>{avatarFallback}</span>
         </span>
-        <span className={styles.authorName}>{post.author.name}</span>
+        <span className={styles.authorName}>{authorName}</span>
       </div>
 
       <time className={styles.createdAt} dateTime={post.createdAt}>

@@ -108,6 +108,12 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
         sortOrder: 0,
       },
     ],
+    author: {
+      displayName: 'Backend Author',
+      id: 'user-1',
+      profilePictureFileId: null,
+      username: 'backend_author',
+    },
     createdAt: '2026-07-04T12:00:00.000Z',
     description: 'Post description',
     id: 'post-1',
@@ -116,6 +122,8 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
     ...overrides,
   }
 }
+
+const POST_AUTHOR_FIELD_NAMES = ['id', 'username', 'displayName', 'profilePictureFileId']
 
 describe('posts GraphQL helpers', () => {
   afterEach(() => {
@@ -140,6 +148,7 @@ describe('posts GraphQL helpers', () => {
     expect(getOperationName(request.query)).toBe('Feed')
     expect(getRootFieldSelectionNames(request.query)).toEqual(['usersCount', 'feed'])
     expect(getVariableNames(request.query)).toEqual([])
+    expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
     expect(request.variables).toBeUndefined()
   })
 
@@ -176,6 +185,7 @@ describe('posts GraphQL helpers', () => {
     expect(getVariableNames(request.query)).toEqual(['id'])
     expect(request.variables).toEqual({ id: 'post-1' })
     expect(request.query.loc?.source.body).toContain('query Post($id: String!)')
+    expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
     expect(getFieldSelectionNames(request.query, 'attachments')).toEqual([
       'fileId',
       'sortOrder',
@@ -243,6 +253,7 @@ describe('posts GraphQL helpers', () => {
     expect(getVariableNames(request.query)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
     expect(getFieldSelectionNames(request.query, 'profilePosts')).toEqual(['edges', 'pageInfo'])
+    expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
     expect(getFieldSelectionNames(request.query, 'pageInfo')).toEqual([
       'startCursor',
       'endCursor',
@@ -323,6 +334,7 @@ describe('posts GraphQL helpers', () => {
 
     expect(getOperationName(request.mutation)).toBe('UpdatePostDescription')
     expect(getVariableNames(request.mutation)).toEqual(['input'])
+    expect(getFieldSelectionNames(request.mutation, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
     expect(request.variables).toEqual({ input })
   })
 

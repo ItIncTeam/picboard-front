@@ -220,7 +220,8 @@ preserve the returned post order and must not own an additional feed limit or so
 
 The backend currently exposes no separate authenticated/personalized feed. Authenticated `/main`
 therefore uses this same global latest-four field through Apollo Client, while `/feed` redirects to
-`/main`. Author profile, likes, comments, bookmarks and follow state are not part of this contract.
+`/main`. Each post includes its author identity; likes, comments, bookmarks and follow state are not
+part of this contract.
 
 ### `post`
 
@@ -229,6 +230,24 @@ post(id: String!): PostEntity
 ```
 
 `post` may return `null` when the backend cannot return an entity for the provided id.
+
+### Post author
+
+```graphql
+type PostEntity {
+  id: ID!
+  ownerId: String!
+  description: String
+  attachments: [PostAttachmentEntity!]!
+  author: User!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+```
+
+Post UI selects only `author.id`, `author.username`, `author.displayName` and
+`author.profilePictureFileId`. `profilePictureFileId` is an ID, not a display URL. Ownership and
+menu permissions continue to compare session user ID with `PostEntity.ownerId`.
 
 ## Display URL Contract
 

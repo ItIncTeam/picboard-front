@@ -1,4 +1,5 @@
-// Frontend display model for posts UI skeletons. This is not a backend contract.
+import type { PostAuthor } from './backendTypes'
+
 export type PostImage = {
   id: string
   alt: string
@@ -6,9 +7,10 @@ export type PostImage = {
 }
 
 export type Post = {
+  author: PostAuthor
   id: string
-  authorName: string
   caption?: string
   createdAtLabel?: string
   images: PostImage[]
+  ownerId: string
 }

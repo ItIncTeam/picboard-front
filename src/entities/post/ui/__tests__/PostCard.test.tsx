@@ -21,10 +21,16 @@ vi.mock('next/image', () => ({
 }))
 
 const post: Post = {
-  authorName: 'User',
+  author: {
+    displayName: 'Post Author',
+    id: 'owner-1',
+    profilePictureFileId: null,
+    username: 'post_author',
+  },
   caption: 'Caption',
   id: 'post-1',
   images: [{ alt: 'post-1.jpg', id: 'image-1', url: 'https://example.com/post-1.jpg' }],
+  ownerId: 'owner-1',
 }
 
 type RenderResult = {

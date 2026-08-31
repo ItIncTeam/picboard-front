@@ -8,10 +8,7 @@ export type PublicHomeDisplayModel = {
 
 export function createPublicHomeDisplayModel(data: PublicHomeQueryData): PublicHomeDisplayModel {
   const posts = mapPostEntitiesToPosts(data.feed).map((post) => ({
-    author: {
-      avatarUrl: null,
-      name: 'User',
-    },
+    author: post.author,
     createdAt: post.createdAtLabel ?? '',
     description: post.caption ?? '',
     id: post.id,

@@ -49,6 +49,12 @@ function createMockPostEntity(description: string): PostEntity {
       fileId: image.id,
       sortOrder: index,
     })),
+    author: {
+      displayName: 'Story Author',
+      id: 'owner-1',
+      profilePictureFileId: null,
+      username: 'story_author',
+    },
     createdAt,
     description,
     id: 'story-post',
@@ -75,7 +81,7 @@ function PostDetailsPreview({ startInEdit = false }: { startInEdit?: boolean }) 
         open
       >
         <PostDetails
-          authorName="User"
+          author={entity.author}
           caption={entity.description ?? undefined}
           createdAt={entity.createdAt}
           createdAtLabel={formatRelativePostTime(entity.createdAt)}
@@ -91,6 +97,7 @@ function PostDetailsPreview({ startInEdit = false }: { startInEdit?: boolean }) 
 
       {isEditOpen ? (
         <EditPostForm
+          author={entity.author}
           description={entity.description ?? ''}
           media={renderCarousel()}
           onCloseAction={() => setIsEditOpen(false)}

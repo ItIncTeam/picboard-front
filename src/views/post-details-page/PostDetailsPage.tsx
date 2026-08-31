@@ -131,7 +131,7 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
         open
       >
         <PostDetails
-          authorName="User"
+          author={displayPost.author}
           caption={displayPost.caption}
           createdAt={currentState.entity.createdAt}
           createdAtLabel={formatRelativePostTime(currentState.entity.createdAt)}
@@ -156,6 +156,7 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
 
       {isOwner && isEditOpen ? (
         <EditPostForm
+          author={displayPost.author}
           description={currentState.entity.description ?? ''}
           media={renderCarousel()}
           onCloseAction={() => setIsEditOpen(false)}

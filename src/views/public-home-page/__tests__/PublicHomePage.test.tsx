@@ -27,7 +27,12 @@ type RenderResult = {
 
 function createPost(id: string, overrides: Partial<PublicPostCardModel> = {}): PublicPostCardModel {
   return {
-    author: { avatarUrl: null, name: 'User' },
+    author: {
+      displayName: null,
+      id: `owner-${id}`,
+      profilePictureFileId: null,
+      username: `author_${id}`,
+    },
     createdAt: 'invalid',
     description: `Short description ${id}`,
     id,
@@ -127,7 +132,7 @@ describe('PublicHomeContent', () => {
     expect(multipleCard?.querySelector('img')?.getAttribute('alt')).toBe('Second image')
   })
 
-  it('shows a media placeholder and uses only the neutral author fallback', () => {
+  it('shows a media placeholder and the backend author fallback', () => {
     const view = renderContent({
       posts: [createPost('no-media', { media: [] })],
       usersCount: 1,
@@ -135,7 +140,10 @@ describe('PublicHomeContent', () => {
     mountedRoots.push(view)
 
     expect(view.container.textContent).toContain('Photo unavailable')
-    expect(view.container.textContent).toContain('User')
+    expect(view.container.textContent).toContain('author_no-media')
+    expect(view.container.querySelector('[aria-label="author_no-media avatar"]')?.textContent).toBe(
+      'A',
+    )
     expect(view.container.textContent).toContain('Recently')
   })
 
