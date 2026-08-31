@@ -247,6 +247,38 @@ describe('DeletePostFlow', () => {
     expect(navigationMocks.router.replace).toHaveBeenCalledWith('/profile/user-1')
   })
 
+  it('waits for synchronization before redirecting to returnTo', async () => {
+    let resolveSynchronization: (() => void) | undefined
+    const synchronizePostDeletionAction = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSynchronization = resolve
+        }),
+    )
+    const view = renderDeletePostFlow({
+      returnTo: '/profile/user-1',
+      synchronizePostDeletionAction,
+    })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Delete Post'))
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+
+    await waitFor(() => {
+      expect(synchronizePostDeletionAction).toHaveBeenCalledWith('post-1')
+    })
+    expect(navigationMocks.router.replace).not.toHaveBeenCalled()
+
+    await act(async () => {
+      resolveSynchronization?.()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(navigationMocks.router.replace).toHaveBeenCalledWith('/profile/user-1')
+    })
+  })
+
   it('redirects to main when the success callback rejects after deletion', async () => {
     const deletePostAction = vi.fn().mockResolvedValue(true)
     const onDeletedAction = vi.fn().mockRejectedValue(new Error('Callback failed.'))

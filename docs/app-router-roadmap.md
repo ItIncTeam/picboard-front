@@ -103,7 +103,7 @@ Protected layout не читает cookies, не вызывает backend нап
 
 `returnTo` сохраняет same-app relative path текущего protected route, включая query string. После
 входа `/auth/sign-in` валидирует `returnTo`: значение должно начинаться с `/`, не начинаться с `//`
-и не начинаться с `/auth`. Небезопасные значения fallback-ятся на `/main`.
+или `/auth` и не содержать backslash. Небезопасные значения fallback-ятся на `/main`.
 
 `src/app/(app-shell)/layout.tsx` также держит slot `@modal`; protected `(main)` остаётся отдельной
 веткой только для auth boundary и route organization. Intercepted Create adapter дополнительно
