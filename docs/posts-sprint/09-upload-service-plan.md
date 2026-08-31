@@ -7,8 +7,8 @@ Shared frontend state and selector contracts are defined in
 
 Production code contains create-post scoped GraphQL helpers, the feature-local upload service and
 default publish integration. Successful publish evicts Feed and the created post owner's first
-Profile posts page, refetches the active Feed query and invalidates Public Home without blocking
-the completed publish.
+Profile posts page, refetches affected active Feed/Profile queries and invalidates Public Home
+without blocking the completed publish.
 
 ## Target Structure
 
@@ -139,9 +139,9 @@ Detailed flow:
 - Do not send original `image.file` when `image.exported.file` is required.
 - Do not add GraphQL Upload for post media.
 
-## Error Handling Direction
+## Error handling
 
-Minimal first implementation should:
+The current implementation:
 
 - fail publish if `initiateUploadBatch` fails;
 - fail publish if any selected image has no returned descriptor;
@@ -150,25 +150,24 @@ Minimal first implementation should:
 - fail publish if `completeUpload` returns `FAILED` for any selected file;
 - skip `createPost` unless all current images are `ready`.
 
-Retry, resumable upload, partial publish and expired `uploadUrl` recovery are follow-up decisions.
+Retry, idempotency, resumable upload and expired `uploadUrl` recovery require a separate
+backend/product decision.
 
-## Out Of Scope
+## Upload service boundaries
 
-- Apollo cache updates.
-- UI progress indicators.
+- Apollo cache updates are owned by post-create synchronization, not by the upload service.
+- UI progress indicators are owned by Create Post UI, not by the upload service.
 - Retry queue or resumable uploads.
 - Draft persistence.
-- Post feed/profile cache refresh strategy.
+- Post Feed/Profile cache refresh is owned by post-create synchronization.
 
-## Known limitations
+## Known follow-ups / non-blockers
 
-- Crop export and persistent crop state are implemented. Filters remains pending; the normal filter
-  currently exposes the cropped base as `image.exported.file`, while future filters must replace
-  only that final artifact.
+- Crop, filters and final export are implemented per image. Filters preserve the immutable cropped
+  base and replace only the final exported artifact.
 - Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
-  already uploaded files should be completed, retried or cleaned up if a later storage `PUT` fails.
+  already uploaded or orphan `READY` files should be completed, retried or cleaned up.
 - Expired `uploadUrl` recovery, retry queue, idempotency keys and resumable uploads are not
   defined.
 - Successful `createPost` uses the targeted Feed/Profile/Public Home synchronization described
   above; synchronization failure is isolated from publish success.
-- Backend error codes/messages for storage validation failures are not finalized.

@@ -67,7 +67,7 @@
 - Posts API foundation for `feed`, `post`, `profilePosts`, `updatePostDescription` and
   `deletePost` lives in `entities/post/api`.
 - Dev 5 owns Filters, canvas export and `exported.objectUrl` lifecycle.
-- Edit/delete, Main Page and Infinite Scroll are follow-up PRs.
+- Edit/delete, Main Page and Profile cursor pagination are implemented.
 - Desktop behavior is route modal; mobile behavior is not confirmed and likely needs fullscreen
   wizard decision.
 - Figma-generated code must not be copied directly. Use CSS modules, existing tokens and FSD
@@ -77,11 +77,10 @@
 
 Route-based modal лучше соответствует текущей App Router архитектуре проекта:
 
-- `app/(protected)/(main)/layout.tsx` уже принимает `modal` slot;
+- `app/(app-shell)/layout.tsx` принимает `modal` slot;
 - URL `/posts/create` остается shareable и может участвовать в browser history;
 - пользователь не теряет контекст `/feed`, `/main` или `/profile/[userId]` при soft navigation;
-- close/back/forward behavior остается routing concern, а не local state sidebar concern;
-- future post details modal может использовать тот же routing pattern.
+- close/back/forward behavior остается routing concern, а не local state sidebar concern.
 
 Local modal из Sidebar не выбран, потому что Sidebar должен оставаться navigation widget, а не
 владеть create-post workflow state.
@@ -186,18 +185,17 @@ Final gateway schema details:
 
 В этой документационной задаче dependency не устанавливается. Установка должна быть отдельным PR.
 
-## Отложенные решения
+## Current boundaries
 
-- Draft persistence: в конец спринта после core publish path и отдельного architecture decision.
-- Mobile Create Post behavior: likely fullscreen wizard, but requires product/design confirmation.
-- UI composition for `profilePosts`, `post`, `updatePostDescription` and `deletePost`: follow-up
-  implementation PRs after the API foundation. The current global `feed` composition is implemented
-  on `/main` through Apollo Client rather than protected SSR/ISR.
+- Draft persistence and an alternative mobile wizard are outside the completed Posts sprint. They
+  are not active work without a separate team/product decision.
+- UI composition for `profilePosts`, `post`, `updatePostDescription` and `deletePost` is implemented.
+  The current global `feed` composition runs on `/main` through Apollo Client rather than protected
+  SSR/ISR.
 - Public Home remains independent and uses ISR with `revalidate = 60` after the gateway HTTPS/TLS
   certificate blocker was resolved.
-- Edit/delete implementation: follow-up after post details skeleton and backend permissions contract.
-- Infinite scroll for cursor-paginated profile posts: follow-up implementation and dependency PR.
-  Public Home has no pagination or infinite scroll.
+- Edit/delete and cursor-paginated Profile posts are implemented. Public Home has no pagination or
+  infinite scroll.
 - Moderation, reports, comments, likes: не входят в этот posts sprint slice, если отдельно не
   добавлены в backlog.
 

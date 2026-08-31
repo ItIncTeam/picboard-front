@@ -185,7 +185,7 @@ Route-based modals живут в `app/(app-shell)/@modal`. Они нужны д�
 - `@modal/default.tsx` и `@modal/[...catchAll]/page.tsx` возвращают `null`, чтобы slot не оставался
   активным на unmatched routes.
 
-Posts sprint planning: [Posts Sprint Overview](./posts-sprint/00-overview.md).
+Posts sprint status: [Posts Sprint Overview](./posts-sprint/00-overview.md).
 
 Local UI modals живут рядом с feature или widget. Это confirmations, dropdowns и маленькие dialogs.
 
@@ -208,7 +208,7 @@ route user id.
 ## Post details
 
 Route adapter передает `postId` в `views/post-details-page`. View загружает существующий `post(id)`,
-показывает carousel / description / дату и fallback автора `User`. Owner-only `Edit Post`
+показывает carousel / description / дату и mapped `PostEntity.author`. Owner-only `Edit Post`
 определяется сравнением session user id с `PostEntity.ownerId`. Закрытие использует существующий
 `getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. `router.back()` для details не
 используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Close и успешный

@@ -1,5 +1,8 @@
 # Frontend Task Breakdown
 
+Status: historical execution breakdown. The Posts sprint is complete and the final integration
+review is `DEV READY`. Unchecked optional items below are not active sprint blockers.
+
 Цель: разложить posts sprint на независимые small PRs для frontend-разработчиков. Все tasks
 сохраняют `app/` тонким и не добавляют GraphQL posts/upload operations in documentation-only work.
 
@@ -36,8 +39,8 @@ Final gateway schema:
 
 Owner group: Dev 4 for first UI skeleton PR.
 
-First PR includes only `entities/post`, `PostCard`, `PostGrid` and `PostDetails`. Edit/delete,
-Main Page and Infinite Scroll are follow-up PRs.
+The first PR included only `entities/post`, `PostCard`, `PostGrid` and `PostDetails`. The subsequent
+Edit/Delete, Main and Profile pagination PRs are complete.
 
 ## Общие правила
 
@@ -46,9 +49,9 @@ Main Page and Infinite Scroll are follow-up PRs.
 - Dependency install PRs должны быть отдельными и маленькими.
 - Не добавлять fake GraphQL operations.
 - Не добавлять real upload API helpers in this documentation PR.
-- Future upload integration must use `initiateUploadBatch`, direct storage `PUT`,
+- The implemented upload integration uses `initiateUploadBatch`, direct storage `PUT`,
   `completeUpload` and `createPost`.
-- Future upload integration must send `purpose: POST_IMAGE` and map browser MIME strings to
+- The implemented upload integration sends `purpose: POST_IMAGE` and maps browser MIME strings to
   `MimeType.JPEG` or `MimeType.PNG`.
 - Не использовать GraphQL Upload для post media.
 - Не хранить business logic в `page.tsx`.
@@ -87,11 +90,11 @@ Completed:
 
 Current:
 
-- backend integration review against final gateway schema.
+- backend integration against the final gateway schema is complete.
 
-Future:
+Out of current scope:
 
-- draft architecture.
+- draft architecture requires a separate team decision.
 
 Checklist:
 
@@ -110,8 +113,8 @@ Checklist:
 - [x] Подготовить static desktop layout из Figma для crop step: header, back, `Next`, media area.
 - [x] Поддержать step-dependent modal size на уровне modal shell, если shared modal ограничивает
       Figma layout.
-- [x] Сохранить `app/(protected)/(main)/@modal/(.)posts/create/page.tsx` тонким adapter.
-- [x] Сохранить `app/(protected)/(main)/posts/create/page.tsx` тонким adapter.
+- [x] Сохранить `app/(app-shell)/@modal/(.)posts/create/page.tsx` тонким adapter.
+- [x] Сохранить `app/(app-shell)/(protected)/(main)/posts/create/page.tsx` тонким adapter.
 - [x] Реализовать close confirm только когда `hasUnsavedData === true`.
 - [x] В close confirm использовать `Discard` / `Keep editing`; не показывать `Save draft`.
 - [x] Оставить draft persistence disabled.
@@ -156,7 +159,7 @@ Checklist:
 - [x] Сохранять original file metadata in create flow state.
 - [x] Revoke object URLs при удалении файла.
 - [x] Revoke object URLs при unmount/reset flow.
-- [ ] Поддержать reorder только если это нужно для MVP; иначе оставить planned.
+- Reorder was not required for the current scope and is not an active follow-up.
 - [x] Показать validation errors без backend calls.
 - [x] Add create-post scoped upload GraphQL helpers after backend contract confirmation.
 - [x] Keep real upload API helpers out of `UploadStep`; backend calls are owned by
@@ -177,22 +180,21 @@ Parallel work:
 
 Goal: подготовить crop flow and post-crop export data for the next filters/export step.
 
-Status: In Progress. The `CropStep` boundary/skeleton exists, but crop UI and export are not
-implemented.
+Status: Completed for the Posts sprint scope. Zoom remains a product-defined non-blocker.
 
 Checklist:
 
-- [ ] Отдельным PR добавить dependency `react-advanced-cropper`.
+- [x] Отдельным PR добавить dependency `react-advanced-cropper`.
 - [x] Добавить `CropStep` boundary/skeleton.
-- [ ] Реализовать aspect ratio menu из Figma: `original`, `1:1`, `4:5`, `16:9`.
-- [ ] Реализовать zoom control из Figma после подключения cropper.
-- [ ] Реализовать image navigation arrows and active image switching.
-- [ ] Поддержать выбранные aspect ratio modes.
-- [ ] Поддержать zoom через cropper controls.
-- [ ] Сохранять crop settings in state.
-- [ ] Экспортировать image result после crop для downstream filters/canvas export.
-- [ ] Сохранять `image.exported` через agreed flow callbacks.
-- [ ] Проверить, что crop export соответствует crop preview.
+- [x] Реализовать aspect ratio menu из Figma: `original`, `1:1`, `4:5`, `16:9`.
+- [ ] Реализовать zoom только после подтверждения product semantics; текущий sprint этого не
+      требует.
+- [x] Реализовать image navigation arrows and active image switching.
+- [x] Поддержать выбранные aspect ratio modes.
+- [x] Сохранять crop settings in state.
+- [x] Экспортировать image result после crop для downstream filters/canvas export.
+- [x] Сохранять `image.exported` через agreed flow callbacks.
+- [x] Проверить, что crop export соответствует crop preview.
 - [x] Не отправлять файлы на backend из `CropStep`; backend upload is owned by the publish
       pipeline.
 
@@ -214,9 +216,7 @@ Goal: подготовить первый UI skeleton для отображен�
 Scope: only posts display skeleton. Dev 4 does not work on create-post upload, crop, filters,
 state shape or publish pipeline in this sprint split.
 
-Status: Completed for the first display skeleton. The separate FRONT-152 composition PR connects
-the existing global `feed` to canonical `/main` through Apollo Client and keeps profile/details as
-follow-ups.
+Status: Completed. Main, Profile, Details, Edit and Delete composition is implemented and verified.
 
 FRONT-150 completes the profile composition: `/profile/[userId]` is public, loads `user(id)` and
 `profilePosts(first: 8)`, renders owner-only Profile Settings and appends cursor pages through a
@@ -238,7 +238,7 @@ Checklist:
 - [x] Add cursor pagination in pages of 8 without frontend sorting or slicing.
 - [x] Compose `posts/[postId]` with `post(id)`, loading, error and not-found states.
 - [x] Add owner Edit Post through `updatePostDescription`; description only, max 500 characters.
-- [ ] Документировать follow-up manual QA scenarios для details.
+- [x] Cover Details close/edit/delete routing scenarios in regression tests.
 
 Dependencies:
 
@@ -247,14 +247,14 @@ Dependencies:
 - `profilePosts` uses cursor pagination with `{ first, after? }` and current page size 8.
 - Details route composition can follow after skeleton components are available.
 
-Parallel work:
+Historical parallel work:
 
 - `PostCard`, `PostGrid` and `PostDetails` can be built independently from Create Post Wizard.
-- Profile/details composition is a follow-up PR after first skeleton is merged.
+- Profile/details composition was completed after the first skeleton merged.
 
-Follow-up PRs:
+Completed follow-up PRs:
 
-- Delete post confirm skeleton.
+- Delete post confirmation and synchronization flow.
 
 ## Dev 5: Filters And Canvas Export
 
@@ -262,21 +262,20 @@ Goal: implement filters, final canvas export and exported object URL lifecycle.
 
 Role: Filters/Canvas Export Owner.
 
-Status: In Progress. The `FiltersStep` boundary/skeleton exists, but filters UI and canvas export
-are not implemented.
+Status: Completed for the Posts sprint scope.
 
 Checklist:
 
 - [x] Добавить `FiltersStep` boundary/skeleton.
-- [ ] Реализовать wide filters layout из Figma: preview слева, filter grid справа.
-- [ ] Определить минимальный набор filters для skeleton/MVP.
-- [ ] Применять filters к preview.
-- [ ] Экспортировать final image через canvas/blob.
-- [ ] Сохранять final edited `File` in `image.exported`.
-- [ ] Ensure exported files can map to backend `MimeType.JPEG` or `MimeType.PNG`.
-- [ ] Create `exported.objectUrl` only for exported blobs.
-- [ ] Revoke `exported.objectUrl` when replaced, reset or unmounted.
-- [ ] Проверить, что exported image соответствует preview.
+- [x] Реализовать wide filters layout из Figma: preview слева, filter grid справа.
+- [x] Реализовать согласованный набор filters.
+- [x] Применять filters к preview.
+- [x] Экспортировать final image через canvas/blob.
+- [x] Сохранять final edited `File` in `image.exported`.
+- [x] Ensure exported files can map to backend `MimeType.JPEG` or `MimeType.PNG`.
+- [x] Create `exported.objectUrl` only for exported blobs.
+- [x] Revoke `exported.objectUrl` when replaced, reset or unmounted.
+- [x] Проверить, что exported image соответствует preview.
 - [x] Не отправлять файлы на backend из `FiltersStep`; backend upload is owned by the publish
       pipeline.
 
@@ -292,9 +291,9 @@ Parallel work:
 - Filters UI can start with a local fixture.
 - Final canvas export integration waits for Dev 3 crop output.
 
-## Dev 1 Backend Integration Follow-Up
+## Dev 1 Backend Integration
 
-After the UI PR is merged, Dev 1 starts backend integration.
+Status: completed.
 
 Checklist:
 
@@ -316,7 +315,7 @@ Checklist:
       skeleton UI, and skip attachments with `file: null`.
 - [x] Define delete cache/refetch behavior for Feed, Profile posts, Public Home and cached Post
       details.
-- [ ] Define cache/refetch behavior after create and update.
+- [x] Define cache/refetch behavior after create and update.
 
 ## Что можно делать параллельно
 
@@ -342,9 +341,6 @@ Gateway schema is synchronized with the current Posts contract. `completeUpload`
 The gateway HTTPS/TLS certificate blocker is resolved, and Public Home uses ISR with
 `revalidate = 60`.
 
-Still not blocked by backend schema, but pending implementation/product decisions:
+Known non-blocking product/backend decision:
 
-- cache/refetch strategy after create and update;
-- edit/delete permissions and error copy;
-- protected main page access and cache policy;
-- retry/idempotency behavior for failed upload and publish steps.
+- retry/idempotency and orphan-file cleanup for failed upload and publish steps.

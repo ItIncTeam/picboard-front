@@ -176,7 +176,7 @@
 - `PostAttachmentEntity.fileId`, `PostAttachmentEntity.sortOrder`, nullable
   `PostAttachmentEntity.file`, and non-null `PostAttachmentEntity.file.url` after the file check.
 - `profilePosts(input: { userId, first, after? })`, `feed()` and `post(id)` from
-  `entities/post/api` for follow-up UI composition.
+  `entities/post/api` for the implemented Profile, Main and Details composition.
 
 **Не меняй:**
 
@@ -234,8 +234,8 @@
 
 **Known limitations:**
 
-- Retry/idempotency for expired `uploadUrl`, failed storage `PUT`, failed `completeUpload` and
-  failed `createPost` remains open.
+- Retry/idempotency for expired `uploadUrl`, failed storage `PUT`, failed `completeUpload`, failed
+  `createPost` and orphan `READY` file cleanup remains open.
 - Create, update and delete use targeted Feed/Profile cache synchronization and Public Home
   invalidation; post-success synchronization does not turn a successful mutation into failure.
 
