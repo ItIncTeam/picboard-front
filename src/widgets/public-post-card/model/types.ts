@@ -1,10 +1,7 @@
-import type { PostImage } from '@/entities/post'
+import type { PostAuthor, PostImage } from '@/entities/post'
 
 export type PublicPostCardModel = {
-  author: {
-    avatarUrl: string | null
-    name: string
-  }
+  author: PostAuthor
   createdAt: string
   description: string
   id: string

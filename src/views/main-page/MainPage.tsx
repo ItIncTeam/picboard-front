@@ -11,10 +11,7 @@ import styles from './main-page.module.css'
 
 function toPublicPostCardModels(data: FeedQueryData): PublicPostCardModel[] {
   return mapPostEntitiesToPosts(data.feed).map((post) => ({
-    author: {
-      avatarUrl: null,
-      name: 'User',
-    },
+    author: post.author,
     createdAt: post.createdAtLabel ?? '',
     description: post.caption ?? '',
     id: post.id,

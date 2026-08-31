@@ -2,7 +2,7 @@
 
 import { type ReactNode, useState } from 'react'
 
-import { updatePostDescription, type PostEntity } from '@/entities/post'
+import { updatePostDescription, type PostAuthor, type PostEntity } from '@/entities/post'
 import { Button } from '@/shared/ui/button'
 import { Modal } from '@/shared/ui/modal'
 import { TextArea } from '@/shared/ui/text-area/TextArea'
@@ -13,6 +13,7 @@ import { EditPostCloseConfirm } from './EditPostCloseConfirm'
 import styles from './edit-post-form.module.css'
 
 type EditPostFormProps = {
+  author: PostAuthor
   description: string
   media: ReactNode
   onCloseAction: () => void
@@ -30,6 +31,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function EditPostForm({
+  author,
   description,
   media,
   onCloseAction,
@@ -37,6 +39,8 @@ export function EditPostForm({
   postId,
   synchronizePostUpdateAction = synchronizeUpdatedPost,
 }: EditPostFormProps) {
+  const authorName = author.displayName?.trim() || author.username
+  const avatarFallback = authorName.charAt(0).toUpperCase()
   const [draft, setDraft] = useState(description)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -100,10 +104,10 @@ export function EditPostForm({
 
           <div className={styles.form}>
             <div className={styles.authorRow}>
-              <span aria-hidden className={styles.avatar}>
-                U
+              <span aria-label={`${authorName} avatar`} className={styles.avatar} role="img">
+                {avatarFallback}
               </span>
-              <span className={styles.authorName}>User</span>
+              <span className={styles.authorName}>{authorName}</span>
             </div>
 
             <div className={styles.descriptionField}>

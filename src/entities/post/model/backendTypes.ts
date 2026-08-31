@@ -21,8 +21,16 @@ export type PostAttachmentEntity = {
   sortOrder: number
 }
 
+export type PostAuthor = {
+  displayName: string | null
+  id: string
+  profilePictureFileId: string | null
+  username: string
+}
+
 export type PostEntity = {
   attachments: PostAttachmentEntity[]
+  author: PostAuthor
   createdAt: string
   description: string | null
   id: string

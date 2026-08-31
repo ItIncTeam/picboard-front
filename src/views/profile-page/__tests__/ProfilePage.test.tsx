@@ -124,6 +124,12 @@ function createPost(id: string): PostEntity {
         sortOrder: 0,
       },
     ],
+    author: {
+      displayName: 'Profile Post Author',
+      id: 'profile-user',
+      profilePictureFileId: null,
+      username: 'profile_post_author',
+    },
     createdAt: '2026-08-20T12:00:00.000Z',
     description: id,
     id,

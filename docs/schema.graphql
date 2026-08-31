@@ -2,6 +2,7 @@ scalar DateTime
 
 type User {
   id: ID!
+  posts: [PostEntity]
   email: String!
   username: String!
   confirmationCode: String
@@ -194,6 +195,7 @@ type PostEntity {
   ownerId: String!
   description: String
   attachments: [PostAttachmentEntity!]!
+  author: User!
   createdAt: DateTime!
   updatedAt: DateTime!
 }

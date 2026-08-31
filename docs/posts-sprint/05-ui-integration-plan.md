@@ -127,7 +127,7 @@ Use only for primitives and infrastructure:
 ### `PostDetails`
 
 - Lives in `entities/post/ui`.
-- Displays carousel slot, fallback author, description and date.
+- Displays carousel slot, mapped post author, description and date.
 - Route-level loading, owner menu and edit composition live in `views/post-details-page`.
 
 ### `EditPostForm`
@@ -214,17 +214,17 @@ Differences:
   `revalidate = 60`. Empty `feed` and `usersCount = 0` remain valid successful data; gateway
   failures throw into the `(public)` route error boundary, whose retry re-fetches and re-renders the
   failed segment.
-- `PostEntity` currently exposes only `ownerId`, not public author profile data. Public Home renders
-  the local neutral `User`/avatar placeholder and does not store that fallback in the shared Post
-  display model.
+- `PostEntity.author` supplies the public post-author identity used by Public Home. The UI displays
+  `displayName?.trim() || username` and uses its first letter as the avatar fallback while the
+  backend exposes only `profilePictureFileId`, not an avatar URL.
 - Likes, comments, bookmarks and other social actions are outside the Public Home scope.
 
 ### Details
 
 - `posts/[postId]/page.tsx` stays thin and passes `postId` into `views/post-details-page`.
 - Details view loads the existing `post(id)` wrapper and maps attachments through `mapPostEntityToPost`.
-- Author name and avatar stay local fallbacks (`User` / `U`) until the backend exposes author data.
-  The page does not call `user(id)` for the post owner.
+- Author name and the letter avatar fallback come from `PostEntity.author`. The page does not call
+  `user(id)` for the post owner and does not use `profilePictureFileId` as an image URL.
 - Owner-only Edit Post is gated by comparing `SessionProvider.user.id` with `PostEntity.ownerId`.
 - Close uses `getSafeReturnToPath` with fallback `/main`. Direct `/posts/[postId]` without `returnTo`
   goes to `/main`; `router.back()` is not used.

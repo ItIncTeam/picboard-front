@@ -5,6 +5,12 @@ export const postFieldsFragment = gql`
     id
     ownerId
     description
+    author {
+      id
+      username
+      displayName
+      profilePictureFileId
+    }
     attachments {
       fileId
       sortOrder

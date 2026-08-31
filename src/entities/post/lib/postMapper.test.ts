@@ -35,6 +35,12 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
         sortOrder: 0,
       },
     ],
+    author: {
+      displayName: '  Backend Author  ',
+      id: 'user-1',
+      profilePictureFileId: 'avatar-file-1',
+      username: 'backend_author',
+    },
     createdAt: '2026-07-04T12:00:00.000Z',
     description: 'Post description',
     id: 'post-1',
@@ -47,7 +53,12 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
 describe('post mapper', () => {
   it('maps PostEntity and sorts attachments by sortOrder', () => {
     expect(mapPostEntityToPost(createPostEntity())).toEqual({
-      authorName: 'user-1',
+      author: {
+        displayName: '  Backend Author  ',
+        id: 'user-1',
+        profilePictureFileId: 'avatar-file-1',
+        username: 'backend_author',
+      },
       caption: 'Post description',
       createdAtLabel: '2026-07-04T12:00:00.000Z',
       id: 'post-1',
@@ -63,6 +74,7 @@ describe('post mapper', () => {
           url: 'https://cdn.example/first.jpg',
         },
       ],
+      ownerId: 'user-1',
     })
   })
 

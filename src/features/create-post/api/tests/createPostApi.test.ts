@@ -37,12 +37,12 @@ function getVariableNames(document: DocumentNode): string[] {
   )
 }
 
-function getAttachmentFieldNames(document: DocumentNode): string[] {
+function getFieldSelectionNames(document: DocumentNode, fieldName: string): string[] {
   let fieldNames: string[] = []
 
   visit(document, {
     Field(node) {
-      if (node.name.value !== 'attachments') {
+      if (node.name.value !== fieldName) {
         return
       }
 
@@ -88,6 +88,12 @@ describe('create post GraphQL helper', () => {
               sortOrder: 0,
             },
           ],
+          author: {
+            displayName: 'Backend Author',
+            id: 'user-1',
+            profilePictureFileId: null,
+            username: 'backend_author',
+          },
           createdAt: '2026-07-03T12:00:00.000Z',
           description: input.description,
           id: 'post-1',
@@ -115,7 +121,17 @@ describe('create post GraphQL helper', () => {
     expect(getOperationName(request.mutation)).toBe('CreatePost')
     expect(getVariableNames(request.mutation)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
-    expect(getAttachmentFieldNames(request.mutation)).toEqual(['fileId', 'sortOrder', 'file'])
+    expect(getFieldSelectionNames(request.mutation, 'attachments')).toEqual([
+      'fileId',
+      'sortOrder',
+      'file',
+    ])
+    expect(getFieldSelectionNames(request.mutation, 'author')).toEqual([
+      'id',
+      'username',
+      'displayName',
+      'profilePictureFileId',
+    ])
   })
 
   it('allows null description', async () => {
@@ -128,6 +144,12 @@ describe('create post GraphQL helper', () => {
       data: {
         createPost: {
           attachments: [],
+          author: {
+            displayName: null,
+            id: 'user-1',
+            profilePictureFileId: null,
+            username: 'backend_author',
+          },
           createdAt: '2026-07-03T12:00:00.000Z',
           description: null,
           id: 'post-1',

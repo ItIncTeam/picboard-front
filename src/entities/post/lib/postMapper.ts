@@ -19,13 +19,12 @@ export function mapPostEntityToPost(entity: PostEntity): Post {
     })
 
   return {
+    author: entity.author,
     id: entity.id,
-    // TODO: Replace fallback author data when PostEntity exposes author info.
-    // Avoid per-post user(ownerId) requests in feeds to prevent N+1 queries.
-    authorName: entity.ownerId,
     caption: entity.description ?? undefined,
     createdAtLabel: entity.createdAt,
     images,
+    ownerId: entity.ownerId,
   }
 }
 

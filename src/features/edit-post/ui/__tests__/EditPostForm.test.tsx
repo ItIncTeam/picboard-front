@@ -7,6 +7,13 @@ import type { PostEntity } from '@/entities/post'
 
 import { EditPostForm } from '../EditPostForm'
 
+const author = {
+  displayName: 'Backend Author',
+  id: 'owner-1',
+  profilePictureFileId: null,
+  username: 'backend_author',
+}
+
 const apiMocks = vi.hoisted(() => ({
   updatePostDescription: vi.fn(),
 }))
@@ -53,6 +60,7 @@ type RenderResult = {
 function createPost(overrides: Partial<PostEntity> = {}): PostEntity {
   return {
     attachments: [],
+    author,
     createdAt: '2026-08-20T12:00:00.000Z',
     description: 'Updated description',
     id: 'post-1',
@@ -80,6 +88,7 @@ function renderForm({
   act(() =>
     root.render(
       <EditPostForm
+        author={author}
         description={description}
         media={<div>media</div>}
         onCloseAction={onCloseAction}

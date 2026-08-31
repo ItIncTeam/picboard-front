@@ -19,8 +19,13 @@ export function createMockPost(index: number): Post {
   const postNumber = index + 1
 
   return {
+    author: {
+      displayName: 'URL Profile',
+      id: 'storybook-user',
+      profilePictureFileId: null,
+      username: 'url_profile',
+    },
     id: `post-${postNumber}`,
-    authorName: 'URLProfile',
     caption: `Publication ${postNumber}`,
     images: [
       {
@@ -29,6 +34,7 @@ export function createMockPost(index: number): Post {
         url: mockImageUrls[index % mockImageUrls.length] ?? mockImageUrls[0],
       },
     ],
+    ownerId: 'storybook-user',
   }
 }
 
@@ -40,8 +46,13 @@ export function createMockPosts(count: number): Post[] {
 
 export function createMockPostWithMultipleImages(imageCount = 3): Post {
   return {
+    author: {
+      displayName: 'URL Profile',
+      id: 'storybook-user',
+      profilePictureFileId: null,
+      username: 'url_profile',
+    },
     id: 'post-multi-image',
-    authorName: 'URLProfile',
     caption: 'Post with multiple images',
     images: Array.from({ length: imageCount }, (_, index) => {
       const imageNumber = index + 1
@@ -52,6 +63,7 @@ export function createMockPostWithMultipleImages(imageCount = 3): Post {
         url: mockImageUrls[index % mockImageUrls.length] ?? mockImageUrls[0],
       }
     }),
+    ownerId: 'storybook-user',
   }
 }
 
