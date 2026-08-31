@@ -154,7 +154,9 @@ Use only for primitives and infrastructure:
 - Calls the existing `deletePost` API through the post entity public API.
 - After a successful delete, synchronizes cached Feed/Profile posts and invalidates Public Home
   through the post entity server-only entrypoint.
-- Always redirects to `/main` after a successful delete, even if post-success synchronization or
+- After a successful delete, redirects to the `returnTo` passed by Post Details, otherwise `/main`.
+  Post Details sanitizes that path through `getSafeReturnToPath` with the same contract as close.
+  Missing or unsafe `returnTo` falls back to `/main`, even if post-success synchronization or
   callbacks fail.
 - Does not own owner checks or the three-dots menu; Post Details owns that gate.
 
@@ -238,10 +240,11 @@ Differences:
 - Owner-only Edit Post is gated by comparing `SessionProvider.user.id` with `PostEntity.ownerId`.
 - Close uses `getSafeReturnToPath` with fallback `/main`. Direct `/posts/[postId]` without `returnTo`
   goes to `/main`; `router.back()` is not used.
-- Profile `PostGrid` passes `returnTo=/profile/[userId]` into `PostCard`, so closing details returns
-  to that profile. Other grids omit `returnTo` and keep the `/main` fallback.
+- Profile `PostGrid` passes `returnTo=/profile/[userId]` into `PostCard`, so closing or deleting from
+  details returns to that profile. Other grids omit `returnTo` and keep the `/main` fallback.
 - The owner `...` menu passes its Delete action to `DeletePostFlow`; the flow owns confirmation,
-  mutation, synchronization and redirect without another ownership check.
+  mutation, synchronization and redirect without another ownership check. Post Details sanitizes
+  `returnTo` once and passes that path into both close and delete.
 
 ## Testing checklist
 
@@ -255,6 +258,8 @@ Differences:
 - Fallback page renders same flow without modal close controls.
 - Post grid renders empty/loading/error/success states.
 - Delete confirm calls close/cancel handlers correctly before backend integration.
+- Delete redirects through `getSafeReturnToPath`: profile `returnTo` stays on profile, missing or
+  unsafe `returnTo` falls back to `/main`.
 
 ## Manual QA checklist
 

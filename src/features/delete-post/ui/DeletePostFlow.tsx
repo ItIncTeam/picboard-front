@@ -15,6 +15,7 @@ export type DeletePostTriggerProps = {
 
 export type DeletePostFlowProps = {
   postId: string
+  returnTo?: string | null
   children?: (props: DeletePostTriggerProps) => ReactNode
   deletePostAction?: DeletePostAction
   onDeletedAction?: () => void | Promise<void>
@@ -26,6 +27,7 @@ export function DeletePostFlow({
   deletePostAction,
   onDeletedAction,
   postId,
+  returnTo,
   synchronizePostDeletionAction = synchronizeDeletedPost,
 }: DeletePostFlowProps) {
   const router = useRouter()
@@ -47,7 +49,7 @@ export function DeletePostFlow({
       Promise.resolve().then(() => onDeletedAction?.()),
     ])
 
-    router.replace('/main')
+    router.replace(returnTo ?? '/main')
   }
 
   return (

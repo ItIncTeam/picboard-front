@@ -26,7 +26,7 @@ vi.mock('@/entities/post', () => ({
   deletePost: postApiMocks.deletePost,
 }))
 
-vi.mock('../../model/synchronizeDeletedPost', () => ({
+vi.mock('@/features/delete-post/model/synchronizeDeletedPost', () => ({
   synchronizeDeletedPost: synchronizationMocks.synchronizeDeletedPost,
 }))
 
@@ -211,7 +211,7 @@ describe('DeletePostFlow', () => {
     expect(view.container.querySelector('[role="dialog"]')).toBeInstanceOf(HTMLElement)
   })
 
-  it('deletes, synchronizes app state, and redirects to main', async () => {
+  it('deletes, synchronizes app state, and redirects to main without returnTo', async () => {
     const deletePostAction = vi.fn().mockResolvedValue(true)
     const onDeletedAction = vi.fn()
     const synchronizePostDeletionAction = vi.fn().mockResolvedValue(undefined)
@@ -230,6 +230,53 @@ describe('DeletePostFlow', () => {
     expect(synchronizePostDeletionAction).toHaveBeenCalledWith('post-7')
     expect(onDeletedAction).toHaveBeenCalledTimes(1)
     expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
+  })
+
+  it('redirects to a safe returnTo path after deletion', async () => {
+    const deletePostAction = vi.fn().mockResolvedValue(true)
+    const view = renderDeletePostFlow({
+      deletePostAction,
+      postId: 'post-7',
+      returnTo: '/profile/user-1',
+    })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Delete Post'))
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+
+    expect(navigationMocks.router.replace).toHaveBeenCalledWith('/profile/user-1')
+  })
+
+  it('waits for synchronization before redirecting to returnTo', async () => {
+    let resolveSynchronization: (() => void) | undefined
+    const synchronizePostDeletionAction = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSynchronization = resolve
+        }),
+    )
+    const view = renderDeletePostFlow({
+      returnTo: '/profile/user-1',
+      synchronizePostDeletionAction,
+    })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Delete Post'))
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+
+    await waitFor(() => {
+      expect(synchronizePostDeletionAction).toHaveBeenCalledWith('post-1')
+    })
+    expect(navigationMocks.router.replace).not.toHaveBeenCalled()
+
+    await act(async () => {
+      resolveSynchronization?.()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(navigationMocks.router.replace).toHaveBeenCalledWith('/profile/user-1')
+    })
   })
 
   it('redirects to main when the success callback rejects after deletion', async () => {

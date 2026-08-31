@@ -75,8 +75,10 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
   const currentState: PostDetailsState =
     postState.postId === postId ? postState : { postId, status: 'loading' }
 
+  const safeReturnTo = getSafeReturnToPath(searchParams.get('returnTo'))
+
   const closePage = () => {
-    router.replace(getSafeReturnToPath(searchParams.get('returnTo')))
+    router.replace(safeReturnTo)
   }
 
   if (currentState.status === 'loading') {
@@ -138,7 +140,7 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
           headerAction={
             <>
               {isOwner ? (
-                <DeletePostFlow postId={currentState.entity.id}>
+                <DeletePostFlow postId={currentState.entity.id} returnTo={safeReturnTo}>
                   {({ openDeleteConfirmAction }) => (
                     <EditPostMenu
                       onDeleteAction={openDeleteConfirmAction}

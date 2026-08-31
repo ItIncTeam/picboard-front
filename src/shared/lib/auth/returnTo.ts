@@ -7,7 +7,12 @@ export const getSafeReturnToPath = (returnTo: string | null): string => {
     return defaultReturnToPath
   }
 
-  if (!returnTo.startsWith('/') || returnTo.startsWith('//') || returnTo.startsWith('/auth')) {
+  if (
+    !returnTo.startsWith('/') ||
+    returnTo.startsWith('//') ||
+    returnTo.startsWith('/auth') ||
+    returnTo.includes('\\')
+  ) {
     return defaultReturnToPath
   }
 
