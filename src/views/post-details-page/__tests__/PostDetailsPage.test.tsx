@@ -497,6 +497,51 @@ describe('PostDetailsPage', () => {
     expect(getDialogText()).not.toContain('Delete Post')
   })
 
+  it('returns from Edit to Details before closing to the profile returnTo', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.post.mockResolvedValue(createPost())
+    navigationMocks.searchParams = new URLSearchParams({ returnTo: '/profile/user-1' })
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Edit Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Edit Post')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(document.body.querySelector('textarea')).toBeInstanceOf(HTMLTextAreaElement),
+    )
+
+    act(() => {
+      getEditDialog().querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
+    })
+
+    await waitFor(() => {
+      expect(document.body.querySelector('textarea')).toBeNull()
+      expect(getDialogText()).toContain('Original description')
+    })
+    expect(navigationMocks.replace).not.toHaveBeenCalled()
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
+    })
+
+    expect(navigationMocks.replace).toHaveBeenCalledTimes(1)
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/user-1')
+  })
+
   it('closes a direct post link to /main', async () => {
     apiMocks.post.mockResolvedValue(createPost())
 
