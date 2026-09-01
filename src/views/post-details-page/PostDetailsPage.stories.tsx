@@ -68,8 +68,7 @@ function PostDetailsPreview({ startInEdit = false }: { startInEdit?: boolean }) 
   const [entity, setEntity] = useState(() => createMockPostEntity('Publication description'))
   const [isEditOpen, setIsEditOpen] = useState(startInEdit)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
-  const previewImage =
-    storyImages[Math.min(activeImageIndex, Math.max(storyImages.length - 1, 0))]
+  const previewImage = storyImages[Math.min(activeImageIndex, Math.max(storyImages.length - 1, 0))]
 
   return isEditOpen ? (
     <EditPostForm
