@@ -91,7 +91,7 @@ describe('PublicHomeContent', () => {
     const view = renderContent({ posts, usersCount: 9213 })
     mountedRoots.push(view)
 
-    expect(view.container.querySelector('[aria-label="9213 registered users"]')).toBeInstanceOf(
+    expect(view.container.querySelector('[aria-label="Registered users: 9213"]')).toBeInstanceOf(
       HTMLElement,
     )
     expect(view.container.querySelectorAll('article')).toHaveLength(4)
@@ -106,7 +106,7 @@ describe('PublicHomeContent', () => {
 
     expect(view.container.textContent).toContain('No public posts yet')
     expect(view.container.textContent).toContain('Registered users:')
-    expect(view.container.querySelector('[aria-label="0 registered users"]')).toBeInstanceOf(
+    expect(view.container.querySelector('[aria-label="Registered users: 0"]')).toBeInstanceOf(
       HTMLElement,
     )
     expect(view.container.textContent).not.toContain('Public posts are unavailable')

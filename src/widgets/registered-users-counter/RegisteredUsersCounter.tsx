@@ -18,7 +18,7 @@ export function RegisteredUsersCounter({ usersCount }: RegisteredUsersCounterPro
   return (
     <div
       className={styles.counter}
-      aria-label={`${safeUsersCount} ${t.widgets.registeredUsersCounter.ariaLabel}`}
+      aria-label={`${t.widgets.registeredUsersCounter.label} ${safeUsersCount}`}
     >
       <span className={styles.label}>{t.widgets.registeredUsersCounter.label}</span>
       <span className={styles.digits} aria-hidden>

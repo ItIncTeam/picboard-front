@@ -48,8 +48,6 @@ type CalendarDay = {
   isWeekend: boolean
 }
 
-const weekDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
-
 const defaultSingleDate = new Date(2023, 10, 11)
 
 const defaultRangeValue: DateRangeValue = {
@@ -172,7 +170,7 @@ export const DatePicker = ({
           </div>
 
           <div className={s.datePicker__weekDays}>
-            {weekDays.map((weekDay) => (
+            {t.ui.datePicker.weekDays.map((weekDay) => (
               <span className={s.datePicker__weekDay} key={weekDay}>
                 {weekDay}
               </span>

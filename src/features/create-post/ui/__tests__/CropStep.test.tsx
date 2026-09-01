@@ -403,12 +403,12 @@ describe('CropStep export boundary', () => {
     clickButton(view.container, 'Aspect ratio')
 
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(queryButton(view.container, 'Оригинал')).toBeDefined()
+    expect(queryButton(view.container, 'Original')).toBeDefined()
 
     clickButton(view.container, 'Aspect ratio')
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+    expect(queryButton(view.container, 'Original')).toBeUndefined()
   })
 
   it('keeps the aspect ratio and gallery panels mutually exclusive', () => {
@@ -421,10 +421,10 @@ describe('CropStep export boundary', () => {
 
     clickButton(view.container, 'Aspect ratio')
     expect(view.container.querySelector('[aria-label="Selected images"]')).toBeNull()
-    expect(queryButton(view.container, 'Оригинал')).toBeDefined()
+    expect(queryButton(view.container, 'Original')).toBeDefined()
 
     clickButton(view.container, 'Show images')
-    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+    expect(queryButton(view.container, 'Original')).toBeUndefined()
     expect(view.container.querySelector('[aria-label="Selected images"]')).not.toBeNull()
   })
 

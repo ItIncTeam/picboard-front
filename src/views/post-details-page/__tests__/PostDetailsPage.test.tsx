@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
 import type { PostEntity } from '@/entities/post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { PostDetailsPage } from '../PostDetailsPage'
 
@@ -133,7 +134,13 @@ function renderPage(postId = 'post-1'): RenderResult {
   const root = createRoot(container)
 
   document.body.append(container)
-  act(() => root.render(<PostDetailsPage postId={postId} />))
+  act(() =>
+    root.render(
+      <I18nProvider>
+        <PostDetailsPage postId={postId} />
+      </I18nProvider>,
+    ),
+  )
 
   return { container, root }
 }

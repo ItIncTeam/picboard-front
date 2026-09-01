@@ -362,9 +362,11 @@ export const ru = {
   ui: {
     close: 'Закрыть',
     closeNotification: 'Закрыть уведомление',
+    loading: 'Загрузка...',
     datePicker: {
       date: 'Дата',
       dateRange: 'Диапазон дат',
+      weekDays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
       previousMonth: 'Предыдущий месяц',
       nextMonth: 'Следующий месяц',
       rangeError: 'Ошибка, выберите текущий или прошлый месяц',

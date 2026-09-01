@@ -334,11 +334,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
           {t.profile.title}
         </h1>
         <PostGrid
-          errorMessage={
-            currentProfileUserState.status === 'error'
-              ? currentProfileUserState.message
-              : getErrorMessage(profilePostsError)
-          }
+          errorMessage={t.profile.loadingError}
           isError
           onRetry={() => {
             setProfileUserState({ status: 'loading', userId })

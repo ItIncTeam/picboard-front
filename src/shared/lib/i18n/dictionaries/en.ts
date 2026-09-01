@@ -360,9 +360,11 @@ export const en = {
   ui: {
     close: 'Close',
     closeNotification: 'Close notification',
+    loading: 'Loading...',
     datePicker: {
       date: 'Date',
       dateRange: 'Date range',
+      weekDays: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
       previousMonth: 'Previous month',
       nextMonth: 'Next month',
       rangeError: 'Error, select current month or last month',
