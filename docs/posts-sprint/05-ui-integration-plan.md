@@ -128,8 +128,9 @@ Use only for primitives and infrastructure:
 - Lives in `entities/post/ui`.
 - Displays carousel slot, mapped post author, description and date.
 - Route-level loading, owner menu and edit composition live in `views/post-details-page`.
-- Details and Edit reuse `PublicPostCarousel` with `fit="contain"` so the cropped export is not
-  recropped. Public Home keeps the default thumbnail `cover` slot.
+- Details uses `PublicPostCarousel` with `fit="contain"` so the cropped export is not recropped.
+  Edit shows that same slide as a static preview with `object-fit: contain`, without arrows or
+  pagination. Public Home keeps the default thumbnail `cover` slot.
 
 ### `EditPostForm`
 
@@ -144,6 +145,15 @@ Use only for primitives and infrastructure:
 - `EditPostMenu` is the single owner `...` menu. It always exposes Edit Post and can render Delete
   Post beside it when `onDeleteAction` is passed. Owner gating stays in Post Details; the menu does
   not check ownership again.
+- Edit Post replaces the Details overlay on the same `/posts/[postId]` route instead of stacking a
+  second modal. The posts page stays behind. Closing or saving Edit returns to Details.
+- Desktop Details and Edit use the same overlay box as Create Post wide / Publication, without
+  importing create-post: `min(60.75rem, 100vw - 2rem)` by `min(35.25rem, 100dvh - 2rem)`, media and
+  form columns `51fr / 50fr`. The dialog header is `auto` and the body is `1fr`, so Edit's title bar
+  stays inside that height. Form grid uses `align-content: start`, full-width description field, and
+  Save Changes on the last `1fr` row with `align-self: end`. Modal body padding stays `0`; stacked
+  layout remains at `width <= 720px`. Edit shows the current Details carousel image as a static
+  preview without arrows or pagination, using the same `contain` fit as Details.
 
 ### `DeletePostFlow`
 
@@ -237,6 +247,9 @@ Differences:
 - Author name and the letter avatar fallback come from `PostEntity.author`. The page does not call
   `user(id)` for the post owner and does not use `profilePictureFileId` as an image URL.
 - Owner-only Edit Post is gated by comparing `SessionProvider.user.id` with `PostEntity.ownerId`.
+  Opening Edit replaces the Details overlay on the same route; it does not stack a second modal.
+  Closing or saving Edit returns to Details. The posts page remains the route behind the overlay.
+  Details and Edit use the same Create Post wide box and Publication column split.
 - Close uses `getSafeReturnToPath` with fallback `/main`. Direct `/posts/[postId]` without `returnTo`
   goes to `/main`; `router.back()` is not used.
 - Profile `PostGrid` passes `returnTo=/profile/[userId]` into `PostCard`, so closing or deleting from

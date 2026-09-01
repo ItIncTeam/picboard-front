@@ -209,7 +209,10 @@ route user id.
 
 Route adapter передает `postId` в `views/post-details-page`. View загружает существующий `post(id)`,
 показывает carousel / description / дату и mapped `PostEntity.author`. Owner-only `Edit Post`
-определяется сравнением session user id с `PostEntity.ownerId`. Закрытие использует существующий
+определяется сравнением session user id с `PostEntity.ownerId` и сменяет overlay Details, а не
+открывает вторую модалку поверх. Details и Edit делят wide-ящик Create/Publication
+(`60.75rem × 35.25rem`, колонки `51fr / 50fr`); шапка Edit входит в эту высоту. Edit показывает
+текущий слайд Details статичной картинкой, без стрелок и пагинации. Закрытие использует существующий
 `getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. `router.back()` для details не
 используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Close и успешный
 delete используют один и тот же sanitized `returnTo`. Меню `...` одно на владельца и передаёт соседний

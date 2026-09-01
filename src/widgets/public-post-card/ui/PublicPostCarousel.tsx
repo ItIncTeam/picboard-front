@@ -12,17 +12,35 @@ type PublicPostCarouselFit = 'contain' | 'cover'
 type PublicPostCarouselProps = {
   fit?: PublicPostCarouselFit
   media: PostImage[]
+  activeIndex?: number
+  onActiveIndexChange?: (index: number) => void
 }
 
 const THUMBNAIL_IMAGE_SIZES =
   '(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 45vw, 234px'
 const DETAILS_IMAGE_SIZES = '(max-width: 720px) 100vw, 50vw'
 
-export function PublicPostCarousel({ fit = 'cover', media }: PublicPostCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const hasMultipleMedia = media.length > 1
-  const safeActiveIndex = Math.min(activeIndex, Math.max(media.length - 1, 0))
+export function PublicPostCarousel({
+  activeIndex: activeIndexProp,
+  fit = 'cover',
+  media,
+  onActiveIndexChange,
+}: PublicPostCarouselProps) {
+  const [uncontrolledIndex, setUncontrolledIndex] = useState(0)
+  const lastIndex = Math.max(media.length - 1, 0)
+  const requestedIndex = onActiveIndexChange ? (activeIndexProp ?? 0) : uncontrolledIndex
+  const safeActiveIndex = Math.min(Math.max(requestedIndex, 0), lastIndex)
   const activeMedia = media[safeActiveIndex]
+  const hasMultipleMedia = media.length > 1
+
+  const setActiveIndex = (index: number) => {
+    if (onActiveIndexChange) {
+      onActiveIndexChange(index)
+      return
+    }
+
+    setUncontrolledIndex(index)
+  }
 
   if (!activeMedia) {
     return (

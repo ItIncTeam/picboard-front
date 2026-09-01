@@ -270,6 +270,44 @@ describe('PostDetailsPage', () => {
     expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
   })
 
+  it('opens edit on the active carousel image without carousel controls', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.post.mockResolvedValue(createPost())
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body
+        .querySelector<HTMLButtonElement>('button[aria-label="Show next image"]')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(document.body.querySelector('img[alt="palm.jpg"]')).toBeInstanceOf(HTMLImageElement),
+    )
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Edit Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Edit Post')
+        ?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Save Changes'))
+    expect(getEditDialog().querySelector('img[alt="palm.jpg"]')).toBeInstanceOf(HTMLImageElement)
+    expect(getEditDialog().querySelector('button[aria-label="Show next image"]')).toBeNull()
+    expect(getEditDialog().querySelector('button[aria-label="Show previous image"]')).toBeNull()
+  })
+
   it('uses ownerId for owner actions and keeps backend author presentation in edit mode', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
@@ -296,7 +334,10 @@ describe('PostDetailsPage', () => {
     })
 
     await waitFor(() => expect(getDialogText()).toContain('Save Changes'))
+    expect(document.body.querySelectorAll('[role="dialog"]')).toHaveLength(1)
+    expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
     expect(getEditDialog().textContent).toContain('Backend Author')
+    expect(getEditDialog().querySelector('button[aria-label="Show next image"]')).toBeNull()
 
     const textArea = document.body.querySelector('textarea')
 
@@ -454,6 +495,51 @@ describe('PostDetailsPage', () => {
 
     expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
     expect(getDialogText()).not.toContain('Delete Post')
+  })
+
+  it('returns from Edit to Details before closing to the profile returnTo', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.post.mockResolvedValue(createPost())
+    navigationMocks.searchParams = new URLSearchParams({ returnTo: '/profile/user-1' })
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Edit Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Edit Post')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(document.body.querySelector('textarea')).toBeInstanceOf(HTMLTextAreaElement),
+    )
+
+    act(() => {
+      getEditDialog().querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
+    })
+
+    await waitFor(() => {
+      expect(document.body.querySelector('textarea')).toBeNull()
+      expect(getDialogText()).toContain('Original description')
+    })
+    expect(navigationMocks.replace).not.toHaveBeenCalled()
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
+    })
+
+    expect(navigationMocks.replace).toHaveBeenCalledTimes(1)
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/user-1')
   })
 
   it('closes a direct post link to /main', async () => {
