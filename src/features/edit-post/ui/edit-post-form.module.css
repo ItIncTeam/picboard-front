@@ -1,18 +1,25 @@
 .modal {
   width: min(60.75rem, calc(100vw - 2rem));
   max-width: calc(100vw - 2rem);
+  height: min(35.25rem, calc(100vh - 2rem));
+  height: min(35.25rem, calc(100dvh - 2rem));
+  max-height: calc(100dvh - 2rem);
 }
 
 .body {
   overflow: auto;
+  flex: 1;
+  min-height: 0;
   padding: 0;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem);
+  grid-template-columns: minmax(0, 51fr) minmax(0, 50fr);
   align-items: stretch;
-  min-height: min(30.75rem, calc(100dvh - 8rem));
+
+  height: 100%;
+  min-height: 0;
 }
 
 .media {
@@ -30,9 +37,9 @@
 
 .form {
   display: grid;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto 1fr;
   gap: 12px;
-  align-content: space-between;
+  align-content: start;
 
   min-width: 0;
   padding: 12px 24px 24px;
@@ -75,7 +82,15 @@
   display: grid;
   gap: 8px;
   align-content: start;
+
+  width: 100%;
+  min-width: 0;
   min-height: 0;
+}
+
+.descriptionField > * {
+  width: 100%;
+  min-width: 0;
 }
 
 .textArea {
@@ -99,6 +114,7 @@
 .footer {
   display: grid;
   gap: 12px;
+  align-self: end;
 }
 
 .saveError {
@@ -113,8 +129,14 @@
 }
 
 @media (width <= 720px) {
+  .modal {
+    height: auto;
+    min-height: 0;
+  }
+
   .layout {
     grid-template-columns: 1fr;
+    height: auto;
     min-height: 0;
   }
 

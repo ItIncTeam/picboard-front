@@ -270,6 +270,44 @@ describe('PostDetailsPage', () => {
     expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
   })
 
+  it('opens edit on the active carousel image without carousel controls', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.post.mockResolvedValue(createPost())
+
+    const view = renderPage()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body
+        .querySelector<HTMLButtonElement>('button[aria-label="Show next image"]')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(document.body.querySelector('img[alt="palm.jpg"]')).toBeInstanceOf(HTMLImageElement),
+    )
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Edit Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Edit Post')
+        ?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Save Changes'))
+    expect(getEditDialog().querySelector('img[alt="palm.jpg"]')).toBeInstanceOf(HTMLImageElement)
+    expect(getEditDialog().querySelector('button[aria-label="Show next image"]')).toBeNull()
+    expect(getEditDialog().querySelector('button[aria-label="Show previous image"]')).toBeNull()
+  })
+
   it('uses ownerId for owner actions and keeps backend author presentation in edit mode', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
@@ -296,7 +334,10 @@ describe('PostDetailsPage', () => {
     })
 
     await waitFor(() => expect(getDialogText()).toContain('Save Changes'))
+    expect(document.body.querySelectorAll('[role="dialog"]')).toHaveLength(1)
+    expect(document.body.querySelector('button[aria-label="Post actions"]')).toBeNull()
     expect(getEditDialog().textContent).toContain('Backend Author')
+    expect(getEditDialog().querySelector('button[aria-label="Show next image"]')).toBeNull()
 
     const textArea = document.body.querySelector('textarea')
 

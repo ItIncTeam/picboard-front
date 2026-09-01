@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { useState } from 'react'
 
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
@@ -66,49 +67,66 @@ function createMockPostEntity(description: string): PostEntity {
 function PostDetailsPreview({ startInEdit = false }: { startInEdit?: boolean }) {
   const [entity, setEntity] = useState(() => createMockPostEntity('Publication description'))
   const [isEditOpen, setIsEditOpen] = useState(startInEdit)
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const previewImage =
+    storyImages[Math.min(activeImageIndex, Math.max(storyImages.length - 1, 0))]
 
-  const renderCarousel = () => <PublicPostCarousel fit="contain" media={storyImages} />
-
-  return (
-    <>
-      <Modal
-        bodyClassName={styles.body}
-        className={styles.modal}
-        hideCloseButton
-        hideHeader
-        modalTitle="Post details"
-        onCloseAction={() => undefined}
-        open
-      >
-        <PostDetails
-          author={entity.author}
-          caption={entity.description ?? undefined}
-          createdAt={entity.createdAt}
-          createdAtLabel={formatRelativePostTime(entity.createdAt)}
-          headerAction={
-            <>
-              <EditPostMenu onEditAction={() => setIsEditOpen(true)} />
-              <IconButton icon={Close} label="Close" onClick={() => undefined} />
-            </>
-          }
-          media={renderCarousel()}
-        />
-      </Modal>
-
-      {isEditOpen ? (
-        <EditPostForm
-          author={entity.author}
-          description={entity.description ?? ''}
-          media={renderCarousel()}
-          onCloseAction={() => setIsEditOpen(false)}
-          onSavedAction={(nextEntity) => {
-            setEntity(nextEntity)
-            setIsEditOpen(false)
-          }}
-          postId={entity.id}
-        />
-      ) : null}
-    </>
+  return isEditOpen ? (
+    <EditPostForm
+      author={entity.author}
+      description={entity.description ?? ''}
+      media={
+        previewImage ? (
+          <div className={styles.editPreview}>
+            <Image
+              alt={previewImage.alt}
+              className={styles.editPreviewImage}
+              fill
+              sizes="(max-width: 720px) calc(100vw - 2rem), 30.375rem"
+              src={previewImage.url}
+              unoptimized
+            />
+          </div>
+        ) : null
+      }
+      onCloseAction={() => setIsEditOpen(false)}
+      onSavedAction={(nextEntity) => {
+        setEntity(nextEntity)
+        setIsEditOpen(false)
+      }}
+      postId={entity.id}
+    />
+  ) : (
+    <Modal
+      bodyClassName={styles.body}
+      className={styles.modal}
+      hideCloseButton
+      hideHeader
+      modalTitle="Post details"
+      onCloseAction={() => undefined}
+      open
+    >
+      <PostDetails
+        author={entity.author}
+        caption={entity.description ?? undefined}
+        createdAt={entity.createdAt}
+        createdAtLabel={formatRelativePostTime(entity.createdAt)}
+        headerAction={
+          <>
+            <EditPostMenu onEditAction={() => setIsEditOpen(true)} />
+            <IconButton icon={Close} label="Close" onClick={() => undefined} />
+          </>
+        }
+        media={
+          <PublicPostCarousel
+            activeIndex={activeImageIndex}
+            fit="contain"
+            media={storyImages}
+            onActiveIndexChange={setActiveImageIndex}
+          />
+        }
+      />
+    </Modal>
   )
 }
 

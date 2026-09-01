@@ -1,9 +1,17 @@
 'use client'
 
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
-import { mapPostEntityToPost, post, PostDetails, PostGrid, type PostEntity } from '@/entities/post'
+import {
+  mapPostEntityToPost,
+  post,
+  PostDetails,
+  PostGrid,
+  type PostEntity,
+  type PostImage,
+} from '@/entities/post'
 import { useSession } from '@/features/auth/session-management'
 import { DeletePostFlow } from '@/features/delete-post'
 import { EditPostForm, EditPostMenu } from '@/features/edit-post'
@@ -29,6 +37,25 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Post loading failed. Please try again.'
 }
 
+function EditPostMediaPreview({ image }: { image: PostImage | undefined }) {
+  if (!image) {
+    return null
+  }
+
+  return (
+    <div className={styles.editPreview}>
+      <Image
+        alt={image.alt || 'Post image'}
+        className={styles.editPreviewImage}
+        fill
+        sizes="(max-width: 720px) calc(100vw - 2rem), 30.375rem"
+        src={image.url}
+        unoptimized
+      />
+    </div>
+  )
+}
+
 export function PostDetailsPage({ postId }: PostDetailsPageProps) {
   return <PostDetailsPageContent key={postId} postId={postId} />
 }
@@ -40,6 +67,7 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
   const [postState, setPostState] = useState<PostDetailsState>({ postId, status: 'loading' })
   const [retryVersion, setRetryVersion] = useState(0)
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
   const requestIdRef = useRef(0)
 
   useEffect(() => {
@@ -118,57 +146,60 @@ function PostDetailsPageContent({ postId }: PostDetailsPageProps) {
   const displayPost = mapPostEntityToPost(currentState.entity)
   const isOwner =
     sessionStatus === 'authenticated' && sessionUser?.id === currentState.entity.ownerId
+  const previewImage =
+    displayPost.images[Math.min(activeImageIndex, Math.max(displayPost.images.length - 1, 0))]
 
-  const renderCarousel = () => <PublicPostCarousel fit="contain" media={displayPost.images} />
-
-  return (
-    <>
-      <Modal
-        bodyClassName={styles.body}
-        className={styles.modal}
-        hideCloseButton
-        hideHeader
-        modalTitle="Post details"
-        onCloseAction={closePage}
-        open
-      >
-        <PostDetails
-          author={displayPost.author}
-          caption={displayPost.caption}
-          createdAt={currentState.entity.createdAt}
-          createdAtLabel={formatRelativePostTime(currentState.entity.createdAt)}
-          headerAction={
-            <>
-              {isOwner ? (
-                <DeletePostFlow postId={currentState.entity.id} returnTo={safeReturnTo}>
-                  {({ openDeleteConfirmAction }) => (
-                    <EditPostMenu
-                      onDeleteAction={openDeleteConfirmAction}
-                      onEditAction={() => setIsEditOpen(true)}
-                    />
-                  )}
-                </DeletePostFlow>
-              ) : null}
-              <IconButton icon={Close} label="Close" onClick={closePage} />
-            </>
-          }
-          media={renderCarousel()}
-        />
-      </Modal>
-
-      {isOwner && isEditOpen ? (
-        <EditPostForm
-          author={displayPost.author}
-          description={currentState.entity.description ?? ''}
-          media={renderCarousel()}
-          onCloseAction={() => setIsEditOpen(false)}
-          onSavedAction={(entity) => {
-            setPostState({ entity, postId, status: 'ready' })
-            setIsEditOpen(false)
-          }}
-          postId={currentState.entity.id}
-        />
-      ) : null}
-    </>
+  return isOwner && isEditOpen ? (
+    <EditPostForm
+      author={displayPost.author}
+      description={currentState.entity.description ?? ''}
+      media={<EditPostMediaPreview image={previewImage} />}
+      onCloseAction={() => setIsEditOpen(false)}
+      onSavedAction={(entity) => {
+        setPostState({ entity, postId, status: 'ready' })
+        setIsEditOpen(false)
+      }}
+      postId={currentState.entity.id}
+    />
+  ) : (
+    <Modal
+      bodyClassName={styles.body}
+      className={styles.modal}
+      hideCloseButton
+      hideHeader
+      modalTitle="Post details"
+      onCloseAction={closePage}
+      open
+    >
+      <PostDetails
+        author={displayPost.author}
+        caption={displayPost.caption}
+        createdAt={currentState.entity.createdAt}
+        createdAtLabel={formatRelativePostTime(currentState.entity.createdAt)}
+        headerAction={
+          <>
+            {isOwner ? (
+              <DeletePostFlow postId={currentState.entity.id} returnTo={safeReturnTo}>
+                {({ openDeleteConfirmAction }) => (
+                  <EditPostMenu
+                    onDeleteAction={openDeleteConfirmAction}
+                    onEditAction={() => setIsEditOpen(true)}
+                  />
+                )}
+              </DeletePostFlow>
+            ) : null}
+            <IconButton icon={Close} label="Close" onClick={closePage} />
+          </>
+        }
+        media={
+          <PublicPostCarousel
+            activeIndex={activeImageIndex}
+            fit="contain"
+            media={displayPost.images}
+            onActiveIndexChange={setActiveImageIndex}
+          />
+        }
+      />
+    </Modal>
   )
 }

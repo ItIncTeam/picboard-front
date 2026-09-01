@@ -16,7 +16,7 @@ Final integration review актуального `dev`: **DEV READY**.
 - общий routing через persistent `AppRouteShell`;
 - Apollo cache synchronization, Profile pagination и 60-second polling Main/Profile;
 - отображение backend `PostEntity.author`;
-- полный cropped raster в Details/Edit через carousel `contain` mode;
+- полный cropped raster в Details через carousel `contain` и в Edit статичным кадром с тем же fit;
 - возврат после Delete через sanitized `returnTo` с `/main` fallback;
 - Public Home server rendering и ISR в текущем согласованном scope.
 
@@ -47,11 +47,14 @@ Final verification:
   against stale responses after first-page changes or user transitions.
 - Post Details maps backend author and attachments and gates owner actions by
   `sessionUser.id === PostEntity.ownerId`.
-- Edit updates description, keeps the user on Details and synchronizes Feed/Public Home.
+- Edit updates description, replaces the Details overlay on the same route instead of stacking a
+  second modal, and synchronizes Feed/Public Home. Details and Edit share the Create Post wide /
+  Publication overlay box. Edit shows the current Details slide as a static image without carousel
+  controls.
 - Delete evicts the normalized post, Feed and Profile posts, then navigates through the same safe
   `returnTo` used by Close.
-- Details and Edit display cropped images with `object-fit: contain`; Main/Public thumbnails keep
-  their existing `cover` presentation.
+- Details carousel and Edit preview display cropped images with `object-fit: contain`; Main/Public
+  thumbnails keep their existing `cover` presentation.
 
 ### Public Home
 
