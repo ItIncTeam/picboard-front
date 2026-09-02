@@ -28,7 +28,7 @@ export function EmailSentModal({ email, onCloseAction, open }: EmailSentModalPro
           {t.auth.signUp.emailSentMessagePrefix} {email}
         </Text>
         <Button className={styles.button} onClick={onCloseAction}>
-          OK
+          {t.ui.ok}
         </Button>
       </div>
     </Modal>

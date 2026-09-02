@@ -2,7 +2,8 @@
 
 import { NavigationButton } from '@/features/auth'
 import { BellIcon } from '@/shared/assets'
-import { useI18n } from '@/shared/lib/i18n'
+import { useI18n, type Language } from '@/shared/lib/i18n'
+import type { Dictionary } from '@/shared/lib/i18n/dictionaries'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { Logo } from '@/shared/ui/logo'
@@ -25,6 +26,25 @@ const logoHref: Record<HeaderRole, string> = {
   superAdmin: '/admin/users',
 }
 
+function getUnreadNotificationsLabel(
+  count: number,
+  language: Language,
+  labels: Dictionary['header']['unreadNotifications'],
+): string {
+  const pluralCategory = new Intl.PluralRules(language).select(count)
+
+  switch (pluralCategory) {
+    case 'one':
+      return labels.one
+    case 'few':
+      return labels.few
+    case 'many':
+      return labels.many
+    default:
+      return labels.other
+  }
+}
+
 export function Header({
   isSidebarOpen = false,
   notificationsCount = 0,
@@ -35,7 +55,7 @@ export function Header({
   const isAuthenticated = role !== 'guest'
   const showAuthActions = !isAuthenticated
   const showSidebarTrigger = isAuthenticated && onToggleSidebarAction
-  const { t } = useI18n()
+  const { language, t } = useI18n()
   const logoSuffix: Partial<Record<HeaderRole, string>> = {
     admin: t.header.adminSuffix,
     superAdmin: t.header.superAdminSuffix,
@@ -70,7 +90,11 @@ export function Header({
               indicatorCount={notificationsCount}
               label={
                 hasNotifications
-                  ? `${notificationsCount} ${t.header.unreadNotifications}. ${t.header.notificationsUnavailable}`
+                  ? `${notificationsCount} ${getUnreadNotificationsLabel(
+                      notificationsCount,
+                      language,
+                      t.header.unreadNotifications,
+                    )}. ${t.header.notificationsUnavailable}`
                   : t.header.notificationsUnavailable
               }
               tooltip={t.header.notificationsUnavailable}

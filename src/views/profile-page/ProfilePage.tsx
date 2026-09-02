@@ -28,7 +28,7 @@ type ProfilePageProps = {
 }
 
 type ProfileUserState =
-  | { status: 'error'; message: string; userId: string }
+  | { status: 'error'; userId: string }
   | { status: 'loading'; userId: string }
   | { status: 'not-found'; userId: string }
   | { status: 'ready'; user: PublicUser; userId: string }
@@ -43,14 +43,10 @@ type PaginationState = {
 }
 
 type PaginationStatus = {
-  error: string | null
+  error: boolean
   isLoading: boolean
   revision: number
   userId: string
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Profile loading failed. Please try again.'
 }
 
 function mergePosts(currentPosts: PostEntity[], nextPosts: PostEntity[]): PostEntity[] {
@@ -123,7 +119,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   )
   const [retryVersion, setRetryVersion] = useState(0)
   const [paginationStatus, setPaginationStatus] = useState<PaginationStatus>({
-    error: null,
+    error: false,
     isLoading: false,
     revision: 0,
     userId,
@@ -164,9 +160,9 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
         setProfileUserState({ status: 'ready', user, userId })
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (requestIdRef.current === requestId) {
-          setProfileUserState({ status: 'error', message: getErrorMessage(error), userId })
+          setProfileUserState({ status: 'error', userId })
         }
       })
 
@@ -197,7 +193,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     paginationStatus.userId === userId &&
     paginationStatus.revision === currentPaginationState.revision
       ? paginationStatus
-      : { error: null, isLoading: false, revision: currentPaginationState.revision, userId }
+      : { error: false, isLoading: false, revision: currentPaginationState.revision, userId }
 
   useEffect(() => {
     loadingMoreRequestRef.current = null
@@ -212,7 +208,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     const paginationRevision = currentPaginationState.revision
     const paginationRequest = Symbol('profile-pagination-request')
     loadingMoreRequestRef.current = paginationRequest
-    setPaginationStatus({ error: null, isLoading: true, revision: paginationRevision, userId })
+    setPaginationStatus({ error: false, isLoading: true, revision: paginationRevision, userId })
 
     try {
       const response = await fetchMore({
@@ -246,11 +242,11 @@ export function ProfilePage({ userId }: ProfilePageProps) {
           pageInfo: nextConnection.pageInfo,
         }
       })
-    } catch (error) {
+    } catch {
       if (requestIdRef.current === requestId) {
         setPaginationStatus((currentStatus) =>
           currentStatus.userId === userId && currentStatus.revision === paginationRevision
-            ? { ...currentStatus, error: getErrorMessage(error), isLoading: false }
+            ? { ...currentStatus, error: true, isLoading: false }
             : currentStatus,
         )
       }
@@ -339,7 +335,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
           onRetry={() => {
             setProfileUserState({ status: 'loading', userId })
             setPaginationStatus({
-              error: null,
+              error: false,
               isLoading: false,
               revision: currentPaginationState.revision,
               userId,
@@ -412,7 +408,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
         {currentPaginationStatus.error && (
           <div className={styles.loadMoreError} role="alert">
-            <p>{currentPaginationStatus.error}</p>
+            <p>{t.profile.loadingMoreError}</p>
             <Button onClick={() => void loadMore()} type="button" variant="outlined">
               {t.posts.grid.tryAgain}
             </Button>

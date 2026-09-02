@@ -4,7 +4,12 @@ export const ru = {
     closeSidebar: 'Закрыть навигацию',
     sidebarOpen: 'Навигация открыта',
     notificationsUnavailable: 'Уведомления пока недоступны.',
-    unreadNotifications: 'непрочитанных уведомлений',
+    unreadNotifications: {
+      one: 'непрочитанное уведомление',
+      few: 'непрочитанных уведомления',
+      many: 'непрочитанных уведомлений',
+      other: 'непрочитанных уведомления',
+    },
     adminSuffix: 'Админ',
     superAdminSuffix: 'Суперадмин',
   },
@@ -117,6 +122,13 @@ export const ru = {
       cropFirst: 'Обрежьте изображение перед применением фильтра.',
       exportFailed: 'Не удалось экспортировать изображение с фильтром. Попробуйте еще раз.',
       unsupportedBrowser: 'Фильтры изображений не поддерживаются в этом браузере.',
+      labels: {
+        normal: 'Обычный',
+        clarendon: 'Clarendon',
+        lark: 'Lark',
+        gingham: 'Gingham',
+        moon: 'Moon',
+      },
     },
     publication: {
       ariaLabel: 'Публикация',
@@ -312,6 +324,7 @@ export const ru = {
     noInformation: 'Информация не указана.',
     publications: 'Публикации',
     loadingMore: 'Загружаем еще публикации...',
+    loadingMoreError: 'Не удалось загрузить дополнительные публикации. Попробуйте еще раз.',
     relationsTitle: 'Связи профиля',
     relationsDescription: 'Защищенный маршрут связей профиля.',
   },
@@ -363,6 +376,7 @@ export const ru = {
     close: 'Закрыть',
     closeNotification: 'Закрыть уведомление',
     loading: 'Загрузка...',
+    ok: 'ОК',
     datePicker: {
       date: 'Дата',
       dateRange: 'Диапазон дат',

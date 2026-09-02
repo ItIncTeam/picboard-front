@@ -4,7 +4,12 @@ export const en = {
     closeSidebar: 'Close sidebar navigation',
     sidebarOpen: 'Sidebar navigation is open',
     notificationsUnavailable: 'Notifications are not available yet.',
-    unreadNotifications: 'unread notifications',
+    unreadNotifications: {
+      one: 'unread notification',
+      few: 'unread notifications',
+      many: 'unread notifications',
+      other: 'unread notifications',
+    },
     adminSuffix: 'Admin',
     superAdminSuffix: 'SuperAdmin',
   },
@@ -117,6 +122,13 @@ export const en = {
       cropFirst: 'Crop this image before applying a filter.',
       exportFailed: 'Could not export the filtered image. Please try again.',
       unsupportedBrowser: 'Image filters are not supported in this browser.',
+      labels: {
+        normal: 'Normal',
+        clarendon: 'Clarendon',
+        lark: 'Lark',
+        gingham: 'Gingham',
+        moon: 'Moon',
+      },
     },
     publication: {
       ariaLabel: 'Publication',
@@ -310,6 +322,7 @@ export const en = {
     noInformation: 'No information provided.',
     publications: 'Publications',
     loadingMore: 'Loading more publications...',
+    loadingMoreError: 'Could not load more publications. Please try again.',
     relationsTitle: 'Profile relations',
     relationsDescription: 'Protected profile relations route.',
   },
@@ -361,6 +374,7 @@ export const en = {
     close: 'Close',
     closeNotification: 'Close notification',
     loading: 'Loading...',
+    ok: 'OK',
     datePicker: {
       date: 'Date',
       dateRange: 'Date range',

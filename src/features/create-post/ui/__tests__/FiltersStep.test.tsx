@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CreatePostImage, ImageFilter } from '@/features/create-post'
 import { I18nProvider } from '@/shared/lib/i18n'
+import { en } from '@/shared/lib/i18n/dictionaries/en'
 
 import { FiltersStep } from '../FiltersStep'
 
@@ -283,7 +284,7 @@ describe('FiltersStep', () => {
 
     expect(filterMocks.bitmapClose).toHaveBeenCalledTimes(1)
     expect(view.container.querySelector('[role="alert"]')?.textContent).toContain(
-      'Canvas draw failed.',
+      en.createPost.filters.exportFailed,
     )
   })
 

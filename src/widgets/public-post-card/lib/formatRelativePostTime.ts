@@ -1,26 +1,16 @@
 import { defaultLanguage, type Language } from '@/shared/lib/i18n'
+import { dictionaries } from '@/shared/lib/i18n/dictionaries'
 
 export type RelativePostTimeLabels = {
   justNow: string
   recently: string
 }
 
-const relativeTimeFallbacks: Record<Language, RelativePostTimeLabels> = {
-  en: {
-    justNow: 'Just now',
-    recently: 'Recently',
-  },
-  ru: {
-    justNow: 'Только что',
-    recently: 'Недавно',
-  },
-}
-
 export function formatRelativePostTime(
   createdAt: string,
   now = new Date(),
   language: Language = defaultLanguage,
-  labels: RelativePostTimeLabels = relativeTimeFallbacks[language],
+  labels: RelativePostTimeLabels = dictionaries[language].widgets.publicPostCard,
 ): string {
   const createdAtDate = new Date(createdAt)
   const relativeTimeFormatter = new Intl.RelativeTimeFormat(language, { numeric: 'auto' })

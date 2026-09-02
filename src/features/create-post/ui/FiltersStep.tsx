@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import type { CreatePostImage, CreatePostImageArtifact, ImageFilter } from '@/features/create-post'
 import { CREATE_POST_FILTERS } from '@/features/create-post/lib/createPostConstants'
@@ -30,24 +30,25 @@ export type FiltersStepProps = {
 }
 
 type FilterExportState = {
-  error: string | null
+  error: FilterExportErrorCode | null
   key: string | null
   status: 'idle' | 'pending'
 }
 
-function getFilterLabel(filter: ImageFilter): string {
-  return `${filter[0].toUpperCase()}${filter.slice(1)}`
+type FilterExportErrorCode = 'exportFailed' | 'unsupportedBrowser'
+
+class FilterExportError extends Error {
+  constructor(readonly code: FilterExportErrorCode) {
+    super(code)
+    this.name = 'FilterExportError'
+  }
 }
 
 function getExportMimeType(file: File): 'image/jpeg' | 'image/png' {
   return file.type === 'image/png' ? 'image/png' : 'image/jpeg'
 }
 
-function canvasToBlob(
-  canvas: HTMLCanvasElement,
-  mimeType: 'image/jpeg' | 'image/png',
-  errorMessage: string,
-) {
+function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image/png') {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -56,7 +57,7 @@ function canvasToBlob(
           return
         }
 
-        reject(new Error(errorMessage))
+        reject(new FilterExportError('exportFailed'))
       },
       mimeType,
       mimeType === 'image/jpeg' ? 0.92 : undefined,
@@ -67,10 +68,6 @@ function canvasToBlob(
 async function exportFilteredImage(
   cropped: CreatePostImageArtifact,
   filter: Exclude<ImageFilter, 'normal'>,
-  messages: {
-    exportFailed: string
-    unsupportedBrowser: string
-  },
 ): Promise<CreatePostImageArtifact> {
   const bitmap = await createImageBitmap(cropped.file)
   const canvas = document.createElement('canvas')
@@ -78,7 +75,7 @@ async function exportFilteredImage(
 
   if (!context) {
     bitmap.close()
-    throw new Error(messages.unsupportedBrowser)
+    throw new FilterExportError('unsupportedBrowser')
   }
 
   canvas.width = bitmap.width
@@ -92,7 +89,7 @@ async function exportFilteredImage(
   }
 
   const mimeType = getExportMimeType(cropped.file)
-  const blob = await canvasToBlob(canvas, mimeType, messages.exportFailed)
+  const blob = await canvasToBlob(canvas, mimeType)
   const file = new File([blob], cropped.file.name, {
     lastModified: Date.now(),
     type: blob.type || mimeType,
@@ -120,6 +117,14 @@ export function FiltersStep({
   onSetActiveImage,
 }: FiltersStepProps) {
   const { t } = useI18n()
+  const notifyExportingChange = useEffectEvent((isExporting: boolean) => {
+    onExportingChange(isExporting)
+  })
+  const notifyImageExported = useEffectEvent(
+    (imageId: string, exported: CreatePostImage['exported']) => {
+      onImageExported(imageId, exported)
+    },
+  )
   const [exportState, setExportState] = useState<FilterExportState>({
     error: null,
     key: null,
@@ -131,12 +136,17 @@ export function FiltersStep({
     ? `${activeImage.id}:${activeImage.filter}:${activeImage.cropped.objectUrl}:${retryVersion}`
     : null
   const isExporting = exportState.key === exportKey && exportState.status === 'pending'
+  const filterLabels: Record<ImageFilter, string> = t.createPost.filters.labels
+  const exportErrorMessages: Record<FilterExportErrorCode, string> = {
+    exportFailed: t.createPost.filters.exportFailed,
+    unsupportedBrowser: t.createPost.filters.unsupportedBrowser,
+  }
   let error: string | null = null
 
   if (activeImage && !activeImage.cropped) {
     error = t.createPost.filters.cropFirst
-  } else if (exportState.key === exportKey) {
-    error = exportState.error
+  } else if (exportState.key === exportKey && exportState.error) {
+    error = exportErrorMessages[exportState.error]
   }
 
   useEffect(() => {
@@ -145,33 +155,33 @@ export function FiltersStep({
     let disposed = false
 
     if (!activeImage?.cropped) {
-      onExportingChange(false)
+      notifyExportingChange(false)
 
       return () => {
         disposed = true
         requestIdRef.current += 1
-        onExportingChange(false)
+        notifyExportingChange(false)
       }
     }
 
     if (activeImage.exported) {
-      onExportingChange(false)
+      notifyExportingChange(false)
 
       return () => {
         disposed = true
         requestIdRef.current += 1
-        onExportingChange(false)
+        notifyExportingChange(false)
       }
     }
 
     if (activeImage.filter === 'normal') {
-      onImageExported(activeImage.id, activeImage.cropped)
-      onExportingChange(false)
+      notifyImageExported(activeImage.id, activeImage.cropped)
+      notifyExportingChange(false)
 
       return () => {
         disposed = true
         requestIdRef.current += 1
-        onExportingChange(false)
+        notifyExportingChange(false)
       }
     }
 
@@ -186,12 +196,9 @@ export function FiltersStep({
         }
 
         setExportState({ error: null, key: exportKey, status: 'pending' })
-        onExportingChange(true)
+        notifyExportingChange(true)
 
-        return exportFilteredImage(cropped, filter, {
-          exportFailed: t.createPost.filters.exportFailed,
-          unsupportedBrowser: t.createPost.filters.unsupportedBrowser,
-        })
+        return exportFilteredImage(cropped, filter)
       })
       .then((artifact) => {
         if (!artifact) {
@@ -204,8 +211,8 @@ export function FiltersStep({
         }
 
         setExportState({ error: null, key: exportKey, status: 'idle' })
-        onExportingChange(false)
-        onImageExported(imageId, artifact)
+        notifyExportingChange(false)
+        notifyImageExported(imageId, artifact)
       })
       .catch((exportError: unknown) => {
         if (disposed || requestIdRef.current !== requestId) {
@@ -213,20 +220,19 @@ export function FiltersStep({
         }
 
         setExportState({
-          error:
-            exportError instanceof Error ? exportError.message : t.createPost.filters.exportFailed,
+          error: exportError instanceof FilterExportError ? exportError.code : 'exportFailed',
           key: exportKey,
           status: 'idle',
         })
-        onExportingChange(false)
+        notifyExportingChange(false)
       })
 
     return () => {
       disposed = true
       requestIdRef.current += 1
-      onExportingChange(false)
+      notifyExportingChange(false)
     }
-  }, [activeImage, exportKey, onExportingChange, onImageExported, retryVersion, t])
+  }, [activeImage, exportKey, retryVersion])
 
   const activePreview = activeImage?.cropped?.objectUrl
 
@@ -308,7 +314,7 @@ export function FiltersStep({
               onClick={() => activeImage && onFilterChange(activeImage.id, filter)}
               type="button"
             >
-              {getFilterLabel(filter)}
+              {filterLabels[filter]}
             </button>
           ))}
         </div>
