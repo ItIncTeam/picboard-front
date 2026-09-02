@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { useI18n } from '@/shared/lib/i18n'
 import styles from '../public-post-card.module.css'
 
 type PublicPostDescriptionProps = {
@@ -11,6 +12,7 @@ type PublicPostDescriptionProps = {
 const COLLAPSED_DESCRIPTION_LENGTH = 90
 
 export function PublicPostDescription({ description }: PublicPostDescriptionProps) {
+  const { t } = useI18n()
   const [isExpanded, setIsExpanded] = useState(false)
   const canExpand = description.length > COLLAPSED_DESCRIPTION_LENGTH
   const visibleDescription =
@@ -32,7 +34,7 @@ export function PublicPostDescription({ description }: PublicPostDescriptionProp
           onClick={() => setIsExpanded((currentValue) => !currentValue)}
           type="button"
         >
-          {isExpanded ? 'Hide' : 'Show more'}
+          {isExpanded ? t.widgets.publicPostCard.hide : t.widgets.publicPostCard.showMore}
         </button>
       ) : null}
     </p>

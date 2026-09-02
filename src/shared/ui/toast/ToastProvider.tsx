@@ -9,6 +9,7 @@ import {
   type ToastInput,
   type ToastVariant,
 } from '@/shared/lib/toast'
+import { useI18n } from '@/shared/lib/i18n'
 
 import styles from './toast.module.css'
 
@@ -26,16 +27,10 @@ type ToastProviderProps = Readonly<{
 const maxVisibleToasts = 3
 const toastDurationMs = 4500
 
-const variantTitles: Record<ToastVariant, string> = {
-  error: 'Error',
-  info: 'Info',
-  success: 'Success',
-  warning: 'Warning',
-}
-
 const resolveToastInput = (
   input: ToastInput,
   variant: ToastVariant,
+  variantTitles: Record<ToastVariant, string>,
 ): Omit<ToastItem, 'id' | 'variant'> => {
   if (typeof input === 'string') {
     return {
@@ -48,24 +43,37 @@ const resolveToastInput = (
 }
 
 export const ToastProvider = ({ children }: ToastProviderProps) => {
+  const { t } = useI18n()
   const nextIdRef = useRef(0)
   const [toasts, setToasts] = useState<ToastItem[]>([])
+  const variantTitles = useMemo<Record<ToastVariant, string>>(
+    () => ({
+      error: t.ui.toast.error,
+      info: t.ui.toast.info,
+      success: t.ui.toast.success,
+      warning: t.ui.toast.warning,
+    }),
+    [t.ui.toast.error, t.ui.toast.info, t.ui.toast.success, t.ui.toast.warning],
+  )
 
   const dismissToast = useCallback((id: string) => {
     setToasts((currentToasts) => currentToasts.filter((toast) => toast.id !== id))
   }, [])
 
-  const showToast = useCallback((variant: ToastVariant, input: ToastInput) => {
-    const nextToast = {
-      id: String(nextIdRef.current),
-      variant,
-      ...resolveToastInput(input, variant),
-    }
+  const showToast = useCallback(
+    (variant: ToastVariant, input: ToastInput) => {
+      const nextToast = {
+        id: String(nextIdRef.current),
+        variant,
+        ...resolveToastInput(input, variant, variantTitles),
+      }
 
-    nextIdRef.current += 1
+      nextIdRef.current += 1
 
-    setToasts((currentToasts) => [nextToast, ...currentToasts].slice(0, maxVisibleToasts))
-  }, [])
+      setToasts((currentToasts) => [nextToast, ...currentToasts].slice(0, maxVisibleToasts))
+    },
+    [variantTitles],
+  )
 
   const value = useMemo<ToastContextValue>(
     () => ({
@@ -98,7 +106,7 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
                 {toast.description}
               </ToastPrimitive.Description>
             ) : null}
-            <ToastPrimitive.Close className={styles.close} aria-label="Close notification">
+            <ToastPrimitive.Close className={styles.close} aria-label={t.ui.closeNotification}>
               ×
             </ToastPrimitive.Close>
           </ToastPrimitive.Root>

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 
 import { Close } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { IconButton } from '@/shared/ui/icon-button'
 import { Text } from '@/shared/ui/typography'
@@ -16,16 +17,6 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'] as const
 const ACCEPTED_IMAGE_TYPES_INPUT_VALUE = ACCEPTED_IMAGE_TYPES.join(',')
 const MAX_IMAGE_SIZE_BYTES = 20 * 1024 * 1024
 const MAX_IMAGES_COUNT = 10
-
-function getAvailableSlotsMessage(availableSlots: number): string {
-  return availableSlots === 1
-    ? 'Only 1 more photo can be added.'
-    : `Only ${availableSlots} more photos can be added.`
-}
-
-function getSelectedPhotosMessage(imagesCount: number): string {
-  return imagesCount === 1 ? '1 photo selected' : `${imagesCount} photos selected`
-}
 
 export type UploadStepProps = {
   activeImageId: string | null
@@ -42,6 +33,7 @@ export function UploadStep({
   onRemoveImage,
   onSetActiveImage,
 }: UploadStepProps) {
+  const { t } = useI18n()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [errors, setErrors] = useState<string[]>([])
   const activeImage = images.find((image) => image.id === activeImageId) ?? images[0] ?? null
@@ -49,7 +41,7 @@ export function UploadStep({
 
   const handleSelectFiles = () => {
     if (hasReachedImagesLimit) {
-      setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
+      setErrors([t.createPost.upload.imageLimit])
 
       return
     }
@@ -70,13 +62,17 @@ export function UploadStep({
     const nextErrors: string[] = []
 
     if (availableSlots <= 0) {
-      setErrors([`You can add up to ${MAX_IMAGES_COUNT} photos.`])
+      setErrors([t.createPost.upload.imageLimit])
 
       return
     }
 
     if (selectedFiles.length > availableSlots) {
-      nextErrors.push(getAvailableSlotsMessage(availableSlots))
+      nextErrors.push(
+        availableSlots === 1
+          ? t.createPost.upload.oneMorePhoto
+          : `${t.createPost.upload.morePhotosPrefix} ${availableSlots} ${t.createPost.upload.morePhotosSuffix}`,
+      )
     }
 
     const filesForValidation = selectedFiles.slice(0, Math.max(availableSlots, 0))
@@ -84,13 +80,13 @@ export function UploadStep({
       const hasAcceptedType = ACCEPTED_IMAGE_TYPES.some((imageType) => imageType === file.type)
 
       if (!hasAcceptedType) {
-        nextErrors.push(`${file.name} must be JPEG or PNG.`)
+        nextErrors.push(`${file.name} ${t.createPost.upload.unsupportedTypeSuffix}`)
 
         return false
       }
 
       if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        nextErrors.push(`${file.name} must be 20 MB or smaller.`)
+        nextErrors.push(`${file.name} ${t.createPost.upload.maxSizeSuffix}`)
 
         return false
       }
@@ -127,7 +123,7 @@ export function UploadStep({
   return (
     <section
       className={styles.root}
-      aria-label="Upload photo"
+      aria-label={t.createPost.upload.ariaLabel}
       data-has-images={images.length > 0}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
@@ -144,7 +140,7 @@ export function UploadStep({
       <div className={styles.previewPanel}>
         {images.length > 0 && (
           <Text as="p" className={styles.sectionLabel} size="sm">
-            Selected photo
+            {t.createPost.upload.selectedPhoto}
           </Text>
         )}
 
@@ -176,21 +172,23 @@ export function UploadStep({
         <div className={styles.gallery}>
           <div className={styles.galleryHeader}>
             <Text as="p" className={styles.sectionLabel} size="sm">
-              Selected photos
+              {t.createPost.upload.selectedPhotos}
             </Text>
             <Text as="p" className={styles.counter} size="sm">
-              {getSelectedPhotosMessage(images.length)}
+              {images.length === 1
+                ? t.createPost.upload.onePhotoSelected
+                : `${images.length} ${t.createPost.upload.photosSelectedSuffix}`}
             </Text>
           </div>
 
-          <ul className={styles.previewList} aria-label="Selected photos">
+          <ul className={styles.previewList} aria-label={t.createPost.upload.selectedPhotos}>
             {images.map((image, index) => {
               const isActive = image.id === activeImage?.id
 
               return (
                 <li key={image.id} className={styles.previewItem} data-active={isActive}>
                   <button
-                    aria-label={`Select image ${index + 1}: ${image.name}`}
+                    aria-label={`${t.createPost.upload.selectImagePrefix} ${index + 1}: ${image.name}`}
                     aria-pressed={isActive}
                     className={styles.previewButton}
                     onClick={() => onSetActiveImage(image.id)}
@@ -210,7 +208,7 @@ export function UploadStep({
                   <IconButton
                     className={styles.removeButton}
                     icon={Close}
-                    label={`Remove ${image.name}`}
+                    label={`${t.createPost.upload.removePrefix} ${image.name}`}
                     onClick={() => handleRemoveImage(image)}
                   />
                 </li>
@@ -222,7 +220,7 @@ export function UploadStep({
 
       <div className={styles.content}>
         <Text as="p" className={styles.caption} size="md">
-          Add photos for your new publication
+          {t.createPost.upload.addPhotosCaption}
         </Text>
         <Button
           className={styles.button}
@@ -230,7 +228,7 @@ export function UploadStep({
           onClick={handleSelectFiles}
           type="button"
         >
-          Select from Computer
+          {t.createPost.actions.selectFromComputer}
         </Button>
 
         {errors.length > 0 && (

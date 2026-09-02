@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { OAuthProviders } from '@/features/auth/oauth-providers'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 const oauthMocks = vi.hoisted(() => ({
   startOAuthProvider: vi.fn(),
@@ -35,7 +36,11 @@ function renderOAuthProviders(intent: 'signIn' | 'signUp'): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<OAuthProviders intent={intent} />)
+    root.render(
+      <I18nProvider>
+        <OAuthProviders intent={intent} />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

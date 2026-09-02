@@ -1,10 +1,11 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import type { CreatePostImage, CreatePostImageArtifact, ImageFilter } from '@/features/create-post'
 import { CREATE_POST_FILTERS } from '@/features/create-post/lib/createPostConstants'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Text } from '@/shared/ui/typography'
 
@@ -29,13 +30,18 @@ export type FiltersStepProps = {
 }
 
 type FilterExportState = {
-  error: string | null
+  error: FilterExportErrorCode | null
   key: string | null
   status: 'idle' | 'pending'
 }
 
-function getFilterLabel(filter: ImageFilter): string {
-  return `${filter[0].toUpperCase()}${filter.slice(1)}`
+type FilterExportErrorCode = 'exportFailed' | 'unsupportedBrowser'
+
+class FilterExportError extends Error {
+  constructor(readonly code: FilterExportErrorCode) {
+    super(code)
+    this.name = 'FilterExportError'
+  }
 }
 
 function getExportMimeType(file: File): 'image/jpeg' | 'image/png' {
@@ -51,7 +57,7 @@ function canvasToBlob(canvas: HTMLCanvasElement, mimeType: 'image/jpeg' | 'image
           return
         }
 
-        reject(new Error('Could not export the filtered image. Please try again.'))
+        reject(new FilterExportError('exportFailed'))
       },
       mimeType,
       mimeType === 'image/jpeg' ? 0.92 : undefined,
@@ -69,7 +75,7 @@ async function exportFilteredImage(
 
   if (!context) {
     bitmap.close()
-    throw new Error('Image filters are not supported in this browser.')
+    throw new FilterExportError('unsupportedBrowser')
   }
 
   canvas.width = bitmap.width
@@ -110,6 +116,15 @@ export function FiltersStep({
   onRemoveImage,
   onSetActiveImage,
 }: FiltersStepProps) {
+  const { t } = useI18n()
+  const notifyExportingChange = useEffectEvent((isExporting: boolean) => {
+    onExportingChange(isExporting)
+  })
+  const notifyImageExported = useEffectEvent(
+    (imageId: string, exported: CreatePostImage['exported']) => {
+      onImageExported(imageId, exported)
+    },
+  )
   const [exportState, setExportState] = useState<FilterExportState>({
     error: null,
     key: null,
@@ -121,12 +136,17 @@ export function FiltersStep({
     ? `${activeImage.id}:${activeImage.filter}:${activeImage.cropped.objectUrl}:${retryVersion}`
     : null
   const isExporting = exportState.key === exportKey && exportState.status === 'pending'
+  const filterLabels: Record<ImageFilter, string> = t.createPost.filters.labels
+  const exportErrorMessages: Record<FilterExportErrorCode, string> = {
+    exportFailed: t.createPost.filters.exportFailed,
+    unsupportedBrowser: t.createPost.filters.unsupportedBrowser,
+  }
   let error: string | null = null
 
   if (activeImage && !activeImage.cropped) {
-    error = 'Crop this image before applying a filter.'
-  } else if (exportState.key === exportKey) {
-    error = exportState.error
+    error = t.createPost.filters.cropFirst
+  } else if (exportState.key === exportKey && exportState.error) {
+    error = exportErrorMessages[exportState.error]
   }
 
   useEffect(() => {
@@ -135,33 +155,33 @@ export function FiltersStep({
     let disposed = false
 
     if (!activeImage?.cropped) {
-      onExportingChange(false)
+      notifyExportingChange(false)
 
       return () => {
         disposed = true
         requestIdRef.current += 1
-        onExportingChange(false)
+        notifyExportingChange(false)
       }
     }
 
     if (activeImage.exported) {
-      onExportingChange(false)
+      notifyExportingChange(false)
 
       return () => {
         disposed = true
         requestIdRef.current += 1
-        onExportingChange(false)
+        notifyExportingChange(false)
       }
     }
 
     if (activeImage.filter === 'normal') {
-      onImageExported(activeImage.id, activeImage.cropped)
-      onExportingChange(false)
+      notifyImageExported(activeImage.id, activeImage.cropped)
+      notifyExportingChange(false)
 
       return () => {
         disposed = true
         requestIdRef.current += 1
-        onExportingChange(false)
+        notifyExportingChange(false)
       }
     }
 
@@ -176,7 +196,7 @@ export function FiltersStep({
         }
 
         setExportState({ error: null, key: exportKey, status: 'pending' })
-        onExportingChange(true)
+        notifyExportingChange(true)
 
         return exportFilteredImage(cropped, filter)
       })
@@ -191,8 +211,8 @@ export function FiltersStep({
         }
 
         setExportState({ error: null, key: exportKey, status: 'idle' })
-        onExportingChange(false)
-        onImageExported(imageId, artifact)
+        notifyExportingChange(false)
+        notifyImageExported(imageId, artifact)
       })
       .catch((exportError: unknown) => {
         if (disposed || requestIdRef.current !== requestId) {
@@ -200,27 +220,24 @@ export function FiltersStep({
         }
 
         setExportState({
-          error:
-            exportError instanceof Error
-              ? exportError.message
-              : 'Could not export the filtered image. Please try again.',
+          error: exportError instanceof FilterExportError ? exportError.code : 'exportFailed',
           key: exportKey,
           status: 'idle',
         })
-        onExportingChange(false)
+        notifyExportingChange(false)
       })
 
     return () => {
       disposed = true
       requestIdRef.current += 1
-      onExportingChange(false)
+      notifyExportingChange(false)
     }
-  }, [activeImage, exportKey, onExportingChange, onImageExported, retryVersion])
+  }, [activeImage, exportKey, retryVersion])
 
   const activePreview = activeImage?.cropped?.objectUrl
 
   return (
-    <section className={styles.root} aria-label="Image filters">
+    <section className={styles.root} aria-label={t.createPost.filters.ariaLabel}>
       <div className={styles.previewPanel}>
         {activeImage && activePreview ? (
           <Image
@@ -234,12 +251,12 @@ export function FiltersStep({
           />
         ) : (
           <Text as="p" className={styles.placeholder} size="sm">
-            Select a cropped image to apply filters.
+            {t.createPost.filters.placeholder}
           </Text>
         )}
 
         {images.length > 0 && (
-          <ul className={styles.imageList} aria-label="Selected images">
+          <ul className={styles.imageList} aria-label={t.createPost.filters.selectedImages}>
             {images.map((image) => {
               const imageSource = image.cropped?.objectUrl
 
@@ -250,7 +267,7 @@ export function FiltersStep({
                   data-active={image.id === activeImage?.id}
                 >
                   <button
-                    aria-label={`Select image ${image.id}`}
+                    aria-label={`${t.createPost.filters.selectImagePrefix} ${image.id}`}
                     aria-pressed={image.id === activeImage?.id}
                     className={styles.imageButton}
                     onClick={() => onSetActiveImage(image.id)}
@@ -269,7 +286,7 @@ export function FiltersStep({
                     )}
                   </button>
                   <button
-                    aria-label={`Remove image ${image.id}`}
+                    aria-label={`${t.createPost.filters.removeImagePrefix} ${image.id}`}
                     className={styles.removeButton}
                     onClick={() => onRemoveImage(image.id)}
                     type="button"
@@ -285,9 +302,9 @@ export function FiltersStep({
 
       <div className={styles.filterPanel}>
         <Text as="p" className={styles.panelTitle} size="md">
-          Filters
+          {t.createPost.filters.title}
         </Text>
-        <div className={styles.filterList} aria-label="Available filters">
+        <div className={styles.filterList} aria-label={t.createPost.filters.availableFilters}>
           {CREATE_POST_FILTERS.map((filter) => (
             <button
               key={filter}
@@ -297,14 +314,14 @@ export function FiltersStep({
               onClick={() => activeImage && onFilterChange(activeImage.id, filter)}
               type="button"
             >
-              {getFilterLabel(filter)}
+              {filterLabels[filter]}
             </button>
           ))}
         </div>
 
         {isExporting && (
           <Text as="p" className={styles.status} role="status" size="sm">
-            Applying filter…
+            {t.createPost.filters.applying}
           </Text>
         )}
         {error && (
@@ -314,7 +331,7 @@ export function FiltersStep({
             </Text>
             {activeImage?.cropped && activeImage.filter !== 'normal' && (
               <Button onClick={() => setRetryVersion((version) => version + 1)} type="button">
-                Retry
+                {t.createPost.actions.retry}
               </Button>
             )}
           </div>

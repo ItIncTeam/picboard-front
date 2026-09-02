@@ -1,21 +1,33 @@
-const relativeTimeFormatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
-const absoluteDateFormatter = new Intl.DateTimeFormat('en', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-})
+import { defaultLanguage, type Language } from '@/shared/lib/i18n'
+import { dictionaries } from '@/shared/lib/i18n/dictionaries'
 
-export function formatRelativePostTime(createdAt: string, now = new Date()): string {
+export type RelativePostTimeLabels = {
+  justNow: string
+  recently: string
+}
+
+export function formatRelativePostTime(
+  createdAt: string,
+  now = new Date(),
+  language: Language = defaultLanguage,
+  labels: RelativePostTimeLabels = dictionaries[language].widgets.publicPostCard,
+): string {
   const createdAtDate = new Date(createdAt)
+  const relativeTimeFormatter = new Intl.RelativeTimeFormat(language, { numeric: 'auto' })
+  const absoluteDateFormatter = new Intl.DateTimeFormat(language, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 
   if (Number.isNaN(createdAtDate.getTime())) {
-    return 'Recently'
+    return labels.recently
   }
 
   const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - createdAtDate.getTime()) / 1000))
 
   if (elapsedSeconds < 60) {
-    return 'Just now'
+    return labels.justNow
   }
 
   const elapsedMinutes = Math.floor(elapsedSeconds / 60)

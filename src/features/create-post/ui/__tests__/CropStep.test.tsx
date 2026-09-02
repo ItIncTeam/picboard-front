@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AspectRatio, CreatePostCropGeometry, CreatePostImage } from '@/features/create-post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { CropStep, type CropStepHandle } from '../CropStep'
 
@@ -215,17 +216,19 @@ function renderCropStep(
 
   const render = (nextProps: TestCropStepProps) => {
     root.render(
-      <CropStep
-        activeImage={nextProps.activeImage}
-        disabled={false}
-        exportRef={exportRef}
-        images={nextProps.images}
-        onAddImages={nextProps.onAddImages ?? (() => undefined)}
-        onAspectRatioChange={nextProps.onAspectRatioChange ?? (() => undefined)}
-        onCropGeometryChange={nextProps.onCropGeometryChange ?? (() => undefined)}
-        onRemoveImage={nextProps.onRemoveImage ?? (() => undefined)}
-        onSetActiveImage={nextProps.onSetActiveImage ?? (() => undefined)}
-      />,
+      <I18nProvider>
+        <CropStep
+          activeImage={nextProps.activeImage}
+          disabled={false}
+          exportRef={exportRef}
+          images={nextProps.images}
+          onAddImages={nextProps.onAddImages ?? (() => undefined)}
+          onAspectRatioChange={nextProps.onAspectRatioChange ?? (() => undefined)}
+          onCropGeometryChange={nextProps.onCropGeometryChange ?? (() => undefined)}
+          onRemoveImage={nextProps.onRemoveImage ?? (() => undefined)}
+          onSetActiveImage={nextProps.onSetActiveImage ?? (() => undefined)}
+        />
+      </I18nProvider>,
     )
   }
 
@@ -281,34 +284,36 @@ function StatefulCropStep({
   const activeImage = images.find((image) => image.id === activeImageId) ?? null
 
   return (
-    <CropStep
-      activeImage={activeImage}
-      images={images}
-      onAddImages={(newImages) => setImages((current) => [...current, ...newImages])}
-      onAspectRatioChange={(imageId, aspectRatio) =>
-        setImages((current) =>
-          current.map((image) => (image.id === imageId ? { ...image, aspectRatio } : image)),
-        )
-      }
-      onCropGeometryChange={(imageId, cropGeometry) =>
-        setImages((current) =>
-          current.map((image) =>
-            image.id === imageId
-              ? {
-                  ...image,
-                  cropGeometry,
-                  cropped: undefined,
-                  exported: undefined,
-                }
-              : image,
-          ),
-        )
-      }
-      onRemoveImage={(imageId) =>
-        setImages((current) => current.filter((image) => image.id !== imageId))
-      }
-      onSetActiveImage={setActiveImageId}
-    />
+    <I18nProvider>
+      <CropStep
+        activeImage={activeImage}
+        images={images}
+        onAddImages={(newImages) => setImages((current) => [...current, ...newImages])}
+        onAspectRatioChange={(imageId, aspectRatio) =>
+          setImages((current) =>
+            current.map((image) => (image.id === imageId ? { ...image, aspectRatio } : image)),
+          )
+        }
+        onCropGeometryChange={(imageId, cropGeometry) =>
+          setImages((current) =>
+            current.map((image) =>
+              image.id === imageId
+                ? {
+                    ...image,
+                    cropGeometry,
+                    cropped: undefined,
+                    exported: undefined,
+                  }
+                : image,
+            ),
+          )
+        }
+        onRemoveImage={(imageId) =>
+          setImages((current) => current.filter((image) => image.id !== imageId))
+        }
+        onSetActiveImage={setActiveImageId}
+      />
+    </I18nProvider>
   )
 }
 
@@ -335,7 +340,7 @@ function renderStatefulCropStep(
 function removeThumbnail(container: HTMLElement, imageName: string) {
   const thumbnail = container.querySelector(`img[alt="${imageName}"]`)?.closest('[role="button"]')
   const removeButton = thumbnail?.querySelector<HTMLButtonElement>(
-    'button[aria-label="deleteImage"]',
+    'button[aria-label="Delete image"]',
   )
 
   if (!removeButton) {
@@ -390,20 +395,20 @@ describe('CropStep export boundary', () => {
     const view = renderCropStep({ activeImage: image, images: [image] })
     views.push(view)
 
-    const toggle = queryButton(view.container, 'AspectRatio')
+    const toggle = queryButton(view.container, 'Aspect ratio')
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+    expect(queryButton(view.container, 'Original')).toBeUndefined()
 
-    clickButton(view.container, 'AspectRatio')
+    clickButton(view.container, 'Aspect ratio')
 
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    expect(queryButton(view.container, 'Оригинал')).toBeDefined()
+    expect(queryButton(view.container, 'Original')).toBeDefined()
 
-    clickButton(view.container, 'AspectRatio')
+    clickButton(view.container, 'Aspect ratio')
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+    expect(queryButton(view.container, 'Original')).toBeUndefined()
   })
 
   it('keeps the aspect ratio and gallery panels mutually exclusive', () => {
@@ -411,15 +416,15 @@ describe('CropStep export boundary', () => {
     const view = renderCropStep({ activeImage: image, images: [image] })
     views.push(view)
 
-    clickButton(view.container, 'showSwiper')
+    clickButton(view.container, 'Show images')
     expect(view.container.querySelector('[aria-label="Selected images"]')).not.toBeNull()
 
-    clickButton(view.container, 'AspectRatio')
+    clickButton(view.container, 'Aspect ratio')
     expect(view.container.querySelector('[aria-label="Selected images"]')).toBeNull()
-    expect(queryButton(view.container, 'Оригинал')).toBeDefined()
+    expect(queryButton(view.container, 'Original')).toBeDefined()
 
-    clickButton(view.container, 'showSwiper')
-    expect(queryButton(view.container, 'Оригинал')).toBeUndefined()
+    clickButton(view.container, 'Show images')
+    expect(queryButton(view.container, 'Original')).toBeUndefined()
     expect(view.container.querySelector('[aria-label="Selected images"]')).not.toBeNull()
   })
 
@@ -435,12 +440,12 @@ describe('CropStep export boundary', () => {
       })
       views.push(view)
 
-      clickButton(view.container, 'AspectRatio')
-      clickButton(view.container, ratio === 'original' ? 'Оригинал' : ratio)
+      clickButton(view.container, 'Aspect ratio')
+      clickButton(view.container, ratio === 'original' ? 'Original' : ratio)
 
       expect(onAspectRatioChange).toHaveBeenCalledWith(image.id, ratio)
-      expect(queryButton(view.container, 'Оригинал')).toBeDefined()
-      expect(queryButton(view.container, 'AspectRatio')).toHaveAttribute('aria-expanded', 'true')
+      expect(queryButton(view.container, 'Original')).toBeDefined()
+      expect(queryButton(view.container, 'Aspect ratio')).toHaveAttribute('aria-expanded', 'true')
     },
   )
 
@@ -449,15 +454,15 @@ describe('CropStep export boundary', () => {
     const view = renderCropStep({ activeImage: image, images: [image] })
     views.push(view)
 
-    const toggle = queryButton(view.container, 'showSwiper')
+    const toggle = queryButton(view.container, 'Show images')
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
 
-    clickButton(view.container, 'showSwiper')
+    clickButton(view.container, 'Show images')
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
     expect(view.container.querySelector('[aria-label="Selected images"]')).not.toBeNull()
 
-    clickButton(view.container, 'showSwiper')
+    clickButton(view.container, 'Show images')
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(view.container.querySelector('[aria-label="Selected images"]')).toBeNull()
   })
@@ -467,7 +472,7 @@ describe('CropStep export boundary', () => {
     const view = renderStatefulCropStep(images, images[0].id)
     views.push(view)
 
-    clickButton(view.container, 'showSwiper')
+    clickButton(view.container, 'Show images')
     const secondThumbnail = view.container
       .querySelector(`img[alt="${images[1].name}"]`)
       ?.closest<HTMLElement>('[role="button"]')
@@ -483,8 +488,8 @@ describe('CropStep export boundary', () => {
     const view = renderCropStep({ activeImage: image, images: [image], onAddImages })
     views.push(view)
 
-    clickButton(view.container, 'showSwiper')
-    clickButton(view.container, 'AddImage')
+    clickButton(view.container, 'Show images')
+    clickButton(view.container, 'Add image')
 
     const input = view.container.querySelector<HTMLInputElement>('input[type="file"]')
     const file = new File(['new-image'], 'new-image.png', { type: 'image/png' })
@@ -520,10 +525,10 @@ describe('CropStep export boundary', () => {
     })
     views.push(view)
 
-    expect(queryButton(view.container, 'ArrowBackIcon')).toBeUndefined()
-    expect(queryButton(view.container, 'ArrowNextIcon')).toBeDefined()
+    expect(queryButton(view.container, 'Previous image')).toBeUndefined()
+    expect(queryButton(view.container, 'Next image')).toBeDefined()
 
-    clickButton(view.container, 'ArrowNextIcon')
+    clickButton(view.container, 'Next image')
     expect(onSetActiveImage).toHaveBeenCalledWith(images[1].id)
   })
 
@@ -532,8 +537,8 @@ describe('CropStep export boundary', () => {
     const view = renderCropStep({ activeImage: images[1], images })
     views.push(view)
 
-    expect(queryButton(view.container, 'ArrowBackIcon')).toBeDefined()
-    expect(queryButton(view.container, 'ArrowNextIcon')).toBeDefined()
+    expect(queryButton(view.container, 'Previous image')).toBeDefined()
+    expect(queryButton(view.container, 'Next image')).toBeDefined()
   })
 
   it('shows only Prev for the last image and does not wrap forwards', () => {
@@ -546,10 +551,10 @@ describe('CropStep export boundary', () => {
     })
     views.push(view)
 
-    expect(queryButton(view.container, 'ArrowBackIcon')).toBeDefined()
-    expect(queryButton(view.container, 'ArrowNextIcon')).toBeUndefined()
+    expect(queryButton(view.container, 'Previous image')).toBeDefined()
+    expect(queryButton(view.container, 'Next image')).toBeUndefined()
 
-    clickButton(view.container, 'ArrowBackIcon')
+    clickButton(view.container, 'Previous image')
     expect(onSetActiveImage).toHaveBeenCalledWith(images[1].id)
   })
 
@@ -558,8 +563,8 @@ describe('CropStep export boundary', () => {
     const view = renderCropStep({ activeImage: image, images: [image] })
     views.push(view)
 
-    expect(queryButton(view.container, 'ArrowBackIcon')).toBeUndefined()
-    expect(queryButton(view.container, 'ArrowNextIcon')).toBeUndefined()
+    expect(queryButton(view.container, 'Previous image')).toBeUndefined()
+    expect(queryButton(view.container, 'Next image')).toBeUndefined()
   })
 
   it('exports the current canvas without mutating the original image', async () => {
@@ -637,7 +642,7 @@ describe('CropStep export boundary', () => {
     const view = renderStatefulCropStep(images, images[0].id)
     views.push(view)
 
-    clickButton(view.container, 'showSwiper')
+    clickButton(view.container, 'Show images')
     removeThumbnail(view.container, images[1].name)
 
     expect(getMockCropper(view.container)).toHaveAttribute('data-cropper-src', images[0].previewUrl)
@@ -651,7 +656,7 @@ describe('CropStep export boundary', () => {
     const view = renderStatefulCropStep(images, images[0].id)
     views.push(view)
 
-    clickButton(view.container, 'showSwiper')
+    clickButton(view.container, 'Show images')
     removeThumbnail(view.container, images[0].name)
 
     expect(getMockCropper(view.container)).toHaveAttribute('data-cropper-src', images[1].previewUrl)

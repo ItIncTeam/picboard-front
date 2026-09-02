@@ -2,6 +2,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
+
 import { ProtectedRouteBoundary } from '../ProtectedRouteBoundary'
 
 const navigationMocks = vi.hoisted(() => ({
@@ -37,9 +39,11 @@ function renderProtectedRouteBoundary(): RenderResult {
 
   act(() => {
     root.render(
-      <ProtectedRouteBoundary>
-        <div>Protected content</div>
-      </ProtectedRouteBoundary>,
+      <I18nProvider>
+        <ProtectedRouteBoundary>
+          <div>Protected content</div>
+        </ProtectedRouteBoundary>
+      </I18nProvider>,
     )
   })
 

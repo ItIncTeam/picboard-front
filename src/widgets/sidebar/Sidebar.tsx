@@ -174,7 +174,7 @@ export function Sidebar({ isMobile, isOpen, onCloseAction, onToggleSidebarAction
         <button
           aria-controls="app-sidebar"
           aria-expanded={isOpen}
-          aria-label={isOpen ? 'Свернуть sidebar' : 'Развернуть sidebar'}
+          aria-label={isOpen ? t.sidebar.collapseSidebar : t.sidebar.expandSidebar}
           className={styles.toggleButton}
           data-open={isOpen}
           onClick={onToggleSidebarAction}

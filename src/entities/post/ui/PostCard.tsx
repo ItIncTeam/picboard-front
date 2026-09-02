@@ -1,7 +1,10 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 
 import type { Post } from '@/entities/post'
+import { useI18n } from '@/shared/lib/i18n'
 import styles from './post.module.css'
 
 type PostCardProps = {
@@ -19,6 +22,7 @@ function getPostDetailsHref(postId: string, returnTo?: string): string {
 }
 
 export function PostCard({ post, returnTo, showCaption = false }: PostCardProps) {
+  const { t } = useI18n()
   const primaryImage = post?.images[0]
 
   return (
@@ -26,7 +30,7 @@ export function PostCard({ post, returnTo, showCaption = false }: PostCardProps)
       <div className={styles.imageSlot}>
         {post ? (
           <Link
-            aria-label={`View post ${post.id}`}
+            aria-label={`${t.posts.card.viewPostPrefix} ${post.id}`}
             className={styles.postLink}
             href={getPostDetailsHref(post.id, returnTo)}
           >
@@ -40,11 +44,11 @@ export function PostCard({ post, returnTo, showCaption = false }: PostCardProps)
                 unoptimized
               />
             ) : (
-              <span className={styles.placeholder}>Post image</span>
+              <span className={styles.placeholder}>{t.posts.card.imagePlaceholder}</span>
             )}
           </Link>
         ) : (
-          <span className={styles.placeholder}>Post image</span>
+          <span className={styles.placeholder}>{t.posts.card.imagePlaceholder}</span>
         )}
       </div>
 

@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
+
 import { OAuthCallback } from '../OAuthCallback'
 import type * as OAuthModule from '@/features/auth/oauth'
 
@@ -54,7 +56,11 @@ function renderOAuthCallback(searchParams: URLSearchParams): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<OAuthCallback />)
+    root.render(
+      <I18nProvider>
+        <OAuthCallback />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

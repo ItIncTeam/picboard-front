@@ -2,6 +2,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { I18nProvider } from '@/shared/lib/i18n'
+
 import PublicError from '../error'
 
 type RenderResult = {
@@ -16,7 +18,11 @@ function renderPublicError(reset: () => void): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<PublicError error={new Error('Gateway unavailable')} unstable_retry={reset} />)
+    root.render(
+      <I18nProvider>
+        <PublicError error={new Error('Gateway unavailable')} unstable_retry={reset} />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

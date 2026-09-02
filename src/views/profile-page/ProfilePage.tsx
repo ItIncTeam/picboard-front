@@ -17,6 +17,7 @@ import {
 import { getUser, type PublicUser } from '@/entities/user'
 import { useSession } from '@/features/auth/session-management'
 import { PersonIcon } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { RoutePlaceholder } from '@/views/route-placeholder'
 
@@ -27,7 +28,7 @@ type ProfilePageProps = {
 }
 
 type ProfileUserState =
-  | { status: 'error'; message: string; userId: string }
+  | { status: 'error'; userId: string }
   | { status: 'loading'; userId: string }
   | { status: 'not-found'; userId: string }
   | { status: 'ready'; user: PublicUser; userId: string }
@@ -42,14 +43,10 @@ type PaginationState = {
 }
 
 type PaginationStatus = {
-  error: string | null
+  error: boolean
   isLoading: boolean
   revision: number
   userId: string
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Profile loading failed. Please try again.'
 }
 
 function mergePosts(currentPosts: PostEntity[], nextPosts: PostEntity[]): PostEntity[] {
@@ -111,6 +108,7 @@ function reconcileFirstPage(
 }
 
 export function ProfilePage({ userId }: ProfilePageProps) {
+  const { t } = useI18n()
   const { status: sessionStatus, user: sessionUser } = useSession()
   const [profileUserState, setProfileUserState] = useState<ProfileUserState>({
     status: 'loading',
@@ -121,7 +119,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   )
   const [retryVersion, setRetryVersion] = useState(0)
   const [paginationStatus, setPaginationStatus] = useState<PaginationStatus>({
-    error: null,
+    error: false,
     isLoading: false,
     revision: 0,
     userId,
@@ -162,9 +160,9 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
         setProfileUserState({ status: 'ready', user, userId })
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (requestIdRef.current === requestId) {
-          setProfileUserState({ status: 'error', message: getErrorMessage(error), userId })
+          setProfileUserState({ status: 'error', userId })
         }
       })
 
@@ -195,7 +193,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     paginationStatus.userId === userId &&
     paginationStatus.revision === currentPaginationState.revision
       ? paginationStatus
-      : { error: null, isLoading: false, revision: currentPaginationState.revision, userId }
+      : { error: false, isLoading: false, revision: currentPaginationState.revision, userId }
 
   useEffect(() => {
     loadingMoreRequestRef.current = null
@@ -210,7 +208,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     const paginationRevision = currentPaginationState.revision
     const paginationRequest = Symbol('profile-pagination-request')
     loadingMoreRequestRef.current = paginationRequest
-    setPaginationStatus({ error: null, isLoading: true, revision: paginationRevision, userId })
+    setPaginationStatus({ error: false, isLoading: true, revision: paginationRevision, userId })
 
     try {
       const response = await fetchMore({
@@ -244,11 +242,11 @@ export function ProfilePage({ userId }: ProfilePageProps) {
           pageInfo: nextConnection.pageInfo,
         }
       })
-    } catch (error) {
+    } catch {
       if (requestIdRef.current === requestId) {
         setPaginationStatus((currentStatus) =>
           currentStatus.userId === userId && currentStatus.revision === paginationRevision
-            ? { ...currentStatus, error: getErrorMessage(error), isLoading: false }
+            ? { ...currentStatus, error: true, isLoading: false }
             : currentStatus,
         )
       }
@@ -315,10 +313,10 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     return (
       <section aria-labelledby="profile-title" className={styles.root}>
         <h1 className={styles.visuallyHidden} id="profile-title">
-          Profile
+          {t.profile.title}
         </h1>
         <div aria-live="polite" className={styles.profileLoading} role="status">
-          Loading profile...
+          {t.profile.loading}
         </div>
         <PostGrid isLoading skeletonCount={PROFILE_POSTS_PAGE_SIZE} />
       </section>
@@ -329,19 +327,15 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     return (
       <section aria-labelledby="profile-title" className={styles.root}>
         <h1 className={styles.visuallyHidden} id="profile-title">
-          Profile
+          {t.profile.title}
         </h1>
         <PostGrid
-          errorMessage={
-            currentProfileUserState.status === 'error'
-              ? currentProfileUserState.message
-              : getErrorMessage(profilePostsError)
-          }
+          errorMessage={t.profile.loadingError}
           isError
           onRetry={() => {
             setProfileUserState({ status: 'loading', userId })
             setPaginationStatus({
-              error: null,
+              error: false,
               isLoading: false,
               revision: currentPaginationState.revision,
               userId,
@@ -357,8 +351,8 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   if (currentProfileUserState.status === 'not-found') {
     return (
       <section aria-labelledby="profile-title" className={styles.notFound}>
-        <h1 id="profile-title">Profile not found</h1>
-        <p>The requested user does not exist or is unavailable.</p>
+        <h1 id="profile-title">{t.profile.notFoundTitle}</h1>
+        <p>{t.profile.notFoundDescription}</p>
       </section>
     )
   }
@@ -374,7 +368,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     <section aria-labelledby="profile-title" className={styles.root}>
       <header className={styles.profileHeader}>
         <div
-          aria-label={`${currentProfileUserState.user.username} avatar`}
+          aria-label={`${currentProfileUserState.user.username} ${t.profile.avatarSuffix}`}
           className={styles.avatar}
           role="img"
         >
@@ -394,36 +388,36 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
             {isOwner && (
               <Button asChild variant="outlined">
-                <Link href="/settings/profile">Profile Settings</Link>
+                <Link href="/settings/profile">{t.profile.settings}</Link>
               </Button>
             )}
           </div>
 
           <div className={styles.about}>
-            <h2 className={styles.aboutTitle}>About me</h2>
+            <h2 className={styles.aboutTitle}>{t.profile.about}</h2>
             <p className={styles.bio}>
-              {currentProfileUserState.user.bio || 'No information provided.'}
+              {currentProfileUserState.user.bio || t.profile.noInformation}
             </p>
           </div>
         </div>
       </header>
 
       <div className={styles.publications}>
-        <h2 className={styles.publicationsTitle}>Publications</h2>
+        <h2 className={styles.publicationsTitle}>{t.profile.publications}</h2>
         <PostGrid posts={posts} returnTo={`/profile/${userId}`} />
 
         {currentPaginationStatus.error && (
           <div className={styles.loadMoreError} role="alert">
-            <p>{currentPaginationStatus.error}</p>
+            <p>{t.profile.loadingMoreError}</p>
             <Button onClick={() => void loadMore()} type="button" variant="outlined">
-              Try again
+              {t.posts.grid.tryAgain}
             </Button>
           </div>
         )}
 
         {currentPaginationStatus.isLoading && (
           <p aria-live="polite" className={styles.loadingMore} role="status">
-            Loading more publications...
+            {t.profile.loadingMore}
           </p>
         )}
 
@@ -439,10 +433,12 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 }
 
 export function ProfileRelationsPage() {
+  const { t } = useI18n()
+
   return (
     <RoutePlaceholder
-      description="Protected profile relations route."
-      title="Profile relations"
+      description={t.profile.relationsDescription}
+      title={t.profile.relationsTitle}
       routes={['/profile/[userId]/followers', '/profile/[userId]/subscriptions']}
     />
   )

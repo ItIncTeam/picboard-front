@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
 
+import { I18nProvider } from '@/shared/lib/i18n'
 import type { PublicPostCardModel } from '../model/types'
 import { PublicPostCard } from '../ui/PublicPostCard'
 
@@ -39,7 +40,13 @@ function renderCard(): RenderResult {
 
   document.body.append(container)
 
-  act(() => root.render(<PublicPostCard post={post} />))
+  act(() =>
+    root.render(
+      <I18nProvider>
+        <PublicPostCard post={post} />
+      </I18nProvider>,
+    ),
+  )
 
   return { container, root }
 }

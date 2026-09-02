@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
 import type { FeedQueryData, PostEntity } from '@/entities/post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { MainPage } from '../MainPage'
 
@@ -104,7 +105,11 @@ function renderMainPage(availableWidth?: number): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<MainPage />)
+    root.render(
+      <I18nProvider>
+        <MainPage />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }
@@ -204,7 +209,13 @@ describe('MainPage', () => {
       loading: false,
       refetch,
     }
-    act(() => view.root.render(<MainPage />))
+    act(() =>
+      view.root.render(
+        <I18nProvider>
+          <MainPage />
+        </I18nProvider>,
+      ),
+    )
 
     expect(
       Array.from(view.container.querySelectorAll('article')).map((card) => card.dataset.postId),
@@ -222,7 +233,7 @@ describe('MainPage', () => {
     mountedRoots.push(view)
 
     const cards = Array.from(view.container.querySelectorAll('article'))
-    expect(view.container.querySelector('[aria-label="9213 registered users"]')).toBeInstanceOf(
+    expect(view.container.querySelector('[aria-label="Registered users: 9213"]')).toBeInstanceOf(
       HTMLElement,
     )
     expect(cards.map((card) => card.dataset.postId)).toEqual(['post-2', 'post-1'])
@@ -250,7 +261,7 @@ describe('MainPage', () => {
     mountedRoots.push(view)
 
     expect(view.container.textContent).toContain('No publications yet')
-    expect(view.container.querySelector('[aria-label="0 registered users"]')).toBeInstanceOf(
+    expect(view.container.querySelector('[aria-label="Registered users: 0"]')).toBeInstanceOf(
       HTMLElement,
     )
     expect(view.container.textContent).not.toContain("Couldn't load publications")
@@ -387,7 +398,7 @@ describe('MainPage', () => {
 
       const root = view.container.querySelector<HTMLElement>('section')
       const counter = view.container.querySelector<HTMLElement>(
-        '[aria-label="9213 registered users"]',
+        '[aria-label="Registered users: 9213"]',
       )
       const grid = view.container.querySelector<HTMLElement>('[data-testid="public-posts-grid"]')
       const firstCard = view.container.querySelector<HTMLElement>('article')

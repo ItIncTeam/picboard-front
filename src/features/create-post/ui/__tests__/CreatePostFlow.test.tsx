@@ -11,6 +11,7 @@ import {
   type CreatePostState,
   type ImageFilter,
 } from '@/features/create-post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { CreatePostFlow } from '../CreatePostFlow'
 
@@ -292,7 +293,9 @@ function renderCreatePostFlow({
         onPublishAction={onPublishAction}
       />
     )
-    root.render(strictMode ? <StrictMode>{flow}</StrictMode> : flow)
+    const tree = <I18nProvider>{flow}</I18nProvider>
+
+    root.render(strictMode ? <StrictMode>{tree}</StrictMode> : tree)
   })
 
   return { container, root }

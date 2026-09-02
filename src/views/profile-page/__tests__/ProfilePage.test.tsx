@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '@/app/globals.css'
 import type { PostConnection, PostEntity, ProfilePostsQueryData } from '@/entities/post'
 import type { PublicUser } from '@/entities/user'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { ProfilePage } from '../ProfilePage'
 
@@ -173,9 +174,17 @@ function renderProfile(userId = 'profile-user'): RenderResult {
   const root = createRoot(container)
 
   document.body.append(container)
-  act(() => root.render(<ProfilePage userId={userId} />))
+  act(() => renderProfilePage(root, userId))
 
   return { container, root }
+}
+
+function renderProfilePage(root: Root, userId: string): void {
+  root.render(
+    <I18nProvider>
+      <ProfilePage userId={userId} />
+    </I18nProvider>,
+  )
 }
 
 async function waitFor(assertion: () => void): Promise<void> {
@@ -318,7 +327,9 @@ describe('ProfilePage', () => {
     const view = renderProfile()
     mountedRoots.push(view)
 
-    await waitFor(() => expect(view.container.textContent).toContain('Profile unavailable'))
+    await waitFor(() =>
+      expect(view.container.textContent).toContain('Profile loading failed. Please try again.'),
+    )
 
     act(() => {
       Array.from(view.container.querySelectorAll('button'))
@@ -437,7 +448,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     expect(
       Array.from(view.container.querySelectorAll('article img')).map((image) =>
@@ -505,7 +516,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     expect(
       Array.from(view.container.querySelectorAll('article img')).map((image) =>
@@ -558,7 +569,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     apiMocks.result.data = {
       profilePosts: createConnection(['12', '11', '10', '9', '8', '7', '6', '5'].map(createPost), {
@@ -566,7 +577,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     expect(
       Array.from(view.container.querySelectorAll('article img')).map((image) =>
@@ -616,7 +627,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     apiMocks.result.data = {
       profilePosts: createConnection(['11', '10', '9', '8', '7', '6', '5', '4'].map(createPost), {
@@ -624,7 +635,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     expect(view.container.querySelector('img[alt="3-refreshed.jpg"]')).toBeInstanceOf(
       HTMLImageElement,
@@ -669,7 +680,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     await triggerIntersection()
 
@@ -712,7 +723,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     await triggerIntersection()
     await waitFor(() => expect(apiMocks.fetchMore).toHaveBeenCalledTimes(2))
@@ -764,7 +775,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    act(() => view.root.render(<ProfilePage userId="profile-user" />))
+    act(() => renderProfilePage(view.root, 'profile-user'))
 
     await triggerIntersection()
     await waitFor(() => expect(apiMocks.fetchMore).toHaveBeenCalledTimes(2))
@@ -855,7 +866,7 @@ describe('ProfilePage', () => {
       }),
     }
     apiMocks.result.variables = { input: { first: 8, userId: 'user-b' } }
-    act(() => view.root.render(<ProfilePage userId="user-b" />))
+    act(() => renderProfilePage(view.root, 'user-b'))
 
     await waitFor(() => expect(view.container.textContent).toContain('user-b'))
     expect(view.container.querySelector('img[alt="user-a-history.jpg"]')).toBeNull()
@@ -894,7 +905,13 @@ describe('ProfilePage', () => {
       profilePosts: createConnection([createPost('second-user-post')]),
     }
     apiMocks.result.variables = { input: { first: 8, userId: 'second-user' } }
-    act(() => view.root.render(<ProfilePage userId="second-user" />))
+    act(() =>
+      view.root.render(
+        <I18nProvider>
+          <ProfilePage userId="second-user" />
+        </I18nProvider>,
+      ),
+    )
 
     await waitFor(() => expect(view.container.textContent).toContain('second-user'))
     stalePage.resolve(createConnection([createPost('stale-post')]))

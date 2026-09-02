@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { getSignInHrefWithReturnTo } from '@/shared/lib/auth'
+import { useI18n } from '@/shared/lib/i18n'
 
 import { useSession } from '../model/useSession'
 import styles from './protected-route-boundary.module.css'
@@ -23,6 +24,7 @@ function SessionStatusScreen({ message }: { message: string }) {
 export function ProtectedRouteBoundary({ children }: ProtectedRouteBoundaryProps) {
   const { status } = useSession()
   const router = useRouter()
+  const { t } = useI18n()
 
   useEffect(() => {
     if (status === 'anonymous') {
@@ -33,11 +35,11 @@ export function ProtectedRouteBoundary({ children }: ProtectedRouteBoundaryProps
   }, [router, status])
 
   if (status === 'bootstrapping') {
-    return <SessionStatusScreen message="Loading session..." />
+    return <SessionStatusScreen message={t.auth.session.loading} />
   }
 
   if (status === 'anonymous') {
-    return <SessionStatusScreen message="Redirecting to sign in..." />
+    return <SessionStatusScreen message={t.auth.session.redirectingToSignIn} />
   }
 
   return children

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '@/app/globals.css'
 
 import type { PostImage } from '@/entities/post'
+import { I18nProvider } from '@/shared/lib/i18n'
 import { PublicPostCarousel } from '../ui/PublicPostCarousel'
 
 vi.mock('next/image', () => ({
@@ -29,7 +30,13 @@ function renderCarousel(fit?: 'contain' | 'cover'): RenderResult {
   const root = createRoot(container)
 
   document.body.append(container)
-  act(() => root.render(<PublicPostCarousel fit={fit} media={media} />))
+  act(() =>
+    root.render(
+      <I18nProvider>
+        <PublicPostCarousel fit={fit} media={media} />
+      </I18nProvider>,
+    ),
+  )
 
   return { container, root }
 }

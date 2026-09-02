@@ -5,6 +5,7 @@ import type { Ref, RefObject } from 'react'
 import { useCallback, useEffect, useImperativeHandle, useReducer, useRef, useState } from 'react'
 
 import { ArrowBackIcon, Close } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { IconButton } from '@/shared/ui/icon-button'
 import { Text, Title } from '@/shared/ui/typography'
@@ -52,19 +53,13 @@ export type CreatePostFlowHandle = {
   requestClose: () => void
 }
 
-const stepTitles: Record<CreatePostStep, string> = {
-  upload: 'Add Photo',
-  crop: 'Cropping',
-  filters: 'Filters',
-  publication: 'Publication',
-}
-
 export function CreatePostFlow({
   closeRequestRef,
   initialState = createPostInitialState,
   onCloseAction,
   onPublishAction,
 }: CreatePostFlowProps) {
+  const { t } = useI18n()
   const [state, dispatch] = useReducer(createPostReducer, initialState)
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
@@ -209,7 +204,7 @@ export function CreatePostFlow({
     const cropStep = cropStepRef.current
 
     if (!image || !cropStep) {
-      setCropExportError('Crop preview is not ready. Please try again.')
+      setCropExportError(t.createPost.crop.previewNotReady)
       return
     }
 
@@ -252,11 +247,7 @@ export function CreatePostFlow({
         return
       }
 
-      setCropExportError(
-        error instanceof Error
-          ? error.message
-          : 'Could not export the cropped image. Please try again.',
-      )
+      setCropExportError(error instanceof Error ? error.message : t.createPost.crop.exportFailed)
     } finally {
       if (mountedRef.current && cropExportRequestIdRef.current === requestId) {
         cropExportingRef.current = false
@@ -277,7 +268,7 @@ export function CreatePostFlow({
       try {
         await onPublishAction(state)
       } catch (error) {
-        setPublishError(error instanceof Error ? error.message : 'Post publishing failed.')
+        setPublishError(error instanceof Error ? error.message : t.createPost.errors.publishFailed)
       } finally {
         dispatch({ type: 'setPublishing', isPublishing: false })
       }
@@ -296,7 +287,7 @@ export function CreatePostFlow({
       createdPostId = createdPost.id
       createdPostOwnerId = createdPost.ownerId
     } catch (error) {
-      setPublishError(error instanceof Error ? error.message : 'Post publishing failed.')
+      setPublishError(error instanceof Error ? error.message : t.createPost.errors.publishFailed)
       dispatch({ type: 'setPublishing', isPublishing: false })
 
       return
@@ -337,7 +328,7 @@ export function CreatePostFlow({
   useImperativeHandle(closeRequestRef, () => ({ requestClose: handleClose }))
 
   return (
-    <section className={styles.root} data-size={flowSize} aria-label="Create post flow">
+    <section className={styles.root} data-size={flowSize} aria-label={t.createPost.flowAriaLabel}>
       {isUploadHeader ? (
         <UploadHeader onCloseAction={handleClose} />
       ) : (
@@ -395,12 +386,14 @@ export function CreatePostFlow({
 }
 
 function UploadHeader({ onCloseAction }: { onCloseAction?: () => void }) {
+  const { t } = useI18n()
+
   return (
     <header className={styles.header}>
       <div className={styles.headerSlot} />
 
       <Title className={styles.title} level="h2">
-        {stepTitles.upload}
+        {t.createPost.steps.upload}
       </Title>
 
       <div className={styles.actionSlot}>
@@ -408,7 +401,7 @@ function UploadHeader({ onCloseAction }: { onCloseAction?: () => void }) {
           <IconButton
             className={styles.closeButton}
             icon={Close}
-            label="Close"
+            label={t.createPost.actions.close}
             onClick={onCloseAction}
           />
         )}
@@ -446,6 +439,7 @@ function WizardHeader({
   onPublish,
   step,
 }: WizardHeaderProps) {
+  const { t } = useI18n()
   const isNextDisabled =
     !canGoNext || (isCropStep && isCropExporting) || (step === 'filters' && isFilterExporting)
   const isBackDisabled = isCropStep && isCropExporting
@@ -457,14 +451,14 @@ function WizardHeader({
             className={styles.backButton}
             disabled={isPublishing || isBackDisabled}
             icon={ArrowBackIcon}
-            label="Back"
+            label={t.createPost.actions.back}
             onClick={onBack}
           />
         )}
       </div>
 
       <Title className={styles.title} level="h2">
-        {stepTitles[step]}
+        {t.createPost.steps[step]}
       </Title>
 
       <div className={styles.actionSlot}>
@@ -473,12 +467,12 @@ function WizardHeader({
             className={styles.headerAction}
             disabled={!canPublish || isPublishing}
             loading={isPublishing}
-            loadingText="Publishing"
+            loadingText={t.createPost.actions.publishing}
             onClick={onPublish}
             type="button"
             variant="textButton"
           >
-            Publish
+            {t.createPost.actions.publish}
           </Button>
         ) : (
           <Button
@@ -488,7 +482,7 @@ function WizardHeader({
             type="button"
             variant="textButton"
           >
-            Next
+            {t.createPost.actions.next}
           </Button>
         )}
       </div>

@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Post } from '@/entities/post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { PostCard } from '../PostCard'
 import { PostGrid } from '../PostGrid'
@@ -43,7 +44,7 @@ function render(node: ReactNode): RenderResult {
   const root = createRoot(container)
 
   document.body.append(container)
-  act(() => root.render(node))
+  act(() => root.render(<I18nProvider>{node}</I18nProvider>))
 
   return { container, root }
 }

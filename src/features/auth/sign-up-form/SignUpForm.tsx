@@ -36,8 +36,6 @@ type BackendFieldError = {
   message: string
 }
 
-const fallbackErrorMessage = 'Sign up failed. Please try again.'
-
 const fieldMap: Record<string, keyof SignUpFormValues> = {
   acceptPrivacy: 'agreedToTerms',
   acceptTerms: 'agreedToTerms',
@@ -95,7 +93,7 @@ const collectFieldErrors = (
   return result
 }
 
-const getErrorMessage = (error: unknown): string => {
+const getErrorMessage = (error: unknown, fallbackErrorMessage: string): string => {
   if (isRecord(error) && typeof error.message === 'string' && error.message.length > 0) {
     return error.message
   }
@@ -126,6 +124,7 @@ export function SignUpForm({
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
   const { t } = useI18n()
   const toast = useToast()
+  const fallbackErrorMessage = t.auth.signUp.fallbackError
 
   const {
     clearErrors,
@@ -159,7 +158,7 @@ export function SignUpForm({
       const fieldErrors = collectFieldErrors(error)
 
       if (fieldErrors.length === 0) {
-        const message = getErrorMessage(error)
+        const message = getErrorMessage(error, fallbackErrorMessage)
         const formField = getFieldFromGenericMessage(message)
 
         if (formField) {

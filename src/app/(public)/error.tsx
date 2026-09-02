@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/shared/ui/button'
+import { useI18n } from '@/shared/lib/i18n'
 
 import styles from './error.module.css'
 
@@ -10,14 +11,16 @@ type PublicRouteErrorProps = {
 }
 
 export default function PublicRouteError({ unstable_retry: reset }: PublicRouteErrorProps) {
+  const { t } = useI18n()
+
   return (
     <section className={styles.root} aria-labelledby="public-route-error-title">
       <h1 className={styles.title} id="public-route-error-title">
-        Public posts are unavailable
+        {t.appError.title}
       </h1>
-      <p className={styles.description}>Please try loading the page again.</p>
+      <p className={styles.description}>{t.appError.description}</p>
       <Button onClick={reset} type="button" variant="outlined">
-        Try again
+        {t.appError.action}
       </Button>
     </section>
   )

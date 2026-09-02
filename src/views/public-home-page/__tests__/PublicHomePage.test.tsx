@@ -4,6 +4,7 @@ import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
+import { I18nProvider } from '@/shared/lib/i18n'
 import type { PublicPostCardModel } from '@/widgets/public-post-card'
 import { PublicHomeContent } from '../PublicHomePage'
 
@@ -56,7 +57,11 @@ function renderContent(data: Parameters<typeof PublicHomeContent>[0]['data']): R
   document.body.append(container)
 
   act(() => {
-    root.render(<PublicHomeContent data={data} />)
+    root.render(
+      <I18nProvider>
+        <PublicHomeContent data={data} />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }
@@ -86,7 +91,7 @@ describe('PublicHomeContent', () => {
     const view = renderContent({ posts, usersCount: 9213 })
     mountedRoots.push(view)
 
-    expect(view.container.querySelector('[aria-label="9213 registered users"]')).toBeInstanceOf(
+    expect(view.container.querySelector('[aria-label="Registered users: 9213"]')).toBeInstanceOf(
       HTMLElement,
     )
     expect(view.container.querySelectorAll('article')).toHaveLength(4)
@@ -101,7 +106,7 @@ describe('PublicHomeContent', () => {
 
     expect(view.container.textContent).toContain('No public posts yet')
     expect(view.container.textContent).toContain('Registered users:')
-    expect(view.container.querySelector('[aria-label="0 registered users"]')).toBeInstanceOf(
+    expect(view.container.querySelector('[aria-label="Registered users: 0"]')).toBeInstanceOf(
       HTMLElement,
     )
     expect(view.container.textContent).not.toContain('Public posts are unavailable')

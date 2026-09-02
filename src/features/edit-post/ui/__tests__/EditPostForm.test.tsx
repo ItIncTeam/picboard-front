@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
 import type { PostEntity } from '@/entities/post'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { EditPostForm } from '../EditPostForm'
 
@@ -87,15 +88,17 @@ function renderForm({
   document.body.append(container)
   act(() =>
     root.render(
-      <EditPostForm
-        author={author}
-        description={description}
-        media={<div>media</div>}
-        onCloseAction={onCloseAction}
-        onSavedAction={onSavedAction}
-        postId="post-1"
-        synchronizePostUpdateAction={synchronizePostUpdateAction}
-      />,
+      <I18nProvider>
+        <EditPostForm
+          author={author}
+          description={description}
+          media={<div>media</div>}
+          onCloseAction={onCloseAction}
+          onSavedAction={onSavedAction}
+          postId="post-1"
+          synchronizePostUpdateAction={synchronizePostUpdateAction}
+        />
+      </I18nProvider>,
     ),
   )
 
