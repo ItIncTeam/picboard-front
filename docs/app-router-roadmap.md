@@ -20,7 +20,6 @@ src/app/
 
   (public)/
     layout.tsx
-    page.tsx
     auth/
       sign-in/page.tsx
       sign-up/page.tsx
@@ -33,6 +32,9 @@ src/app/
   (app-shell)/
     layout.tsx
     AppRouteShell.tsx
+    (public-home)/
+      page.tsx
+      error.tsx
     @modal/
       default.tsx
       [...catchAll]/page.tsx
@@ -69,7 +71,9 @@ src/app/
       posts/page.tsx
 ```
 
-Route groups `(public)` и `(protected)` не попадают в URL. Они нужны только для разделения layouts.
+Route groups `(public)`, `(app-shell)` и `(protected)` не попадают в URL. Они нужны только для
+разделения layouts, поэтому `src/app/(app-shell)/(public-home)/page.tsx` по-прежнему обслуживает URL
+`/`.
 
 ## Ответственность layouts
 
@@ -80,14 +84,16 @@ Route groups `(public)` и `(protected)` не попадают в URL. Они н
 
 Root layout не содержит route-specific UI, redirects, role checks или бизнес-логику страниц.
 
-`src/app/(public)/layout.tsx` содержит публичный визуальный shell: `PublicHeader` и общий `<main>`.
-Здесь нет auth-логики.
+`src/app/(public)/layout.tsx` содержит публичный визуальный shell auth routes: `PublicHeader` и общий
+`<main>`. Здесь нет auth-логики; Public Home больше не входит в эту route group.
 
-`src/app/(app-shell)/layout.tsx` — общий persistent visual shell для Profile и authenticated main
-routes. Он владеет единственным `AdaptiveAppShell`: после session bootstrap anonymous Profile
-получает public header без Sidebar, а authenticated navigation между `/main`,
+`src/app/(app-shell)/layout.tsx` — общий persistent visual shell для Public Home, Profile и
+authenticated main routes. Он владеет единственным `AdaptiveAppShell`: во время client session
+bootstrap shell остается pending; затем anonymous пользователь получает `PublicHeader` без
+Sidebar, а authenticated пользователь — `AppHeader` и Sidebar. Auth влияет только на shell:
+Public Home и Profile не становятся protected routes. Authenticated navigation между `/`, `/main`,
 `/profile/[userId]` и `/posts/[postId]` сохраняет тот же Header/Sidebar instance. Общий layout не
-делает redirect и не превращает Profile в protected route.
+читает cookies/headers, не вызывает backend и не делает redirect.
 
 `src/app/(app-shell)/(protected)/layout.tsx` оборачивает main-app `children` в
 `ProtectedRouteBoundary`. Отдельный `src/app/(protected)/layout.tsx` сохраняет ту же boundary для
@@ -115,6 +121,34 @@ refresh/retry pipeline. Страница переиспользует общий
 Public Home при этом сохраняет отдельный server/ISR data path. `/feed` пока не имеет отдельного
 personalized backend contract и остается compatibility redirect на `/main`; Sidebar также ведет на
 `/main`.
+
+## Public Home `/`
+
+Фактическая цепочка рендеринга:
+
+```txt
+GET /
+  -> ISR route (`revalidate = 60`)
+  -> PublicHomePage server boundary
+  -> server GraphQL PublicHome
+  -> usersCount + feed (до 4 последних публичных постов)
+  -> initial HTML
+  -> hydration
+  -> SessionProvider client bootstrap
+  -> refreshToken -> me
+  -> anonymous/authenticated shell
+```
+
+`/` находится под `(app-shell)`, но остается публичным. `PublicHome` выполняется server-side и не
+зависит от session; `PublicHomeContent` получает готовые данные через server props и не повторяет
+этот query в browser после hydration. `SessionProvider` определяет auth только client-side и меняет
+только shell: anonymous получает `PublicHeader`, authenticated — `AppHeader` и Sidebar.
+
+`revalidate = 60` означает request-driven ISR: после истечения интервала regeneration запускается
+следующим запросом, а не таймером каждые 60 секунд. Create, Edit и Delete дополнительно вызывают
+on-demand `revalidatePath('/')`. Для изменения `usersCount` отдельной event invalidation нет, поэтому
+счетчик полагается на time-based ISR. `/main` остается отдельным authenticated client-data route и
+не заменяет `/`.
 
 `settings/layout.tsx` и `admin/layout.tsx` занимают места под будущие section shells. Пока они
 легкие.

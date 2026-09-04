@@ -58,9 +58,24 @@ Final verification:
 
 ### Public Home
 
-- `/` remains a Server Component data path with ISR `revalidate = 60`.
-- Create, Edit and Delete invalidate `/` through `revalidatePublicHome`.
-- Browser-side polling is not used for Public Home.
+- `/` lives under `(app-shell)` but remains public because route groups do not change the URL.
+- `PublicHomePage` keeps the server boundary: server GraphQL `PublicHome` supplies `usersCount` and
+  up to 4 latest public posts to the initial HTML, while `PublicHomeContent` receives the result as
+  props and does not repeat the query in the browser after hydration.
+- Public data is session-independent. After hydration, the existing `SessionProvider` runs the
+  client `refreshToken -> me` bootstrap; anonymous users receive `PublicHeader`, authenticated users
+  receive `AppHeader` and Sidebar.
+- `/` uses request-driven ISR with `revalidate = 60`: an eligible request after the interval starts
+  regeneration; there is no timer that runs every 60 seconds.
+- Create, Edit and Delete invalidate `/` on demand through `revalidatePublicHome` /
+  `revalidatePath('/')`. `usersCount` has no separate event invalidation and relies on time-based
+  ISR.
+- `/main` remains a separate authenticated client-data route; it does not replace `/`.
+
+Runtime confirmed manually: the `/` document contains the real `usersCount` and four cards before
+hydration, `PublicHome` executes server-side without a duplicate browser query, auth bootstrap starts
+after hydration, the anonymous shell works, and `revalidate = 60` is preserved. Production ISR
+regeneration has not yet been runtime-verified.
 
 ## Current architecture
 
