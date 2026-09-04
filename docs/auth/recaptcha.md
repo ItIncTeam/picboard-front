@@ -60,7 +60,7 @@ NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 Пример:
 
 ```env
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://users.picboard.space/api/v1
+NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://gateway.picboard.space/api/v1
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
 ```
 
@@ -152,7 +152,7 @@ Backend отправляет token в Google и проверяет:
 - указан `NEXT_PUBLIC_GRAPHQL_ENDPOINT`;
 - приложение перезапущено после изменения `.env.local`;
 - Forgot Password успешно отправляет запрос;
-- request уходит на backend GraphQL URL, например `https://users.picboard.space/api/v1`;
+- request уходит на backend GraphQL URL, например `https://gateway.picboard.space/api/v1`;
 - backend получает `email` и `captchaToken`.
 
 ---

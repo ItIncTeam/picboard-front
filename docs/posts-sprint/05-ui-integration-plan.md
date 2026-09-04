@@ -1,0 +1,298 @@
+# UI Integration Plan
+
+This plan maps posts sprint code to the current FSD-like project structure. It follows
+[Architecture](../architecture.md), [Layer Ownership](../layer-ownership.md), and
+[App Router roadmap](../app-router-roadmap.md).
+
+Status: implemented and verified. The Posts sprint is complete and the final integration review is
+`DEV READY`.
+
+Create Post Figma notes are tracked in [Create Post Figma Review](./06-figma-review.md).
+
+## FSD placement
+
+### `app/`
+
+Use for route adapters and modal slots only:
+
+- `src/app/(app-shell)/@modal/(.)posts/create/page.tsx`;
+- `src/app/(app-shell)/(protected)/(main)/posts/create/page.tsx`;
+- `src/app/(app-shell)/(protected)/(main)/posts/[postId]/page.tsx`.
+
+Do not put forms, API calls, stores or complex UI in `app/`.
+
+### `views/`
+
+Use for page composition:
+
+- `views/create-post-page`;
+- `views/profile-page`;
+- `views/main-page`;
+- `views/public-home-page`;
+- `views/post-details-page`.
+
+### `widgets/`
+
+Use for large UI composition:
+
+- `widgets/create-post-modal`;
+- `widgets/public-post-card`;
+- `widgets/public-posts-grid`.
+
+### `features/`
+
+Use for user actions:
+
+- `features/create-post`;
+- `features/edit-post`;
+- `features/delete-post`.
+
+### `entities/`
+
+Use for the shared Post model, mapping, API and entity UI:
+
+- `entities/post`;
+- backend and mapped `Post` types;
+- GraphQL fragments and typed operations;
+- `PostCard`, `PostGrid` and `PostDetails`.
+
+### `shared/`
+
+Use only for primitives and infrastructure:
+
+- existing `shared/ui/modal`;
+- existing Button/Input/TextArea primitives;
+- no post-specific UI in `shared/ui`.
+
+## Components
+
+### `CreatePostFlow`
+
+- Lives in `features/create-post`.
+- Owns step state and transitions.
+- Used by both modal and fallback page.
+- Does not know whether it is rendered in modal or page.
+- Owns Figma step composition for upload, crop, filters and publication.
+- Dev 1 is Create Flow Owner and owns `CreatePostState`, `CreatePostImage` and `CreatePostStep`.
+- Dev 2/3 do not change shared state shape without Dev 1 approval.
+
+### `UploadStep`
+
+- Lives in `features/create-post`.
+- Handles file selection, validation and object URL creation.
+- Does not call backend.
+- Upload API helpers and orchestration remain in the parent feature API/model boundaries.
+- Does not use GraphQL Upload.
+
+### `CropStep`
+
+- Lives in `features/create-post`.
+- Uses `react-advanced-cropper`.
+- Saves crop settings into create flow state.
+- Owns crop toolbar, aspect ratio menu, active image navigation and media strip.
+- Zoom remains outside the implemented scope until product semantics are defined.
+
+### `FiltersStep`
+
+- Lives in `features/create-post`.
+- Applies preview filters.
+- Prepares final export settings.
+- Owns the desktop wide layout from Figma: preview panel plus filter grid.
+- Export output is a final edited `File` that later enters the backend-confirmed upload pipeline.
+
+### `PublicationStep`
+
+- Lives in `features/create-post`.
+- Handles caption/tags UI and publish boundary.
+- Keeps backend calls in the parent feature flow rather than in the step UI.
+- The implemented publish pipeline is: exported `File` -> `initiateUploadBatch` -> direct storage
+  `PUT` -> `completeUpload` -> `createPost`.
+
+### `PostGrid`
+
+- First skeleton lives in `entities/post/ui`.
+- Move composition to `widgets/post-grid` or `widgets/posts-feed` only when route-level reuse needs
+  widget ownership.
+- Displays post thumbnails.
+- Receives data as props.
+- Does not fetch by itself until data boundary is agreed.
+
+### `PostCard`
+
+- Lives in `entities/post/ui` for first skeleton.
+- Represents display-only post data.
+- Feed-specific layout/actions should stay outside the entity.
+
+### `PostDetails`
+
+- Lives in `entities/post/ui`.
+- Displays carousel slot, mapped post author, description and date.
+- Route-level loading, owner menu and edit composition live in `views/post-details-page`.
+- Details uses `PublicPostCarousel` with `fit="contain"` so the cropped export is not recropped.
+  Edit shows that same slide as a static preview with `object-fit: contain`, without arrows or
+  pagination. Public Home keeps the default thumbnail `cover` slot.
+
+### `EditPostForm`
+
+- Lives in `features/edit-post`.
+- Edits only `description` through `updatePostDescription`, with a 500-character limit.
+- Tracks dirty state: close without changes dismisses immediately; dirty close shows confirmation.
+- After a successful save the user stays on `/posts/[postId]` and the visible post updates without a
+  reload.
+- After a successful save, invalidates Public Home through `revalidatePublicHome` (same Create/Delete
+  pattern, including Feed cache eviction). A revalidation failure is logged and does not turn the
+  successful save into a UI error.
+- `EditPostMenu` is the single owner `...` menu. It always exposes Edit Post and can render Delete
+  Post beside it when `onDeleteAction` is passed. Owner gating stays in Post Details; the menu does
+  not check ownership again.
+- Edit Post replaces the Details overlay on the same `/posts/[postId]` route instead of stacking a
+  second modal. The posts page stays behind. Closing or saving Edit returns to Details.
+- Desktop Details and Edit use the same overlay box as Create Post wide / Publication, without
+  importing create-post: `min(60.75rem, 100vw - 2rem)` by `min(35.25rem, 100dvh - 2rem)`, media and
+  form columns `51fr / 50fr`. The dialog header is `auto` and the body is `1fr`, so Edit's title bar
+  stays inside that height. Form grid uses `align-content: start`, full-width description field, and
+  Save Changes on the last `1fr` row with `align-self: end`. Modal body padding stays `0`; stacked
+  layout remains at `width <= 720px`. Edit shows the current Details carousel image as a static
+  preview without arrows or pagination, using the same `contain` fit as Details.
+
+### `DeletePostFlow`
+
+- Lives in `features/delete-post`.
+- Exposes the Delete Post trigger boundary used by the owner-only Post Details menu.
+- Uses shared modal/dialog primitives for confirmation.
+- Calls the existing `deletePost` API through the post entity public API.
+- After a successful delete, synchronizes cached Feed/Profile posts and invalidates Public Home
+  through the post entity server-only entrypoint.
+- After a successful delete, redirects to the `returnTo` passed by Post Details, otherwise `/main`.
+  Post Details sanitizes that path through `getSafeReturnToPath` with the same contract as close.
+  Missing or unsafe `returnTo` falls back to `/main`, even if post-success synchronization or
+  callbacks fail.
+- Does not own owner checks or the three-dots menu; Post Details owns that gate.
+
+### `CreatePostCloseConfirm`
+
+- Lives in `features/create-post` or locally under `widgets/create-post-modal` depending on where
+  `hasUnsavedData` is owned.
+- Opens only when `hasUnsavedData === true`.
+- Uses `Discard` and `Keep editing`.
+- Does not implement draft persistence.
+
+## Modal and fallback page sharing
+
+Both route shells should render the same feature flow:
+
+```txt
+@modal/(.)posts/create/page.tsx -> widgets/create-post-modal -> features/create-post/CreatePostFlow
+posts/create/page.tsx           -> views/create-post-page     -> features/create-post/CreatePostFlow
+```
+
+Differences:
+
+- modal shell owns route close behavior;
+- modal shell owns desktop route-modal dimensions and may adjust width by step;
+- fallback page owns page-level spacing/title;
+- create flow owns state and step UI;
+- backend integration lives in feature/model/api boundaries, not in route adapters;
+- backend integration uses `initiateUploadBatch`, direct storage `PUT`, `completeUpload`
+  and `createPost`, not GraphQL Upload.
+
+## Profile, main and details backend integration
+
+### Profile
+
+- `views/profile-page` composes the public user header and posts section.
+- `/profile/[userId]` lives in the public `(profile)` route group; anonymous users receive the
+  public shell and authenticated users retain the reusable app Header/Sidebar shell.
+- `PostGrid` receives mapped `profilePosts` data in backend order. The first `first: 8` page is an
+  active Apollo query and polls every 60 seconds, so targeted cache eviction after create refetches
+  an already mounted Profile immediately.
+- A native `IntersectionObserver` requests subsequent cursor pages through Apollo `fetchMore`.
+  Locally retained pagination data consists of visible older-post history, the current cursor-chain
+  `pageInfo` and a previous-first-page reconciliation snapshot. Rendering still uses only the
+  current Apollo first page plus deduplicated history. When the ordered first-page ids change,
+  displaced posts move into history and pagination restarts from the current first-page
+  `endCursor`; the frontend does not assume opaque backend cursors remain stable after head inserts.
+  An unchanged ordered id list keeps the existing cursor chain.
+- Sidebar My Profile uses the current session user id and does not issue another `me` request.
+
+### Main protected page
+
+- `/main` is the canonical authenticated home. `views/main-page` composes the current global
+  latest-four `feed` with Apollo `useQuery`, preserving backend order and using the shared auth
+  refresh/retry links. The active query polls every 60 seconds and keeps usable cached data visible
+  while a poll is in flight.
+- `/feed` has no distinct personalized contract and redirects to `/main` for compatibility.
+- The protected feed does not use raw server fetch or ISR because the access token is memory-only.
+  Pagination and personalized/social semantics remain backend-unsupported.
+
+### Public main page
+
+- `/` lives in the `(app-shell)` route group without changing its URL or public access. The existing
+  client session bootstrap changes only the shell: pending while bootstrapping, `PublicHeader` for
+  anonymous users, and `AppHeader` with Sidebar for authenticated users.
+- `views/public-home-page` composes `usersCount` and `feed` through the page-specific `PublicHome`
+  query on the server and passes the result to `PublicHomeContent` as props. Backend returns at most
+  4 posts ordered by `createdAt DESC`; frontend preserves that order and does not apply another
+  limit. Public Home has no pagination, infinite scroll, or duplicate browser query after hydration.
+- The gateway HTTPS/TLS certificate blocker is resolved, so Public Home uses ISR with
+  `revalidate = 60`. Regeneration is request-driven after the interval, not timer-driven every 60
+  seconds. Create, Edit and Delete also use on-demand `revalidatePath('/')`; `usersCount` relies on
+  time-based ISR because it has no separate event invalidation. Empty `feed` and `usersCount = 0`
+  remain valid successful data.
+- `/main` remains the separate authenticated Apollo client-data route and does not replace `/`.
+- Initial HTML and hydration behavior have been manually verified. Production ISR regeneration is
+  not yet runtime-verified.
+- `PostEntity.author` supplies the public post-author identity used by Public Home. The UI displays
+  `displayName?.trim() || username` and uses its first letter as the avatar fallback while the
+  backend exposes only `profilePictureFileId`, not an avatar URL.
+- Likes, comments, bookmarks and other social actions are outside the Public Home scope.
+
+### Details
+
+- `posts/[postId]/page.tsx` stays thin and passes `postId` into `views/post-details-page`.
+- Details view loads the existing `post(id)` wrapper and maps attachments through `mapPostEntityToPost`.
+- Author name and the letter avatar fallback come from `PostEntity.author`. The page does not call
+  `user(id)` for the post owner and does not use `profilePictureFileId` as an image URL.
+- Owner-only Edit Post is gated by comparing `SessionProvider.user.id` with `PostEntity.ownerId`.
+  Opening Edit replaces the Details overlay on the same route; it does not stack a second modal.
+  Closing or saving Edit returns to Details. The posts page remains the route behind the overlay.
+  Details and Edit use the same Create Post wide box and Publication column split.
+- Close uses `getSafeReturnToPath` with fallback `/main`. Direct `/posts/[postId]` without `returnTo`
+  goes to `/main`; `router.back()` is not used.
+- Profile `PostGrid` passes `returnTo=/profile/[userId]` into `PostCard`, so closing or deleting from
+  details returns to that profile. Other grids omit `returnTo` and keep the `/main` fallback.
+- The owner `...` menu passes its Delete action to `DeletePostFlow`; the flow owns confirmation,
+  mutation, synchronization and redirect without another ownership check. Post Details sanitizes
+  `returnTo` once and passes that path into both close and delete.
+
+## Testing checklist
+
+- Create flow reducer/helpers: step transitions, reset, unsaved data.
+- Upload validation: file type, count, size after limits are known.
+- Object URL lifecycle: revoke on remove/reset/unmount.
+- Crop/filter export helpers: output exists and respects selected settings.
+- Upload readiness selectors: require final exported files, without calling backend.
+- Modal Escape, backdrop and direct dismiss use the Create flow close guard: no unsaved data closes;
+  unsaved data opens the existing confirm.
+- Fallback page renders same flow without modal close controls.
+- Post grid renders empty/loading/error/success states.
+- Delete confirm covers close/cancel, mutation failure and successful synchronization/navigation.
+- Delete redirects through `getSafeReturnToPath`: profile `returnTo` stays on profile, missing or
+  unsafe `returnTo` falls back to `/main`.
+
+## Manual QA checklist
+
+- Open `/main`, click Create in Sidebar. Confirm `/feed` redirects to `/main` for compatibility.
+- Confirm URL becomes `/posts/create`.
+- Confirm Create renders as modal over main layout.
+- Close modal and confirm previous route is restored.
+- Open `/posts/create` directly or reload it.
+- Confirm fallback page renders, not overlay modal.
+- On mobile, open Sidebar, click Create, confirm Sidebar closes as before.
+- Select files in upload step, navigate steps, go back and verify state is preserved.
+- Remove selected image and verify preview disappears.
+- Close with no unsaved data: no confirm.
+- Close with unsaved data: confirm appears.
+- Profile page loads the active first posts page and appends further pages through infinite scroll.
+- Public main page renders the real `usersCount + feed` response before hydration, distinguishes a
+  successful empty feed from gateway failure, and does not repeat `PublicHome` in the browser.

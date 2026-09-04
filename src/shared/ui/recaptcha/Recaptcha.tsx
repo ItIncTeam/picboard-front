@@ -15,7 +15,7 @@ type RecaptchaProps = {
   disabled?: boolean
   errorMessage?: string
   expiredMessage?: string
-  onCheckedChange?: (checked: boolean) => void
+  onCheckedChangeAction?: (checked: boolean) => void
   status?: RecaptchaStatus
 }
 
@@ -26,7 +26,7 @@ export function Recaptcha({
   disabled = false,
   errorMessage = 'Please verify that you are not a robot',
   expiredMessage = 'Verification expired. Check the checkbox again.',
-  onCheckedChange,
+  onCheckedChangeAction,
   status = 'default',
 }: RecaptchaProps) {
   const controlId = useId()
@@ -42,7 +42,7 @@ export function Recaptcha({
   const defaultCheckedValue = hasFixedStatus || checked !== undefined ? undefined : defaultChecked
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onCheckedChange?.(event.currentTarget.checked)
+    onCheckedChangeAction?.(event.currentTarget.checked)
   }
 
   return (
@@ -73,7 +73,7 @@ export function Recaptcha({
             disabled={isDisabled}
             id={controlId}
             onChange={handleChange}
-            readOnly={hasFixedStatus && onCheckedChange === undefined}
+            readOnly={hasFixedStatus && onCheckedChangeAction === undefined}
             type="checkbox"
           />
 

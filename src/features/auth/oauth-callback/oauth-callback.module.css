@@ -1,0 +1,21 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 320px;
+  padding: 24px;
+
+  text-align: center;
+}
+
+.description {
+  max-width: 420px;
+}
+
+.action {
+  min-width: 160px;
+}

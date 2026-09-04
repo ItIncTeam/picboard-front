@@ -1,7 +1,12 @@
+import { I18nProvider } from '@/shared/lib/i18n'
 import type { Metadata } from 'next'
+import 'react-advanced-cropper/dist/style.css'
 
 import { SessionProvider } from '@/features/auth/session-management'
 import { ApolloProvider } from '@/shared/api'
+import { RouteHistoryTracker } from '@/shared/lib/router'
+import { ToastProvider } from '@/shared/ui/toast'
+import { TooltipProvider } from '@/shared/ui/tooltip'
 
 import './globals.css'
 
@@ -33,7 +38,16 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ApolloProvider>
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider>
+            <I18nProvider>
+              <TooltipProvider>
+                <ToastProvider>
+                  <RouteHistoryTracker />
+                  {children}
+                </ToastProvider>
+              </TooltipProvider>
+            </I18nProvider>
+          </SessionProvider>
         </ApolloProvider>
       </body>
     </html>

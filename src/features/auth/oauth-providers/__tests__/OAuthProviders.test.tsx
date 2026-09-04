@@ -1,12 +1,23 @@
-import { act } from 'react'
+import { act, type SVGProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { OAuthProviders } from '../OAuthProviders'
+import { OAuthProviders } from '@/features/auth/oauth-providers'
+import { I18nProvider } from '@/shared/lib/i18n'
+
+const oauthMocks = vi.hoisted(() => ({
+  startOAuthProvider: vi.fn(),
+}))
+
+vi.mock('@/features/auth/oauth', async () => {
+  return {
+    startOAuthProvider: oauthMocks.startOAuthProvider,
+  }
+})
 
 vi.mock('@/shared/assets', () => ({
-  GithubIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
-  GoogleIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GithubIcon: (props: SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GoogleIcon: (props: SVGProps<SVGSVGElement>) => <svg {...props} />,
 }))
 
 vi.mock('next/image', () => ({
@@ -25,7 +36,11 @@ function renderOAuthProviders(intent: 'signIn' | 'signUp'): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<OAuthProviders intent={intent} />)
+    root.render(
+      <I18nProvider>
+        <OAuthProviders intent={intent} />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }
@@ -61,29 +76,42 @@ describe('OAuthProviders', () => {
       container.remove()
     })
     mountedRoots.length = 0
+    oauthMocks.startOAuthProvider.mockReset()
   })
 
-  it('renders disabled sign-in provider buttons with availability labels', () => {
+  it('redirects sign-in Google button to backend OAuth start', () => {
     const view = renderOAuthProviders('signIn')
 
     mountedRoots.push(view)
 
-    const googleButton = getButton(view.container, 'Google sign-in is not available yet')
-    const githubButton = getButton(view.container, 'GitHub sign-in is not available yet')
+    const googleButton = getButton(view.container, 'Sign in with Google')
+    const githubButton = getButton(view.container, 'Sign in with GitHub')
 
-    expect(googleButton.disabled).toBe(true)
-    expect(githubButton.disabled).toBe(true)
+    expect(googleButton.disabled).toBe(false)
+    expect(githubButton.disabled).toBe(false)
+
+    act(() => {
+      googleButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    expect(oauthMocks.startOAuthProvider).toHaveBeenCalledWith('google')
   })
 
-  it('renders disabled sign-up provider buttons with availability labels', () => {
+  it('redirects sign-up GitHub button to backend OAuth start', () => {
     const view = renderOAuthProviders('signUp')
 
     mountedRoots.push(view)
 
-    const googleButton = getButton(view.container, 'Google sign-up is not available yet')
-    const githubButton = getButton(view.container, 'GitHub sign-up is not available yet')
+    const googleButton = getButton(view.container, 'Sign up with Google')
+    const githubButton = getButton(view.container, 'Sign up with GitHub')
 
-    expect(googleButton.disabled).toBe(true)
-    expect(githubButton.disabled).toBe(true)
+    expect(googleButton.disabled).toBe(false)
+    expect(githubButton.disabled).toBe(false)
+
+    act(() => {
+      githubButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    expect(oauthMocks.startOAuthProvider).toHaveBeenCalledWith('github')
   })
 })

@@ -11,9 +11,43 @@
   white-space: nowrap;
 }
 
+.icon {
+  display: none;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+}
+
 .suffix {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-base);
   color: var(--color-text-secondary);
+}
+
+@media (width < 480px) {
+  .logo {
+    align-items: center;
+  }
+
+  .icon {
+    display: block;
+  }
+
+  .label,
+  .suffix {
+    position: absolute;
+
+    overflow: hidden;
+
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+
+    white-space: nowrap;
+
+    clip-path: inset(50%);
+  }
 }

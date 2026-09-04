@@ -27,8 +27,7 @@ pnpm install
 ```
 
 Настройте `.env.local` по [Project Start Guide](./docs/project-start-guide.md). Для auth и
-forgot-password локально нужны `NEXT_PUBLIC_GRAPHQL_ENDPOINT` и
-`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`.
+forgot-password локально нужны `NEXT_PUBLIC_GRAPHQL_ENDPOINT` и `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`.
 
 Запустите dev server:
 

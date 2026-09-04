@@ -20,7 +20,6 @@ src/app/
 
   (public)/
     layout.tsx
-    page.tsx
     auth/
       sign-in/page.tsx
       sign-up/page.tsx
@@ -30,29 +29,40 @@ src/app/
         registration/page.tsx
         password-recovery/page.tsx
 
+  (app-shell)/
+    layout.tsx
+    AppRouteShell.tsx
+    (public-home)/
+      page.tsx
+      error.tsx
+    @modal/
+      default.tsx
+      [...catchAll]/page.tsx
+      (.)posts/create/page.tsx
+    (profile)/
+      profile/[userId]/page.tsx
+    (protected)/
+      layout.tsx
+      (main)/
+        main/page.tsx
+        feed/page.tsx
+        messenger/page.tsx
+        messenger/[dialogId]/page.tsx
+        search/page.tsx
+        favorites/page.tsx
+        statistics/page.tsx
+        profile/[userId]/followers/page.tsx
+        profile/[userId]/subscriptions/page.tsx
+        settings/layout.tsx
+        settings/profile/page.tsx
+        settings/account/page.tsx
+        settings/devices/page.tsx
+        settings/notifications/page.tsx
+        posts/create/page.tsx
+        posts/[postId]/page.tsx
+
   (protected)/
     layout.tsx
-    (main)/
-      layout.tsx
-      @modal/default.tsx
-      @modal/[...catchAll]/page.tsx
-      main/page.tsx
-      feed/page.tsx
-      messenger/page.tsx
-      messenger/[dialogId]/page.tsx
-      search/page.tsx
-      favorites/page.tsx
-      statistics/page.tsx
-      profile/[userId]/page.tsx
-      profile/[userId]/followers/page.tsx
-      profile/[userId]/subscriptions/page.tsx
-      settings/layout.tsx
-      settings/profile/page.tsx
-      settings/account/page.tsx
-      settings/devices/page.tsx
-      settings/notifications/page.tsx
-      posts/create/page.tsx
-      posts/[postId]/page.tsx
     admin/
       layout.tsx
       users/page.tsx
@@ -61,7 +71,9 @@ src/app/
       posts/page.tsx
 ```
 
-Route groups `(public)` и `(protected)` не попадают в URL. Они нужны только для разделения layouts.
+Route groups `(public)`, `(app-shell)` и `(protected)` не попадают в URL. Они нужны только для
+разделения layouts, поэтому `src/app/(app-shell)/(public-home)/page.tsx` по-прежнему обслуживает URL
+`/`.
 
 ## Ответственность layouts
 
@@ -72,20 +84,71 @@ Route groups `(public)` и `(protected)` не попадают в URL. Они н
 
 Root layout не содержит route-specific UI, redirects, role checks или бизнес-логику страниц.
 
-`src/app/(public)/layout.tsx` содержит публичный визуальный shell: `PublicHeader` и общий `<main>`.
-Здесь нет auth-логики.
+`src/app/(public)/layout.tsx` содержит публичный визуальный shell auth routes: `PublicHeader` и общий
+`<main>`. Здесь нет auth-логики; Public Home больше не входит в эту route group.
 
-`src/app/(protected)/layout.tsx` оборачивает `children` в `ProtectedRouteBoundary`.
+`src/app/(app-shell)/layout.tsx` — общий persistent visual shell для Public Home, Profile и
+authenticated main routes. Он владеет единственным `AdaptiveAppShell`: во время client session
+bootstrap shell остается pending; затем anonymous пользователь получает `PublicHeader` без
+Sidebar, а authenticated пользователь — `AppHeader` и Sidebar. Auth влияет только на shell:
+Public Home и Profile не становятся protected routes. Authenticated navigation между `/`, `/main`,
+`/profile/[userId]` и `/posts/[postId]` сохраняет тот же Header/Sidebar instance. Общий layout не
+читает cookies/headers, не вызывает backend и не делает redirect.
+
+`src/app/(app-shell)/(protected)/layout.tsx` оборачивает main-app `children` в
+`ProtectedRouteBoundary`. Отдельный `src/app/(protected)/layout.tsx` сохраняет ту же boundary для
+admin routes вне app shell.
 `ProtectedRouteBoundary` использует client session state из `SessionProvider`:
 
 - `bootstrapping` показывает loading state;
-- `anonymous` делает client redirect на `/auth/sign-in`;
+- `anonymous` делает client redirect на `/auth/sign-in?returnTo=<encoded protected path>`;
 - `authenticated` рендерит protected content.
 
 Protected layout не читает cookies, не вызывает backend напрямую, не реализует role-based access и
 не заменяет middleware.
 
-`src/app/(protected)/(main)/layout.tsx` держит основной protected segment и slot `@modal`.
+`returnTo` сохраняет same-app relative path текущего protected route, включая query string. После
+входа `/auth/sign-in` валидирует `returnTo`: значение должно начинаться с `/`, не начинаться с `//`
+или `/auth` и не содержать backslash. Небезопасные значения fallback-ятся на `/main`.
+
+`src/app/(app-shell)/layout.tsx` также держит slot `@modal`; protected `(main)` остаётся отдельной
+веткой только для auth boundary и route organization. Intercepted Create adapter дополнительно
+использует `ProtectedRouteBoundary`, поэтому soft navigation с anonymous Profile не обходит auth.
+
+`/main` — canonical authenticated home. Его `views/main-page` получает текущие `usersCount` и global
+`feed` одним Apollo Client operation, чтобы использовать memory-only access token и общий
+refresh/retry pipeline. Страница переиспользует общий `RegisteredUsersCounter` и feed-card widgets;
+Public Home при этом сохраняет отдельный server/ISR data path. `/feed` пока не имеет отдельного
+personalized backend contract и остается compatibility redirect на `/main`; Sidebar также ведет на
+`/main`.
+
+## Public Home `/`
+
+Фактическая цепочка рендеринга:
+
+```txt
+GET /
+  -> ISR route (`revalidate = 60`)
+  -> PublicHomePage server boundary
+  -> server GraphQL PublicHome
+  -> usersCount + feed (до 4 последних публичных постов)
+  -> initial HTML
+  -> hydration
+  -> SessionProvider client bootstrap
+  -> refreshToken -> me
+  -> anonymous/authenticated shell
+```
+
+`/` находится под `(app-shell)`, но остается публичным. `PublicHome` выполняется server-side и не
+зависит от session; `PublicHomeContent` получает готовые данные через server props и не повторяет
+этот query в browser после hydration. `SessionProvider` определяет auth только client-side и меняет
+только shell: anonymous получает `PublicHeader`, authenticated — `AppHeader` и Sidebar.
+
+`revalidate = 60` означает request-driven ISR: после истечения интервала regeneration запускается
+следующим запросом, а не таймером каждые 60 секунд. Create, Edit и Delete дополнительно вызывают
+on-demand `revalidatePath('/')`. Для изменения `usersCount` отдельной event invalidation нет, поэтому
+счетчик полагается на time-based ISR. `/main` остается отдельным authenticated client-data route и
+не заменяет `/`.
 
 `settings/layout.tsx` и `admin/layout.tsx` занимают места под будущие section shells. Пока они
 легкие.
@@ -113,6 +176,7 @@ export default function Page() {
 /auth/sign-up
 /auth/forgot-password
 /auth/create-new-password
+/auth/callback
 /auth/confirm/registration
 /auth/confirm/password-recovery
 ```
@@ -143,12 +207,51 @@ widgets/public-auth-shell
 
 ## Modals
 
-Route-based modals живут в `app/(protected)/(main)/@modal`. Они нужны для контента, который можно
+Route-based modals живут в `app/(app-shell)/@modal`. Они нужны для контента, который можно
 открыть отдельным URL.
+
+Сейчас подключен Create Post modal с Upload, Crop, Filters и Publication steps:
+
+- soft navigation на `/posts/create` внутри `(app-shell)` открывает
+  `@modal/(.)posts/create/page.tsx` поверх текущей Main/Profile/Details page;
+- прямой заход или reload `/posts/create` рендерит обычный fallback route
+  `(protected)/(main)/posts/create/page.tsx`;
+- `@modal/default.tsx` и `@modal/[...catchAll]/page.tsx` возвращают `null`, чтобы slot не оставался
+  активным на unmatched routes.
+
+Posts sprint status: [Posts Sprint Overview](./posts-sprint/00-overview.md).
 
 Local UI modals живут рядом с feature или widget. Это confirmations, dropdowns и маленькие dialogs.
 
 Пока не добавляем общий modal manager.
+
+## Public Profile
+
+Route adapter передает реальный dynamic `userId` в `views/profile-page`. View отдельно загружает
+public `user(id)`, а первые 8 `profilePosts` держит активным Apollo query с polling раз в 60 секунд.
+`IntersectionObserver` и `fetchMore` загружают следующие страницы по cursor `pageInfo.endCursor`;
+видимая история старых страниц сохраняется локально с dedupe по post id. Если состав или порядок
+первой страницы меняется, вытесненные posts переносятся в историю, а cursor chain перестраивается
+от актуального `firstPage.pageInfo.endCursor`. Opaque backend cursors не считаются стабильными после
+вставок в начало connection.
+
+Sidebar строит My Profile URL из уже загруженного `SessionProvider.user.id`; отдельный `me` query
+для ссылки не выполняется. Owner-only `Profile Settings` определяется сравнением session user id с
+route user id.
+
+## Post details
+
+Route adapter передает `postId` в `views/post-details-page`. View загружает существующий `post(id)`,
+показывает carousel / description / дату и mapped `PostEntity.author`. Owner-only `Edit Post`
+определяется сравнением session user id с `PostEntity.ownerId` и сменяет overlay Details, а не
+открывает вторую модалку поверх. Details и Edit делят wide-ящик Create/Publication
+(`60.75rem × 35.25rem`, колонки `51fr / 50fr`); шапка Edit входит в эту высоту. Edit показывает
+текущий слайд Details статичной картинкой, без стрелок и пагинации. Закрытие использует существующий
+`getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. `router.back()` для details не
+используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Close и успешный
+delete используют один и тот же sanitized `returnTo`. Меню `...` одно на владельца и передаёт соседний
+`Delete Post` в `DeletePostFlow` без второй проверки владельца; confirmation, synchronization и
+redirect остаются внутри delete flow, а view передаёт уже безопасный `returnTo`.
 
 ## Providers
 

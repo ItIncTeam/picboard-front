@@ -1,3 +1,9 @@
+'use client'
+
+import { useI18n } from '@/shared/lib/i18n'
+
 export default function NotFound() {
-  return <h1>App Not Found</h1>
+  const { t } = useI18n()
+
+  return <h1>{t.appError.notFound}</h1>
 }

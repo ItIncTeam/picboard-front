@@ -1,3 +1,6 @@
+'use client'
+
+import { useI18n } from '@/shared/lib/i18n'
 import { RoutePlaceholder } from '@/views/route-placeholder'
 
 type AuthScreen =
@@ -7,23 +10,24 @@ type AuthScreen =
   | 'sign-in'
   | 'sign-up'
 
-const authScreenTitles: Record<AuthScreen, string> = {
-  'confirm-password-recovery': 'Password recovery confirmation',
-  'confirm-registration': 'Registration confirmation',
-  'forgot-password': 'Password recovery',
-  'sign-in': 'Sign In',
-  'sign-up': 'Sign Up',
-}
-
 type AuthPageProps = {
   screen: AuthScreen
 }
 
 export function AuthPage({ screen }: AuthPageProps) {
+  const { t } = useI18n()
+  const authScreenTitles: Record<AuthScreen, string> = {
+    'confirm-password-recovery': t.routePlaceholder.authSections.confirmPasswordRecovery,
+    'confirm-registration': t.routePlaceholder.authSections.confirmRegistration,
+    'forgot-password': t.routePlaceholder.authSections.forgotPassword,
+    'sign-in': t.routePlaceholder.authSections.signIn,
+    'sign-up': t.routePlaceholder.authSections.signUp,
+  }
+
   return (
     <RoutePlaceholder
       title={authScreenTitles[screen]}
-      description="Public authentication flow from the WebApp / UI / Auth Figma section."
+      description={t.routePlaceholder.publicAuthDescription}
       figmaNode="301:4851"
       routes={[
         '/auth/sign-in',

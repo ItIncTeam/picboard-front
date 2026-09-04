@@ -4,25 +4,27 @@ import { useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 
 import { ArrowBackIcon } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
 import { Title } from '@/shared/ui/typography'
 
 import styles from './doc-modal.module.css'
-import { docModalConfig, type DocModalKind } from './model/docModalConfig'
+import { type DocModalKind } from './model/docModalConfig'
 import { renderDocBody } from './model/renderDocBody'
 
 type DocModalProps = {
   kind: DocModalKind
-  onClose: () => void
+  onCloseAction: () => void
 }
 
-export function DocModal({ kind, onClose }: DocModalProps) {
+export function DocModal({ kind, onCloseAction }: DocModalProps) {
+  const { language, t } = useI18n()
   const titleId = useId()
-  const { title } = docModalConfig[kind]
+  const title = t.widgets.docModal.titles[kind]
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose()
+        onCloseAction()
       }
     }
 
@@ -34,10 +36,10 @@ export function DocModal({ kind, onClose }: DocModalProps) {
       document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [onClose])
+  }, [onCloseAction])
 
   return createPortal(
-    <div className={styles.overlay} onClick={onClose} role="presentation">
+    <div className={styles.overlay} onClick={onCloseAction} role="presentation">
       <section
         aria-labelledby={titleId}
         aria-modal="true"
@@ -47,9 +49,9 @@ export function DocModal({ kind, onClose }: DocModalProps) {
           event.stopPropagation()
         }}
       >
-        <button autoFocus className={styles.backLink} onClick={onClose} type="button">
+        <button autoFocus className={styles.backLink} onClick={onCloseAction} type="button">
           <ArrowBackIcon aria-hidden className={styles.backIcon} />
-          <span className={styles.backLabel}>Back to Sign Up</span>
+          <span className={styles.backLabel}>{t.widgets.docModal.backToSignUp}</span>
         </button>
 
         <div className={styles.docColumn}>
@@ -57,7 +59,7 @@ export function DocModal({ kind, onClose }: DocModalProps) {
             {title}
           </Title>
 
-          <div className={styles.body}>{renderDocBody(kind)}</div>
+          <div className={styles.body}>{renderDocBody(kind, language)}</div>
         </div>
       </section>
     </div>,

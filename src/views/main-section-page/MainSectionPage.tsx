@@ -1,3 +1,6 @@
+'use client'
+
+import { useI18n } from '@/shared/lib/i18n'
 import { RoutePlaceholder } from '@/views/route-placeholder'
 
 type MainSection =
@@ -11,27 +14,28 @@ type MainSection =
   | 'settings-devices'
   | 'statistics'
 
-const mainSectionTitles: Record<MainSection, string> = {
-  'account-settings': 'Account settings',
-  'create-post': 'Create post',
-  favorites: 'Favorites',
-  'notifications-settings': 'Notification settings',
-  'post-details': 'Post details',
-  'profile-settings': 'Profile settings',
-  search: 'Search',
-  'settings-devices': 'Settings devices',
-  statistics: 'Statistics',
-}
-
 type MainSectionPageProps = {
   section: MainSection
 }
 
 export function MainSectionPage({ section }: MainSectionPageProps) {
+  const { t } = useI18n()
+  const mainSectionTitles: Record<MainSection, string> = {
+    'account-settings': t.routePlaceholder.mainSections.accountSettings,
+    'create-post': t.routePlaceholder.mainSections.createPost,
+    favorites: t.routePlaceholder.mainSections.favorites,
+    'notifications-settings': t.routePlaceholder.mainSections.notificationSettings,
+    'post-details': t.routePlaceholder.mainSections.postDetails,
+    'profile-settings': t.routePlaceholder.mainSections.profileSettings,
+    search: t.routePlaceholder.mainSections.search,
+    'settings-devices': t.routePlaceholder.mainSections.settingsDevices,
+    statistics: t.routePlaceholder.mainSections.statistics,
+  }
+
   return (
     <RoutePlaceholder
       title={mainSectionTitles[section]}
-      description="Protected application route from the WebApp / UI Figma section."
+      description={t.routePlaceholder.protectedDescription}
       figmaNode="1:12"
       routes={[
         '/feed',

@@ -2,6 +2,8 @@ import type { Preview } from '@storybook/nextjs-vite'
 
 import '@/app/globals.css'
 
+import { I18nProvider } from '@/shared/lib/i18n'
+
 const preview: Preview = {
   globalTypes: {
     theme: {
@@ -37,7 +39,9 @@ const preview: Preview = {
             color: 'var(--color-text-primary)',
           }}
         >
-          <Story />
+          <I18nProvider>
+            <Story />
+          </I18nProvider>
         </div>
       )
     },

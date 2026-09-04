@@ -2,6 +2,7 @@ scalar DateTime
 
 type User {
   id: ID!
+  posts: [PostEntity]
   email: String!
   username: String!
   confirmationCode: String
@@ -20,8 +21,12 @@ type UserOutput {
 }
 
 type Query {
-  me: User!
+  me: User
   user(id: String!): User
+  usersCount: Int!
+  feed: [PostEntity!]!
+  post(id: String!): PostEntity
+  profilePosts(input: ProfilePostsInput!): PostConnection!
 }
 
 type Mutation {
@@ -33,6 +38,30 @@ type Mutation {
   refreshToken: RefreshTokenPayload!
   passwordReset(input: PasswordResetInput!): PasswordResetPayload!
   setNewPassword(input: SetNewPasswordInput!): SetNewPasswordPayload!
+  exchangeOAuthCode(input: OAuthExchangeCodeInput!): SignInPayload!
+  initiateUploadBatch(input: [InitiateUploadInput!]!): [InitiateUploadPayload!]!
+  completeUpload(input: [CompleteUploadInput!]!): [CompleteUploadPayload!]!
+  createPost(input: CreatePostInput!): PostEntity!
+  updatePostDescription(input: UpdatePostDescriptionInput!): PostEntity!
+  deletePost(input: DeletePostInput!): Boolean!
+}
+
+enum Purpose {
+  POST_IMAGE
+  BILL
+}
+
+enum MimeType {
+  JPEG
+  PNG
+}
+
+enum FileStatus {
+  PENDING
+  UPLOADED
+  READY
+  FAILED
+  DELETED
 }
 
 input SignUpInput {
@@ -65,6 +94,42 @@ input SetNewPasswordInput {
   password: String!
 }
 
+input OAuthExchangeCodeInput {
+  code: String!
+}
+
+input InitiateUploadInput {
+  clientUploadId: String!
+  originalName: String!
+  purpose: Purpose!
+  mimeType: MimeType!
+  size: Int!
+}
+
+input CompleteUploadInput {
+  fileId: String!
+}
+
+input CreatePostInput {
+  fileIds: [ID!]!
+  description: String
+}
+
+input UpdatePostDescriptionInput {
+  postId: ID!
+  description: String
+}
+
+input DeletePostInput {
+  postId: ID!
+}
+
+input ProfilePostsInput {
+  userId: ID!
+  first: Int
+  after: String
+}
+
 type SignUpPayload {
   user: UserOutput!
   message: String!
@@ -73,7 +138,6 @@ type SignUpPayload {
 type SignInPayload {
   user: User!
   accessToken: String!
-  refreshToken: String!
 }
 
 type EmailConfirmationPayload {
@@ -95,4 +159,59 @@ type SetNewPasswordPayload {
 type RefreshTokenPayload {
   accessToken: String!
   refreshToken: String!
+}
+
+type File {
+  id: ID!
+  ownerId: String!
+  originalName: String!
+  purpose: Purpose!
+  mimeType: MimeType!
+  size: Int!
+  status: FileStatus!
+  url: String!
+}
+
+type InitiateUploadPayload {
+  clientUploadId: String!
+  fileId: String!
+  uploadUrl: String!
+  expiresAt: DateTime!
+}
+
+type CompleteUploadPayload {
+  fileId: String!
+  status: FileStatus!
+}
+
+type PostAttachmentEntity {
+  fileId: ID!
+  sortOrder: Int!
+  file: File
+}
+
+type PostEntity {
+  id: ID!
+  ownerId: String!
+  description: String
+  attachments: [PostAttachmentEntity!]!
+  author: User!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PostEdge {
+  cursor: String!
+  node: PostEntity!
+}
+
+type PageInfo {
+  startCursor: String
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type PostConnection {
+  edges: [PostEdge!]!
+  pageInfo: PageInfo!
 }
