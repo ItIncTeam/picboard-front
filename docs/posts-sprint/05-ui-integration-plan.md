@@ -227,14 +227,21 @@ Differences:
 
 ### Public main page
 
-- `/` stays in the `(public)` route group and uses the public layout/header.
+- `/` lives in the `(app-shell)` route group without changing its URL or public access. The existing
+  client session bootstrap changes only the shell: pending while bootstrapping, `PublicHeader` for
+  anonymous users, and `AppHeader` with Sidebar for authenticated users.
 - `views/public-home-page` composes `usersCount` and `feed` through the page-specific `PublicHome`
-  query. Backend returns at most 4 posts ordered by `createdAt DESC`; frontend preserves that order
-  and does not apply another limit. Public Home has no pagination or infinite scroll.
+  query on the server and passes the result to `PublicHomeContent` as props. Backend returns at most
+  4 posts ordered by `createdAt DESC`; frontend preserves that order and does not apply another
+  limit. Public Home has no pagination, infinite scroll, or duplicate browser query after hydration.
 - The gateway HTTPS/TLS certificate blocker is resolved, so Public Home uses ISR with
-  `revalidate = 60`. Empty `feed` and `usersCount = 0` remain valid successful data; gateway
-  failures throw into the `(public)` route error boundary, whose retry re-fetches and re-renders the
-  failed segment.
+  `revalidate = 60`. Regeneration is request-driven after the interval, not timer-driven every 60
+  seconds. Create, Edit and Delete also use on-demand `revalidatePath('/')`; `usersCount` relies on
+  time-based ISR because it has no separate event invalidation. Empty `feed` and `usersCount = 0`
+  remain valid successful data.
+- `/main` remains the separate authenticated Apollo client-data route and does not replace `/`.
+- Initial HTML and hydration behavior have been manually verified. Production ISR regeneration is
+  not yet runtime-verified.
 - `PostEntity.author` supplies the public post-author identity used by Public Home. The UI displays
   `displayName?.trim() || username` and uses its first letter as the avatar fallback while the
   backend exposes only `profilePictureFileId`, not an avatar URL.
@@ -287,5 +294,5 @@ Differences:
 - Close with no unsaved data: no confirm.
 - Close with unsaved data: confirm appears.
 - Profile page loads the active first posts page and appends further pages through infinite scroll.
-- Public main page renders the real `usersCount + feed` response, distinguishes a successful empty
-  feed from gateway failure, and delegates gateway failure recovery to the route error boundary.
+- Public main page renders the real `usersCount + feed` response before hydration, distinguishes a
+  successful empty feed from gateway failure, and does not repeat `PublicHome` in the browser.
