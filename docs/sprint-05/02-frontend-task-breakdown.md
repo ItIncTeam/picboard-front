@@ -1,239 +1,386 @@
-# Sprint 05 Frontend Task Breakdown
+# Sprint 05: план frontend-задач
 
-Status: **ARCHITECTURE AUDIT PAUSED / IN PROGRESS**.
+Статус: **GENERAL ARCHITECTURE AUDIT COMPLETE / BACKEND CONTRACT AUDIT COMPLETE /
+IMPLEMENTATION NOT STARTED**.
 
-Этот документ перечисляет только подтвержденные work streams. Это не финальный implementation plan:
-точные file changes, PR sequence и команды проверки определяются после завершения architecture
-audit и отдельного backend-contract audit.
+Это основной документ для выполнения Sprint 05. Задачи, которым нужны отсутствующие
+backend-контракты, нельзя начинать с временными полями или мутациями.
 
-## Общие ограничения
+## Общие правила
 
-- Не создавать временные GraphQL contracts, User fields, mutations или fake counters.
-- Не показывать fake-success persistence на production routes.
-- Не добавлять dependencies без отдельного подтверждения.
-- Не создавать generic abstractions без доказанного повторения.
-- Сохранять существующие App Router, FSD, Apollo singleton и local pagination boundaries.
-- При изменении routing/behavior синхронизировать relevant docs.
+- Сохранять публичный SSR, существующий Apollo Client, App Router и границы модулей.
+- Не добавлять зависимости, общий менеджер состояния или новую инфраструктуру без необходимости.
+- Не использовать фиктивные данные, счётчики и успешные ответы в рабочих маршрутах.
+- Сначала переиспользовать `Modal`, `Tabs`, `Input`, `Select`, `DatePicker`, `TextArea`,
+  `Button`, `PostGrid`, `PostDetails` и `PublicPostCarousel`.
+- Figma задаёт desktop-композицию. Адаптация строится на существующих layout и breakpoints.
+- Comments, likes, replies, engagement controls и неподтверждённые social actions не реализуются.
+- После изменения маршрутов обновить `docs/app-router-roadmap.md`.
 
-## Contract-independent work
+## Итог backend-аудита
 
-Эти streams могут выполняться параллельно с backend work после завершения общего architecture audit.
+- READY: anonymous `user(id)`, `profilePosts(input)`, `post(id)`, Post author/attachments/timestamps
+  и `null` для отсутствующих user/post.
+- REQUIRED: безопасный Public User, публичные счётчики, Edit Profile read/update, полный Avatar
+  contract и подтверждение ordering/cursor semantics `profilePosts`.
+- CRITICAL BACKEND / SECURITY: anonymous `user(id)`, `feed.author` и `post.author` сейчас раскрывают
+  приватные auth/account fields. Исправление выполняется первым.
+- Улучшение generic errors для неверного `first` или cursor желательно, но не блокирует Profile SSR.
+- PRODUCT DECISION REQUIRED: Followers/Following и Follow/Unfollow.
+- Задачи A1–A4 и B1–B3 можно начинать до готовности backend. D1–D4, F1 и F2 ждут соответствующих
+  контрактов; E1–E4 имеют достаточный базовый Post contract.
 
-### Stream A: Edit Profile form UI and state
+## Поток A. Edit Profile без backend
 
-- Собрать `EditProfileForm` как feature через explicit typed props.
-- Использовать полный `EditProfileFormValues`: string для всех text/select fields, `Date | null`
-  только для DOB; optional string fields представлять как `''`.
-- Всегда передавать полный `defaultValues` shape; не включать Avatar и не вводить backend DTO.
-- Получать `countryOptions` и `cityOptionsByCountryValue` через props на базе существующего
-  `SelectOption`; считать option values opaque UI keys.
-- При пустом Country держать City empty/disabled; при смене Country всегда reset-ить City, а при
-  отсутствии options также оставлять его empty/disabled.
-- Не добавлять production geography source/API/dependency или async options infrastructure.
-- Настроить RHF fields/state без backend field mapping.
-- Реализовать Sprint 05 client validation feature-local rules:
-  - Username: required/trim-aware, `6–30`, Latin letters/digits/`_`/`-`;
-  - First/Last Name: required/trim-aware, `1–50`, Latin/Cyrillic letters;
-  - Country/City: optional без дополнительных length/regex rules;
-  - About Me: optional, maximum `200`, без дополнительного character allowlist.
-- Не переносить signup schema автоматически, не менять case и не мутировать values on blur.
-- Хранить optional DOB как `Date | null`; валидировать future date и age `< 13` по calendar
-  year/month/day.
-- Переиспользовать controlled shared `DatePicker`: selected DOB задает initial visible month, null
-  использует current month из testable `today`.
-- При необходимости минимально исправить shared primitive, чтобы hardcoded November 2023 не влиял
-  на Edit Profile; не создавать DOB-specific picker/workaround.
-- Сохранить Figma month-only navigation и отметить неудобство выбора старого DOB как design
-  usability limitation; year navigation оставить product/design-gated.
-- Передавать current date в age helper явно и покрыть null/future/exactly-13/13-tomorrow/older и
-  естественно затронутые leap-year boundaries.
-- Сохранить RHF `mode: 'onTouched'`; не добавлять custom date-validation lifecycle или API
-  serialization до backend contract.
-- Открывать Privacy Policy через существующий `DocModal`, не размонтируя форму.
-- Проверить сохранение values/errors/touched/dirty/date после открытия и закрытия документа.
-- Не добавлять navigation guard; navigation away разрешена.
-- Держать `isDirty`, submit и `reset(savedValues)` только в Profile form boundary.
-- Отключать Save при pristine, invalid или pending state; выполнять submit только через RHF
-  `handleSubmit` и не блокировать всю форму во время pending.
-- При success делать returned saved values новым baseline через `reset(savedValues)`; при failure
-  сохранять values/dirty/touched/baseline и показывать local form-level error.
-- Проверить single-submit pending guard, backend-normalized reset и повторный submit после failure.
-- Не включать Avatar draft или operations в RHF state и Save lifecycle.
-- Подготовить focused unit/component tests и isolated Storybook preview, используя текущий project
-  setup.
-- Покрыть empty/whitespace и length/character boundaries `5/6/30/31`, `1/50/51`, а также About Me
-  `200/201` и special characters.
-- Проверить empty-string/null defaults, сохранение raw whitespace и полный saved callback/reset
-  shape.
-- Проверить Country → City filtering/reset/disabled states и отсутствие fixture imports в
-  production route.
-- Не подключать форму к `/settings/profile` до backend integration stream.
+### Задача A1. Типы и проверка полей
 
-### Stream B: Avatar contract-independent UI
+**Цель:** подготовить независимую от API модель формы и чистые правила проверки.
 
-- Подготовить select/preview/fixed `1:1` crop/cancel UI через explicit props/callbacks.
-- Использовать circular presentation mask, не создавая физически круглый output или transparent
-  corners.
-- Ограничить crop interaction подтвержденным позиционированием/центрированием; не добавлять
-  неподтвержденные zoom/scale controls.
-- Использовать file-picker hint `accept="image/jpeg,image/png"`, но валидировать exact MIME
-  allowlist и maximum size `10 * 1024 * 1024` bytes до создания preview/draft.
-- Проверять format раньше size и показывать одну deterministic validation error; ровно `10 MiB`
-  принимать.
-- Подготовить delete-avatar confirmation UI.
-- Показывать delete control только для saved avatar; draft не считать сохраненным avatar.
-- Реализовать non-optimistic local confirmation через `OnDeleteAvatar = () => Promise<void>`:
-  pending блокирует actions/dismiss/concurrent Avatar operation, success очищает avatar, failure
-  сохраняет его и допускает retry.
-- Проверить object URL cleanup для local preview, если он потребуется выбранному UI flow.
-- Не выбирать upload purpose и не моделировать attach/replace/delete persistence.
-- Не использовать `profilePictureFileId` как display URL.
-- Возвращать из isolated UI typed crop selection/positioning result, а не backend file contract.
-- Описать `AvatarCropSelection` только через source `File` и square `left/top/width/height` в pixels
-  исходного изображения.
-- Не выводить object URL, canvas, cropper refs/transforms или upload metadata через feature contract.
-- Оставить dimensions/compression/conversion/encoding backend-gated.
-- Создавать/revoke-ить preview object URL внутри Avatar feature; Cancel и новый valid file должны
-  очищать предыдущий draft resource.
-- Invalid first selection не должен создавать object URL/draft; invalid replacement должен
-  сохранять текущие valid preview, crop и object URL.
-- Новый valid replacement должен очистить error, revoke-нуть старый URL и полностью reset-нуть
-  crop draft.
-- Не добавлять content sniffing/dependency и не менять Create Post validation с другим limit.
-- Держать Avatar state/error lifecycle независимо от Profile form.
-- Проверить, что Avatar cancel/success/delete не меняют RHF state и Profile Save не запускает
-  Avatar operations.
-- Проверить delete visibility, dismiss, single pending call, success/failure/retry и отсутствие
-  feature-level Delete Post imports.
-- Не создавать combined form/avatar transaction или orchestration state в Settings view.
+**Объём:** `EditProfileFormValues` с полным набором строк и `dateOfBirth: Date | null`;
+feature-local schema для Username, First/Last Name, About Me и возраста. Значения не обрезаются и не
+нормализуются автоматически.
 
-### Stream C: Public Profile/Post presentation and route contracts
+**Зависимости:** решения 21, 22 и 24.
 
-- Подготовить typed serializable `InitialProfileData` и `InitialPostData` boundaries согласно
-  Decision Log.
-- После подтверждения counters contract собрать одну `initialProfileQuery` с user/counters/first
-  page и выполнить один raw POST; не создавать multi-request orchestration.
-- Использовать общий first-page variables factory без `after`; явно включить server-printed
-  `__typename` и обеспечить field/selection compatibility с `profilePostsQuery`.
-- Seed-ить complete combined result одним `writeQuery`; incomplete/partial result считать technical
-  failure и не seed-ить.
-- Реализовать локальные Profile/Post seed boundaries через existing `useApolloClient()`,
-  `useEffect` и `seededBaselineKey`; до matching key держать Profile query на `skipToken`.
-- Не выполнять render-time/layout-effect writes; StrictMode repeated seed должен оставаться
-  idempotent и не создавать network request.
-- При новом server baseline снова включать `skipToken`, seed-ить complete payload и только затем
-  активировать Profile query. Post при этом остается на props/local display ownership.
-- Сохранить Profile pagination/reconciliation ownership локальным.
-- Сохранить Post `initialPost`/`displayPost` ownership отдельно от Apollo cache.
-- Подготовить direct/intercepted presentation adapters и close strategies без дублирования Post
-  Details.
-- Добавить route-local canonical/intercepted Post error boundaries: technical failures используют
-  generic UI и Next 16.2.4 `unstable_retry()`, а confirmed null остается 404/unavailable semantics.
-- Не seed-ить cache для null/error; successful Retry должен создавать новый complete baseline.
-- Перенести canonical `/posts/[postId]` непосредственно под public app shell и добавить
-  `@modal/(.)posts/[postId]`; оставить canonical `/posts/create` и intercepted Create flow
-  protected.
-- Добавить Profile/Main soft Post entry points, не меняя Public Home navigation и не вводя
-  query-param routing.
-- После route implementation точечно синхронизировать stale Post placement в
-  `docs/app-router-roadmap.md`.
-- Подготовить focused tests с deterministic `baselineKey` fixtures.
-- Не подключать backend-blocked Profile counters или временные fallbacks.
-- Сохранить public SSR обязательным anonymous baseline и показывать owner controls только после
-  client `SessionProvider` bootstrap/exact owner ID match.
-- Не оборачивать public routes в `ProtectedRouteBoundary`; session failure не должен заменять
-  public content или route error state.
-- Проверить, что session transition не refetch-ит public data, не меняет baseline и не remount-ит
-  global providers.
+**Критерии приёмки:** обязательные поля учитывают пробелы; Username принимает 6–30 символов из
+латиницы, цифр, `_`, `-`; имена принимают 1–50 букв латиницы/кириллицы; About Me — до 200.
 
-### Stream D: Figma requirements audit
+**Тесты:** границы 5/6/30/31, 0/1/50/51 и 200/201; пробелы; допустимые и запрещённые символы;
+`null`, будущая дата, ровно 13 лет, 13 лет завтра, високосная дата.
 
-- Получать metadata/tree из root `1:12` и design context/screenshots только конкретных frames.
-- Сравнивать Edit Profile, Avatar, Profile и Post frames с существующими project primitives.
-- Фиксировать MCP limitation: root canvas design context может требовать concrete frame.
-- Отмечать unsupported Post engagement UI как `design-visible / contract-unavailable`.
-- Не копировать Figma-generated Tailwind code и не придумывать размеры отсутствующих frames.
+**Блокер:** нет. Сериализация и ошибки backend в эту задачу не входят.
 
-## Backend-gated work
+### Задача A2. Country и City
 
-### Stream E: Live contract audit and backend work package
+**Цель:** реализовать зависимые списки без предположений о рабочем источнике данных.
 
-- Повторить live introspection перед integration.
-- Подтвердить Profile read/update fields, types и nullability.
-- Подтвердить backend validation/error shape.
-- Сверить backend constraints с frontend-known Sprint 05 rules; конфликт фиксировать как
-  `CONTRACT CONFLICT`, не менять frontend validation молча.
-- Подтвердить public counters и источник `publicationsCount`.
-- Подтвердить Avatar upload purpose, mutations и display URL.
-- Подтвердить missing user/post semantics: nullable result или typed GraphQL error.
-- Подтвердить nested Post author shape и при необходимости зафиксировать SSR waterfall.
-- Подтвердить `updatedAt` semantics отдельно; opaque baseline от него не зависит.
-- Сформировать один конкретный backend work package вместо временных frontend contracts.
+**Объём:** принимать `countryOptions: SelectOption[]` и
+`cityOptionsByCountryValue: Record<string, SelectOption[]>` через props. При пустом или изменённом
+Country очищать City; при отсутствии вариантов отключать City.
 
-### Stream F: Edit Profile production integration
+**Зависимости:** задача A1, существующий `Select`.
 
-Запускается только после Stream E.
+**Критерии приёмки:** значения options остаются внутренними ключами UI; тестовые данные используются
+только в тестах и Storybook; рабочий маршрут не получает временный набор стран.
 
-- Добавить подтвержденные read/update GraphQL documents и typed mappings.
-- Передать реальные initial values в `EditProfileForm`.
-- Подключить mutation и backend error mapping.
-- На success использовать сохраненный backend payload и вызвать `reset(savedValues)`.
-- Заменить `/settings/profile` placeholder только после полной read/save integration.
+**Тесты:** начальное пустое состояние, фильтрация городов, смена страны, страна без городов,
+отсутствие тестовых наборов в рабочем маршруте.
 
-### Stream G: Avatar production integration
+**Блокер:** рабочий источник и отображение значений требуют backend-аудита.
 
-Запускается только после Stream E.
+### Задача A3. DatePicker для даты рождения
 
-- Подключить подтвержденный upload purpose и upload lifecycle.
-- Подключить attach/replace/delete mutations.
-- Использовать подтвержденный display avatar URL contract.
-- Синхронизировать Profile, session и normalized cache только в границах live contract.
+**Цель:** корректно открыть существующий календарь для выбранной или пустой даты.
 
-### Stream H: Atomic Public Profile SSR integration
+**Объём:** минимально скорректировать shared `DatePicker`, если он всё ещё зависит от ноября
+2023 года. Выбранная дата задаёт видимый месяц; `null` использует текущий месяц из переданного
+`today`.
 
-Запускается после подтверждения обязательных counters и query shapes.
+**Зависимости:** задача A1, существующий `src/shared/ui/date-picker`.
 
-- Выполнить atomic raw server load с `cache: 'no-store'`.
-- Обработать `user === null` через `notFound()` и technical failure через route error UI.
-- Создать один server `baselineKey` на successful payload.
-- Seed-ить цельный user/counters/first-page payload до activation Profile query.
-- Сохранить `cache-first`, declarative polling и local pagination model.
+**Критерии приёмки:** controlled `Date | null` работает без отдельной обёртки для DOB; остаётся
+навигация по месяцам; year picker, ручной ввод и новая date dependency не добавляются.
 
-### Stream I: Public Post SSR integration
+**Тесты:** выбранный месяц/год, пустая дата, переход между месяцами, controlled update и
+`onTouched` формы.
 
-Запускается после live verification текущего Post contract и missing-resource signal.
+**Блокер:** улучшенная навигация по годам требует отдельного решения продукта/дизайна.
 
-- Вынести canonical route из protected group без изменения URL.
-- Добавить intercepted Post adapter в существующий `@modal` slot.
-- Выполнить raw server load и создать один `baselineKey`.
-- Seed-ить `postQuery`, но рендерить UI из `initialPost`/local `displayPost`.
-- Реализовать canonical 404 и modal-scoped unavailable/error states.
-- Сохранить edit/delete cache synchronization и presentation-specific navigation.
+### Задача A4. Форма и её жизненный цикл
 
-## Product-decision-gated work
+**Цель:** собрать изолированный `EditProfileForm` на RHF и существующих компонентах.
 
-Не включать без отдельного product confirmation и live backend contract:
+**Объём:** поля, Country/City, DOB, About Me, `Privacy Policy` через `DocModal`,
+`onSubmit(values) => Promise<savedValues>`. Avatar в форму не входит.
 
-- Followers list/modal.
-- Following list/modal.
-- Follow.
-- Unfollow.
+**Зависимости:** задачи A1–A3.
 
-## Follow-up work
+**Критерии приёмки:** Save недоступна при pristine, invalid и `isSubmitting`; успех вызывает
+`reset(savedValues)`; ошибка сохраняет values/dirty/touched и показывает локальное сообщение.
+Переход с несохранённой формы не блокируется.
 
-- Delete follower.
-- Send Message, если отдельно не подтвержден.
-- Public Post comments, replies, likes, counters и engagement actions.
+**Тесты:** один вызов submit, нормализованный backend result, повтор после ошибки, сохранение
+состояния при открытии Privacy Policy, отсутствие влияния Avatar.
 
-## Confirmed verification groups
+**Блокер:** подключение к `/settings/profile` ждёт операций чтения и сохранения.
 
-Final implementation plan должен разложить проверки минимум на следующие группы:
+## Поток B. Avatar без backend
 
-- SSR request count, initial HTML и отсутствие hydration duplicates.
-- Atomic Profile failure/null/partial-result behavior.
-- Apollo seed compatibility, normalization и mutation synchronization.
-- Profile fetchMore/polling/reconciliation и baseline reset.
-- Direct/intercepted Post navigation, errors, delete и Back/Forward.
-- Post local display ownership, edit synchronization и baseline reset.
-- Edit Profile RHF validation, Privacy modal lifecycle и разрешенный navigation away.
-- Avatar file validation, preview/crop/cancel и local resource cleanup.
+### Задача B1. Выбор файла и черновик
+
+**Цель:** безопасно управлять локальным файлом и object URL.
+
+**Объём:** file input с `accept="image/jpeg,image/png"`; точная проверка MIME и лимита 10 MiB;
+создание, замена, отмена и очистка локального preview.
+
+**Зависимости:** существующие `Modal` и `Button`.
+
+**Критерии приёмки:** сначала проверяется формат, затем размер; ровно 10 MiB допустимо; ошибочная
+замена сохраняет предыдущий корректный черновик; object URL освобождается при замене и очистке.
+
+**Тесты:** допустимые MIME, неправильный MIME, границы размера, первый неверный файл, неверная и
+успешная замена, Cancel, unmount.
+
+**Блокер:** нет. Проверка содержимого файла и upload в задачу не входят.
+
+### Задача B2. Decode и квадратный crop
+
+**Цель:** возвращать подтверждённую пользователем квадратную область исходного изображения.
+
+**Объём:** фиксированный crop `1:1` с круглой preview-маской. Файл остаётся в ожидании до `onReady`;
+результат содержит `sourceFile` и `left/top/width/height` для orientation-normalized bitmap.
+
+**Зависимости:** задача B1 и существующий cropper. Код feature Create Post не импортируется.
+
+**Критерии приёмки:** Save недоступна до декодирования; `width === height`; координаты не округляются;
+`onError` освобождает URL кандидата и сохраняет предыдущий черновик либо empty state; старые
+callbacks игнорируются. Export/upload не выполняются.
+
+**Тесты:** успешное и неуспешное декодирование, ошибка при замене, устаревшие `onReady/onError`,
+квадратная геометрия, система координат, отсутствие Blob/canvas/upload результата.
+
+**Блокер:** размеры, кодирование, качество и формат выходного файла определяются backend-аудитом.
+
+### Задача B3. Подтверждение удаления
+
+**Цель:** подготовить независимый UI удаления сохранённого аватара.
+
+**Объём:** локальный `Modal` подтверждения и
+`OnDeleteAvatar = () => Promise<void>`. Delete не показывается для empty state или локального
+черновика.
+
+**Зависимости:** задача B1.
+
+**Критерии приёмки:** удаление не оптимистическое; состояние ожидания блокирует повтор, закрытие и другие
+операции Avatar; успех очищает сохранённый аватар; ошибка сохраняет его и разрешает повтор.
+
+**Тесты:** видимость Delete, Yes/No/закрытие, один вызов во время ожидания, успех, ошибка и повтор,
+независимость от RHF.
+
+**Блокер:** рабочий callback ждёт мутацию удаления.
+
+## Обязательная проверка backend
+
+### Задача C1. Актуальная GraphQL-схема и пакет backend-задач
+
+**Статус:** COMPLETE.
+
+**Цель:** заменить неизвестные части плана подтверждённым контрактом.
+
+**Объём:** проверить операции и поля Edit Profile, публичные счётчики, признак отсутствующих ресурсов,
+author shape, `updatedAt`, Avatar upload/attach/replace/delete/display URL и Country/City.
+Расхождения с frontend-правилами фиксировать как `CONTRACT CONFLICT`.
+
+**Зависимости:** выполнены.
+
+**Критерии приёмки:** для каждого блокера есть точная ссылка на поле/операцию схемы либо запись в
+едином пакете backend-задач. Временные frontend-контракты не создаются.
+
+**Тесты:** повторная introspection актуального окружения и минимальные проверки подтверждённых
+операций.
+
+**Блокер:** нет. Результат — подтверждённый backend work package с пятью обязательными задачами.
+
+## Поток D. Публичный профиль
+
+### Задача D1. Серверный запрос профиля
+
+**Цель:** получить все начальные данные профиля одним GraphQL POST.
+
+**Объём:** общая GraphQL-операция для user, counters и первой `profilePosts` page; общая фабрика переменных
+без `after`; raw transport с `cache: 'no-store'`; сериализуемый `InitialProfileData`.
+
+**Зависимости:** задача C1 завершена; нужны безопасный Public User и публичные счётчики.
+
+**Критерии приёмки:** один запрос возвращает полный набор или ошибку; GraphQL errors и неполный
+ответ не отображаются и не записываются в кэш; успешный ответ получает новый `baselineKey`.
+
+**Тесты:** число запросов, variables без `after`, HTTP/transport, invalid JSON, GraphQL errors,
+`null` user, отсутствующие counters/posts, полный ответ.
+
+**Блокер:** безопасный Public User и обязательные counters. Missing user уже подтверждён как `null`.
+
+### Задача D2. Запись профиля в Apollo Client
+
+**Цель:** продолжить работу на клиенте без повторного начального запроса.
+
+**Объём:** локальная seed boundary с `useApolloClient()`, `writeQuery` в `useEffect`,
+`seededBaselineKey` и `skipToken`. Первая страница должна быть совместима с
+`profilePostsQuery`.
+
+**Зависимости:** задача D1.
+
+**Критерии приёмки:** первый hydration render совпадает с SSR; до seed старый кэш не читается;
+после seed `cache-first` не делает запрос из браузера; StrictMode остаётся безопасным.
+
+**Тесты:** первый seed, повтор эффекта, новый user ID, `router.refresh()`, неполное чтение кэша,
+отсутствие browser request.
+
+**Блокер:** точный способ чтения user/counters зависит от полей актуальной схемы.
+
+### Задача D3. Страница профиля и ошибки маршрута
+
+**Цель:** перевести `/profile/[userId]` на атомарный публичный SSR.
+
+**Объём:** Server Component, корневой `notFound()`, локальный `error.tsx` с
+`unstable_retry()`, динамические `title` и `description` через общий
+`React.cache()` loader. `loading.tsx` и Suspense не добавляются.
+
+**Зависимости:** задачи D1 и D2.
+
+**Критерии приёмки:** публичные данные есть в HTML только после полной загрузки; Retry выполняет новый
+`cache: 'no-store'` запрос и создаёт новый `baselineKey`; metadata не создаёт второй запрос.
+
+**Тесты:** полный SSR, 404, техническая ошибка, Retry, неполный ответ, page и metadata за один
+запрос, свежие данные в следующем HTTP-запросе.
+
+**Блокер:** тот же, что у D1.
+
+### Задача D4. Посты профиля после hydration
+
+**Цель:** сохранить существующие polling, пагинацию и reconciliation после SSR.
+
+**Объём:** `cache-first`, `pollInterval: 60_000`, `fetchMore`, локальная история страниц и
+сброс по `userId + baselineKey`.
+
+**Зависимости:** задачи D2 и D3.
+
+**Критерии приёмки:** polling обновляет первую страницу и не стирает историю; изменение цепочки cursor
+сбрасывает revision; ошибки polling/fetchMore остаются локальными.
+
+**Тесты:** успех, ошибка и повтор polling, перенос вытесненных постов, смена цепочки cursor, `fetchMore`,
+Profile A → B, `router.refresh()`.
+
+**Блокер:** backend должен подтвердить стабильную сортировку и cursor semantics. Улучшение generic
+errors для неверного input желательно, но не блокирует SSR.
+
+## Поток E. Публичный пост
+
+### Задача E1. Серверный запрос поста
+
+**Цель:** подготовить свежие начальные данные для канонического и перехваченного маршрутов.
+
+**Объём:** `loadInitialPost(postId)`, raw GraphQL `fetch` с `cache: 'no-store'`,
+`InitialPostData` и `baselineKey`. Page и metadata делят `React.cache()` loader.
+
+**Зависимости:** задача C1 завершена; missing Post и author shape подтверждены.
+
+**Критерии приёмки:** полный ответ отделён от `null` и технической ошибки; неполные данные не
+записываются в Apollo; повторного запроса для metadata нет.
+
+**Тесты:** HTTP/transport, invalid JSON, GraphQL errors, `null`, неполный и полный ответ, один запрос
+в рамках page и metadata, свежесть следующего HTTP-запроса.
+
+**Блокер:** нет. Базовый Public Post contract готов.
+
+### Задача E2. Маршруты и границы ошибок поста
+
+**Цель:** сделать Post Details публичным с двумя способами показа.
+
+**Объём:** перенести канонический маршрут под `(app-shell)`; добавить
+`@modal/(.)posts/[postId]`; сохранить защищённый Create Post. Канонический `null` вызывает
+`notFound()`; modal показывает unavailable state. Ошибки используют `unstable_retry()`.
+
+**Зависимости:** задача E1.
+
+**Критерии приёмки:** прямой переход и перезагрузка показывают страницу; переход из списка сохраняет
+исходный маршрут;
+Retry создаёт новый baseline; детали ошибки и digest не показываются.
+
+**Тесты:** прямой и перехваченный переход, перезагрузка, 404, недоступный пост, Retry, Close,
+Back/Forward и отсутствие устаревшего состояния modal slot.
+
+**Блокер:** нет.
+
+### Задача E3. Apollo seed и отображение поста
+
+**Цель:** записать пост в общий кэш, сохранив один источник данных открытого UI.
+
+**Объём:** локальная seed boundary через `postQuery`; отображение из `initialPost/displayPost`;
+синхронизация успешных edit/delete mutations.
+
+**Зависимости:** задачи E1 и E2.
+
+**Критерии приёмки:** hydration не вызывает `postQuery`; редактирование обновляет локальное состояние
+и Apollo одним payload; удаление убирает entity из кэша и закрывает текущий способ показа.
+
+**Тесты:** seed, отсутствие начального запроса из браузера, edit без refetch, delete, новый
+`baselineKey`, обновление Apollo другим компонентом без самовольной замены `displayPost`.
+
+**Блокер:** нет для базового Sprint 05 Post flow; live update/delete operations подтверждены.
+
+### Задача E4. Ссылки на публичный пост и автора
+
+**Цель:** обеспечить одинаковую публичную навигацию во всех текущих лентах и сетках.
+
+**Объём:** `PostCard` и `PublicPostCard/PublicPostsGrid` ведут на canonical `/posts/[postId]` в
+Public Home, Main, Profile и других текущих местах с полноценным публичным постом. Имя и аватар
+автора ведут на `/profile/[authorId]`. Использовать обычный Link на media/details surface.
+
+**Зависимости:** задача E2.
+
+**Критерии приёмки:** просмотр Post/Profile доступен anonymous без auth guard или sign-in redirect;
+внутри приложения Post может открываться через `@modal`, direct/reload остаётся публичным SSR.
+Carousel и другие внутренние controls не запускают переход; весь `article` не оборачивается в Link.
+
+**Тесты:** href и browser Link semantics для Public Home/Main/Profile, ссылка автора, anonymous
+direct SSR, перехваченный modal, carousel previous/next без навигации, owner controls только после
+client `/me`.
+
+**Блокер:** нет после E2.
+
+## Поток F. Интеграция после готовности backend
+
+### Задача F1. Подключение Edit Profile
+
+**Цель:** заменить заглушку `/settings/profile` полностью работающей формой.
+
+**Объём:** подтверждённые GraphQL-операции чтения и обновления, преобразование server ↔ form, начальные
+значения, mutation и отображение backend errors. Успешный backend payload передаётся в
+`reset(savedValues)`.
+
+**Зависимости:** задачи A1–A4 и C1.
+
+**Критерии приёмки:** маршрут не показывает фиктивный успех; загрузка, сохранение и повтор после
+ошибки используют реальный контракт; Avatar остаётся независимым.
+
+**Тесты:** преобразование пустых/null значений, DOB и Country/City, нормализация успешного ответа,
+ошибки полей и формы, повторный submit.
+
+**Блокер:** операции чтения/обновления и формат ошибок.
+
+### Задача F2. Подключение Avatar
+
+**Цель:** связать готовый UI Avatar с подтверждённой загрузкой и мутациями.
+
+**Объём:** export по требованиям backend, upload purpose, attach/replace/delete и display URL.
+Обновлять Profile, session и Apollo только данными подтверждённых mutation payload.
+
+**Зависимости:** задачи B1–B3 и C1.
+
+**Критерии приёмки:** upload не использует `profilePictureFileId` как URL; замена и удаление не
+оптимистические; ошибки не меняют Edit Profile; object URLs освобождаются.
+
+**Тесты:** границы export, успех и ошибка upload/attach, замена, удаление и повтор, синхронизация
+отображаемого аватара и независимость RHF.
+
+**Блокер:** полный Avatar upload и mutation contract.
+
+## Поток G. Итоговая проверка
+
+### Задача G1. Сквозные сценарии и документация
+
+**Цель:** проверить совместную работу SSR, Apollo, маршрутов и форм перед завершением спринта.
+
+**Объём:** точечные unit-, component- и route-тесты; обновление статусов Sprint 05 и
+`docs/app-router-roadmap.md`. Проверять только затронутые команды проекта.
+
+**Зависимости:** завершённые задачи выбранного рабочего объёма.
+
+**Критерии приёмки:** нет повторных начальных запросов, неполных SSR-данных, устаревшего состояния между
+маршрутами и неподтверждённых UI-действий; документация соответствует коду.
+
+**Тесты:** анонимный SSR, hydration, смена состояния сессии, Profile/Post Retry и 404, Back/Forward,
+polling/pagination, Edit Profile, Avatar и базовые responsive-проверки.
+
+**Блокер:** зависит от завершения F1, F2 и публичных интеграций D/E.
