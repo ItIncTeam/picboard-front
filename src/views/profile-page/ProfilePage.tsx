@@ -315,9 +315,34 @@ export function ProfilePage({ userId }: ProfilePageProps) {
         <h1 className={styles.visuallyHidden} id="profile-title">
           {t.profile.title}
         </h1>
-        <div aria-live="polite" className={styles.profileLoading} role="status">
+        <div aria-live="polite" className={styles.visuallyHidden} role="status">
           {t.profile.loading}
         </div>
+        <header
+          aria-hidden="true"
+          className={styles.profileHeader}
+          data-testid="profile-header-skeleton"
+        >
+          <div className={`${styles.avatar} ${styles.skeletonBlock}`} />
+
+          <div className={styles.profileInfo}>
+            <div className={styles.skeletonIdentity}>
+              <div className={`${styles.skeletonBlock} ${styles.skeletonUsername}`} />
+              <div className={`${styles.skeletonBlock} ${styles.skeletonDisplayName}`} />
+            </div>
+
+            <div className={styles.skeletonCounters}>
+              <div className={styles.skeletonBlock} />
+              <div className={styles.skeletonBlock} />
+              <div className={styles.skeletonBlock} />
+            </div>
+
+            <div className={styles.skeletonAbout}>
+              <div className={`${styles.skeletonBlock} ${styles.skeletonAboutTitle}`} />
+              <div className={`${styles.skeletonBlock} ${styles.skeletonBio}`} />
+            </div>
+          </div>
+        </header>
         <PostGrid isLoading skeletonCount={PROFILE_POSTS_PAGE_SIZE} />
       </section>
     )

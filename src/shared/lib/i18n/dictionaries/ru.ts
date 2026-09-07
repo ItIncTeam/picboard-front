@@ -323,6 +323,8 @@ export const ru = {
     about: 'О себе',
     noInformation: 'Информация не указана.',
     publications: 'Публикации',
+    followers: 'Подписчики',
+    following: 'Подписки',
     loadingMore: 'Загружаем еще публикации...',
     loadingMoreError: 'Не удалось загрузить дополнительные публикации. Попробуйте еще раз.',
     relationsTitle: 'Связи профиля',

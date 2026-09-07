@@ -267,6 +267,10 @@ describe('ProfilePage', () => {
     mountedRoots.push(view)
 
     expect(view.container.textContent).toContain('Loading profile...')
+    expect(view.container.querySelector('[data-testid="profile-header-skeleton"]')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
     expect(view.container.querySelector('[aria-label="Loading publications"]')).toBeInstanceOf(
       HTMLElement,
     )
@@ -292,6 +296,19 @@ describe('ProfilePage', () => {
     expect(view.container.textContent).toContain('About me')
     expect(view.container.textContent).toContain('Profile biography')
     expect(view.container.textContent).toContain('No publications yet')
+    expect(view.container.textContent).not.toContain('Profile Settings')
+  })
+
+  it('renders the existing not-found state for a missing public user', async () => {
+    apiMocks.getUser.mockResolvedValue(null)
+
+    const view = renderProfile()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(view.container.textContent).toContain('Profile not found'))
+    expect(view.container.textContent).toContain(
+      'The requested user does not exist or is unavailable.',
+    )
   })
 
   it('renders posts in backend order', async () => {
