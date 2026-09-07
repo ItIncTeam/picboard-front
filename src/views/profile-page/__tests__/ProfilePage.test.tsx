@@ -1,5 +1,6 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
@@ -245,13 +246,14 @@ describe('ProfilePage', () => {
     vi.stubGlobal('IntersectionObserver', IntersectionObserverMock)
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     mountedRoots.forEach(({ container, root }) => {
       act(() => root.unmount())
       container.remove()
     })
     mountedRoots.length = 0
     vi.unstubAllGlobals()
+    await page.viewport(1280, 720)
   })
 
   it('renders loading state and requests the first eight posts', () => {
@@ -327,12 +329,82 @@ describe('ProfilePage', () => {
         image.getAttribute('alt'),
       ),
     ).toEqual(['newest-post.jpg', 'older-post.jpg'])
-    expect(
-      view.container.querySelector(
-        'a[href="/posts/newest-post?returnTo=%2Fprofile%2Fprofile-user"]',
-      ),
-    ).toBeInstanceOf(HTMLAnchorElement)
+    const postLinks = Array.from(
+      view.container.querySelectorAll<HTMLAnchorElement>('article a[href^="/posts/"]'),
+    )
+
+    expect(postLinks.map((link) => link.getAttribute('href'))).toEqual([
+      '/posts/newest-post?returnTo=%2Fprofile%2Fprofile-user',
+      '/posts/older-post?returnTo=%2Fprofile%2Fprofile-user',
+    ])
+    expect(postLinks.map((link) => link.getAttribute('aria-label'))).toEqual([
+      'View post newest-post',
+      'View post older-post',
+    ])
   })
+
+  it.each([
+    { sessionStatus: 'anonymous' as const, sessionUserId: null, state: 'anonymous' },
+    {
+      sessionStatus: 'authenticated' as const,
+      sessionUserId: 'profile-user',
+      state: 'owner',
+    },
+    {
+      sessionStatus: 'authenticated' as const,
+      sessionUserId: 'another-user',
+      state: 'non-owner',
+    },
+  ])(
+    'keeps profile post navigation public for $state',
+    async ({ sessionStatus, sessionUserId }) => {
+      sessionMocks.status = sessionStatus
+      sessionMocks.userId = sessionUserId
+      apiMocks.getUser.mockResolvedValue(createUser())
+      apiMocks.result.data = { profilePosts: createConnection([createPost('public-post')]) }
+
+      const view = renderProfile()
+      mountedRoots.push(view)
+
+      await waitFor(() =>
+        expect(
+          view.container.querySelector(
+            'a[href="/posts/public-post?returnTo=%2Fprofile%2Fprofile-user"]',
+          ),
+        ).toBeInstanceOf(HTMLAnchorElement),
+      )
+    },
+  )
+
+  it.each([320, 360])(
+    'keeps profile post links responsive and keyboard accessible at %dpx',
+    async (width) => {
+      await page.viewport(width, 640)
+      apiMocks.getUser.mockResolvedValue(createUser())
+      apiMocks.result.data = {
+        profilePosts: createConnection([createPost('first-post'), createPost('second-post')]),
+      }
+
+      const view = renderProfile()
+      mountedRoots.push(view)
+
+      await waitFor(() => expect(view.container.querySelectorAll('article')).toHaveLength(2))
+
+      const firstPost = view.container.querySelector('article')
+      const grid = firstPost?.parentElement
+      const firstPostLink = firstPost?.querySelector<HTMLAnchorElement>('a[href^="/posts/"]')
+      const renderedColumns = grid
+        ? getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length
+        : 0
+
+      expect(renderedColumns).toBe(2)
+      expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
+      expect(firstPostLink?.getAttribute('aria-label')).toBe('View post first-post')
+
+      firstPostLink?.focus()
+      expect(document.activeElement).toBe(firstPostLink)
+    },
+  )
 
   it('renders an error state and retries the initial request', async () => {
     const retryError = new Error('Profile posts still unavailable')
