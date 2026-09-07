@@ -120,5 +120,7 @@ verification.
 
 ## Next documented stage
 
-Next sprint is not defined in current project docs. Do not create a new sprint plan without a
-separate team decision.
+Следующим подтвержден Sprint 05: Edit Profile, Avatar, Public User Profile SSR, User Posts и Public
+Post SSR. Текущий статус — architecture audit; production implementation еще не начата.
+
+См. [Sprint 05 Overview](../sprint-05/00-overview.md).
