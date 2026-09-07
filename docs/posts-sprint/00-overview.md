@@ -80,8 +80,8 @@ regeneration has not yet been runtime-verified.
 ## Current architecture
 
 - `AppRouteShell` persistently owns the shared Main/Profile/Details application shell.
-- Protected routes remain under `ProtectedRouteBoundary`; public Profile keeps its supported
-  anonymous presentation.
+- Protected routes remain under `ProtectedRouteBoundary`; public Profile and Post Details keep their
+  supported anonymous presentation.
 - Create uses an intercepted route-modal plus a direct fallback page.
 - Apollo owns Posts queries, normalized entities, active refetch and polling behavior.
 - `PostEntity.author` is the presentation source for post authors; `ownerId` remains the ownership

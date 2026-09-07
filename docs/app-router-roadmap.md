@@ -41,6 +41,8 @@ src/app/
       (.)posts/create/page.tsx
     (profile)/
       profile/[userId]/page.tsx
+    (posts)/
+      posts/[postId]/page.tsx
     (protected)/
       layout.tsx
       (main)/
@@ -59,7 +61,6 @@ src/app/
         settings/devices/page.tsx
         settings/notifications/page.tsx
         posts/create/page.tsx
-        posts/[postId]/page.tsx
 
   (protected)/
     layout.tsx
@@ -91,9 +92,9 @@ Root layout не содержит route-specific UI, redirects, role checks ил
 authenticated main routes. Он владеет единственным `AdaptiveAppShell`: во время client session
 bootstrap shell остается pending; затем anonymous пользователь получает `PublicHeader` без
 Sidebar, а authenticated пользователь — `AppHeader` и Sidebar. Auth влияет только на shell:
-Public Home и Profile не становятся protected routes. Authenticated navigation между `/`, `/main`,
-`/profile/[userId]` и `/posts/[postId]` сохраняет тот же Header/Sidebar instance. Общий layout не
-читает cookies/headers, не вызывает backend и не делает redirect.
+Public Home, Profile и Post Details не становятся protected routes. Authenticated navigation между
+`/`, `/main`, `/profile/[userId]` и `/posts/[postId]` сохраняет тот же Header/Sidebar instance.
+Общий layout не читает cookies/headers, не вызывает backend и не делает redirect.
 
 `src/app/(app-shell)/(protected)/layout.tsx` оборачивает main-app `children` в
 `ProtectedRouteBoundary`. Отдельный `src/app/(protected)/layout.tsx` сохраняет ту же boundary для
@@ -240,6 +241,9 @@ Sidebar строит My Profile URL из уже загруженного `Sessio
 route user id.
 
 ## Post details
+
+`/posts/[postId]` живет в `(app-shell)/(posts)` вне `ProtectedRouteBoundary`, поэтому гость открывает
+прямую ссылку без редиректа на sign-in. `/posts/create` остается в `(protected)/(main)`.
 
 Route adapter передает `postId` в `views/post-details-page`. View загружает существующий `post(id)`,
 показывает carousel / description / дату и mapped `PostEntity.author`. Owner-only `Edit Post`

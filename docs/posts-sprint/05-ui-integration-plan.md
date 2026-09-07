@@ -17,7 +17,7 @@ Use for route adapters and modal slots only:
 
 - `src/app/(app-shell)/@modal/(.)posts/create/page.tsx`;
 - `src/app/(app-shell)/(protected)/(main)/posts/create/page.tsx`;
-- `src/app/(app-shell)/(protected)/(main)/posts/[postId]/page.tsx`.
+- `src/app/(app-shell)/(posts)/posts/[postId]/page.tsx`.
 
 Do not put forms, API calls, stores or complex UI in `app/`.
 
