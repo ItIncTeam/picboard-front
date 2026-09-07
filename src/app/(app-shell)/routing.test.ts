@@ -19,7 +19,7 @@ describe('persistent app shell routing', () => {
     const routes = [
       appRoute('(protected)', '(main)', 'main', 'page.tsx'),
       appRoute('(profile)', 'profile', '[userId]', 'page.tsx'),
-      appRoute('(protected)', '(main)', 'posts', '[postId]', 'page.tsx'),
+      appRoute('(posts)', 'posts', '[postId]', 'page.tsx'),
     ]
 
     expect(existsSync(appRoute('layout.tsx'))).toBe(true)
@@ -51,5 +51,26 @@ describe('persistent app shell routing', () => {
     expect(interceptedSource).toContain('ProtectedRouteBoundary')
     expect(interceptedSource).toContain('CreatePostModal')
     expect(fallbackSource).toContain('CreatePostPage')
+  })
+
+  it('keeps Post Details public and Create Post protected', () => {
+    const postDetailsRoute = appRoute('(posts)', 'posts', '[postId]', 'page.tsx')
+    const protectedPostDetailsRoute = appRoute(
+      '(protected)',
+      '(main)',
+      'posts',
+      '[postId]',
+      'page.tsx',
+    )
+    const createRoute = appRoute('(protected)', '(main)', 'posts', 'create', 'page.tsx')
+
+    expect(existsSync(postDetailsRoute)).toBe(true)
+    expect(existsSync(protectedPostDetailsRoute)).toBe(false)
+    expect(existsSync(createRoute)).toBe(true)
+
+    const postDetailsSource = readFileSync(postDetailsRoute, 'utf8')
+
+    expect(postDetailsSource).toContain('PostDetailsPage')
+    expect(postDetailsSource).not.toContain('ProtectedRouteBoundary')
   })
 })
