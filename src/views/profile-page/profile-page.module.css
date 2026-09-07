@@ -19,11 +19,6 @@
   clip-path: inset(50%);
 }
 
-.profileLoading {
-  margin-bottom: 24px;
-  color: var(--color-text-secondary);
-}
-
 .profileHeader {
   display: grid;
   grid-template-columns: 192px minmax(0, 1fr);
@@ -34,6 +29,9 @@
 }
 
 .avatar {
+  position: relative;
+
+  overflow: hidden;
   display: grid;
   place-items: center;
 
@@ -44,6 +42,10 @@
   color: var(--color-text-secondary);
 
   background: var(--color-surface-secondary);
+}
+
+.avatarImage {
+  object-fit: cover;
 }
 
 .avatarIcon {
@@ -86,6 +88,77 @@
 
 .displayName {
   margin-top: 4px;
+
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.skeletonBlock {
+  border-radius: 4px;
+  background: var(--color-surface-secondary);
+}
+
+.skeletonIdentity,
+.skeletonAbout {
+  display: grid;
+  gap: 8px;
+}
+
+.skeletonUsername {
+  width: min(100%, 240px);
+  height: 28px;
+}
+
+.skeletonDisplayName {
+  width: min(72%, 172px);
+  height: 18px;
+}
+
+.skeletonCounters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 72px));
+  gap: 36px;
+}
+
+.skeletonCounters > * {
+  height: 44px;
+}
+
+.skeletonAboutTitle {
+  width: min(42%, 112px);
+  height: 20px;
+}
+
+.skeletonBio {
+  width: min(100%, 420px);
+  height: 36px;
+}
+
+.counters {
+  display: flex;
+  gap: 36px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.counters li {
+  display: grid;
+  gap: 2px;
+}
+
+.counters strong {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-md);
+  color: var(--color-text-primary);
+}
+
+.counters span {
   font-size: var(--font-size-sm);
   line-height: var(--line-height-md);
   color: var(--color-text-secondary);
@@ -179,6 +252,14 @@
     flex-direction: column;
     gap: 16px;
   }
+
+  .counters {
+    gap: 20px;
+  }
+
+  .skeletonCounters {
+    gap: 20px;
+  }
 }
 
 @media (width <= 480px) {
@@ -195,5 +276,10 @@
   .avatarIcon {
     width: 36px;
     height: 36px;
+  }
+
+  .counters {
+    flex-wrap: wrap;
+    gap: 12px 20px;
   }
 }

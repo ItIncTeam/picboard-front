@@ -321,6 +321,8 @@ export const en = {
     about: 'About me',
     noInformation: 'No information provided.',
     publications: 'Publications',
+    followers: 'Followers',
+    following: 'Following',
     loadingMore: 'Loading more publications...',
     loadingMoreError: 'Could not load more publications. Please try again.',
     relationsTitle: 'Profile relations',
