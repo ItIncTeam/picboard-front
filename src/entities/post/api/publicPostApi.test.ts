@@ -1,7 +1,7 @@
 import { print } from 'graphql'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { PostEntity } from '../model/backendTypes'
+import type { PostEntity } from '@/entities/post'
 import { postQuery } from './postQuery'
 import { getPostQueryData } from './publicPostApi'
 
