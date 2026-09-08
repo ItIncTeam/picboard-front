@@ -27,40 +27,6 @@
   object-fit: contain;
 }
 
-.root {
-  width: min(100%, 972px);
-  margin: 0 auto;
-  padding: 24px 16px;
-}
-
-.status {
-  margin: 0;
-  color: var(--color-text-secondary);
-}
-
-.notFound {
-  display: grid;
-  gap: 8px;
-  place-items: center;
-
-  min-height: 320px;
-
-  text-align: center;
-}
-
-.notFound h1,
-.notFound p {
-  margin: 0;
-}
-
-.notFound h1 {
-  color: var(--color-text-primary);
-}
-
-.notFound p {
-  color: var(--color-text-secondary);
-}
-
 @media (width <= 720px) {
   .modal {
     height: auto;

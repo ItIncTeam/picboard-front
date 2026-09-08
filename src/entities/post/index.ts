@@ -3,6 +3,7 @@ export {
   feed,
   feedQuery,
   post,
+  postQuery,
   PROFILE_POSTS_PAGE_SIZE,
   profilePosts,
   profilePostsQuery,
@@ -14,6 +15,7 @@ export {
   type ProfilePostsQueryVariables,
   type UpdatePostDescriptionInput,
 } from './api/postsApi'
+export { getPostQueryData } from './api/publicPostApi'
 export { getPublicHomeQueryData, type PublicHomeQueryData } from './api/publicHomeApi'
 export { mapPostEntitiesToPosts, mapPostEntityToPost } from './lib/postMapper'
 export type {
