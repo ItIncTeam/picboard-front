@@ -287,6 +287,28 @@ describe('ProfilePage', () => {
     )
   })
 
+  it.each([320, 480, 720, 1024])(
+    'keeps the loading skeleton stable without horizontal overflow at $width px',
+    async (width) => {
+      await page.viewport(width, 720)
+      apiMocks.getUser.mockReturnValue(new Promise(() => undefined))
+      apiMocks.result = {
+        fetchMore: apiMocks.fetchMore,
+        loading: true,
+        refetch: apiMocks.refetch,
+        variables: { input: { first: 8, userId: 'profile-user' } },
+      }
+
+      const view = renderProfile()
+      mountedRoots.push(view)
+      const postsSkeleton = view.container.querySelector('[aria-label="Loading publications"]')
+
+      expect(postsSkeleton?.children).toHaveLength(8)
+      expect(view.container.querySelector('[data-testid="profile-header-skeleton"]')).toBeVisible()
+      expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
+    },
+  )
+
   it('renders public user data without exposing email and shows empty posts state', async () => {
     apiMocks.getUser.mockResolvedValue(createUser())
 
@@ -300,6 +322,25 @@ describe('ProfilePage', () => {
     expect(view.container.textContent).toContain('Profile biography')
     expect(view.container.textContent).toContain('No publications yet')
     expect(view.container.textContent).not.toContain('Profile Settings')
+    expect(view.container.querySelector('[role="status"]')).toHaveTextContent(
+      'No publications yetPublished posts will appear here once they are available.',
+    )
+  })
+
+  it('uses readable fallbacks for empty profile text fields', async () => {
+    apiMocks.getUser.mockResolvedValue(
+      createUser({ bio: '   ', displayName: '   ', username: '   ' }),
+    )
+
+    const view = renderProfile()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(view.container.textContent).toContain('No information provided.'))
+    expect(view.container.querySelector('h1')).toHaveTextContent('Profile')
+    expect(view.container.querySelector('[aria-label="Profile avatar"]')).toHaveAttribute(
+      'role',
+      'img',
+    )
   })
 
   it('renders the existing not-found state for a missing public user', async () => {
@@ -309,6 +350,7 @@ describe('ProfilePage', () => {
     mountedRoots.push(view)
 
     await waitFor(() => expect(view.container.textContent).toContain('Profile not found'))
+    expect(view.container.querySelector('h1')).toHaveTextContent('Profile not found')
     expect(view.container.textContent).toContain(
       'The requested user does not exist or is unavailable.',
     )
@@ -377,11 +419,24 @@ describe('ProfilePage', () => {
     },
   )
 
-  it.each([320, 360])(
-    'keeps profile post links responsive and keyboard accessible at %dpx',
-    async (width) => {
+  it.each([
+    { columns: 2, width: 320 },
+    { columns: 2, width: 360 },
+    { columns: 2, width: 480 },
+    { columns: 2, width: 720 },
+    { columns: 3, width: 721 },
+    { columns: 4, width: 1024 },
+  ])(
+    'keeps profile post links responsive and keyboard accessible at $width px',
+    async ({ columns, width }) => {
       await page.viewport(width, 640)
-      apiMocks.getUser.mockResolvedValue(createUser())
+      apiMocks.getUser.mockResolvedValue(
+        createUser({
+          bio: 'LongUnbrokenBiography'.repeat(24),
+          displayName: 'LongUnbrokenDisplayName'.repeat(12),
+          username: 'long_unbroken_username'.repeat(12),
+        }),
+      )
       apiMocks.result.data = {
         profilePosts: createConnection([createPost('first-post'), createPost('second-post')]),
       }
@@ -398,7 +453,7 @@ describe('ProfilePage', () => {
         ? getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length
         : 0
 
-      expect(renderedColumns).toBe(2)
+      expect(renderedColumns).toBe(columns)
       expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
       expect(firstPostLink?.getAttribute('aria-label')).toBe('View post first-post')
 
@@ -421,10 +476,17 @@ describe('ProfilePage', () => {
       expect(view.container.textContent).toContain('Profile loading failed. Please try again.'),
     )
 
+    const error = view.container.querySelector('[role="alert"]')
+    const retryButton = Array.from(view.container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Try again',
+    )
+
+    expect(error).toContainElement(retryButton ?? null)
+    retryButton?.focus()
+    expect(document.activeElement).toBe(retryButton)
+
     act(() => {
-      Array.from(view.container.querySelectorAll('button'))
-        .find((button) => button.textContent === 'Try again')
-        ?.click()
+      retryButton?.click()
     })
 
     await waitFor(() => expect(view.container.textContent).toContain('profile_username'))
