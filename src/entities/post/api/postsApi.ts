@@ -4,6 +4,9 @@ import { apolloClient } from '@/shared/api'
 
 import type { PostConnection, PostEntity } from '@/entities/post'
 import { postFieldsFragment } from './postFragments'
+import { postQuery } from './postQuery'
+
+export { postQuery } from './postQuery'
 
 export const feedQuery = gql`
   ${postFieldsFragment}
@@ -11,16 +14,6 @@ export const feedQuery = gql`
   query Feed {
     usersCount
     feed {
-      ...PostFields
-    }
-  }
-`
-
-const postQuery = gql`
-  ${postFieldsFragment}
-
-  query Post($id: String!) {
-    post(id: $id) {
       ...PostFields
     }
   }

@@ -6,11 +6,10 @@ import '@/app/globals.css'
 import type { PostEntity } from '@/entities/post'
 import { I18nProvider } from '@/shared/lib/i18n'
 
-import { PostDetailsPage } from '../PostDetailsPage'
+import { PostDetailsContent } from '../PostDetailsContent'
 
 const apiMocks = vi.hoisted(() => ({
   deletePost: vi.fn(),
-  post: vi.fn(),
   updatePostDescription: vi.fn(),
 }))
 
@@ -35,7 +34,6 @@ vi.mock('@/entities/post/api/postsApi', async (importOriginal) => {
   return {
     ...actual,
     deletePost: apiMocks.deletePost,
-    post: apiMocks.post,
     updatePostDescription: apiMocks.updatePostDescription,
   }
 })
@@ -129,7 +127,7 @@ function createPost(overrides: Partial<PostEntity> = {}): PostEntity {
   }
 }
 
-function renderPage(postId = 'post-1'): RenderResult {
+function renderPage(entity: PostEntity = createPost()): RenderResult {
   const container = document.createElement('div')
   const root = createRoot(container)
 
@@ -137,7 +135,7 @@ function renderPage(postId = 'post-1'): RenderResult {
   act(() =>
     root.render(
       <I18nProvider>
-        <PostDetailsPage postId={postId} />
+        <PostDetailsContent data={{ baselineKey: 'baseline-1', post: entity }} />
       </I18nProvider>,
     ),
   )
@@ -188,7 +186,7 @@ function getEditDialog(): HTMLElement {
   return dialog
 }
 
-describe('PostDetailsPage', () => {
+describe('PostDetailsContent', () => {
   const mountedRoots: RenderResult[] = []
 
   beforeEach(() => {
@@ -198,7 +196,6 @@ describe('PostDetailsPage', () => {
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     apiMocks.deletePost.mockReset()
-    apiMocks.post.mockReset()
     apiMocks.updatePostDescription.mockReset()
     navigationMocks.replace.mockReset()
     navigationMocks.searchParams = new URLSearchParams()
@@ -218,53 +215,19 @@ describe('PostDetailsPage', () => {
     mountedRoots.length = 0
   })
 
-  it('renders loading state while post(id) is in flight', () => {
-    apiMocks.post.mockReturnValue(new Promise(() => undefined))
-
+  it('renders server-provided post data without requesting post(id)', () => {
     const view = renderPage()
     mountedRoots.push(view)
 
-    expect(view.container.textContent).toContain('Loading post...')
-    expect(apiMocks.post).toHaveBeenCalledWith('post-1')
+    expect(getDialogText()).toContain('Original description')
+    expect(getDialogText()).toContain('Backend Author')
   })
 
-  it('renders not-found when post(id) returns null', async () => {
-    apiMocks.post.mockResolvedValue(null)
-
+  it('renders carousel, backend author, description and date', () => {
     const view = renderPage()
     mountedRoots.push(view)
 
-    await waitFor(() => expect(view.container.textContent).toContain('Post not found'))
-  })
-
-  it('renders an error state and retries post(id)', async () => {
-    apiMocks.post
-      .mockRejectedValueOnce(new Error('Post unavailable'))
-      .mockResolvedValueOnce(createPost())
-
-    const view = renderPage()
-    mountedRoots.push(view)
-
-    await waitFor(() => expect(view.container.textContent).toContain('Post unavailable'))
-
-    act(() => {
-      Array.from(view.container.querySelectorAll('button'))
-        .find((button) => button.textContent === 'Try again')
-        ?.click()
-    })
-
-    await waitFor(() => expect(getDialogText()).toContain('Original description'))
-    expect(apiMocks.post).toHaveBeenCalledTimes(2)
-  })
-
-  it('renders carousel, backend author, description and date', async () => {
-    apiMocks.post.mockResolvedValue(createPost())
-
-    const view = renderPage()
-    mountedRoots.push(view)
-
-    await waitFor(() => expect(getDialogText()).toContain('Original description'))
-
+    expect(getDialogText()).toContain('Original description')
     expect(getDialogText()).toContain('Backend Author')
     expect(document.body.querySelector('[aria-label="Backend Author avatar"]')?.textContent).toBe(
       'B',
@@ -280,8 +243,6 @@ describe('PostDetailsPage', () => {
   it('opens edit on the active carousel image without carousel controls', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
-    apiMocks.post.mockResolvedValue(createPost())
-
     const view = renderPage()
     mountedRoots.push(view)
 
@@ -318,7 +279,6 @@ describe('PostDetailsPage', () => {
   it('uses ownerId for owner actions and keeps backend author presentation in edit mode', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
-    apiMocks.post.mockResolvedValue(createPost())
     apiMocks.updatePostDescription.mockResolvedValue(
       createPost({ description: 'Updated description' }),
     )
@@ -380,7 +340,6 @@ describe('PostDetailsPage', () => {
   it('lets the post owner delete through the existing menu and delete flow', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
-    apiMocks.post.mockResolvedValue(createPost())
     apiMocks.deletePost.mockResolvedValue(true)
 
     const view = renderPage()
@@ -418,7 +377,6 @@ describe('PostDetailsPage', () => {
   it('deletes back to a safe returnTo path from profile', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
-    apiMocks.post.mockResolvedValue(createPost())
     apiMocks.deletePost.mockResolvedValue(true)
     navigationMocks.searchParams = new URLSearchParams({ returnTo: '/profile/user-1' })
 
@@ -456,7 +414,6 @@ describe('PostDetailsPage', () => {
   it('falls back to /main when deleting with an unsafe returnTo', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
-    apiMocks.post.mockResolvedValue(createPost())
     apiMocks.deletePost.mockResolvedValue(true)
     navigationMocks.searchParams = new URLSearchParams({ returnTo: '//evil.example' })
 
@@ -493,8 +450,6 @@ describe('PostDetailsPage', () => {
   it('hides Edit and Delete actions for an authenticated user who does not own the post', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'other-user'
-    apiMocks.post.mockResolvedValue(createPost())
-
     const view = renderPage()
     mountedRoots.push(view)
 
@@ -507,7 +462,6 @@ describe('PostDetailsPage', () => {
   it('returns from Edit to Details before closing to the profile returnTo', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
-    apiMocks.post.mockResolvedValue(createPost())
     navigationMocks.searchParams = new URLSearchParams({ returnTo: '/profile/user-1' })
 
     const view = renderPage()
@@ -550,8 +504,6 @@ describe('PostDetailsPage', () => {
   })
 
   it('closes a direct post link to /main', async () => {
-    apiMocks.post.mockResolvedValue(createPost())
-
     const view = renderPage()
     mountedRoots.push(view)
 
@@ -565,7 +517,6 @@ describe('PostDetailsPage', () => {
   })
 
   it('closes to a safe returnTo path', async () => {
-    apiMocks.post.mockResolvedValue(createPost())
     navigationMocks.searchParams = new URLSearchParams({ returnTo: '/profile/user-1' })
 
     const view = renderPage()
@@ -581,7 +532,6 @@ describe('PostDetailsPage', () => {
   })
 
   it('falls back to /main when returnTo is unsafe', async () => {
-    apiMocks.post.mockResolvedValue(createPost())
     navigationMocks.searchParams = new URLSearchParams({ returnTo: '//evil.example' })
 
     const view = renderPage()
@@ -599,8 +549,6 @@ describe('PostDetailsPage', () => {
   it('asks for confirmation when closing a dirty edit form', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
-    apiMocks.post.mockResolvedValue(createPost())
-
     const view = renderPage()
     mountedRoots.push(view)
 

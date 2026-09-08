@@ -245,8 +245,12 @@ route user id.
 `/posts/[postId]` живет в `(app-shell)/(posts)` вне `ProtectedRouteBoundary`, поэтому гость открывает
 прямую ссылку без редиректа на sign-in. `/posts/create` остается в `(protected)/(main)`.
 
-Route adapter передает `postId` в `views/post-details-page`. View загружает существующий `post(id)`,
-показывает carousel / description / дату и mapped `PostEntity.author`. Owner-only `Edit Post`
+Route adapter передаёт `postId` в `views/post-details-page`. View загружает пост на сервере через
+`getCachedInitialPost` (`cache: 'no-store'`) и отдаёт его в HTML. После hydration браузер не
+повторяет начальный `post(id)`; гость видит пост без `/me`. Отсутствующий пост вызывает `notFound()`,
+техническая ошибка обрабатывается локальным `error.tsx` с `unstable_retry()`. `generateMetadata`
+берёт `title` и `description` из того же cached loader. View показывает carousel / description / дату и
+mapped `PostEntity.author`. Owner-only `Edit Post`
 определяется сравнением session user id с `PostEntity.ownerId` и сменяет overlay Details, а не
 открывает вторую модалку поверх. Details и Edit делят wide-ящик Create/Publication
 (`60.75rem × 35.25rem`, колонки `51fr / 50fr`); шапка Edit входит в эту высоту. Edit показывает
