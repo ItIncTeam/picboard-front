@@ -1,1 +1,1 @@
-export { getUser, type PublicUser } from './api/usersApi'
+export { getUser, type PublicUser, type PublicUserAvatar } from './api/usersApi'

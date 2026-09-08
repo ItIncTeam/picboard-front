@@ -10,11 +10,21 @@ const userQuery = gql`
       displayName
       bio
       profilePictureFileId
+      avatar {
+        id
+        url
+      }
     }
   }
 `
 
+export type PublicUserAvatar = {
+  id: string
+  url: string
+}
+
 export type PublicUser = {
+  avatar: PublicUserAvatar | null
   bio: string | null
   displayName: string | null
   id: string

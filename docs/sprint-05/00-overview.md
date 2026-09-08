@@ -2,10 +2,11 @@
 
 ## Статус
 
-**GENERAL ARCHITECTURE AUDIT COMPLETE / BACKEND CONTRACT AUDIT COMPLETE**
+**D1.1–D1.2 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
-Подтверждены решения 1–38 и пакет backend-задач. Реализация не начата. Рабочий код и GraphQL-схема
-во время аудитов не менялись.
+Подтверждены решения 1–38 и пакет backend-задач. D1.1 и D1.2 реализованы. В D1.3 подготовлена
+безопасная часть Public User contract foundation; полная атомарная загрузка начальных данных ждёт
+backend-контракт счётчиков и безопасный Public User.
 
 ## Цель
 
@@ -38,6 +39,9 @@
 - Отсутствующие user/post возвращают `null`; неизвестный userId для `profilePosts` возвращает
   пустую connection.
 - `profilePosts` поддерживает cursor pagination, default `first = 8` и диапазон `1–8`.
+- По live introspection на 2026-09-08 текущий `User.avatar` имеет nullable-тип `File`, а
+  `File.url` — тип `String!`; отдельного `User.avatarUrl` в актуальной схеме нет. Это снимок
+  текущего контракта, а не утверждение об истории предыдущих контрактов.
 - `PostEntity` содержит author, ownerId, attachments, `createdAt` и `updatedAt`.
 - Post attachments имеют signed display URL; наблюдаемый срок — 900 секунд.
 
@@ -45,7 +49,7 @@
 
 - Поля профиля, их типы и обязательность; операции чтения и сохранения; формат ошибок.
 - Публичные `publicationsCount`, `followersCount` и `followingCount`.
-- Назначение загрузки аватара, операции установки, замены и удаления, URL для отображения.
+- Назначение загрузки аватара и операции установки, замены и удаления.
 - Источник и формат значений Country/City.
 - Гарантированная сортировка и cursor semantics `profilePosts`.
 

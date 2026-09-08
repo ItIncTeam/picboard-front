@@ -1,4 +1,4 @@
-import { visit, type DocumentNode } from 'graphql'
+import { print, visit, type DocumentNode } from 'graphql'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const apolloMocks = vi.hoisted(() => ({
@@ -41,6 +41,10 @@ describe('user GraphQL helper', () => {
 
   it('loads only public profile fields by id', async () => {
     const payload = {
+      avatar: {
+        id: 'avatar-file-1',
+        url: 'https://example.com/avatar.jpg',
+      },
       bio: 'About user',
       displayName: 'Display Name',
       id: 'user-1',
@@ -60,7 +64,9 @@ describe('user GraphQL helper', () => {
       'displayName',
       'bio',
       'profilePictureFileId',
+      'avatar',
     ])
+    expect(print(request.query).replace(/\s+/g, ' ')).toContain('avatar { id url }')
   })
 
   it('allows a missing public user', async () => {

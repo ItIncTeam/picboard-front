@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **AUDITS COMPLETE / IMPLEMENTATION NOT STARTED**.
+Статус: **D1.1–D1.2 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -28,9 +28,13 @@ Frontend-интеграции также ждут:
 - безопасный Public User;
 - `publicationsCount`, `followersCount`, `followingCount`;
 - Edit Profile read/update contract;
-- Avatar upload/attach/replace/delete/display URL contract;
+- Avatar upload/attach/replace/delete contract;
 - production-источник Country/City;
 - подтверждение стабильной сортировки и cursor semantics `profilePosts`.
+
+По live introspection на 2026-09-08 текущий `User.avatar` имеет nullable-тип `File`, а
+`File.url` — тип `String!`; отдельного `User.avatarUrl` в актуальной схеме нет. Это фиксирует
+текущий контракт и не описывает историю предыдущих контрактов.
 
 Ошибки для неверного `first` или cursor желательно улучшить, но это не блокирует Profile SSR.
 
@@ -84,6 +88,10 @@ Dev 2 меняет общее Link-поведение `PostCard`, `PublicPostCar
 поведение Link и отсутствие дублирования Link-логики в Profile.
 
 ### D1.3. Начальные данные Public Profile
+
+**Статус:** часть Public User contract foundation синхронизирована с текущей формой
+`User.avatar`. Общая Profile operation, server loader и полный `InitialProfileData` не реализованы
+и ждут безопасный Public User и публичные счётчики.
 
 **Цель:** получить пользователя, счётчики и первую страницу `profilePosts` одним GraphQL POST.
 

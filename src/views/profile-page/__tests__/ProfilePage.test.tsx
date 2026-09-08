@@ -115,6 +115,7 @@ function createDeferred<T>(): Deferred<T> {
 
 function createUser(overrides: Partial<PublicUser> = {}): PublicUser {
   return {
+    avatar: null,
     bio: 'Profile biography',
     displayName: 'Display Name',
     id: 'profile-user',
