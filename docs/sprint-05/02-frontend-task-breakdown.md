@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D3.1 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -280,6 +280,12 @@ previous/next без перехода, клавиатура/focus и едины�
 ## Dev 3 — Edit Profile и Avatar
 
 ### D3.1. Edit Profile UI и отправка формы
+
+**Статус:** реализована изолированная RHF-форма с начальными значениями и асинхронным
+`onSubmitAction` через props. Успешная отправка вызывает `reset(savedValues)`, ошибка не теряет
+изменения и допускает повторную попытку. Privacy Policy не показана до отдельного решения, чтобы
+соответствовать макету. Маршрут, backend, полная валидация и Country → City остаются в отдельных
+задачах.
 
 **Цель:** собрать изолированную форму на RHF по Figma-композиции.
 
