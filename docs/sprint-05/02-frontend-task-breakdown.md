@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2 IMPLEMENTED / D2.2–D2.3 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -187,6 +187,9 @@ sign-in; элементы владельца по-прежнему завися�
 
 ### D2.2. Начальные данные Public Post
 
+**Статус:** IMPLEMENTED. Серверный loader живёт в `entities/post/api` (`getPostQueryData`) и
+`views/post-details-page/api/loadInitialPost`. Страница подключает его в D2.3.
+
 **Цель:** загружать полный Post на сервере без запроса из браузера.
 
 **Объём:** `loadInitialPost(postId)`, прямой GraphQL `fetch` с `cache: 'no-store'`,
@@ -204,6 +207,10 @@ sign-in; элементы владельца по-прежнему завися�
 вложения, автор/ownerId и полный ответ.
 
 ### D2.3. Public Post SSR и metadata
+
+**Статус:** IMPLEMENTED. `/posts/[postId]` загружает `getCachedInitialPost`, отдаёт HTML, вызывает
+`notFound()` для отсутствующего поста и локальный `error.tsx` с `unstable_retry()`. Apollo seed
+остаётся в D2.6.
 
 **Цель:** отдать прямой маршрут Post как публичную SSR-страницу.
 
