@@ -111,12 +111,21 @@ describe('ProfileHeader', () => {
   it.each([
     { bio: null, displayName: null },
     { bio: '', displayName: '' },
+    { bio: '   ', displayName: '   ' },
   ])('handles empty optional values', ({ bio, displayName }) => {
     const view = renderHeader({ ...profile, bio, displayName })
     mountedRoots.push(view)
 
     expect(view.container.textContent).not.toContain('Display Name')
     expect(view.container.textContent).toContain('No information provided.')
+  })
+
+  it('uses an accessible fallback for an empty username', () => {
+    const view = renderHeader({ ...profile, username: '   ' })
+    mountedRoots.push(view)
+
+    expect(view.container.querySelector('h1')).toHaveTextContent('Profile')
+    expect(view.container.querySelector('img')).toHaveAttribute('alt', 'Profile avatar')
   })
 
   it('renders long username and bio values without changing their content', () => {
@@ -146,21 +155,41 @@ describe('ProfileHeader', () => {
     expect(view.container.textContent).toContain('987654321Following')
   })
 
-  it.each([320, 360])('does not create horizontal overflow at a %dpx viewport', async (width) => {
-    await page.viewport(width, 640)
+  it.each([320, 360, 480, 720, 1024])(
+    'does not create horizontal overflow at a %dpx viewport',
+    async (width) => {
+      await page.viewport(width, 720)
 
-    const view = renderHeader({
-      ...profile,
-      bio: 'LongUnbrokenBiography'.repeat(24),
-      displayName: 'LongUnbrokenDisplayName'.repeat(12),
-      followersCount: 123_456_789,
-      followingCount: 987_654_321,
-      publicationsCount: 456_789_012,
-      username: 'long_unbroken_username'.repeat(12),
-    })
+      const view = renderHeader({
+        ...profile,
+        bio: 'LongUnbrokenBiography'.repeat(24),
+        displayName: 'LongUnbrokenDisplayName'.repeat(12),
+        followersCount: 123_456_789,
+        followingCount: 987_654_321,
+        publicationsCount: 456_789_012,
+        username: 'long_unbroken_username'.repeat(12),
+      })
+      mountedRoots.push(view)
+
+      expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
+    },
+  )
+
+  it.each([
+    { avatarSize: 72, width: 320 },
+    { avatarSize: 72, width: 480 },
+    { avatarSize: 96, width: 720 },
+    { avatarSize: 192, width: 1024 },
+  ])('uses the responsive avatar size at $width px', async ({ avatarSize, width }) => {
+    await page.viewport(width, 720)
+
+    const view = renderHeader()
     mountedRoots.push(view)
+    const avatar = view.container.querySelector('img')?.parentElement
 
-    expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
+    expect(avatar).toBeInstanceOf(HTMLElement)
+    expect(avatar ? Number.parseFloat(getComputedStyle(avatar).width) : 0).toBe(avatarSize)
+    expect(avatar ? Number.parseFloat(getComputedStyle(avatar).height) : 0).toBe(avatarSize)
   })
 
   it('shows Profile Settings only for the owner', () => {
@@ -172,5 +201,11 @@ describe('ProfileHeader', () => {
     expect(ownerView.container.querySelector('a[href="/settings/profile"]')).toBeInstanceOf(
       HTMLAnchorElement,
     )
+
+    const settingsLink = ownerView.container.querySelector<HTMLAnchorElement>(
+      'a[href="/settings/profile"]',
+    )
+    settingsLink?.focus()
+    expect(document.activeElement).toBe(settingsLink)
   })
 })

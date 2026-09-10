@@ -331,12 +331,6 @@ export function ProfilePage({ userId }: ProfilePageProps) {
               <div className={`${styles.skeletonBlock} ${styles.skeletonDisplayName}`} />
             </div>
 
-            <div className={styles.skeletonCounters}>
-              <div className={styles.skeletonBlock} />
-              <div className={styles.skeletonBlock} />
-              <div className={styles.skeletonBlock} />
-            </div>
-
             <div className={styles.skeletonAbout}>
               <div className={`${styles.skeletonBlock} ${styles.skeletonAboutTitle}`} />
               <div className={`${styles.skeletonBlock} ${styles.skeletonBio}`} />
@@ -388,12 +382,17 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
   const isOwner = sessionStatus === 'authenticated' && sessionUser?.id === userId
   const posts = mapPostEntitiesToPosts(mergePosts(firstPagePosts, currentPaginationState.history))
+  const username = currentProfileUserState.user.username.trim() || t.profile.title
+  const hasDisplayName = Boolean(currentProfileUserState.user.displayName?.trim())
+  const bio = currentProfileUserState.user.bio?.trim()
+    ? currentProfileUserState.user.bio
+    : t.profile.noInformation
 
   return (
     <section aria-labelledby="profile-title" className={styles.root}>
       <header className={styles.profileHeader}>
         <div
-          aria-label={`${currentProfileUserState.user.username} ${t.profile.avatarSuffix}`}
+          aria-label={`${username} ${t.profile.avatarSuffix}`}
           className={styles.avatar}
           role="img"
         >
@@ -404,9 +403,9 @@ export function ProfilePage({ userId }: ProfilePageProps) {
           <div className={styles.identityRow}>
             <div>
               <h1 className={styles.username} id="profile-title">
-                {currentProfileUserState.user.username}
+                {username}
               </h1>
-              {currentProfileUserState.user.displayName && (
+              {hasDisplayName && (
                 <p className={styles.displayName}>{currentProfileUserState.user.displayName}</p>
               )}
             </div>
@@ -420,9 +419,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
           <div className={styles.about}>
             <h2 className={styles.aboutTitle}>{t.profile.about}</h2>
-            <p className={styles.bio}>
-              {currentProfileUserState.user.bio || t.profile.noInformation}
-            </p>
+            <p className={styles.bio}>{bio}</p>
           </div>
         </div>
       </header>

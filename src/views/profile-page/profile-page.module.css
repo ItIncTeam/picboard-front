@@ -66,6 +66,10 @@
   justify-content: space-between;
 }
 
+.identityRow > div {
+  min-width: 0;
+}
+
 .username,
 .displayName,
 .aboutTitle,
@@ -114,16 +118,6 @@
 .skeletonDisplayName {
   width: min(72%, 172px);
   height: 18px;
-}
-
-.skeletonCounters {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 72px));
-  gap: 36px;
-}
-
-.skeletonCounters > * {
-  height: 44px;
 }
 
 .skeletonAboutTitle {
@@ -254,10 +248,6 @@
   }
 
   .counters {
-    gap: 20px;
-  }
-
-  .skeletonCounters {
     gap: 20px;
   }
 }

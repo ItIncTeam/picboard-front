@@ -26,7 +26,10 @@ type ProfileHeaderProps = {
 
 export function ProfileHeader({ data, isOwner }: ProfileHeaderProps) {
   const { t } = useI18n()
-  const avatarLabel = `${data.username} ${t.profile.avatarSuffix}`
+  const username = data.username.trim() || t.profile.title
+  const avatarLabel = `${username} ${t.profile.avatarSuffix}`
+  const hasDisplayName = Boolean(data.displayName?.trim())
+  const bio = data.bio?.trim() ? data.bio : t.profile.noInformation
 
   return (
     <header className={styles.profileHeader}>
@@ -54,9 +57,9 @@ export function ProfileHeader({ data, isOwner }: ProfileHeaderProps) {
         <div className={styles.identityRow}>
           <div>
             <h1 className={styles.username} id="profile-title">
-              {data.username}
+              {username}
             </h1>
-            {data.displayName && <p className={styles.displayName}>{data.displayName}</p>}
+            {hasDisplayName && <p className={styles.displayName}>{data.displayName}</p>}
           </div>
 
           {isOwner && (
@@ -83,7 +86,7 @@ export function ProfileHeader({ data, isOwner }: ProfileHeaderProps) {
 
         <div className={styles.about}>
           <h2 className={styles.aboutTitle}>{t.profile.about}</h2>
-          <p className={styles.bio}>{data.bio || t.profile.noInformation}</p>
+          <p className={styles.bio}>{bio}</p>
         </div>
       </div>
     </header>
