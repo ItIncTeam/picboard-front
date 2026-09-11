@@ -331,15 +331,12 @@ export const ru = {
     relationsDescription: 'Защищенный маршрут связей профиля.',
     edit: {
       aboutMe: 'О себе',
-      accountManagement: 'Управление аккаунтом',
       city: 'Город',
       country: 'Страна',
       dateOfBirth: 'Дата рождения',
-      devices: 'Устройства',
       firstName: 'Имя',
       generalInformation: 'Общая информация',
       lastName: 'Фамилия',
-      myPayments: 'Мои платежи',
       requiredField: 'Обязательное поле',
       selectYourCity: 'Выберите город',
       selectYourCountry: 'Выберите страну',
@@ -347,6 +344,15 @@ export const ru = {
       saveFailed: 'Не удалось сохранить изменения профиля. Попробуйте еще раз.',
       saving: 'Сохраняем изменения...',
       username: 'Имя пользователя',
+    },
+  },
+  settings: {
+    navigation: {
+      accountManagement: 'Управление аккаунтом',
+      devices: 'Устройства',
+      generalInformation: 'Общая информация',
+      label: 'Навигация настроек',
+      notifications: 'Уведомления',
     },
   },
   routePlaceholder: {
