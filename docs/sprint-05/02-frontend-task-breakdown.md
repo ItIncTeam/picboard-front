@@ -32,9 +32,10 @@ Frontend-интеграции также ждут:
 - production-источник Country/City;
 - подтверждение стабильной сортировки и cursor semantics `profilePosts`.
 
-По live introspection на 2026-09-08 текущий `User.avatar` имеет nullable-тип `File`, а
-`File.url` — тип `String!`; отдельного `User.avatarUrl` в актуальной схеме нет. Это фиксирует
-текущий контракт и не описывает историю предыдущих контрактов.
+Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
+использует `avatar?.url`, а `avatar === null` — fallback. URL подписанный, действует 15 минут и не
+является постоянным идентификатором. Каждый новый `user`, `feed` или `post` запрос с
+`avatar { url }` возвращает свежий URL, поэтому отдельный timer/refresh-manager не нужен.
 
 Ошибки для неверного `first` или cursor желательно улучшить, но это не блокирует Profile SSR.
 
@@ -90,8 +91,8 @@ Dev 2 меняет общее Link-поведение `PostCard`, `PublicPostCar
 ### D1.3. Начальные данные Public Profile
 
 **Статус:** часть Public User contract foundation синхронизирована с текущей формой
-`User.avatar`. Общая Profile operation, server loader и полный `InitialProfileData` не реализованы
-и ждут безопасный Public User и публичные счётчики.
+`User.avatar` и подтверждёнными правилами signed URL. Общая Profile operation, server loader и
+полный `InitialProfileData` не реализованы и ждут безопасный Public User и публичные счётчики.
 
 **Цель:** получить пользователя, счётчики и первую страницу `profilePosts` одним GraphQL POST.
 
@@ -416,7 +417,7 @@ attach/replace/delete и URL для отображения. Обновлять S
 
 **Оценка:** 2 дня.
 **Сложность:** Сложная.
-**Зависит от backend:** Да — полный Avatar contract.
+**Зависит от backend:** Да — Avatar upload/attach/replace/delete contract.
 
 **Готово:** attach использует только готовый файл; `profilePictureFileId` не используется как URL;
 replace/delete не оптимистические; правила жизни signed/public URL соблюдены; RHF не меняется.

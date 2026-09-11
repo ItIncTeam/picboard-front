@@ -39,9 +39,10 @@ backend-контракт счётчиков и безопасный Public User.
 - Отсутствующие user/post возвращают `null`; неизвестный userId для `profilePosts` возвращает
   пустую connection.
 - `profilePosts` поддерживает cursor pagination, default `first = 8` и диапазон `1–8`.
-- По live introspection на 2026-09-08 текущий `User.avatar` имеет nullable-тип `File`, а
-  `File.url` — тип `String!`; отдельного `User.avatarUrl` в актуальной схеме нет. Это снимок
-  текущего контракта, а не утверждение об истории предыдущих контрактов.
+- Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
+  использует `avatar?.url`, а `avatar === null` — fallback. URL подписанный, действует 15 минут,
+  не является постоянным идентификатором и обновляется каждым новым `user`, `feed` или `post`
+  запросом с `avatar { url }`; отдельный timer/refresh-manager не нужен.
 - `PostEntity` содержит author, ownerId, attachments, `createdAt` и `updatedAt`.
 - Post attachments имеют signed display URL; наблюдаемый срок — 900 секунд.
 
