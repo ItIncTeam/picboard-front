@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -281,6 +281,13 @@ previous/next без перехода, клавиатура/focus и едины�
 
 ### D3.1. Edit Profile UI и отправка формы
 
+**Статус:** частично реализована изолированная RHF-форма с начальными значениями и асинхронным
+`onSubmitAction` через props. Успешная отправка вызывает `reset(savedValues)`, ошибка не теряет
+изменения и допускает повторную попытку. Settings navigation вынесена в `settings/layout.tsx` и
+использует ссылки существующих routes. Для завершения D3.1 нужен Privacy Policy trigger через
+`DocModal` и проверка, что он не сбрасывает форму. Маршрут, backend и полная валидация остаются
+в отдельных задачах.
+
 **Цель:** собрать изолированную форму на RHF по Figma-композиции.
 
 **Объём:** Username, First/Last Name, DOB, Country/City, About Me, полный
@@ -315,6 +322,10 @@ Avatar в RHF не входит.
 13 лет, 13-летие завтра, високосный год и видимый месяц.
 
 ### D3.3. Country → City
+
+**Статус:** реализована зависимость через `countryOptions` и `cityOptionsByCountryValue` props:
+смена Country очищает City, список берётся для текущей Country, а City выключен без доступных
+вариантов. Production-источник options остаётся backend-зависимостью.
 
 **Цель:** реализовать зависимые Select без временного набора production-данных.
 

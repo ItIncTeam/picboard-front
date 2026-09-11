@@ -3,7 +3,7 @@
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 import type { ComponentPropsWithoutRef } from 'react'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 
 import { useI18n } from '@/shared/lib/i18n'
 import type { Dictionary } from '@/shared/lib/i18n/dictionaries'
@@ -79,9 +79,13 @@ export const DatePicker = ({
   dayOverrides = [],
   onValueChange,
   className,
+  id,
   ...rest
 }: Props) => {
   const { language, t } = useI18n()
+  const generatedId = useId()
+  const triggerId = `${id ?? generatedId}-trigger`
+  const labelId = `${triggerId}-label`
   const isDisabled = disabled || state === 'disabled'
   const isError = Boolean(errorMessage) || state === 'error'
   const [isOpen, setIsOpen] = useState(defaultOpen)
@@ -119,11 +123,16 @@ export const DatePicker = ({
   }
 
   return (
-    <div className={clsx(s.datePicker, className)} {...rest}>
-      <label className={clsx(s.datePicker__label, isDisabled && s.datePicker__label_disabled)}>
+    <div className={clsx(s.datePicker, className)} id={id} {...rest}>
+      <label
+        className={clsx(s.datePicker__label, isDisabled && s.datePicker__label_disabled)}
+        htmlFor={triggerId}
+        id={labelId}
+      >
         {resolvedLabel}
       </label>
       <button
+        aria-labelledby={labelId}
         className={clsx(
           s.datePicker__input,
           state === 'hover' && s.datePicker__input_hover,
@@ -132,6 +141,7 @@ export const DatePicker = ({
           isDisabled && s.datePicker__input_disabled,
         )}
         disabled={isDisabled}
+        id={triggerId}
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
       >
