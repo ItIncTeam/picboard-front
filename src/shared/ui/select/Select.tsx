@@ -24,8 +24,12 @@ export type SelectSharedProps = {
   placeholder?: string
   errorMessage?: string
   className?: string
+  contentClassName?: string
+  iconClassName?: string
   labelClassName?: string
+  triggerAriaLabel?: string
   triggerClassName?: string
+  valueLabelClassName?: string
 }
 
 export type SelectProps = SelectSharedProps & ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
@@ -49,8 +53,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       placeholder,
       errorMessage,
       className,
+      contentClassName,
+      iconClassName,
       labelClassName,
+      triggerAriaLabel,
       triggerClassName,
+      valueLabelClassName,
       disabled,
       value,
       defaultValue,
@@ -104,7 +112,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
               isError && styles['select__trigger_error'],
               triggerClassName,
             )}
-            aria-label={label ? undefined : placeholder}
+            aria-label={
+              label ? undefined : (triggerAriaLabel ?? selectedOption?.label ?? placeholder)
+            }
             aria-invalid={isError || undefined}
             aria-describedby={isError ? errorId : undefined}
           >
@@ -115,16 +125,16 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                     <SelectOptionImage src={selectedOption.image} alt={selectedOption.imageAlt} />
                   </span>
                 ) : null}
-                <span>{selectedOption?.label ?? placeholder}</span>
+                <span className={valueLabelClassName}>{selectedOption?.label ?? placeholder}</span>
               </span>
             </SelectPrimitive.Value>
             <SelectPrimitive.Icon asChild>
-              <ChevronDownIcon className={styles['select__icon']} aria-hidden />
+              <ChevronDownIcon className={cn(styles['select__icon'], iconClassName)} aria-hidden />
             </SelectPrimitive.Icon>
           </SelectPrimitive.Trigger>
           <SelectPrimitive.Portal>
             <SelectPrimitive.Content
-              className={styles['select__content']}
+              className={cn(styles['select__content'], contentClassName)}
               position="popper"
               sideOffset={0}
               align="start"

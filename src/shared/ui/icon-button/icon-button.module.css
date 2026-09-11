@@ -22,6 +22,10 @@
     transform 0.08s ease;
 }
 
+.tooltipTrigger {
+  display: inline-flex;
+}
+
 .button:not(:disabled):hover {
   background-color: var(--color-surface-secondary);
   box-shadow: inset 0 0 0 1px var(--color-border-secondary);

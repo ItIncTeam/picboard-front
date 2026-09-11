@@ -1,11 +1,10 @@
-import { RoutePlaceholder } from '@/views/route-placeholder'
+import { getPublicHomeData } from './api/getPublicHomeData'
+import { PublicHomeContent } from './PublicHomeContent'
 
-export function PublicHomePage() {
-  return (
-    <RoutePlaceholder
-      title="Public landing"
-      description="Public entry route placeholder for unauthenticated users."
-      routes={['/auth/sign-in', '/auth/sign-up', '/auth/forgot-password']}
-    />
-  )
+export async function PublicHomePage() {
+  const data = await getPublicHomeData()
+
+  return <PublicHomeContent data={data} />
 }
+
+export { PublicHomeContent } from './PublicHomeContent'

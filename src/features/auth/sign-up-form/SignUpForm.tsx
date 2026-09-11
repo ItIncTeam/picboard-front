@@ -6,6 +6,8 @@ import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { CloseEyeIcon, OpenEyeIcon } from '@/shared/assets'
+import { useI18n } from '@/shared/lib/i18n'
+import { useToast } from '@/shared/lib/toast'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Input } from '@/shared/ui/input/Input'
@@ -24,17 +26,15 @@ const defaultValues: SignUpFormValues = {
 }
 
 type SignUpFormProps = {
-  onOpenPrivacy: () => void
-  onOpenTerms: () => void
-  onSuccess?: () => void
+  onOpenPrivacyAction: () => void
+  onOpenTermsAction: () => void
+  onSuccessAction?: (email: string) => void
 }
 
 type BackendFieldError = {
   field: string
   message: string
 }
-
-const fallbackErrorMessage = 'Sign up failed. Please try again.'
 
 const fieldMap: Record<string, keyof SignUpFormValues> = {
   acceptPrivacy: 'agreedToTerms',
@@ -93,7 +93,7 @@ const collectFieldErrors = (
   return result
 }
 
-const getErrorMessage = (error: unknown): string => {
+const getErrorMessage = (error: unknown, fallbackErrorMessage: string): string => {
   if (isRecord(error) && typeof error.message === 'string' && error.message.length > 0) {
     return error.message
   }
@@ -115,9 +115,16 @@ const getFieldFromGenericMessage = (message: string): keyof SignUpFormValues | n
   return null
 }
 
-export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpFormProps) {
+export function SignUpForm({
+  onOpenPrivacyAction,
+  onOpenTermsAction,
+  onSuccessAction,
+}: SignUpFormProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isPasswordConfirmationVisible, setIsPasswordConfirmationVisible] = useState(false)
+  const { t } = useI18n()
+  const toast = useToast()
+  const fallbackErrorMessage = t.auth.signUp.fallbackError
 
   const {
     clearErrors,
@@ -146,12 +153,12 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
 
       await signUp(input)
 
-      onSuccess?.()
+      onSuccessAction?.(input.email)
     } catch (error) {
       const fieldErrors = collectFieldErrors(error)
 
       if (fieldErrors.length === 0) {
-        const message = getErrorMessage(error)
+        const message = getErrorMessage(error, fallbackErrorMessage)
         const formField = getFieldFromGenericMessage(message)
 
         if (formField) {
@@ -160,6 +167,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
         }
 
         setError('root', { message })
+        toast.error(message)
         return
       }
 
@@ -178,6 +186,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
 
       if (hasUnknownField) {
         setError('root', { message: fallbackErrorMessage })
+        toast.error(fallbackErrorMessage)
       }
     }
   }
@@ -193,7 +202,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               {...field}
               autoComplete="username"
               error={fieldState.error?.message}
-              label="Username"
+              label={t.auth.signUp.username}
             />
           )}
         />
@@ -206,7 +215,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               {...field}
               autoComplete="email"
               error={fieldState.error?.message}
-              label="Email"
+              label={t.auth.signUp.email}
               type="email"
             />
           )}
@@ -221,7 +230,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               autoComplete="new-password"
               error={fieldState.error?.message}
               Icon={isPasswordVisible ? CloseEyeIcon : OpenEyeIcon}
-              label="Password"
+              label={t.auth.signUp.password}
               onClick={() => {
                 setIsPasswordVisible((currentValue) => !currentValue)
               }}
@@ -240,7 +249,7 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               autoComplete="new-password"
               error={fieldState.error?.message}
               Icon={isPasswordConfirmationVisible ? CloseEyeIcon : OpenEyeIcon}
-              label="Password confirmation"
+              label={t.auth.signUp.passwordConfirmation}
               onClick={() => {
                 setIsPasswordConfirmationVisible((currentValue) => !currentValue)
               }}
@@ -266,20 +275,20 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
               <Checkbox
                 checked={field.value}
                 errorMessage={fieldState.error ? ' ' : undefined}
-                onCheckedChange={(checked) => {
+                onCheckedChangeAction={(checked) => {
                   field.onChange(checked === true)
                   field.onBlur()
                 }}
               />
 
               <Text className={styles.termsText} size="xs">
-                I agree to the{' '}
-                <button className={styles.termsLink} onClick={onOpenTerms} type="button">
-                  Terms of Service
+                {t.auth.signUp.agreePrefix}{' '}
+                <button className={styles.termsLink} onClick={onOpenTermsAction} type="button">
+                  {t.auth.signUp.terms}
                 </button>{' '}
-                and{' '}
-                <button className={styles.termsLink} onClick={onOpenPrivacy} type="button">
-                  Privacy Policy
+                {t.auth.signUp.and}{' '}
+                <button className={styles.termsLink} onClick={onOpenPrivacyAction} type="button">
+                  {t.auth.signUp.privacy}
                 </button>
               </Text>
             </div>
@@ -290,17 +299,17 @@ export function SignUpForm({ onOpenPrivacy, onOpenTerms, onSuccess }: SignUpForm
           className={styles.submitButton}
           disabled={!isValid}
           loading={isSubmitting}
-          loadingText="Creating account..."
+          loadingText={t.auth.signUp.loading}
           type="submit"
         >
-          Sign Up
+          {t.auth.signUp.submit}
         </Button>
       </div>
 
       <div className={styles.signInFooter}>
-        <Text>Do you have an account?</Text>
+        <Text>{t.auth.signUp.signInQuestion}</Text>
         <Link className={styles.signInLink} href="/auth/sign-in">
-          Sign In
+          {t.auth.signUp.signInLink}
         </Link>
       </div>
     </form>

@@ -1,3 +1,2 @@
 export { OAuthProviders } from './OAuthProviders'
-export { useOAuthAuth } from './model/useOAuthAuth'
-export type { OAuthIntent, OAuthProvider } from './model/types'
+export type { OAuthIntent, OAuthProvider } from '@/features/auth/oauth'

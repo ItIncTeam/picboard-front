@@ -1,5 +1,9 @@
-import { LogoutButton, NavigationButton } from '@/features/auth'
+'use client'
+
+import { NavigationButton } from '@/features/auth'
 import { BellIcon } from '@/shared/assets'
+import { useI18n, type Language } from '@/shared/lib/i18n'
+import type { Dictionary } from '@/shared/lib/i18n/dictionaries'
 import { IconButton } from '@/shared/ui/icon-button'
 import { LanguageSwitcher } from '@/shared/ui/language-switcher'
 import { Logo } from '@/shared/ui/logo'
@@ -9,7 +13,9 @@ import styles from './header.module.css'
 type HeaderRole = 'guest' | 'user' | 'admin' | 'superAdmin'
 
 type HeaderProps = {
+  isSidebarOpen?: boolean
   notificationsCount?: number
+  onToggleSidebarAction?: () => void
   role?: HeaderRole
 }
 
@@ -20,35 +26,87 @@ const logoHref: Record<HeaderRole, string> = {
   superAdmin: '/admin/users',
 }
 
-const logoSuffix: Partial<Record<HeaderRole, string>> = {
-  admin: 'Admin',
-  superAdmin: 'SuperAdmin',
+function getUnreadNotificationsLabel(
+  count: number,
+  language: Language,
+  labels: Dictionary['header']['unreadNotifications'],
+): string {
+  const pluralCategory = new Intl.PluralRules(language).select(count)
+
+  switch (pluralCategory) {
+    case 'one':
+      return labels.one
+    case 'few':
+      return labels.few
+    case 'many':
+      return labels.many
+    default:
+      return labels.other
+  }
 }
 
-export function Header({ notificationsCount = 0, role = 'user' }: HeaderProps) {
+export function Header({
+  isSidebarOpen = false,
+  notificationsCount = 0,
+  onToggleSidebarAction,
+  role = 'user',
+}: HeaderProps) {
   const hasNotifications = notificationsCount > 0
   const isAuthenticated = role !== 'guest'
   const showAuthActions = !isAuthenticated
+  const showSidebarTrigger = isAuthenticated && onToggleSidebarAction
+  const { language, t } = useI18n()
+  const logoSuffix: Partial<Record<HeaderRole, string>> = {
+    admin: t.header.adminSuffix,
+    superAdmin: t.header.superAdminSuffix,
+  }
 
   return (
     <header className={styles.root}>
-      <div className={styles.inner}>
+      <div className={styles.inner} data-guest={showAuthActions}>
+        {showSidebarTrigger && (
+          <button
+            aria-controls="app-sidebar"
+            aria-expanded={isSidebarOpen}
+            aria-label={isSidebarOpen ? t.header.closeSidebar : t.header.openSidebar}
+            className={styles.sidebarTrigger}
+            data-open={isSidebarOpen}
+            onClick={onToggleSidebarAction}
+            type="button"
+          >
+            <span className={styles.sidebarTriggerIcon} aria-hidden>
+              <span className={styles.sidebarTriggerLine} />
+              <span className={styles.sidebarTriggerLine} />
+              <span className={styles.sidebarTriggerLine} />
+            </span>
+          </button>
+        )}
         <Logo href={logoHref[role]} label="Picboard" suffix={logoSuffix[role]} />
         <div className={styles.actions}>
-          <IconButton
-            disabled
-            icon={BellIcon}
-            indicatorCount={notificationsCount}
-            label={
-              hasNotifications
-                ? `${notificationsCount} unread notifications. Notifications are not available yet.`
-                : 'Notifications are not available yet.'
-            }
-          />
+          {isAuthenticated && (
+            <IconButton
+              disabled
+              icon={BellIcon}
+              indicatorCount={notificationsCount}
+              label={
+                hasNotifications
+                  ? `${notificationsCount} ${getUnreadNotificationsLabel(
+                      notificationsCount,
+                      language,
+                      t.header.unreadNotifications,
+                    )}. ${t.header.notificationsUnavailable}`
+                  : t.header.notificationsUnavailable
+              }
+              tooltip={t.header.notificationsUnavailable}
+            />
+          )}
 
           <LanguageSwitcher />
-          {showAuthActions && <NavigationButton />}
-          {isAuthenticated && <LogoutButton />}
+          {showAuthActions && (
+            <div className={styles.authActions}>
+              <NavigationButton />
+            </div>
+          )}
         </div>
       </div>
     </header>

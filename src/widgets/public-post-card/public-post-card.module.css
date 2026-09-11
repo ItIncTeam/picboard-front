@@ -1,0 +1,167 @@
+.card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-width: 0;
+}
+
+.carousel,
+.mediaPlaceholder {
+  position: relative;
+
+  overflow: hidden;
+
+  aspect-ratio: 234 / 240;
+  min-width: 0;
+
+  background: var(--color-surface-secondary);
+}
+
+.mediaImage {
+  object-fit: cover;
+}
+
+.carousel[data-fit='contain'] .mediaImage {
+  object-fit: contain;
+}
+
+.mediaPlaceholder {
+  display: grid;
+  place-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.carouselButton {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+
+  display: grid;
+  place-items: center;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+
+  color: var(--color-light-100);
+
+  background: rgb(0 0 0 / 55%);
+}
+
+.carouselButton:hover {
+  background: rgb(0 0 0 / 75%);
+}
+
+.carouselButton:focus-visible,
+.paginationDot:focus-visible,
+.descriptionButton:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.previousButton {
+  left: 8px;
+}
+
+.nextButton {
+  right: 8px;
+}
+
+.pagination {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.paginationDot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+
+  background: rgb(255 255 255 / 65%);
+}
+
+.paginationDot[aria-pressed='true'] {
+  background: var(--color-primary);
+}
+
+.authorRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+
+  min-width: 0;
+}
+
+.avatar {
+  position: relative;
+
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+
+  background: var(--color-primary);
+}
+
+.avatar img {
+  object-fit: cover;
+}
+
+.authorName {
+  overflow: hidden;
+
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.createdAt {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+  color: var(--color-text-secondary);
+}
+
+.description {
+  margin: 0;
+
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.descriptionButton {
+  padding: 0;
+  border: 0;
+
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-position: from-font;
+
+  background: transparent;
+}
+
+.descriptionButton:hover {
+  color: var(--color-primary-hover);
+}

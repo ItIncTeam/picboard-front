@@ -1,6 +1,7 @@
 export { SignUpForm } from './sign-up-form'
 export { SignInForm } from './sign-in-form'
-export { OAuthProviders, type OAuthIntent, type OAuthProvider } from './oauth-providers'
+export { OAuthProviders } from './oauth-providers'
+export type { OAuthIntent, OAuthProvider } from './oauth'
 export { NavigationButton } from './navigation-button'
 export { ForgotPasswordForm } from './forgot-password-form'
 export { LogoutButton } from './logout-button'

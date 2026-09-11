@@ -4,14 +4,15 @@ This document maps current `/auth` routes to views, features, and verified Graph
 
 ## Route Map
 
-| Route                             | Page file                                                  | View / page                   | GraphQL operation       | Status                        |
-| --------------------------------- | ---------------------------------------------------------- | ----------------------------- | ----------------------- | ----------------------------- |
-| `/auth/sign-up`                   | `src/app/(public)/auth/sign-up/page.tsx`                   | `SignUpView`                  | `signUp`                | Integrated / backend verified |
-| `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationView`     | `emailConfirmation`     | Integrated / backend verified |
-| `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInView`                  | `signIn`, `me`          | Integrated / backend verified |
-| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`         | Existing / contract verified  |
-| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`        | Implemented                   |
-| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | `ConfirmPasswordRecoveryView` | No standalone operation | Implemented / bridge redirect |
+| Route                             | Page file                                                  | View / page                   | GraphQL operation         | Status                        |
+| --------------------------------- | ---------------------------------------------------------- | ----------------------------- | ------------------------- | ----------------------------- |
+| `/auth/sign-up`                   | `src/app/(public)/auth/sign-up/page.tsx`                   | `SignUpView`                  | `signUp`                  | Integrated / backend verified |
+| `/auth/confirm/registration`      | `src/app/(public)/auth/confirm/registration/page.tsx`      | `ConfirmRegistrationView`     | `emailConfirmation`       | Integrated / backend verified |
+| `/auth/sign-in`                   | `src/app/(public)/auth/sign-in/page.tsx`                   | `SignInView`                  | `signIn`, `me`            | Integrated / backend verified |
+| `/auth/callback`                  | `src/app/(public)/auth/callback/page.tsx`                  | `OAuthCallbackView`           | `exchangeOAuthCode`, `me` | Implemented                   |
+| `/auth/forgot-password`           | `src/app/(public)/auth/forgot-password/page.tsx`           | `ForgotPasswordView`          | `passwordReset`           | Existing / contract verified  |
+| `/auth/create-new-password`       | `src/app/(public)/auth/create-new-password/page.tsx`       | `CreateNewPasswordPage`       | `setNewPassword`          | Implemented                   |
+| `/auth/confirm/password-recovery` | `src/app/(public)/auth/confirm/password-recovery/page.tsx` | `ConfirmPasswordRecoveryView` | No standalone operation   | Implemented / bridge redirect |
 
 ## Password Recovery Routes
 
@@ -42,7 +43,7 @@ Frontend flow:
 2. Frontend calls `signUp`.
 3. Backend creates an unconfirmed user.
 4. Backend sends a confirmation email.
-5. Frontend opens the current email-sent placeholder state.
+5. Frontend opens `EmailSentModal` with the submitted email and redirects to sign in after close.
 
 Verified backend success message:
 
@@ -56,7 +57,7 @@ Notes:
 
 - The confirmation email can land in spam.
 - Backend validates `username` as 6-30 characters, with lowercase/uppercase letters and `-` or `_`.
-- Final email-sent modal UI is still a follow-up; the mutation and success transition are wired.
+- The email-sent modal UI and success transition are wired.
 
 ### `/auth/confirm/registration?code=<CODE>`
 
@@ -65,7 +66,10 @@ Frontend flow:
 1. Route reads `code` from the query string.
 2. Frontend calls `emailConfirmation` with `EmailConfirmationInput`.
 3. Backend confirms the account when the code is valid.
-4. Frontend shows the confirmation result and a path to sign in.
+4. Frontend redirects to the matching sign-up UI state:
+   - success or already confirmed -> `/auth/sign-up?status=confirmed`
+   - expired, invalid, or missing code -> `/auth/sign-up?status=expired`
+5. Unknown errors stay on the confirm route with a resend link to the expired state.
 
 Verified mutation:
 
@@ -101,7 +105,7 @@ Frontend flow:
 4. Frontend stores only `accessToken` in memory.
 5. Frontend calls `authenticateWithCurrentToken`.
 6. `authenticateWithCurrentToken` calls `me` and moves session state to `authenticated`.
-7. Frontend redirects to the protected entry route.
+7. Frontend redirects to the validated `returnTo` route when present, otherwise to `/main`.
 
 Verified invalid credentials error:
 
@@ -118,6 +122,43 @@ Notes:
 - Sign-in does not call `refreshToken`; refresh is only used for bootstrap/session restore.
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
+
+### `/auth/callback?code=<BACKEND_CODE>`
+
+Frontend flow:
+
+1. Backend owns the complete Google/GitHub OAuth provider flow: provider detection, state
+   validation, PKCE, provider code exchange, user creation/linking, and issuing a backend OAuth code.
+2. Frontend OAuth provider buttons redirect the browser to backend-owned OAuth start URLs built
+   from `NEXT_PUBLIC_OAUTH_BASE_URL=https://users.picboard.space/api/v1`:
+   - Google: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/google/start`
+   - GitHub: `${NEXT_PUBLIC_OAUTH_BASE_URL}/auth/github/login`
+3. Backend redirects production provider flows to `https://picboard.space/auth/callback`.
+   Local frontend origin is also configured, so local verification should use
+   `http://localhost:3000/auth/callback`.
+4. Frontend route `/auth/callback` receives `/auth/callback?code=<BACKEND_CODE>`.
+5. Frontend reads only `code` from the URL and calls `exchangeOAuthCode` with
+   `OAuthExchangeCodeInput` through `NEXT_PUBLIC_GRAPHQL_ENDPOINT`.
+6. Backend returns `accessToken` and `user`.
+7. Frontend stores only `accessToken` in memory, calls `authenticateWithCurrentToken`, then redirects
+   to `/main`.
+
+Handled callback errors:
+
+- `invalid_state`
+- `no_code`
+- `no_pkce_verifier`
+- `unverified_email`
+
+The backend may redirect to `/auth/callback?error=<ERROR_CODE>` with one of the known error codes
+above. Unknown values use the default OAuth error UI.
+
+Frontend must not:
+
+- use provider client ids, scopes, PKCE, or state;
+- redirect directly to Google or GitHub OAuth URLs;
+- store provider OAuth data in `localStorage` or `sessionStorage`;
+- exchange Google/GitHub provider codes directly.
 
 ### `/auth/forgot-password`
 
@@ -203,8 +244,12 @@ older bootstrap result cannot overwrite a newer sign-in result.
 `src/app/(protected)/layout.tsx` wraps protected route children in `ProtectedRouteBoundary`:
 
 - `bootstrapping` shows a loading state;
-- `anonymous` redirects to `/auth/sign-in`;
+- `anonymous` redirects to `/auth/sign-in?returnTo=<encoded protected path>`;
 - `authenticated` renders `children`.
+
+The `returnTo` value preserves the protected route path and query string. The sign-in view validates
+it before navigation and only accepts same-app relative paths that start with `/`, do not start with
+`//`, and do not start with `/auth`. Unsafe or missing values fall back to `/main`.
 
 Auth error refresh and invalidation:
 
@@ -216,7 +261,7 @@ Auth error refresh and invalidation:
 5. Refresh failure, ineligible operations, and `403` / `FORBIDDEN` errors clear the in-memory access
    token and emit a shared auth session expired event from `shared/lib/auth`.
 6. `SessionProvider` subscribes to that event and moves session state to `anonymous`.
-7. `ProtectedRouteBoundary` redirects anonymous users from protected pages.
+7. `ProtectedRouteBoundary` redirects anonymous users from protected pages with `returnTo`.
 
 The token store uses a version guard so an in-flight refresh cannot restore the token after logout.
 
@@ -229,7 +274,7 @@ Logout:
 1. The protected header renders the feature-level logout action.
 2. The action calls `logout`.
 3. `SessionProvider` clears the memory-only access token and moves session state to `anonymous`.
-4. The action redirects to `/auth/sign-in`.
+4. The action redirects to plain `/auth/sign-in`.
 
 The frontend does not persist tokens and does not read, store, or manually send the refresh token.
 

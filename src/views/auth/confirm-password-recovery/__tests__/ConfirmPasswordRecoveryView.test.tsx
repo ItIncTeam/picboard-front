@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { authRoutes } from '@/shared/lib/auth'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import ConfirmPasswordRecoveryView from '../ConfirmPasswordRecoveryView'
 
@@ -25,6 +26,22 @@ vi.mock('next/link', () => ({
   ),
 }))
 
+vi.mock('next/image', () => ({
+  __esModule: true,
+  default: ({ alt }: { alt: string }) => {
+    const Image = ({
+      alt: imageAlt,
+    }: {
+      alt: string
+      height: number
+      unoptimized: boolean
+      width: number
+    }) => <span aria-label={imageAlt} role="img" />
+
+    return <Image alt={alt} height={100} unoptimized width={100} />
+  },
+}))
+
 type RenderResult = {
   container: HTMLDivElement
   root: Root
@@ -39,7 +56,11 @@ function renderView(searchParams: URLSearchParams): RenderResult {
   document.body.append(container)
 
   act(() => {
-    root.render(<ConfirmPasswordRecoveryView />)
+    root.render(
+      <I18nProvider>
+        <ConfirmPasswordRecoveryView />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }
@@ -88,14 +109,16 @@ describe('ConfirmPasswordRecoveryView', () => {
     )
   })
 
-  it('shows error and forgot-password link when code is missing', () => {
+  it('shows expired link state and forgot-password link when code is missing', () => {
     const view = renderView(new URLSearchParams())
 
     mountedRoots.push(view)
 
+    expect(view.container.textContent).toContain('Email verification link expired')
     expect(view.container.textContent).toContain(
-      'Invalid recovery link. Please request a new password reset.',
+      'Looks like the verification link has expired. Not to worry, we can send the link again',
     )
+    expect(view.container.textContent).toContain('Resend link')
 
     const link = view.container.querySelector('a')
 

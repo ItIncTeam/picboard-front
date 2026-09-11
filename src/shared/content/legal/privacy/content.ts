@@ -1,3 +1,5 @@
+import type { Language } from '@/shared/lib/i18n'
+
 export const privacyParagraphs = [
   'Privacy Policy  (placeholder). Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Fames ac turpis egestas integer eget aliquet nibh. Amet consectetur adipiscing elit ut aliquam purus sit amet luctus. Tortor vitae purus faucibus ornare suspendisse sed nisi. Dolor sit amet consectetur adipiscing. Massa enim nec dui nunc mattis enim ut tellus. Scelerisque eleifend donec pretium vulputate sapien nec sagittis. Feugiat nisl pretium fusce id velit ut tortor pretium viverra. Tortor aliquam nulla facilisi cras. Elit pellentesque habitant morbi tristique senectus et netus. Nulla facilisi nullam vehicula ipsum a arcu cursus. Ut lectus arcu bibendum at varius vel pharetra. Etiam erat velit scelerisque in dictum non consectetur. Quam adipiscing vitae proin sagittis nisl rhoncus mattis rhoncus. Id diam maecenas ultricies mi eget mauris pharetra. Tincidunt lobortis feugiat vivamus at augue. Non odio euismod lacinia at. Aliquet eget sit amet tellus. Auctor neque vitae tempus quam.',
   'Tellus in hac habitasse platea dictumst vestibulum rhoncus est. Nisl pretium fusce id velit ut tortor pretium. Eget arcu dictum varius duis at consectetur. Est placerat in egestas erat imperdiet sed euismod nisi porta. Scelerisque felis imperdiet proin fermentum. Tellus in hac habitasse platea dictumst vestibulum rhoncus. Proin nibh nisl condimentum id venenatis a condimentum vitae. Massa tincidunt dui ut ornare lectus sit amet est placerat. Vel turpis nunc eget lorem dolor sed viverra ipsum. Enim ut tellus elementum sagittis. At consectetur lorem donec massa sapien faucibus et molestie. Enim sit amet venenatis urna cursus. Id velit ut tortor pretium viverra suspendisse potenti.',
@@ -7,3 +9,14 @@ export const privacyParagraphs = [
   'A diam maecenas sed enim ut. Fermentum et sollicitudin ac orci phasellus. Tincidunt vitae semper quis lectus nulla. Tincidunt dui ut ornare lectus sit amet est. Sed enim ut sem viverra aliquet eget sit. Eu augue ut lectus arcu bibendum at varius. Suspendisse sed nisi lacus sed viverra tellus in hac habitasse. Donec ultrices tincidunt arcu non sodales neque sodales ut etiam. Varius vel pharetra vel turpis nunc eget lorem dolor. Arcu odio ut sem nulla pharetra. Bibendum neque egestas congue quisque. Facilisis volutpat est velit egestas dui. Orci nulla pellentesque dignissim enim sit amet. Mauris vitae ultricies leo integer malesuada nunc vel risus commodo. Odio ut enim blandit volutpat maecenas volutpat blandit.',
   'Eu mi bibendum neque egestas congue quisque egestas diam in. Neque viverra justo nec ultrices dui sapien. Congue mauris rhoncus aenean vel elit. Vitae aliquet nec ullamcorper sit. Tempus imperdiet nulla malesuada pellentesque. Sed lectus vestibulum mattis ullamcorper velit. Commodo odio aenean sed adipiscing diam. Viverra nam libero justo laoreet. Id neque aliquam vestibulum morbi blandit cursus. Vel facilisis volutpat est velit egestas dui id ornare. Feugiat nibh sed pulvinar proin.',
 ] as const
+
+const privacyParagraphsRu = [
+  'Политика конфиденциальности (placeholder). Этот текст временно описывает, какие данные Picboard может обрабатывать для регистрации, входа, публикации контента и работы основных функций платформы.',
+  'Мы можем использовать данные профиля, email, опубликованный контент, техническую информацию браузера и сведения о действиях пользователя только в рамках работы продукта и его безопасности.',
+  'Финальная версия политики должна быть подготовлена и согласована отдельно. Этот placeholder не является юридическим документом и используется только для интерфейсной разработки.',
+] as const
+
+export const privacyParagraphsByLanguage = {
+  en: privacyParagraphs,
+  ru: privacyParagraphsRu,
+} satisfies Record<Language, readonly string[]>

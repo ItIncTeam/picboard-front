@@ -6,3 +6,11 @@ export {
   type EmailConfirmationResendingInput,
   type EmailConfirmationResendingPayload,
 } from './api'
+export {
+  emailConfirmationFallbackErrorMessage,
+  getEmailConfirmationErrorMessage,
+  isAlreadyConfirmedError,
+  isExpiredConfirmationError,
+  resolveEmailConfirmationOutcome,
+  type EmailConfirmationOutcome,
+} from './model/resolveEmailConfirmationOutcome'

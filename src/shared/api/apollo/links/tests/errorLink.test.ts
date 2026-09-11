@@ -20,6 +20,7 @@ vi.mock('../authRefreshRequest', () => ({
 }))
 
 import { clearRefreshPromise } from '../authRefreshQueue'
+import { authLink } from '../authLink'
 import { errorLink } from '../errorLink'
 
 const createServerError = (statusCode: number): ServerError => {
@@ -164,6 +165,111 @@ describe('errorLink refresh-on-401 behavior', () => {
     expect(refreshRequestMocks.refreshAccessToken).toHaveBeenCalledTimes(1)
     expect(getAccessToken()).toBe('new-access-token')
     expect(getRequestCount()).toBe(2)
+    expect(authSessionExpiredCount).toBe(0)
+  })
+
+  it('refreshes and retries InitiateUploadBatch for a top-level UNAUTHENTICATED code', async () => {
+    const variables = {
+      input: [
+        {
+          clientUploadId: 'client-upload-id',
+          mimeType: 'JPEG',
+          originalName: 'photo.jpg',
+          purpose: 'POST_IMAGE',
+          size: 1024,
+        },
+      ],
+    }
+    const receivedAuthorizationHeaders: Array<string | undefined> = []
+    const receivedVariables: unknown[] = []
+    let requestCount = 0
+
+    setAccessToken('stale-access-token')
+    refreshRequestMocks.refreshAccessToken.mockResolvedValueOnce('new-access-token')
+
+    const link = ApolloLink.from([
+      errorLink,
+      authLink,
+      new ApolloLink((operation) => {
+        requestCount += 1
+        receivedVariables.push(operation.variables)
+
+        const headers = operation.getContext().headers as Record<string, string> | undefined
+
+        receivedAuthorizationHeaders.push(headers?.authorization)
+
+        return new Observable<ApolloLink.Result>((observer) => {
+          if (requestCount === 1) {
+            const gatewayAuthError = {
+              code: 'UNAUTHENTICATED',
+              message: 'Invalid or expired token',
+              statusCode: 401,
+            }
+
+            observer.next({
+              data: null,
+              errors: [gatewayAuthError],
+            })
+            observer.complete()
+
+            return
+          }
+
+          observer.next({
+            data: {
+              initiateUploadBatch: [
+                {
+                  clientUploadId: 'client-upload-id',
+                  expiresAt: '2026-08-13T12:00:00.000Z',
+                  fileId: 'file-id',
+                  uploadUrl: 'https://storage.example/upload',
+                },
+              ],
+            },
+          })
+          observer.complete()
+        })
+      }),
+    ])
+
+    const result = new Promise<Record<string, unknown>>((resolve, reject) => {
+      ApolloLink.execute(
+        link,
+        {
+          query: parse(`
+            mutation InitiateUploadBatch($input: [InitiateUploadInput!]!) {
+              initiateUploadBatch(input: $input) {
+                clientUploadId
+              }
+            }
+          `),
+          variables,
+        },
+        createExecuteContext(),
+      ).subscribe({
+        error: reject,
+        next: ({ data }) => resolve(data as Record<string, unknown>),
+      })
+    })
+
+    await expect(result).resolves.toEqual({
+      initiateUploadBatch: [
+        {
+          clientUploadId: 'client-upload-id',
+          expiresAt: '2026-08-13T12:00:00.000Z',
+          fileId: 'file-id',
+          uploadUrl: 'https://storage.example/upload',
+        },
+      ],
+    })
+    expect(refreshRequestMocks.refreshAccessToken).toHaveBeenCalledTimes(1)
+    expect(requestCount).toBe(2)
+    expect(receivedVariables).toEqual([variables, variables])
+    expect(receivedAuthorizationHeaders).toEqual([
+      'Bearer stale-access-token',
+      'Bearer new-access-token',
+    ])
+    expect(getAccessToken()).toBe('new-access-token')
     expect(authSessionExpiredCount).toBe(0)
   })
 
