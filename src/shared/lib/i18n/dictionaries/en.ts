@@ -329,15 +329,12 @@ export const en = {
     relationsDescription: 'Protected profile relations route.',
     edit: {
       aboutMe: 'About Me',
-      accountManagement: 'Account Management',
       city: 'City',
       country: 'Country',
       dateOfBirth: 'Date of birth',
-      devices: 'Devices',
       firstName: 'First Name',
       generalInformation: 'General information',
       lastName: 'Last Name',
-      myPayments: 'My payments',
       requiredField: 'Required',
       selectYourCity: 'Select your city',
       selectYourCountry: 'Select your country',
@@ -345,6 +342,15 @@ export const en = {
       saveFailed: 'Profile changes could not be saved. Please try again.',
       saving: 'Saving changes...',
       username: 'Username',
+    },
+  },
+  settings: {
+    navigation: {
+      accountManagement: 'Account Management',
+      devices: 'Devices',
+      generalInformation: 'General information',
+      label: 'Settings navigation',
+      notifications: 'Notifications',
     },
   },
   routePlaceholder: {

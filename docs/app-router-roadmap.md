@@ -151,8 +151,8 @@ on-demand `revalidatePath('/')`. Для изменения `usersCount` отде
 счетчик полагается на time-based ISR. `/main` остается отдельным authenticated client-data route и
 не заменяет `/`.
 
-`settings/layout.tsx` и `admin/layout.tsx` занимают места под будущие section shells. Пока они
-легкие.
+`settings/layout.tsx` рендерит `SettingsNavigation` с реальными ссылками на существующие settings
+routes; form features не владеют этой навигацией. `admin/layout.tsx` пока остаётся лёгким.
 
 ## Файлы page.tsx
 

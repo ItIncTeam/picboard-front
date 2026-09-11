@@ -1,7 +1,7 @@
 'use client'
 
 import { useId, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 
 import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
@@ -27,11 +27,14 @@ export function EditProfileForm({
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { isDirty, isSubmitting, isValid },
   } = useForm<EditProfileFormValues>({
     defaultValues: initialValues,
     mode: 'onChange',
   })
+  const selectedCountry = useWatch({ control, name: 'country' })
+  const cityOptions = cityOptionsByCountryValue[selectedCountry] ?? []
 
   const onSubmit = async (values: EditProfileFormValues): Promise<void> => {
     setSubmitError(null)
@@ -46,13 +49,6 @@ export function EditProfileForm({
 
   return (
     <section aria-labelledby="edit-profile-title" className={styles.root}>
-      <nav aria-label={t.profile.edit.generalInformation} className={styles.tabs}>
-        <span className={styles.tabActive}>{t.profile.edit.generalInformation}</span>
-        <span className={styles.tab}>{t.profile.edit.devices}</span>
-        <span className={styles.tab}>{t.profile.edit.accountManagement}</span>
-        <span className={styles.tab}>{t.profile.edit.myPayments}</span>
-      </nav>
-
       <form className={styles.form} id={formId} noValidate onSubmit={handleSubmit(onSubmit)}>
         <h1 className={styles.visuallyHidden} id="edit-profile-title">
           {t.profile.edit.generalInformation}
@@ -63,14 +59,12 @@ export function EditProfileForm({
           name="username"
           rules={{ required: requiredFieldMessage }}
           render={({ field, fieldState }) => (
-            <div className={styles.textField}>
-              <Input
-                {...field}
-                autoComplete="username"
-                error={fieldState.error?.message}
-                label={t.profile.edit.username}
-              />
-            </div>
+            <Input
+              {...field}
+              autoComplete="username"
+              error={fieldState.error?.message}
+              label={t.profile.edit.username}
+            />
           )}
         />
 
@@ -79,14 +73,12 @@ export function EditProfileForm({
           name="firstName"
           rules={{ required: requiredFieldMessage }}
           render={({ field, fieldState }) => (
-            <div className={styles.textField}>
-              <Input
-                {...field}
-                autoComplete="given-name"
-                error={fieldState.error?.message}
-                label={t.profile.edit.firstName}
-              />
-            </div>
+            <Input
+              {...field}
+              autoComplete="given-name"
+              error={fieldState.error?.message}
+              label={t.profile.edit.firstName}
+            />
           )}
         />
 
@@ -95,14 +87,12 @@ export function EditProfileForm({
           name="lastName"
           rules={{ required: requiredFieldMessage }}
           render={({ field, fieldState }) => (
-            <div className={styles.textField}>
-              <Input
-                {...field}
-                autoComplete="family-name"
-                error={fieldState.error?.message}
-                label={t.profile.edit.lastName}
-              />
-            </div>
+            <Input
+              {...field}
+              autoComplete="family-name"
+              error={fieldState.error?.message}
+              label={t.profile.edit.lastName}
+            />
           )}
         />
 
@@ -131,7 +121,13 @@ export function EditProfileForm({
               <Select
                 errorMessage={fieldState.error?.message}
                 label={t.profile.edit.selectYourCountry}
-                onValueChange={field.onChange}
+                onValueChange={(country) => {
+                  if (country !== field.value) {
+                    setValue('city', '', { shouldDirty: true, shouldValidate: true })
+                  }
+
+                  field.onChange(country)
+                }}
                 options={countryOptions}
                 placeholder={t.profile.edit.country}
                 value={field.value}
@@ -144,11 +140,11 @@ export function EditProfileForm({
             name="city"
             render={({ field, fieldState }) => (
               <Select
-                disabled={!initialValues.country}
+                disabled={!selectedCountry || cityOptions.length === 0}
                 errorMessage={fieldState.error?.message}
                 label={t.profile.edit.selectYourCity}
                 onValueChange={field.onChange}
-                options={cityOptionsByCountryValue[initialValues.country] ?? []}
+                options={cityOptions}
                 placeholder={t.profile.edit.city}
                 value={field.value}
               />
