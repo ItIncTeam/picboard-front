@@ -232,3 +232,11 @@ state. Callbacks старого кандидата игнорируются; exp
 Details. Для responsive используются существующие `AdaptiveAppShell`, Profile/Post layouts и
 grids; отсутствующие значения не выдумываются. Подходящие компоненты переиспользуются, повреждённые
 frames и ограничения `get_design_context` фиксируются как пробелы, а не восстанавливаются догадками.
+
+### Решение 39. Read contract аватара
+
+Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
+использует только `avatar?.url`, а при `avatar === null` показывает fallback. URL подписанный,
+действует 15 минут и не является постоянным идентификатором. Каждый новый запрос `user`, `feed`
+или `post` с `avatar { url }` получает свежий URL, поэтому отдельный timer/refresh-manager не нужен.
+Upload/attach/replace/delete остаются backend-blocked.
