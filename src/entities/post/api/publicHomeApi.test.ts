@@ -18,7 +18,9 @@ describe('Public Home GraphQL boundary', () => {
 
     expect(compactDocument).toContain('query PublicHome { usersCount feed { ...PostFields } }')
     expect(compactDocument).toContain('attachments { fileId sortOrder file {')
-    expect(compactDocument).toContain('author { id username displayName profilePictureFileId }')
+    expect(compactDocument).toContain(
+      'author { id username displayName profilePictureFileId avatar { id url } }',
+    )
     expect(compactDocument).toContain('status url')
     expect(document).not.toMatch(/^\s+order$/m)
     expect(compactDocument).not.toContain('attachments { id')

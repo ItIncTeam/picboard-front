@@ -1,6 +1,6 @@
 # Sprint 05: журнал решений
 
-Статус: **GENERAL ARCHITECTURE AUDIT COMPLETE**. Ниже перечислены подтверждённые решения 1–38.
+Статус: **GENERAL ARCHITECTURE AUDIT COMPLETE**. Ниже перечислены подтверждённые решения 1–40.
 Рабочие шаги и проверки находятся в [плане frontend-задач](./02-frontend-task-breakdown.md).
 
 ### Решение 1. Адрес и показ поста
@@ -240,3 +240,13 @@ Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url
 действует 15 минут и не является постоянным идентификатором. Каждый новый запрос `user`, `feed`
 или `post` с `avatar { url }` получает свежий URL, поэтому отдельный timer/refresh-manager не нужен.
 Upload/attach/replace/delete остаются backend-blocked.
+
+### Решение 40. Live User / Me / UserOutput contract и Public User security
+
+Live gateway verification 2026-09-19 confirmed three separate boundaries: public `User`, private
+session `Me` and auth payload `UserOutput`. `user(id)`, `feed.author` и `post.author` возвращают
+public `User`; приватные `email`, `isConfirmed`, `confirmationCode` и `confirmationCodeExpDate`
+отсутствуют и отклоняются GraphQL validation. `signIn` и `exchangeOAuthCode` продолжают безопасно
+выбирать `email` и `isConfirmed` из `UserOutput`. Public author и session `Me` могут выбирать
+nullable `avatar { id url }`; `profilePictureFileId` не используется как URL. Security blocker
+закрыт, но Avatar upload/attach/replace/delete остаются backend-blocked.

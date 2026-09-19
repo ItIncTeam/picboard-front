@@ -101,8 +101,8 @@ Detailed flow:
 1. `selectUploadCandidates` returns current images that have `exported.file`.
 2. Build `initiateUploadBatch` input from candidates:
    - `clientUploadId` comes from candidate `imageId`;
-   - `originalName`, `mimeType` and `size` come from candidate `exportedFileInfo`, which is
-     `image.exported.fileInfo`;
+   - `originalName` comes from candidate `exportedFileInfo`;
+   - `mimeType` and `size` describe the exact `image.exported.file` sent by storage `PUT`;
    - `purpose` is always `POST_IMAGE` for posts;
    - browser `image/jpeg` maps to `MimeType.JPEG`;
    - browser `image/png` maps to `MimeType.PNG`.
@@ -138,6 +138,11 @@ Detailed flow:
 - `fileIds` for `createPost` must preserve `state.images` order.
 - Do not send original `image.file` when `image.exported.file` is required.
 - Do not add GraphQL Upload for post media.
+- Same-URL storage retries are bounded and apply only to network failures, `429` and `5xx`.
+- Storage `403`, an expired URL and a backend-confirmed retryable completion failure can request a
+  fresh presigned URL through `retryUpload` for the same `fileId` and exported `File`.
+- `retryUpload` is called for one failed file at a time. Its backend `attempt` is authoritative and
+  cannot exceed `5`.
 
 ## Error handling
 
@@ -145,19 +150,23 @@ The current implementation:
 
 - fail publish if `initiateUploadBatch` fails;
 - fail publish if any selected image has no returned descriptor;
-- mark an image as `failed` if its storage `PUT` fails;
+- keep already `ready` images successful while retrying only the selected failed image;
+- retry a storage `PUT` on the same URL for network failures, `429` and `5xx` with bounded backoff;
+- request a fresh URL for storage `403`, expired URLs and retryable backend completion failures;
 - call `completeUpload` only for successfully uploaded `{ fileId }` items;
-- fail publish if `completeUpload` returns `FAILED` for any selected file;
+- expose per-file retry when `completeUpload` returns `FAILED` with `retryable: true`;
+- require file replacement when `completeUpload` returns `FAILED` with `retryable: false`;
 - skip `createPost` unless all current images are `ready`.
 
-Retry, idempotency, resumable upload and expired `uploadUrl` recovery require a separate
-backend/product decision.
+The completion retry path does not branch on `failedReason` text. It retries `completeUpload`
+before requesting a new URL for a retryable completion failure. Resumable uploads and retrying a
+failed `createPost` remain outside this upload service.
 
 ## Upload service boundaries
 
 - Apollo cache updates are owned by post-create synchronization, not by the upload service.
 - UI progress indicators are owned by Create Post UI, not by the upload service.
-- Retry queue or resumable uploads.
+- Resumable uploads.
 - Draft persistence.
 - Post Feed/Profile cache refresh is owned by post-create synchronization.
 
@@ -165,9 +174,7 @@ backend/product decision.
 
 - Crop, filters and final export are implemented per image. Filters preserve the immutable cropped
   base and replace only the final exported artifact.
-- Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
-  already uploaded or orphan `READY` files should be completed, retried or cleaned up.
-- Expired `uploadUrl` recovery, retry queue, idempotency keys and resumable uploads are not
-  defined.
+- Cleanup of orphan backend files after an abandoned draft remains undefined.
+- Resumable uploads and `createPost` idempotency remain undefined.
 - Successful `createPost` uses the targeted Feed/Profile/Public Home synchronization described
   above; synchronization failure is isolated from publish success.

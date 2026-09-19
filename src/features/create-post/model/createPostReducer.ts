@@ -278,14 +278,19 @@ export function createPostReducer(
           ...uploadPatch,
         }
 
-        if (nextUpload.status !== 'failed' && !('error' in uploadPatch)) {
+        if (nextUpload.status !== 'failed') {
           delete nextUpload.error
+          delete nextUpload.retryable
+          delete nextUpload.retryMode
         }
 
         if (
           image.upload?.fileId === nextUpload.fileId &&
           image.upload?.uploadUrl === nextUpload.uploadUrl &&
           image.upload?.expiresAt === nextUpload.expiresAt &&
+          image.upload?.attempt === nextUpload.attempt &&
+          image.upload?.retryable === nextUpload.retryable &&
+          image.upload?.retryMode === nextUpload.retryMode &&
           image.upload?.status === nextUpload.status &&
           image.upload?.error === nextUpload.error
         ) {

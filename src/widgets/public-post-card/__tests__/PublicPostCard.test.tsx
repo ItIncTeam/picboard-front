@@ -23,6 +23,7 @@ type RenderResult = {
 
 const post: PublicPostCardModel = {
   author: {
+    avatar: null,
     displayName: '  Backend Author  ',
     id: 'owner-1',
     profilePictureFileId: 'avatar-file-1',
@@ -34,7 +35,7 @@ const post: PublicPostCardModel = {
   media: [{ alt: 'Post image', id: 'media-1', url: 'https://example.com/post.jpg' }],
 }
 
-function renderCard(): RenderResult {
+function renderCard(postToRender = post): RenderResult {
   const container = document.createElement('div')
   const root = createRoot(container)
 
@@ -43,7 +44,7 @@ function renderCard(): RenderResult {
   act(() =>
     root.render(
       <I18nProvider>
-        <PublicPostCard post={post} />
+        <PublicPostCard post={postToRender} />
       </I18nProvider>,
     ),
   )
@@ -95,5 +96,23 @@ describe('PublicPostCard', () => {
     act(() => toggle?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 
     expect(toggle?.textContent).toBe('Hide')
+  })
+
+  it('uses the public author avatar URL when available', () => {
+    const view = renderCard({
+      ...post,
+      author: {
+        ...post.author,
+        avatar: {
+          id: 'avatar-file-1',
+          url: 'https://example.com/avatar.jpg',
+        },
+      },
+    })
+    mountedRoots.push(view)
+
+    expect(
+      view.container.querySelector('[aria-label="Backend Author avatar"] img'),
+    ).toHaveAttribute('src', 'https://example.com/avatar.jpg')
   })
 })

@@ -1,5 +1,7 @@
 'use client'
 
+import Image from 'next/image'
+
 import { useI18n } from '@/shared/lib/i18n'
 import { formatRelativePostTime } from '../lib/formatRelativePostTime'
 import type { PublicPostCardModel } from '../model/types'
@@ -26,7 +28,11 @@ export function PublicPostCard({ post }: PublicPostCardProps) {
           className={styles.avatar}
           role="img"
         >
-          <span aria-hidden>{avatarFallback}</span>
+          {post.author.avatar ? (
+            <Image alt="" fill sizes="36px" src={post.author.avatar.url} unoptimized />
+          ) : (
+            <span aria-hidden>{avatarFallback}</span>
+          )}
         </span>
         <span className={styles.authorName}>{authorName}</span>
       </div>

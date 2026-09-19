@@ -70,6 +70,7 @@ export function CreatePostFlow({
   const cropExportingRef = useRef(false)
   const filterExportingRef = useRef(false)
   const cropExportRequestIdRef = useRef(0)
+  const publishRequestIdRef = useRef(0)
   const mountedRef = useRef(false)
 
   useCreatePostPreviewUrlCleanup(state.images)
@@ -92,6 +93,7 @@ export function CreatePostFlow({
     return () => {
       mountedRef.current = false
       cropExportRequestIdRef.current += 1
+      publishRequestIdRef.current += 1
       cropExportingRef.current = false
       filterExportingRef.current = false
     }
@@ -256,21 +258,31 @@ export function CreatePostFlow({
     }
   }
 
-  const handlePublish = async () => {
+  const runPublish = async (retryImageId?: string) => {
     if (!canPublish || state.isPublishing) {
       return
     }
 
     setPublishError(null)
     dispatch({ type: 'setPublishing', isPublishing: true })
+    const requestId = publishRequestIdRef.current + 1
+    publishRequestIdRef.current = requestId
+
+    const isRequestCurrent = () => mountedRef.current && publishRequestIdRef.current === requestId
 
     if (onPublishAction) {
       try {
         await onPublishAction(state)
       } catch (error) {
-        setPublishError(error instanceof Error ? error.message : t.createPost.errors.publishFailed)
+        if (isRequestCurrent()) {
+          setPublishError(
+            error instanceof Error ? error.message : t.createPost.errors.publishFailed,
+          )
+        }
       } finally {
-        dispatch({ type: 'setPublishing', isPublishing: false })
+        if (isRequestCurrent()) {
+          dispatch({ type: 'setPublishing', isPublishing: false })
+        }
       }
 
       return
@@ -280,13 +292,32 @@ export function CreatePostFlow({
     let createdPostOwnerId: string
 
     try {
-      const fileIds = await uploadCreatePostImages(state, { dispatch })
+      const fileIds = await uploadCreatePostImages(state, { dispatch, retryImageId })
+
+      if (!isRequestCurrent()) {
+        return
+      }
+
+      if (fileIds.length !== state.images.length) {
+        dispatch({ type: 'setPublishing', isPublishing: false })
+
+        return
+      }
+
       const description = state.caption.trim() || undefined
       const createdPost = await createPost({ description, fileIds })
+
+      if (!isRequestCurrent()) {
+        return
+      }
 
       createdPostId = createdPost.id
       createdPostOwnerId = createdPost.ownerId
     } catch (error) {
+      if (!isRequestCurrent()) {
+        return
+      }
+
       setPublishError(error instanceof Error ? error.message : t.createPost.errors.publishFailed)
       dispatch({ type: 'setPublishing', isPublishing: false })
 
@@ -306,6 +337,19 @@ export function CreatePostFlow({
     })
   }
 
+  const handlePublish = () => runPublish()
+
+  const handleRetryUpload = (imageId: string) => runPublish(imageId)
+
+  const handleReplaceUpload = (imageId: string) => {
+    if (state.isPublishing) {
+      return
+    }
+
+    dispatch({ type: 'removeImage', imageId })
+    dispatch({ type: 'goToStep', step: 'upload' })
+  }
+
   const handleClose = () => {
     if (cropExportingRef.current) {
       invalidateCropExport()
@@ -321,6 +365,7 @@ export function CreatePostFlow({
 
   const handleDiscard = () => {
     invalidateCropExport()
+    publishRequestIdRef.current += 1
     dispatch({ type: 'reset' })
     onCloseAction?.()
   }
@@ -361,7 +406,8 @@ export function CreatePostFlow({
           onCropGeometryChange={handleCropGeometryChange}
           onImageExported={handleImageExported}
           onRemoveImage={handleRemoveImage}
-          onRetryUpload={handlePublish}
+          onReplaceUpload={handleReplaceUpload}
+          onRetryUpload={handleRetryUpload}
           onSetActiveImage={handleSetActiveImage}
           state={state}
         />
@@ -502,7 +548,8 @@ type RenderStepArgs = {
   onCropGeometryChange: (imageId: string, geometry: CreatePostCropGeometry) => void
   onImageExported: (imageId: string, exported: CreatePostImage['exported']) => void
   onRemoveImage: (imageId: string) => void
-  onRetryUpload: () => void | Promise<void>
+  onReplaceUpload: (imageId: string) => void
+  onRetryUpload: (imageId: string) => void | Promise<void>
   onSetActiveImage: (imageId: string | null) => void
   state: CreatePostState
 }
@@ -519,6 +566,7 @@ function StepContent({
   onCropGeometryChange,
   onImageExported,
   onRemoveImage,
+  onReplaceUpload,
   onRetryUpload,
   onSetActiveImage,
   state,
@@ -570,6 +618,7 @@ function StepContent({
           images={state.images}
           isPublishing={state.isPublishing}
           onCaptionChange={onCaptionChange}
+          onReplaceUpload={onReplaceUpload}
           onRetryUpload={onRetryUpload}
         />
       )

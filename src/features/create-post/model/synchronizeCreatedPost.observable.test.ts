@@ -24,6 +24,7 @@ function createConnection(postIds: string[]): PostConnection {
         __typename: 'PostEntity',
         attachments: [],
         author: {
+          avatar: null,
           displayName: null,
           id: 'owner-1',
           profilePictureFileId: null,

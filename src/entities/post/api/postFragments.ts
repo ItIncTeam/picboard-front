@@ -10,6 +10,10 @@ export const postFieldsFragment = gql`
       username
       displayName
       profilePictureFileId
+      avatar {
+        id
+        url
+      }
     }
     attachments {
       fileId

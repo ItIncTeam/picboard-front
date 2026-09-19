@@ -1,19 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createPostInitialState } from './createPostReducer'
-import type { CreatePostImage, CreatePostState } from './createPostTypes'
+import { createPostInitialState, createPostReducer } from './createPostReducer'
+import { uploadCreatePostImages } from './createPostUploadService'
+import type {
+  CreatePostAction,
+  CreatePostImage,
+  CreatePostState,
+  CreatePostUploadPatch,
+} from './createPostTypes'
 
 const apiMocks = vi.hoisted(() => ({
   completeUpload: vi.fn(),
   initiateUploadBatch: vi.fn(),
+  retryUpload: vi.fn(),
 }))
 
 vi.mock('../api', () => ({
   completeUpload: apiMocks.completeUpload,
   initiateUploadBatch: apiMocks.initiateUploadBatch,
+  retryUpload: apiMocks.retryUpload,
 }))
-
-import { uploadCreatePostImages } from '@/features/create-post'
 
 function createExportedImage(id: string, fileName: string, type = 'image/jpeg'): CreatePostImage {
   const file = new File([id], fileName, { type })
@@ -89,13 +95,45 @@ function createState(images: CreatePostImage[]): CreatePostState {
   }
 }
 
+function createDispatchHarness(initialState: CreatePostState) {
+  let state = initialState
+  const actions: CreatePostAction[] = []
+
+  return {
+    actions,
+    dispatch(action: CreatePostAction) {
+      actions.push(action)
+      state = createPostReducer(state, action)
+    },
+    getState: () => state,
+  }
+}
+
+function getUploadPatches(actions: CreatePostAction[]): CreatePostUploadPatch[] {
+  return actions.flatMap((action) =>
+    action.type === 'applyUploadBatchState' ? action.patches : [],
+  )
+}
+
+function mockReadyCompletion(fileId: string) {
+  apiMocks.completeUpload.mockResolvedValueOnce([
+    {
+      failedReason: null,
+      fileId,
+      retryable: false,
+      status: 'READY',
+    },
+  ])
+}
+
 describe('create post upload service', () => {
   afterEach(() => {
     apiMocks.completeUpload.mockReset()
     apiMocks.initiateUploadBatch.mockReset()
+    apiMocks.retryUpload.mockReset()
   })
 
-  it('uses image id as clientUploadId and returns ready file ids in image order', async () => {
+  it('keeps successful upload behavior and returns ready file ids in attachment order', async () => {
     const firstImage = createExportedImage('image-first', 'first.jpg')
     const secondImage = createExportedImage('image-second', 'second.png', 'image/png')
     const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
@@ -103,27 +141,19 @@ describe('create post upload service', () => {
     apiMocks.initiateUploadBatch.mockResolvedValueOnce([
       {
         clientUploadId: secondImage.id,
-        expiresAt: '2026-07-04T12:10:00.000Z',
+        expiresAt: '2099-07-04T12:10:00.000Z',
         fileId: 'file-second',
         uploadUrl: 'https://storage.example/second',
       },
       {
         clientUploadId: firstImage.id,
-        expiresAt: '2026-07-04T12:00:00.000Z',
+        expiresAt: '2099-07-04T12:00:00.000Z',
         fileId: 'file-first',
         uploadUrl: 'https://storage.example/first',
       },
     ])
-    apiMocks.completeUpload.mockResolvedValueOnce([
-      {
-        fileId: 'file-second',
-        status: 'READY',
-      },
-      {
-        fileId: 'file-first',
-        status: 'READY',
-      },
-    ])
+    mockReadyCompletion('file-first')
+    mockReadyCompletion('file-second')
 
     await expect(
       uploadCreatePostImages(createState([firstImage, secondImage]), { fetcher }),
@@ -135,157 +165,513 @@ describe('create post upload service', () => {
         originalName: 'first.jpg',
         purpose: 'POST_IMAGE',
         mimeType: 'JPEG',
-        size: firstImage.exported?.fileInfo.size,
+        size: firstImage.exported?.file.size,
       },
       {
         clientUploadId: secondImage.id,
         originalName: 'second.png',
         purpose: 'POST_IMAGE',
         mimeType: 'PNG',
-        size: secondImage.exported?.fileInfo.size,
+        size: secondImage.exported?.file.size,
       },
     ])
     expect(fetcher).toHaveBeenNthCalledWith(
       1,
       'https://storage.example/first',
       expect.objectContaining({
-        method: 'PUT',
         body: firstImage.exported?.file,
+        headers: { 'Content-Type': 'image/jpeg' },
+        method: 'PUT',
       }),
     )
     expect(fetcher).toHaveBeenNthCalledWith(
       2,
       'https://storage.example/second',
       expect.objectContaining({
-        method: 'PUT',
         body: secondImage.exported?.file,
+        headers: { 'Content-Type': 'image/png' },
+        method: 'PUT',
       }),
     )
-    expect(apiMocks.completeUpload).toHaveBeenCalledWith([
-      { fileId: 'file-first' },
-      { fileId: 'file-second' },
-    ])
+    expect(apiMocks.completeUpload).toHaveBeenNthCalledWith(1, [{ fileId: 'file-first' }])
+    expect(apiMocks.completeUpload).toHaveBeenNthCalledWith(2, [{ fileId: 'file-second' }])
   })
 
-  it('uploads exported file and uses exported metadata when original file differs', async () => {
+  it('uploads the exact exported blob and derives size and Content-Type from it', async () => {
     const image = createImageWithDifferentExportedFile()
     const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
 
     apiMocks.initiateUploadBatch.mockResolvedValueOnce([
       {
         clientUploadId: image.id,
-        expiresAt: '2026-07-04T12:00:00.000Z',
+        expiresAt: '2099-07-04T12:00:00.000Z',
         fileId: 'file-edited',
         uploadUrl: 'https://storage.example/edited',
       },
     ])
-    apiMocks.completeUpload.mockResolvedValueOnce([
-      {
-        fileId: 'file-edited',
-        status: 'READY',
-      },
-    ])
+    mockReadyCompletion('file-edited')
 
     await uploadCreatePostImages(createState([image]), { fetcher })
 
-    expect(image.file).not.toBe(image.exported?.file)
     expect(apiMocks.initiateUploadBatch).toHaveBeenCalledWith([
-      {
-        clientUploadId: image.id,
-        originalName: image.exported?.fileInfo.name,
-        purpose: 'POST_IMAGE',
+      expect.objectContaining({
         mimeType: 'PNG',
-        size: image.exported?.fileInfo.size,
-      },
+        size: image.exported?.file.size,
+      }),
     ])
     expect(fetcher).toHaveBeenCalledWith(
       'https://storage.example/edited',
       expect.objectContaining({
-        headers: {
-          'Content-Type': image.exported?.file.type,
-        },
         body: image.exported?.file,
+        headers: { 'Content-Type': image.exported?.file.type },
       }),
     )
   })
 
-  it('throws when initiateUploadBatch does not return a payload for image id', async () => {
+  it.each([
+    ['network error', 'network'],
+    ['429', 429],
+    ['5xx', 503],
+  ] as const)('retries a %s on the same presigned URL', async (_label, failure) => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    const fetcher = vi.fn()
+    const wait = vi.fn(async () => undefined)
+
+    if (failure === 'network') {
+      fetcher.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    } else {
+      fetcher.mockResolvedValueOnce(new Response(null, { status: failure }))
+    }
+
+    fetcher.mockResolvedValueOnce(new Response(null, { status: 200 }))
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt: '2099-07-04T12:00:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/first',
+      },
+    ])
+    mockReadyCompletion('file-1')
+
+    await expect(uploadCreatePostImages(createState([image]), { fetcher, wait })).resolves.toEqual([
+      'file-1',
+    ])
+
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(fetcher.mock.calls[0]?.[0]).toBe('https://storage.example/first')
+    expect(fetcher.mock.calls[1]?.[0]).toBe('https://storage.example/first')
+    expect(wait).toHaveBeenCalledTimes(1)
+    expect(apiMocks.retryUpload).not.toHaveBeenCalled()
+  })
+
+  it('requests a fresh URL after 403 and keeps the same fileId and exported blob', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 403 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt: '2099-07-04T12:00:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/expired',
+      },
+    ])
+    apiMocks.retryUpload.mockResolvedValueOnce([
+      {
+        attempt: 2,
+        expiresAt: '2099-07-04T12:15:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/fresh',
+      },
+    ])
+    mockReadyCompletion('file-1')
+
+    await expect(uploadCreatePostImages(createState([image]), { fetcher })).resolves.toEqual([
+      'file-1',
+    ])
+
+    expect(apiMocks.retryUpload).toHaveBeenCalledWith([{ fileId: 'file-1' }])
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      'https://storage.example/fresh',
+      expect.objectContaining({ body: image.exported?.file }),
+    )
+  })
+
+  it('returns a retryUpload rejection to a recoverable failed state and recovers on Retry', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    const state = createState([image])
+    const harness = createDispatchHarness(state)
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 403 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt: '2099-07-04T12:00:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/expired',
+      },
+    ])
+    apiMocks.retryUpload
+      .mockRejectedValueOnce(new Error('Upload retry unavailable.'))
+      .mockResolvedValueOnce([
+        {
+          attempt: 2,
+          expiresAt: '2099-07-04T12:15:00.000Z',
+          fileId: 'file-1',
+          uploadUrl: 'https://storage.example/fresh',
+        },
+      ])
+
+    await expect(
+      uploadCreatePostImages(state, { dispatch: harness.dispatch, fetcher }),
+    ).rejects.toThrow('Upload retry unavailable.')
+    expect(harness.getState().images[0]?.upload).toEqual(
+      expect.objectContaining({
+        fileId: 'file-1',
+        retryable: true,
+        retryMode: 'new-url',
+        status: 'failed',
+        uploadUrl: 'https://storage.example/expired',
+      }),
+    )
+
+    mockReadyCompletion('file-1')
+
+    await expect(
+      uploadCreatePostImages(harness.getState(), {
+        dispatch: harness.dispatch,
+        fetcher,
+        retryImageId: image.id,
+      }),
+    ).resolves.toEqual(['file-1'])
+
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      'https://storage.example/fresh',
+      expect.objectContaining({ body: image.exported?.file }),
+    )
+    expect(harness.getState().images[0]?.upload?.status).toBe('ready')
+  })
+
+  it('renews an expired URL before the first PUT', async () => {
     const image = createExportedImage('image-1', 'first.jpg')
     const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt: '2026-07-04T12:00:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/expired',
+      },
+    ])
+    apiMocks.retryUpload.mockResolvedValueOnce([
+      {
+        attempt: 2,
+        expiresAt: '2026-07-04T12:15:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/fresh',
+      },
+    ])
+    mockReadyCompletion('file-1')
+
+    await expect(
+      uploadCreatePostImages(createState([image]), {
+        fetcher,
+        now: () => Date.parse('2026-07-04T12:05:00.000Z'),
+      }),
+    ).resolves.toEqual(['file-1'])
+
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://storage.example/fresh',
+      expect.objectContaining({ body: image.exported?.file }),
+    )
+  })
+
+  it('renews a URL that expires between same-URL PUT attempts', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    const expiresAt = '2026-07-04T12:00:00.150Z'
+    const beforeExpiry = Date.parse('2026-07-04T12:00:00.000Z')
+    const afterExpiry = Date.parse('2026-07-04T12:00:00.200Z')
+    const now = vi
+      .fn()
+      .mockReturnValueOnce(beforeExpiry)
+      .mockReturnValueOnce(beforeExpiry)
+      .mockReturnValue(afterExpiry)
+    const wait = vi.fn(async () => undefined)
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt,
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/expiring',
+      },
+    ])
+    apiMocks.retryUpload.mockResolvedValueOnce([
+      {
+        attempt: 2,
+        expiresAt: '2026-07-04T12:15:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/fresh',
+      },
+    ])
+    mockReadyCompletion('file-1')
+
+    await expect(
+      uploadCreatePostImages(createState([image]), { fetcher, now, wait }),
+    ).resolves.toEqual(['file-1'])
+
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(fetcher.mock.calls[0]?.[0]).toBe('https://storage.example/expiring')
+    expect(fetcher.mock.calls[1]?.[0]).toBe('https://storage.example/fresh')
+    expect(apiMocks.retryUpload).toHaveBeenCalledWith([{ fileId: 'file-1' }])
+  })
+
+  it('does not upload files that are already READY', async () => {
+    const readyImage = createExportedImage('image-ready', 'ready.jpg')
+    readyImage.upload = {
+      fileId: 'file-ready',
+      retryable: false,
+      status: 'ready',
+    }
+    const pendingImage = createExportedImage('image-pending', 'pending.jpg')
+    const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: pendingImage.id,
+        expiresAt: '2099-07-04T12:00:00.000Z',
+        fileId: 'file-pending',
+        uploadUrl: 'https://storage.example/pending',
+      },
+    ])
+    mockReadyCompletion('file-pending')
+
+    await expect(
+      uploadCreatePostImages(createState([readyImage, pendingImage]), { fetcher }),
+    ).resolves.toEqual(['file-ready', 'file-pending'])
+
+    expect(apiMocks.initiateUploadBatch).toHaveBeenCalledWith([
+      expect.objectContaining({ clientUploadId: pendingImage.id }),
+    ])
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    expect(apiMocks.completeUpload).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries completion before requesting a fresh URL for a retryable backend failure', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    image.upload = {
+      expiresAt: '2099-07-04T12:00:00.000Z',
+      fileId: 'file-1',
+      retryable: true,
+      retryMode: 'complete',
+      status: 'failed',
+      uploadUrl: 'https://storage.example/original',
+    }
+    const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
+
+    apiMocks.completeUpload
+      .mockResolvedValueOnce([
+        {
+          failedReason: 'Backend verification is still pending',
+          fileId: 'file-1',
+          retryable: true,
+          status: 'FAILED',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          failedReason: null,
+          fileId: 'file-1',
+          retryable: false,
+          status: 'READY',
+        },
+      ])
+    apiMocks.retryUpload.mockResolvedValueOnce([
+      {
+        attempt: 2,
+        expiresAt: '2099-07-04T12:15:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/fresh',
+      },
+    ])
+
+    await expect(
+      uploadCreatePostImages(createState([image]), {
+        fetcher,
+        retryImageId: image.id,
+      }),
+    ).resolves.toEqual(['file-1'])
+
+    expect(apiMocks.completeUpload).toHaveBeenNthCalledWith(1, [{ fileId: 'file-1' }])
+    expect(apiMocks.retryUpload).toHaveBeenCalledWith([{ fileId: 'file-1' }])
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://storage.example/fresh',
+      expect.objectContaining({ body: image.exported?.file }),
+    )
+  })
+
+  it('does not retry a non-retryable FAILED file', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    image.upload = {
+      expiresAt: '2099-07-04T12:00:00.000Z',
+      fileId: 'file-1',
+      retryable: false,
+      status: 'failed',
+      uploadUrl: 'https://storage.example/first',
+    }
+    const fetcher = vi.fn()
+
+    await expect(
+      uploadCreatePostImages(createState([image]), {
+        fetcher,
+        retryImageId: image.id,
+      }),
+    ).resolves.toEqual([])
+
+    expect(apiMocks.completeUpload).not.toHaveBeenCalled()
+    expect(apiMocks.retryUpload).not.toHaveBeenCalled()
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
+  it('stops fresh-URL retries at backend attempt 5', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    image.upload = {
+      attempt: 5,
+      expiresAt: '2099-07-04T12:00:00.000Z',
+      fileId: 'file-1',
+      retryable: true,
+      retryMode: 'new-url',
+      status: 'failed',
+      uploadUrl: 'https://storage.example/attempt-5',
+    }
+    const state = createState([image])
+    const harness = createDispatchHarness(state)
+
+    await expect(
+      uploadCreatePostImages(state, {
+        dispatch: harness.dispatch,
+        retryImageId: image.id,
+      }),
+    ).resolves.toEqual([])
+
+    expect(apiMocks.retryUpload).not.toHaveBeenCalled()
+    expect(harness.getState().images[0]?.upload).toEqual(
+      expect.objectContaining({ attempt: 5, retryable: false, status: 'failed' }),
+    )
+  })
+
+  it('allows completion-only recovery at backend attempt 5', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    image.upload = {
+      attempt: 5,
+      expiresAt: '2099-07-04T12:00:00.000Z',
+      fileId: 'file-1',
+      status: 'uploaded',
+      uploadUrl: 'https://storage.example/attempt-5',
+    }
+    const state = createState([image])
+    const harness = createDispatchHarness(state)
+    const fetcher = vi.fn()
+
+    apiMocks.completeUpload
+      .mockResolvedValueOnce([
+        {
+          failedReason: 'Verification is not ready yet.',
+          fileId: 'file-1',
+          retryable: true,
+          status: 'FAILED',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          failedReason: null,
+          fileId: 'file-1',
+          retryable: false,
+          status: 'READY',
+        },
+      ])
+
+    await expect(
+      uploadCreatePostImages(state, { dispatch: harness.dispatch, fetcher }),
+    ).resolves.toEqual([])
+    expect(harness.getState().images[0]?.upload).toEqual(
+      expect.objectContaining({
+        attempt: 5,
+        retryable: true,
+        retryMode: 'complete',
+        status: 'failed',
+      }),
+    )
+
+    await expect(
+      uploadCreatePostImages(harness.getState(), {
+        dispatch: harness.dispatch,
+        fetcher,
+        retryImageId: image.id,
+      }),
+    ).resolves.toEqual(['file-1'])
+
+    expect(apiMocks.completeUpload).toHaveBeenCalledTimes(2)
+    expect(apiMocks.retryUpload).not.toHaveBeenCalled()
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
+  it('bounds same-URL retries and exposes a retryable file state', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
+    const state = createState([image])
+    const harness = createDispatchHarness(state)
+    const fetcher = vi.fn(async () => new Response(null, { status: 500 }))
+    const wait = vi.fn(async () => undefined)
+
+    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
+      {
+        clientUploadId: image.id,
+        expiresAt: '2099-07-04T12:00:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/first',
+      },
+    ])
+
+    await expect(
+      uploadCreatePostImages(state, { dispatch: harness.dispatch, fetcher, wait }),
+    ).resolves.toEqual([])
+
+    expect(fetcher).toHaveBeenCalledTimes(3)
+    expect(wait).toHaveBeenCalledTimes(2)
+    expect(apiMocks.retryUpload).not.toHaveBeenCalled()
+    expect(getUploadPatches(harness.actions).at(-1)).toEqual(
+      expect.objectContaining({
+        imageId: image.id,
+        retryable: true,
+        retryMode: 'same-url',
+        status: 'failed',
+      }),
+    )
+  })
+
+  it('throws when initiateUploadBatch omits an image descriptor', async () => {
+    const image = createExportedImage('image-1', 'first.jpg')
 
     apiMocks.initiateUploadBatch.mockResolvedValueOnce([])
 
-    await expect(uploadCreatePostImages(createState([image]), { fetcher })).rejects.toThrow(
+    await expect(uploadCreatePostImages(createState([image]))).rejects.toThrow(
       'Upload initialization did not return a descriptor for image image-1.',
     )
-    expect(fetcher).not.toHaveBeenCalled()
     expect(apiMocks.completeUpload).not.toHaveBeenCalled()
-  })
-
-  it('throws when storage PUT fails', async () => {
-    const image = createExportedImage('image-1', 'first.jpg')
-    const fetcher = vi.fn(async () => new Response(null, { status: 500 }))
-
-    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
-      {
-        clientUploadId: image.id,
-        expiresAt: '2026-07-04T12:00:00.000Z',
-        fileId: 'file-1',
-        uploadUrl: 'https://storage.example/first',
-      },
-    ])
-
-    await expect(uploadCreatePostImages(createState([image]), { fetcher })).rejects.toThrow(
-      'Storage upload failed for image image-1.',
-    )
-    expect(apiMocks.completeUpload).not.toHaveBeenCalled()
-  })
-
-  it('throws when completeUpload does not return READY', async () => {
-    const image = createExportedImage('image-1', 'first.jpg')
-    const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
-
-    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
-      {
-        clientUploadId: image.id,
-        expiresAt: '2026-07-04T12:00:00.000Z',
-        fileId: 'file-1',
-        uploadUrl: 'https://storage.example/first',
-      },
-    ])
-    apiMocks.completeUpload.mockResolvedValueOnce([
-      {
-        fileId: 'file-1',
-        status: 'FAILED',
-      },
-    ])
-
-    await expect(uploadCreatePostImages(createState([image]), { fetcher })).rejects.toThrow(
-      'Upload completion for file file-1 returned FAILED.',
-    )
-  })
-
-  it('does not treat UPLOADED as ready for createPost', async () => {
-    const image = createExportedImage('image-1', 'first.jpg')
-    const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
-
-    apiMocks.initiateUploadBatch.mockResolvedValueOnce([
-      {
-        clientUploadId: image.id,
-        expiresAt: '2026-07-04T12:00:00.000Z',
-        fileId: 'file-1',
-        uploadUrl: 'https://storage.example/first',
-      },
-    ])
-    apiMocks.completeUpload.mockResolvedValueOnce([
-      {
-        fileId: 'file-1',
-        status: 'UPLOADED',
-      },
-    ])
-
-    await expect(uploadCreatePostImages(createState([image]), { fetcher })).rejects.toThrow(
-      'Upload completion for file file-1 returned UPLOADED.',
-    )
   })
 })

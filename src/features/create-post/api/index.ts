@@ -1,11 +1,14 @@
 export {
   completeUpload,
   initiateUploadBatch,
+  retryUpload,
   type CompleteUploadInput,
   type CompleteUploadPayload,
   type FileStatus,
   type InitiateUploadInput,
   type InitiateUploadPayload,
+  type RetryUploadInput,
+  type RetryUploadPayload,
   type UploadMimeType,
   type UploadPurpose,
 } from './createPostUploadApi'

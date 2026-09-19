@@ -154,6 +154,9 @@
 }
 
 .avatar {
+  position: relative;
+
+  overflow: hidden;
   display: grid;
   place-items: center;
 
@@ -166,6 +169,10 @@
   color: var(--color-text-inverse);
 
   background: var(--color-primary);
+}
+
+.avatarImage {
+  object-fit: cover;
 }
 
 .authorName {

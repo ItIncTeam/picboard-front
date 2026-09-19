@@ -3,10 +3,17 @@ scalar DateTime
 type User {
   id: ID!
   posts: [PostEntity]
+  username: String!
+  displayName: String
+  bio: String
+  profilePictureFileId: ID
+  avatar: File
+}
+
+type Me {
+  id: ID!
   email: String!
   username: String!
-  confirmationCode: String
-  confirmationCodeExpDate: DateTime
   isConfirmed: Boolean!
   displayName: String
   bio: String
@@ -22,7 +29,7 @@ type UserOutput {
 }
 
 type Query {
-  me: User
+  me: Me
   user(id: String!): User
   usersCount: Int!
   feed: [PostEntity!]!
@@ -42,6 +49,7 @@ type Mutation {
   exchangeOAuthCode(input: OAuthExchangeCodeInput!): SignInPayload!
   initiateUploadBatch(input: [InitiateUploadInput!]!): [InitiateUploadPayload!]!
   completeUpload(input: [CompleteUploadInput!]!): [CompleteUploadPayload!]!
+  retryUpload(input: [RetryUploadInput!]!): [RetryUploadPayload!]!
   createPost(input: CreatePostInput!): PostEntity!
   updatePostDescription(input: UpdatePostDescriptionInput!): PostEntity!
   deletePost(input: DeletePostInput!): Boolean!
@@ -111,6 +119,10 @@ input CompleteUploadInput {
   fileId: String!
 }
 
+input RetryUploadInput {
+  fileId: String!
+}
+
 input CreatePostInput {
   fileIds: [ID!]!
   description: String
@@ -137,7 +149,7 @@ type SignUpPayload {
 }
 
 type SignInPayload {
-  user: User!
+  user: UserOutput!
   accessToken: String!
 }
 
@@ -183,6 +195,15 @@ type InitiateUploadPayload {
 type CompleteUploadPayload {
   fileId: String!
   status: FileStatus!
+  failedReason: String
+  retryable: Boolean!
+}
+
+type RetryUploadPayload {
+  fileId: String!
+  uploadUrl: String!
+  expiresAt: DateTime!
+  attempt: Int!
 }
 
 type PostAttachmentEntity {

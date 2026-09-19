@@ -617,6 +617,8 @@ describe('createPostReducer', () => {
       ...firstImage,
       upload: {
         fileId: 'file-1',
+        retryable: true,
+        retryMode: 'same-url',
         status: 'failed',
         error: 'Upload failed',
       },

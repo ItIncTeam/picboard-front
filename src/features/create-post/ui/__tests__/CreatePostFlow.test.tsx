@@ -1,4 +1,4 @@
-import { act, StrictMode, useImperativeHandle } from 'react'
+import { act, createRef, StrictMode, useImperativeHandle } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -13,7 +13,7 @@ import {
 } from '@/features/create-post'
 import { I18nProvider } from '@/shared/lib/i18n'
 
-import { CreatePostFlow } from '../CreatePostFlow'
+import { CreatePostFlow, type CreatePostFlowHandle } from '../CreatePostFlow'
 
 type UploadStepBoundaryProps = {
   activeImageId: string | null
@@ -56,7 +56,8 @@ type PublicationStepBoundaryProps = {
   images: CreatePostImage[]
   isPublishing: boolean
   onCaptionChange: (caption: string) => void
-  onRetryUpload: () => Promise<void> | void
+  onReplaceUpload: (imageId: string) => void
+  onRetryUpload: (imageId: string) => Promise<void> | void
 }
 
 const stepBoundaries = vi.hoisted(() => ({
@@ -270,11 +271,13 @@ function createState(overrides: Partial<CreatePostState> = {}): CreatePostState 
 }
 
 function renderCreatePostFlow({
+  closeRequestRef,
   initialState,
   onCloseAction = vi.fn(),
   onPublishAction,
   strictMode = false,
 }: {
+  closeRequestRef?: React.Ref<CreatePostFlowHandle>
   initialState?: CreatePostState
   onCloseAction?: () => void
   onPublishAction?: (state: CreatePostState) => Promise<void> | void
@@ -288,6 +291,7 @@ function renderCreatePostFlow({
   act(() => {
     const flow = (
       <CreatePostFlow
+        closeRequestRef={closeRequestRef}
         initialState={initialState}
         onCloseAction={onCloseAction}
         onPublishAction={onPublishAction}
@@ -1510,6 +1514,7 @@ describe('CreatePostFlow', () => {
     expect(stepBoundaries.publication?.images).toEqual([image])
     expect(stepBoundaries.publication?.caption).toBe('Initial caption')
     expect(stepBoundaries.publication?.isPublishing).toBe(false)
+    expect(stepBoundaries.publication?.onReplaceUpload).toEqual(expect.any(Function))
     expect(stepBoundaries.publication?.onRetryUpload).toEqual(expect.any(Function))
 
     act(() => {
@@ -1615,6 +1620,41 @@ describe('CreatePostFlow', () => {
     })
   })
 
+  it('does not create a post when a deferred upload resolves after Discard', async () => {
+    const uploadReady = createDeferred<string[]>()
+    const closeRequestRef = createRef<CreatePostFlowHandle>()
+    const onCloseAction = vi.fn()
+    const image = createExportedImage()
+
+    publishMocks.uploadCreatePostImages.mockReturnValueOnce(uploadReady.promise)
+
+    const view = renderCreatePostFlow({
+      closeRequestRef,
+      initialState: createState({
+        activeImageId: image.id,
+        images: [image],
+        step: 'publication',
+      }),
+      onCloseAction,
+    })
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
+
+    act(() => closeRequestRef.current?.requestClose())
+    clickButton(getButton(view.container, 'Discard'))
+
+    await act(async () => {
+      uploadReady.resolve(['file-1'])
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(publishMocks.createPost).not.toHaveBeenCalled()
+    expect(publishMocks.synchronizeCreatedPost).not.toHaveBeenCalled()
+    expect(onCloseAction).toHaveBeenCalledTimes(1)
+  })
+
   it('retries publish through the publication boundary', async () => {
     const onPublishAction = vi.fn()
     const image = createExportedImage()
@@ -1630,7 +1670,7 @@ describe('CreatePostFlow', () => {
     mountedRoots.push(view)
 
     await act(async () => {
-      await stepBoundaries.publication?.onRetryUpload()
+      await stepBoundaries.publication?.onRetryUpload(image.id)
     })
 
     expect(onPublishAction).toHaveBeenCalledTimes(1)
@@ -1645,6 +1685,8 @@ describe('CreatePostFlow', () => {
       upload: {
         error: 'Storage upload failed.',
         fileId: 'stale-file',
+        retryable: true,
+        retryMode: 'same-url',
         status: 'failed',
       },
     }
@@ -1685,13 +1727,20 @@ describe('CreatePostFlow', () => {
     expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
       error: 'Storage upload failed.',
       fileId: 'stale-file',
+      retryable: true,
+      retryMode: 'same-url',
       status: 'failed',
     })
 
     await act(async () => {
-      retryResult = stepBoundaries.publication?.onRetryUpload()
+      retryResult = stepBoundaries.publication?.onRetryUpload(image.id)
       await Promise.resolve()
     })
+
+    expect(publishMocks.uploadCreatePostImages).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ retryImageId: image.id }),
+    )
 
     expect(stepBoundaries.publication?.images[0]?.upload).toEqual({
       fileId: 'stale-file',
@@ -1715,6 +1764,34 @@ describe('CreatePostFlow', () => {
     })
   })
 
+  it('returns a non-retryable failed file to image selection', () => {
+    const image = createExportedImage()
+    const view = renderCreatePostFlow({
+      initialState: createState({
+        activeImageId: image.id,
+        images: [
+          {
+            ...image,
+            upload: {
+              error: 'The file must be replaced.',
+              fileId: 'file-1',
+              retryable: false,
+              status: 'failed',
+            },
+          },
+        ],
+        step: 'publication',
+      }),
+    })
+
+    mountedRoots.push(view)
+
+    act(() => stepBoundaries.publication?.onReplaceUpload(image.id))
+
+    expect(getHeaderTitle(view.container)).toBe('Add Photo')
+    expect(stepBoundaries.upload?.images).toEqual([])
+  })
+
   it('does not retry publish while publishing is already in progress', async () => {
     const onPublishAction = vi.fn()
     const image = createExportedImage()
@@ -1731,7 +1808,7 @@ describe('CreatePostFlow', () => {
     mountedRoots.push(view)
 
     await act(async () => {
-      await stepBoundaries.publication?.onRetryUpload()
+      await stepBoundaries.publication?.onRetryUpload(image.id)
     })
 
     expect(onPublishAction).not.toHaveBeenCalled()
@@ -1754,6 +1831,7 @@ describe('CreatePostFlow', () => {
       description: 'Ready to publish',
       attachments: [],
       author: {
+        avatar: null,
         displayName: 'Backend Author',
         id: 'user-1',
         profilePictureFileId: null,
@@ -1788,6 +1866,26 @@ describe('CreatePostFlow', () => {
     expect(onCloseAction).toHaveBeenCalledTimes(1)
   })
 
+  it('does not create a post until every attachment is READY', async () => {
+    const firstImage = createImage({ id: 'image-1', exported: createExportedPayload() })
+    const secondImage = createImage({ id: 'image-2', exported: createExportedPayload() })
+    const initialState = createState({
+      activeImageId: firstImage.id,
+      images: [firstImage, secondImage],
+      step: 'publication',
+    })
+
+    publishMocks.uploadCreatePostImages.mockResolvedValueOnce(['file-1'])
+
+    const view = renderCreatePostFlow({ initialState })
+    mountedRoots.push(view)
+
+    await clickButtonAndFlush(getButton(view.container, 'Publish'))
+
+    expect(publishMocks.createPost).not.toHaveBeenCalled()
+    expect(stepBoundaries.publication?.isPublishing).toBe(false)
+  })
+
   it('closes as published when post-create synchronization rejects', async () => {
     const synchronizationError = new Error('Feed synchronization failed.')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
@@ -1801,6 +1899,7 @@ describe('CreatePostFlow', () => {
       description: null,
       attachments: [],
       author: {
+        avatar: null,
         displayName: 'Backend Author',
         id: 'user-1',
         profilePictureFileId: null,

@@ -18,6 +18,10 @@ const createPostMutation = gql`
         username
         displayName
         profilePictureFileId
+        avatar {
+          id
+          url
+        }
       }
       attachments {
         fileId

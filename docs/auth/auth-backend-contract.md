@@ -131,11 +131,22 @@ Frontend decision:
 - `refreshToken` is managed by the backend through an `httpOnly` cookie.
 - Frontend does not read, store, or manually send `refreshToken`.
 
+### Live user type separation
+
+Verified through live gateway introspection and anonymous read-only queries on September 19, 2026:
+
+- `user(id)`, `feed.author` and `post.author` expose the public `User` type.
+- Public `User` does not expose `email`, `isConfirmed`, `confirmationCode` or
+  `confirmationCodeExpDate`.
+- `me` returns the private session type `Me`.
+- `signIn` and `exchangeOAuthCode` return `SignInPayload.user: UserOutput!`.
+- `User.avatar` and `Me.avatar` are nullable `File` values; `File.url` is the display URL.
+
 ## Queries
 
 | Query  | Purpose                                 | Arguments     | Required arguments | Return type |
 | ------ | --------------------------------------- | ------------- | ------------------ | ----------- |
-| `me`   | Returns the current authenticated user. | None          | None               | `User!`     |
+| `me`   | Returns the current authenticated user. | None          | None               | `Me`        |
 | `user` | Returns a user by id.                   | `id: String!` | `id`               | `User`      |
 
 ## Mutations
@@ -244,10 +255,10 @@ frontend origin is also configured, so local verification should use
 
 Frontend sign-in integration requests `accessToken` and `user`.
 
-| Field         | Type      | Required |
-| ------------- | --------- | -------- |
-| `user`        | `User!`   | Yes      |
-| `accessToken` | `String!` | Yes      |
+| Field         | Type          | Required |
+| ------------- | ------------- | -------- |
+| `user`        | `UserOutput!` | Yes      |
+| `accessToken` | `String!`     | Yes      |
 
 The backend no longer returns `refreshToken` in the `signIn` response. It is managed only through
 the backend-set `httpOnly` cookie.
@@ -304,17 +315,32 @@ Frontend session bootstrap requests only `accessToken` from `refreshToken`.
 
 ### `User`
 
-| Field                     | Type       | Required |
-| ------------------------- | ---------- | -------- |
-| `id`                      | `ID!`      | Yes      |
-| `email`                   | `String!`  | Yes      |
-| `username`                | `String!`  | Yes      |
-| `confirmationCode`        | `String`   | No       |
-| `confirmationCodeExpDate` | `DateTime` | No       |
-| `isConfirmed`             | `Boolean!` | Yes      |
-| `displayName`             | `String`   | No       |
-| `bio`                     | `String`   | No       |
-| `profilePictureFileId`    | `ID`       | No       |
+Public user returned by `user(id)`, `feed.author` and `post.author`.
+
+| Field                  | Type           | Required |
+| ---------------------- | -------------- | -------- |
+| `id`                   | `ID!`          | Yes      |
+| `posts`                | `[PostEntity]` | No       |
+| `username`             | `String!`      | Yes      |
+| `displayName`          | `String`       | No       |
+| `bio`                  | `String`       | No       |
+| `profilePictureFileId` | `ID`           | No       |
+| `avatar`               | `File`         | No       |
+
+### `Me`
+
+Private session user returned by `me`.
+
+| Field                  | Type       | Required |
+| ---------------------- | ---------- | -------- |
+| `id`                   | `ID!`      | Yes      |
+| `email`                | `String!`  | Yes      |
+| `username`             | `String!`  | Yes      |
+| `isConfirmed`          | `Boolean!` | Yes      |
+| `displayName`          | `String`   | No       |
+| `bio`                  | `String`   | No       |
+| `profilePictureFileId` | `ID`       | No       |
+| `avatar`               | `File`     | No       |
 
 ### `UserOutput`
 
@@ -360,7 +386,7 @@ bootstrap flow calls:
 1. `refreshToken`
 2. Backend reads `refreshToken` from the `httpOnly` cookie.
 3. Save `accessToken` in memory.
-4. Call `me` to load the current `User`.
+4. Call `me` to load the current private `Me` user.
 
 If `refreshToken` or `me` fails, the frontend clears the in-memory `accessToken` and treats the
 session as anonymous.
@@ -458,8 +484,7 @@ listed queries and mutations.
 
 Types and fields that can support future user/profile work:
 
-- Scalar-like schema reference: `DateTime` through
-  `User.confirmationCodeExpDate`.
-- Profile fields on `User`: `displayName`, `bio`, `profilePictureFileId`.
+- Profile fields on public `User`: `displayName`, `bio`, `profilePictureFileId`, `avatar`.
+- Private account fields remain on `Me`; auth payload fields remain on `UserOutput`.
 - `user(id: String!): User` can support public or profile user lookup flows
   when the frontend scope requires it.

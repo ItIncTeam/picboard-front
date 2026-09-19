@@ -50,6 +50,7 @@ vi.mock('next/image', () => ({
 vi.mock('@/shared/assets', () => assetMocks)
 
 const user = {
+  avatar: null,
   bio: null,
   displayName: null,
   email: 'user@example.com',

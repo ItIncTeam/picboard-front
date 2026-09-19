@@ -29,6 +29,7 @@ type RenderResult = {
 function createPost(id: string, overrides: Partial<PublicPostCardModel> = {}): PublicPostCardModel {
   return {
     author: {
+      avatar: null,
       displayName: null,
       id: `owner-${id}`,
       profilePictureFileId: null,

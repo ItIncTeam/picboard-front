@@ -41,6 +41,7 @@ function createPost(id: string, overrides: Partial<PostEntity> = {}): PostEntity
       },
     ],
     author: {
+      avatar: null,
       displayName: '  Public Author  ',
       id: `owner-${id}`,
       profilePictureFileId: 'avatar-file-id',
@@ -74,6 +75,7 @@ describe('Public Home display model', () => {
 
     expect(model.posts[0]).toMatchObject({
       author: {
+        avatar: null,
         displayName: '  Public Author  ',
         id: 'owner-post-1',
         profilePictureFileId: 'avatar-file-id',

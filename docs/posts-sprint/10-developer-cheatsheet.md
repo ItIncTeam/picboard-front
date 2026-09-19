@@ -234,8 +234,7 @@
 
 **Known limitations:**
 
-- Retry/idempotency for expired `uploadUrl`, failed storage `PUT`, failed `completeUpload`, failed
-  `createPost` and orphan `READY` file cleanup remains open.
+- Resumable uploads, failed `createPost` idempotency and orphan `READY` file cleanup remain open.
 - Create, update and delete use targeted Feed/Profile cache synchronization and Public Home
   invalidation; post-success synchronization does not turn a successful mutation into failure.
 
@@ -250,7 +249,10 @@
 - `FileStatus`: `PENDING | UPLOADED | READY | FAILED | DELETED`.
 - `initiateUploadBatch` возвращает: `clientUploadId`, `fileId`, `uploadUrl`, `expiresAt`.
 - Загрузка в хранилище — прямой `PUT`-запрос на `uploadUrl` с экспортированным файлом.
-- `completeUpload` получает массив `{ fileId }` и возвращает `fileId` plus `FileStatus`.
+- `completeUpload` получает массив `{ fileId }` и возвращает `fileId`, `status`, `failedReason` и
+  `retryable`.
+- `retryUpload` получает массив `{ fileId }` и возвращает новый `uploadUrl`, `expiresAt` и
+  backend-owned `attempt` для того же `fileId`.
 - `createPost` получает упорядоченные `fileIds` и опциональное `description` (до 500 символов).
 - `updatePostDescription` получает `postId` and `description`.
 - `deletePost` получает `postId`.

@@ -9,6 +9,7 @@ import { I18nProvider } from '@/shared/lib/i18n'
 import { EditPostForm } from '../EditPostForm'
 
 const author = {
+  avatar: null,
   displayName: 'Backend Author',
   id: 'owner-1',
   profilePictureFileId: null,

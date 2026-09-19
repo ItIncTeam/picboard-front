@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { ReactNode } from 'react'
 
 import { useI18n } from '@/shared/lib/i18n'
@@ -38,7 +39,18 @@ export function PostDetails({
             className={styles.avatar}
             role="img"
           >
-            {avatarFallback}
+            {author.avatar ? (
+              <Image
+                alt=""
+                className={styles.avatarImage}
+                fill
+                sizes="36px"
+                src={author.avatar.url}
+                unoptimized
+              />
+            ) : (
+              avatarFallback
+            )}
           </span>
           <span className={styles.authorName}>{authorName}</span>
           {headerAction ? <div className={styles.headerActions}>{headerAction}</div> : null}
