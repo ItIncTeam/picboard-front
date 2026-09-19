@@ -19,7 +19,8 @@ export type PublicationStepProps = {
   images: CreatePostImage[]
   isPublishing: boolean
   onCaptionChange: (caption: string) => void
-  onRetryUpload: () => void
+  onReplaceUpload: (imageId: string) => void
+  onRetryUpload: (imageId: string) => void
 }
 
 function getPublicationPreviewUrl(image: CreatePostImage | undefined): string | undefined {
@@ -73,6 +74,7 @@ export function PublicationStep({
   images,
   isPublishing,
   onCaptionChange,
+  onReplaceUpload,
   onRetryUpload,
 }: PublicationStepProps) {
   const { t } = useI18n()
@@ -105,12 +107,12 @@ export function PublicationStep({
     setActiveIndex((currentIndex) => (currentIndex + 1) % images.length)
   }
 
-  const handleRetryUpload = () => {
+  const handleRetryUpload = (imageId: string) => {
     if (isPublishing) {
       return
     }
 
-    onRetryUpload()
+    onRetryUpload(imageId)
   }
 
   return (
@@ -232,20 +234,34 @@ export function PublicationStep({
               </Text>
               <ul className={styles.errorList}>
                 {failedImages.map((image) => (
-                  <li key={image.id}>
-                    {getUploadErrorMessage(image, t.createPost.publication.uploadFailedSuffix)}
+                  <li className={styles.errorItem} key={image.id}>
+                    <span>
+                      {getUploadErrorMessage(image, t.createPost.publication.uploadFailedSuffix)}
+                    </span>
+                    {image.upload?.retryable === true ? (
+                      <Button
+                        className={styles.retryButton}
+                        disabled={isPublishing}
+                        onClick={() => handleRetryUpload(image.id)}
+                        type="button"
+                        variant="outlined"
+                      >
+                        {t.createPost.actions.retry}
+                      </Button>
+                    ) : (
+                      <Button
+                        className={styles.retryButton}
+                        disabled={isPublishing}
+                        onClick={() => onReplaceUpload(image.id)}
+                        type="button"
+                        variant="outlined"
+                      >
+                        {t.createPost.actions.selectFromComputer}
+                      </Button>
+                    )}
                   </li>
                 ))}
               </ul>
-              <Button
-                className={styles.retryButton}
-                disabled={isPublishing}
-                onClick={handleRetryUpload}
-                type="button"
-                variant="outlined"
-              >
-                {t.createPost.actions.retry}
-              </Button>
             </div>
           )}
         </div>

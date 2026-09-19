@@ -52,8 +52,8 @@ Confirmed backend validation mirrored on frontend:
 - maximum images per post: `10`;
 - maximum file size: `20 MB`.
 
-На текущем этапе upload остается frontend-only. Backend upload API не подключается, real upload
-helpers не добавляются.
+Selection and preview remain frontend-owned. Publishing uses the implemented backend upload
+pipeline documented below.
 
 ## Step: crop
 
@@ -236,7 +236,8 @@ type PublicationStepProps = {
   caption: string
   isPublishing: boolean
   onCaptionChange: (caption: string) => void
-  onRetryUpload: () => void
+  onReplaceUpload: (imageId: string) => void
+  onRetryUpload: (imageId: string) => void
 }
 ```
 
@@ -370,8 +371,13 @@ Backend create integration is implemented in the current Create Post flow:
 - map response descriptors by `clientUploadId`, not array order;
 - `PUT` final edited files directly to storage with `Content-Type: file.type`;
 - treat HTTP `2xx` storage response as successful binary upload;
+- retry network failures, `429` and `5xx` on the same presigned URL with bounded backoff;
+- use `retryUpload` for the same `fileId` and exported file after storage `403`, URL expiration or
+  a retryable backend completion failure;
 - call `completeUpload` with uploaded files as `CompleteUploadInput[]`, one `{ fileId }` item per
   successfully uploaded file;
+- use `completeUpload.retryable` rather than parsing `failedReason` to decide whether a failed file
+  can retry;
 - call `createPost` only after every selected file is `READY`;
 - after successful `createPost`, evict `ROOT_QUERY.feed` and the owner's first Profile page,
   refetch affected active Apollo Feed/Profile queries and invalidate Public Home through fixed-path
@@ -394,10 +400,8 @@ final artifacts are ready.
 
 ## Known follow-ups / non-blockers
 
-- Partial upload failure behavior is fail-fast. Backend/product still need to clarify whether
-  previously uploaded or orphan `READY` files should be completed, retried or cleaned up.
-- Retry/idempotency behavior for expired `uploadUrl`, failed storage `PUT`, failed
-  `completeUpload` and failed `createPost` remains open.
+- Cleanup of orphan backend files after an abandoned draft remains undefined.
+- Resumable uploads and `createPost` idempotency remain open.
 
 image.file
 │

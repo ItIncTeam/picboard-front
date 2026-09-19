@@ -49,6 +49,7 @@ type Mutation {
   exchangeOAuthCode(input: OAuthExchangeCodeInput!): SignInPayload!
   initiateUploadBatch(input: [InitiateUploadInput!]!): [InitiateUploadPayload!]!
   completeUpload(input: [CompleteUploadInput!]!): [CompleteUploadPayload!]!
+  retryUpload(input: [RetryUploadInput!]!): [RetryUploadPayload!]!
   createPost(input: CreatePostInput!): PostEntity!
   updatePostDescription(input: UpdatePostDescriptionInput!): PostEntity!
   deletePost(input: DeletePostInput!): Boolean!
@@ -115,6 +116,10 @@ input InitiateUploadInput {
 }
 
 input CompleteUploadInput {
+  fileId: String!
+}
+
+input RetryUploadInput {
   fileId: String!
 }
 
@@ -190,6 +195,15 @@ type InitiateUploadPayload {
 type CompleteUploadPayload {
   fileId: String!
   status: FileStatus!
+  failedReason: String
+  retryable: Boolean!
+}
+
+type RetryUploadPayload {
+  fileId: String!
+  uploadUrl: String!
+  expiresAt: DateTime!
+  attempt: Int!
 }
 
 type PostAttachmentEntity {

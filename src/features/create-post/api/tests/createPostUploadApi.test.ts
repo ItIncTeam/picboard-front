@@ -14,8 +14,10 @@ vi.mock('@/shared/api', () => ({
 import {
   completeUpload,
   initiateUploadBatch,
+  retryUpload,
   type CompleteUploadInput,
   type InitiateUploadInput,
+  type RetryUploadInput,
 } from '../createPostUploadApi'
 
 function getOperationDefinition(document: DocumentNode): OperationDefinitionNode {
@@ -120,7 +122,9 @@ describe('create post upload GraphQL helpers', () => {
       data: {
         completeUpload: [
           {
+            failedReason: null,
             fileId: 'file-1',
+            retryable: false,
             status: 'READY',
           },
         ],
@@ -129,7 +133,9 @@ describe('create post upload GraphQL helpers', () => {
 
     await expect(completeUpload(input)).resolves.toEqual([
       {
+        failedReason: null,
         fileId: 'file-1',
+        retryable: false,
         status: 'READY',
       },
     ])
@@ -156,6 +162,46 @@ describe('create post upload GraphQL helpers', () => {
 
     await expect(completeUpload(input)).rejects.toThrow(
       'Upload completion failed. Please try again.',
+    )
+  })
+
+  it('requests a fresh presigned URL for one existing file', async () => {
+    const input: RetryUploadInput[] = [{ fileId: 'file-1' }]
+
+    apolloMocks.mutate.mockResolvedValueOnce({
+      data: {
+        retryUpload: [
+          {
+            attempt: 2,
+            expiresAt: '2026-07-03T12:15:00.000Z',
+            fileId: 'file-1',
+            uploadUrl: 'https://storage.example/retry',
+          },
+        ],
+      },
+    })
+
+    await expect(retryUpload(input)).resolves.toEqual([
+      {
+        attempt: 2,
+        expiresAt: '2026-07-03T12:15:00.000Z',
+        fileId: 'file-1',
+        uploadUrl: 'https://storage.example/retry',
+      },
+    ])
+
+    const request = apolloMocks.mutate.mock.calls[0]?.[0]
+
+    expect(getOperationName(request.mutation)).toBe('RetryUpload')
+    expect(getVariableNames(request.mutation)).toEqual(['input'])
+    expect(request.variables).toEqual({ input })
+  })
+
+  it('throws when retryUpload returns no payload', async () => {
+    apolloMocks.mutate.mockResolvedValueOnce({ data: null })
+
+    await expect(retryUpload([{ fileId: 'file-1' }])).rejects.toThrow(
+      'Upload retry failed. Please try again.',
     )
   })
 })

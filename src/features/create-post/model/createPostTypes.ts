@@ -40,6 +40,8 @@ export type CreatePostImageArtifact = {
 
 export type CreatePostUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
 
+export type CreatePostUploadRetryMode = 'complete' | 'new-url' | 'same-url'
+
 /**
  * Upload patch from backend upload pipeline.
  *
@@ -52,6 +54,9 @@ export type CreatePostUploadPatch = {
   fileId?: string
   uploadUrl?: string
   expiresAt?: string
+  attempt?: number
+  retryable?: boolean
+  retryMode?: CreatePostUploadRetryMode
   status?: CreatePostUploadStatus
   error?: string
 }
@@ -81,6 +86,9 @@ export type CreatePostImage = {
     fileId?: string
     uploadUrl?: string
     expiresAt?: string
+    attempt?: number
+    retryable?: boolean
+    retryMode?: CreatePostUploadRetryMode
     status: CreatePostUploadStatus
     error?: string
   }

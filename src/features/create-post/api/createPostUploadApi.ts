@@ -18,6 +18,19 @@ const completeUploadMutation = gql`
     completeUpload(input: $input) {
       fileId
       status
+      failedReason
+      retryable
+    }
+  }
+`
+
+const retryUploadMutation = gql`
+  mutation RetryUpload($input: [RetryUploadInput!]!) {
+    retryUpload(input: $input) {
+      fileId
+      uploadUrl
+      expiresAt
+      attempt
     }
   }
 `
@@ -48,8 +61,21 @@ export type CompleteUploadInput = {
 }
 
 export type CompleteUploadPayload = {
+  failedReason: string | null
   fileId: string
+  retryable: boolean
   status: FileStatus
+}
+
+export type RetryUploadInput = {
+  fileId: string
+}
+
+export type RetryUploadPayload = {
+  attempt: number
+  expiresAt: string
+  fileId: string
+  uploadUrl: string
 }
 
 type InitiateUploadBatchResponse = {
@@ -58,6 +84,10 @@ type InitiateUploadBatchResponse = {
 
 type CompleteUploadResponse = {
   completeUpload: CompleteUploadPayload[]
+}
+
+type RetryUploadResponse = {
+  retryUpload: RetryUploadPayload[]
 }
 
 export const initiateUploadBatch = async (
@@ -99,6 +129,23 @@ export const completeUpload = async (
 
   if (!payload) {
     throw new Error('Upload completion failed. Please try again.')
+  }
+
+  return payload
+}
+
+export const retryUpload = async (input: RetryUploadInput[]): Promise<RetryUploadPayload[]> => {
+  const response = await apolloClient.mutate<RetryUploadResponse, { input: RetryUploadInput[] }>({
+    mutation: retryUploadMutation,
+    variables: {
+      input,
+    },
+  })
+
+  const payload = response.data?.retryUpload
+
+  if (!payload) {
+    throw new Error('Upload retry failed. Please try again.')
   }
 
   return payload

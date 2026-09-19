@@ -137,6 +137,8 @@ Backend returns one payload item per completed file:
 type CompleteUploadPayload = {
   fileId: string
   status: 'PENDING' | 'UPLOADED' | 'READY' | 'FAILED' | 'DELETED'
+  failedReason: string | null
+  retryable: boolean
 }
 ```
 
@@ -145,6 +147,33 @@ type CompleteUploadPayload = {
 - file exists in storage;
 - backend validated upload;
 - file can be attached to post.
+
+`retryable` is the stable frontend signal for whether a failed file may retry. Frontend does not
+branch on `failedReason` text.
+
+## `retryUpload`
+
+Verified live mutation:
+
+```graphql
+retryUpload(input: [RetryUploadInput!]!): [RetryUploadPayload!]!
+```
+
+```ts
+type RetryUploadInput = {
+  fileId: string
+}
+
+type RetryUploadPayload = {
+  fileId: string
+  uploadUrl: string
+  expiresAt: string
+  attempt: number
+}
+```
+
+`retryUpload` preserves `fileId` and returns a fresh presigned URL. Backend `attempt` is
+authoritative and the backend allows at most five server upload attempts.
 
 ## `createPost`
 
@@ -245,9 +274,10 @@ type PostEntity {
 }
 ```
 
-Post UI selects only `author.id`, `author.username`, `author.displayName` and
-`author.profilePictureFileId`. `profilePictureFileId` is an ID, not a display URL. Ownership and
-menu permissions continue to compare session user ID with `PostEntity.ownerId`.
+Post UI selects `author.id`, `author.username`, `author.displayName`,
+`author.profilePictureFileId` and nullable `author.avatar { id url }`. `avatar.url` is the display
+URL; `profilePictureFileId` remains an identifier. Ownership and menu permissions continue to
+compare session user ID with `PostEntity.ownerId`.
 
 ## Display URL Contract
 
@@ -270,9 +300,15 @@ type File {
   status: FileStatus!
   url: String!
 }
+
+type User {
+  avatar: File
+}
 ```
 
 `PostAttachmentEntity.file` is nullable. When `file` is present, `file.url` is non-null.
+Public `User.avatar` is nullable. When present, frontend renders `avatar.url`; signed URLs are
+refreshed by a new `user`, `feed` or `post` query.
 
 Frontend rendering:
 
@@ -321,6 +357,10 @@ type CreatePostUploadIntegrationState = {
   upload: {
     fileId?: string
     uploadUrl?: string
+    expiresAt?: string
+    attempt?: number
+    retryable?: boolean
+    retryMode?: 'complete' | 'new-url' | 'same-url'
     status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
   }
 }
@@ -370,9 +410,12 @@ Current frontend flow:
 The implemented Posts contract is not blocked. Remaining questions require separate backend/product
 decisions:
 
-1. retry/idempotency strategy for expired `uploadUrl`, failed storage `PUT`, failed
-   `completeUpload` and failed `createPost`, including cleanup of orphan `READY` files;
-2. a usable avatar display URL contract instead of only `profilePictureFileId`.
+1. Backend confirmation that completion-first handling is safe for every
+   `completeUpload FAILED + retryable: true` result. The current frontend retries completion first
+   without parsing `failedReason`, then requests a fresh URL only when another server upload
+   attempt is available.
+2. `createPost` idempotency and cleanup of orphan `READY` files.
+3. Avatar upload/attach/replace/delete mutations; public avatar read/display is verified.
 
 ## Current invariants
 

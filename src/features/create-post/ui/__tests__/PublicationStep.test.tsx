@@ -65,6 +65,7 @@ vi.mock('next/image', () => ({
 type RenderResult = {
   container: HTMLDivElement
   onCaptionChange: ReturnType<typeof vi.fn>
+  onReplaceUpload: ReturnType<typeof vi.fn>
   onRetryUpload: ReturnType<typeof vi.fn>
   root: Root
 }
@@ -120,6 +121,7 @@ function renderPublicationStep(props: Partial<PublicationStepProps> = {}): Rende
   const container = document.createElement('div')
   const root = createRoot(container)
   const onCaptionChange = vi.fn()
+  const onReplaceUpload = vi.fn()
   const onRetryUpload = vi.fn()
 
   document.body.append(container)
@@ -132,13 +134,14 @@ function renderPublicationStep(props: Partial<PublicationStepProps> = {}): Rende
           images={props.images ?? [createExportedImage('image-1')]}
           isPublishing={props.isPublishing ?? false}
           onCaptionChange={props.onCaptionChange ?? onCaptionChange}
+          onReplaceUpload={props.onReplaceUpload ?? onReplaceUpload}
           onRetryUpload={props.onRetryUpload ?? onRetryUpload}
         />
       </I18nProvider>,
     )
   })
 
-  return { container, onCaptionChange, onRetryUpload, root }
+  return { container, onCaptionChange, onReplaceUpload, onRetryUpload, root }
 }
 
 function getButton(container: HTMLElement, name: string): HTMLButtonElement {
@@ -362,6 +365,7 @@ describe('PublicationStep', () => {
           upload: {
             status: 'failed',
             error: 'Storage upload failed.',
+            retryable: true,
           },
         }),
       ],
@@ -376,7 +380,33 @@ describe('PublicationStep', () => {
 
     clickButton(getButton(view.container, 'Retry'))
 
-    expect(view.onRetryUpload).toHaveBeenCalledTimes(1)
+    expect(view.onRetryUpload).toHaveBeenCalledWith('failed-image')
+  })
+
+  it('requires selecting another file for a non-retryable failure', () => {
+    const view = renderPublicationStep({
+      images: [
+        createExportedImage('failed-image', {
+          upload: {
+            status: 'failed',
+            error: 'The uploaded file cannot be processed.',
+            retryable: false,
+          },
+        }),
+      ],
+    })
+
+    mountedRoots.push(view)
+
+    expect(
+      Array.from(view.container.querySelectorAll('button')).some(
+        (button) => button.textContent === 'Retry',
+      ),
+    ).toBe(false)
+    clickButton(getButton(view.container, 'Select from Computer'))
+
+    expect(view.onReplaceUpload).toHaveBeenCalledWith('failed-image')
+    expect(view.onRetryUpload).not.toHaveBeenCalled()
   })
 
   it('keeps retry disabled while publishing', () => {
@@ -385,6 +415,7 @@ describe('PublicationStep', () => {
         createExportedImage('failed-image', {
           upload: {
             status: 'failed',
+            retryable: true,
           },
         }),
       ],

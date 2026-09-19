@@ -278,6 +278,12 @@
   color: var(--color-danger-500);
 }
 
+.errorItem {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
 .retryButton {
   justify-self: start;
 }
