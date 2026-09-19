@@ -109,6 +109,7 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
       },
     ],
     author: {
+      avatar: null,
       displayName: 'Backend Author',
       id: 'user-1',
       profilePictureFileId: null,
@@ -123,7 +124,7 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
   }
 }
 
-const POST_AUTHOR_FIELD_NAMES = ['id', 'username', 'displayName', 'profilePictureFileId']
+const POST_AUTHOR_FIELD_NAMES = ['id', 'username', 'displayName', 'profilePictureFileId', 'avatar']
 
 describe('posts GraphQL helpers', () => {
   afterEach(() => {

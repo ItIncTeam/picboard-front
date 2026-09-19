@@ -20,6 +20,7 @@ export function createMockPost(index: number): Post {
 
   return {
     author: {
+      avatar: null,
       displayName: 'URL Profile',
       id: 'storybook-user',
       profilePictureFileId: null,
@@ -47,6 +48,7 @@ export function createMockPosts(count: number): Post[] {
 export function createMockPostWithMultipleImages(imageCount = 3): Post {
   return {
     author: {
+      avatar: null,
       displayName: 'URL Profile',
       id: 'storybook-user',
       profilePictureFileId: null,

@@ -51,6 +51,7 @@ function createMockPostEntity(description: string): PostEntity {
       sortOrder: index,
     })),
     author: {
+      avatar: null,
       displayName: 'Story Author',
       id: 'owner-1',
       profilePictureFileId: null,

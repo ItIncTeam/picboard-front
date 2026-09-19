@@ -22,6 +22,10 @@ export type PostAttachmentEntity = {
 }
 
 export type PostAuthor = {
+  avatar: {
+    id: string
+    url: string
+  } | null
   displayName: string | null
   id: string
   profilePictureFileId: string | null

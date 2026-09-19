@@ -3,10 +3,17 @@ scalar DateTime
 type User {
   id: ID!
   posts: [PostEntity]
+  username: String!
+  displayName: String
+  bio: String
+  profilePictureFileId: ID
+  avatar: File
+}
+
+type Me {
+  id: ID!
   email: String!
   username: String!
-  confirmationCode: String
-  confirmationCodeExpDate: DateTime
   isConfirmed: Boolean!
   displayName: String
   bio: String
@@ -22,7 +29,7 @@ type UserOutput {
 }
 
 type Query {
-  me: User
+  me: Me
   user(id: String!): User
   usersCount: Int!
   feed: [PostEntity!]!
@@ -137,7 +144,7 @@ type SignUpPayload {
 }
 
 type SignInPayload {
-  user: User!
+  user: UserOutput!
   accessToken: String!
 }
 

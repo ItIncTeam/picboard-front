@@ -23,6 +23,7 @@ vi.mock('next/image', () => ({
 
 const post: Post = {
   author: {
+    avatar: null,
     displayName: 'Post Author',
     id: 'owner-1',
     profilePictureFileId: null,

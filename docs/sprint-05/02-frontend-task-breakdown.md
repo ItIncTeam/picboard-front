@@ -20,12 +20,12 @@
 
 ## Backend-зависимости
 
-Первый приоритет backend — **CRITICAL BACKEND / SECURITY**: anonymous `user(id)`,
-`feed.author` и `post.author` не должны раскрывать приватные auth/account fields.
+**CRITICAL BACKEND / SECURITY CLOSED 2026-09-19:** anonymous `user(id)`, `feed.author` и
+`post.author` подтверждены как public `User`; приватные auth/account fields отсутствуют и
+отклоняются GraphQL validation.
 
 Frontend-интеграции также ждут:
 
-- безопасный Public User;
 - `publicationsCount`, `followersCount`, `followingCount`;
 - Edit Profile read/update contract;
 - Avatar upload/attach/replace/delete contract;
@@ -91,8 +91,8 @@ Dev 2 меняет общее Link-поведение `PostCard`, `PublicPostCar
 ### D1.3. Начальные данные Public Profile
 
 **Статус:** часть Public User contract foundation синхронизирована с текущей формой
-`User.avatar` и подтверждёнными правилами signed URL. Общая Profile operation, server loader и
-полный `InitialProfileData` не реализованы и ждут безопасный Public User и публичные счётчики.
+`User.avatar`, безопасным Public User и подтверждёнными правилами signed URL. Общая Profile
+operation, server loader и полный `InitialProfileData` не реализованы и ждут публичные счётчики.
 
 **Цель:** получить пользователя, счётчики и первую страницу `profilePosts` одним GraphQL POST.
 
@@ -101,7 +101,7 @@ Dev 2 меняет общее Link-поведение `PostCard`, `PublicPostCar
 
 **Оценка:** 2 дня.
 **Сложность:** Сложная.
-**Зависит от backend:** Да — безопасный Public User и публичные счётчики.
+**Зависит от backend:** Да — публичные счётчики.
 
 **Готово:** один запрос возвращает полный набор или классифицированную ошибку; `user === null`
 означает отсутствие пользователя; неполный ответ не отображается и не попадает в Apollo Client;
@@ -439,12 +439,12 @@ replace/delete не оптимистические; правила жизни si
 ## Что можно начинать сразу
 
 - Dev 1: D1.1, D1.2.
-- Dev 2: D2.1–D2.6; публикация результата всё равно ждёт исправления CRITICAL SECURITY.
+- Dev 2: D2.1–D2.6; CRITICAL SECURITY закрыт live verification 2026-09-19.
 - Dev 3: D3.1–D3.6. Для D3.3 пока используются только props и тестовые фикстуры.
 
 ## Что ждёт backend
 
 - Dev 1: D1.3–D1.5; завершение D1.6 ждёт гарантий сортировки и cursor.
 - Dev 3: D3.7 и D3.8; production-источник для D3.3.
-- Dev 2: контрактных блокеров для базового Public Post нет; выпуск зависит от исправления утечки
-  приватных полей Public User.
+- Dev 2: контрактных блокеров для базового Public Post нет; утечка приватных полей Public User
+  закрыта live verification 2026-09-19.

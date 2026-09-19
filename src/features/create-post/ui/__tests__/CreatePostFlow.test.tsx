@@ -1754,6 +1754,7 @@ describe('CreatePostFlow', () => {
       description: 'Ready to publish',
       attachments: [],
       author: {
+        avatar: null,
         displayName: 'Backend Author',
         id: 'user-1',
         profilePictureFileId: null,
@@ -1801,6 +1802,7 @@ describe('CreatePostFlow', () => {
       description: null,
       attachments: [],
       author: {
+        avatar: null,
         displayName: 'Backend Author',
         id: 'user-1',
         profilePictureFileId: null,

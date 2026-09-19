@@ -115,6 +115,10 @@ function createPost(overrides: Partial<PostEntity> = {}): PostEntity {
       },
     ],
     author: {
+      avatar: {
+        id: 'avatar-file-1',
+        url: 'https://example.com/avatar.jpg',
+      },
       displayName: 'Backend Author',
       id: 'owner-1',
       profilePictureFileId: 'avatar-file-1',
@@ -266,8 +270,9 @@ describe('PostDetailsPage', () => {
     await waitFor(() => expect(getDialogText()).toContain('Original description'))
 
     expect(getDialogText()).toContain('Backend Author')
-    expect(document.body.querySelector('[aria-label="Backend Author avatar"]')?.textContent).toBe(
-      'B',
+    expect(document.body.querySelector('[aria-label="Backend Author avatar"] img')).toHaveAttribute(
+      'src',
+      'https://example.com/avatar.jpg',
     )
     expect(document.body.querySelector('img[alt="beach.jpg"]')).toBeInstanceOf(HTMLImageElement)
     expect(document.body.querySelector('[data-fit="contain"]')).toBeInstanceOf(HTMLDivElement)

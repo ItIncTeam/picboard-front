@@ -4,12 +4,12 @@
 
 **D1.1–D1.2, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
-Подтверждены решения 1–38 и пакет backend-задач. D1.1 и D1.2 реализованы. В D1.3 подготовлена
+Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. В D1.3 подготовлена
 безопасная часть Public User contract foundation; полная атомарная загрузка начальных данных ждёт
-backend-контракт счётчиков и безопасный Public User. D3.1 частично реализована как изолированная
-RHF-форма: Privacy Policy trigger через `DocModal` остаётся незавершённым. D3.3 реализована как
-зависимые Country/City select через props. Валидация, production-источник Country/City и
-backend-интеграция остаются отдельными задачами.
+backend-контракт публичных счётчиков и безопасный Public User. D3.1 частично реализована как
+изолированная RHF-форма: Privacy Policy trigger через `DocModal` остаётся незавершённым. D3.3
+реализована как зависимые Country/City select через props. Валидация, production-источник
+Country/City и backend-интеграция остаются отдельными задачами.
 
 ## Цель
 
@@ -47,6 +47,9 @@ backend-интеграция остаются отдельными задача�
   не является постоянным идентификатором и обновляется каждым новым `user`, `feed` или `post`
   запросом с `avatar { url }`; отдельный timer/refresh-manager не нужен.
 - `PostEntity` содержит author, ownerId, attachments, `createdAt` и `updatedAt`.
+- Live gateway verification 2026-09-19 confirmed the separation: public `User`, private session
+  `Me` and auth payload `UserOutput`. `feed.author` and `post.author` are public `User` values and
+  expose nullable `avatar { id url }` without private account fields.
 - Post attachments имеют signed display URL; наблюдаемый срок — 900 секунд.
 
 ## Блокеры backend
@@ -57,12 +60,12 @@ backend-интеграция остаются отдельными задача�
 - Источник и формат значений Country/City.
 - Гарантированная сортировка и cursor semantics `profilePosts`.
 
-### CRITICAL BACKEND / SECURITY
+### CLOSED: CRITICAL BACKEND / SECURITY
 
 Anonymous `user(id)`, `feed.author` и `post.author` не должны раскрывать `email`,
-`confirmationCode`, `confirmationCodeExpDate` и другие приватные auth/account fields. Live gateway
-сейчас возвращает эти поля без авторизации. Исправление имеет первый приоритет и не ограничивается
-Sprint 05.
+`isConfirmed`, `confirmationCode`, `confirmationCodeExpDate` и другие приватные auth/account
+fields. Live gateway verification 2026-09-19 confirmed that all three surfaces resolve to public
+`User`; selecting these private fields is rejected during GraphQL validation.
 
 Временные поля, запросы, мутации, фиктивные счётчики и имитация успешного сохранения запрещены.
 
@@ -86,6 +89,6 @@ engagement controls. Наличие этих элементов в Figma не р
 
 ## Следующий шаг
 
-Подготовить короткое сообщение и конкретные задачи для backend-команды. Независимые frontend-задачи
-Edit Profile и Avatar можно начинать без ожидания backend; production integration ждёт готовых
-контрактов.
+Продолжить Public Profile/Post без закрытого security-блокера. Независимые frontend-задачи Edit
+Profile и Avatar можно начинать без ожидания backend; production integration записи профиля и
+аватара ждёт готовых контрактов.

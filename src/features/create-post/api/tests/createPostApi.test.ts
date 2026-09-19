@@ -89,6 +89,7 @@ describe('create post GraphQL helper', () => {
             },
           ],
           author: {
+            avatar: null,
             displayName: 'Backend Author',
             id: 'user-1',
             profilePictureFileId: null,
@@ -131,6 +132,7 @@ describe('create post GraphQL helper', () => {
       'username',
       'displayName',
       'profilePictureFileId',
+      'avatar',
     ])
   })
 
@@ -145,6 +147,7 @@ describe('create post GraphQL helper', () => {
         createPost: {
           attachments: [],
           author: {
+            avatar: null,
             displayName: null,
             id: 'user-1',
             profilePictureFileId: null,

@@ -144,6 +144,7 @@ function createPost(id: string): PostEntity {
       },
     ],
     author: {
+      avatar: null,
       displayName: 'Profile Post Author',
       id: 'profile-user',
       profilePictureFileId: null,

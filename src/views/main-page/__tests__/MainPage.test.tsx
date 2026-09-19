@@ -80,6 +80,7 @@ function createPost(id: string, overrides: Partial<PostEntity> = {}): PostEntity
       },
     ],
     author: {
+      avatar: null,
       displayName: null,
       id: 'owner-1',
       profilePictureFileId: 'avatar-file-1',

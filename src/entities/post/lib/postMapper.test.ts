@@ -36,6 +36,10 @@ function createPostEntity(overrides: Partial<PostEntity> = {}): PostEntity {
       },
     ],
     author: {
+      avatar: {
+        id: 'avatar-file-1',
+        url: 'https://cdn.example/avatar.jpg',
+      },
       displayName: '  Backend Author  ',
       id: 'user-1',
       profilePictureFileId: 'avatar-file-1',
@@ -54,6 +58,10 @@ describe('post mapper', () => {
   it('maps PostEntity and sorts attachments by sortOrder', () => {
     expect(mapPostEntityToPost(createPostEntity())).toEqual({
       author: {
+        avatar: {
+          id: 'avatar-file-1',
+          url: 'https://cdn.example/avatar.jpg',
+        },
         displayName: '  Backend Author  ',
         id: 'user-1',
         profilePictureFileId: 'avatar-file-1',
