@@ -2,11 +2,14 @@
 
 ## Статус
 
-**D1.1–D1.2 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+**D1.1–D1.2, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
 Подтверждены решения 1–38 и пакет backend-задач. D1.1 и D1.2 реализованы. В D1.3 подготовлена
 безопасная часть Public User contract foundation; полная атомарная загрузка начальных данных ждёт
-backend-контракт счётчиков и безопасный Public User.
+backend-контракт счётчиков и безопасный Public User. D3.1 частично реализована как изолированная
+RHF-форма: Privacy Policy trigger через `DocModal` остаётся незавершённым. D3.3 реализована как
+зависимые Country/City select через props. Валидация, production-источник Country/City и
+backend-интеграция остаются отдельными задачами.
 
 ## Цель
 
