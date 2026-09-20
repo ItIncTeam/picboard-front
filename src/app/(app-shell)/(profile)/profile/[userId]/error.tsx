@@ -3,7 +3,7 @@
 import { Button } from '@/shared/ui/button'
 import { useI18n } from '@/shared/lib/i18n'
 
-import styles from '@/app/(app-shell)/(public-home)/error.module.css'
+import styles from './error.module.css'
 
 type ProfileRouteErrorProps = {
   error: Error & { digest?: string }
