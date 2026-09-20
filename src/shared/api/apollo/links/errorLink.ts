@@ -21,13 +21,7 @@ const invalidateAuthSession = (): void => {
 }
 
 const getGraphQLErrorCode = (graphQLError: CombinedGraphQLErrors['errors'][number]): unknown => {
-  const extensionsCode = graphQLError.extensions?.code
-
-  if (typeof extensionsCode === 'string') {
-    return extensionsCode
-  }
-
-  return 'code' in graphQLError ? graphQLError.code : undefined
+  return graphQLError.extensions?.code
 }
 
 const hasAuthGraphQLError = (error: unknown): boolean => {

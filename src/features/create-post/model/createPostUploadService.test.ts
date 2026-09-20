@@ -472,16 +472,17 @@ describe('create post upload service', () => {
     expect(apiMocks.completeUpload).toHaveBeenCalledTimes(1)
   })
 
-  it('retries completion before requesting a fresh URL for a retryable backend failure', async () => {
+  it('requests a fresh URL before re-uploading a retryable completion failure', async () => {
     const image = createExportedImage('image-1', 'first.jpg')
     image.upload = {
+      attempt: 1,
       expiresAt: '2099-07-04T12:00:00.000Z',
       fileId: 'file-1',
-      retryable: true,
-      retryMode: 'complete',
-      status: 'failed',
+      status: 'uploaded',
       uploadUrl: 'https://storage.example/original',
     }
+    const state = createState([image])
+    const harness = createDispatchHarness(state)
     const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
 
     apiMocks.completeUpload
@@ -511,13 +512,29 @@ describe('create post upload service', () => {
     ])
 
     await expect(
-      uploadCreatePostImages(createState([image]), {
+      uploadCreatePostImages(state, { dispatch: harness.dispatch, fetcher }),
+    ).resolves.toEqual([])
+    expect(harness.getState().images[0]?.upload).toEqual(
+      expect.objectContaining({
+        attempt: 1,
+        retryable: true,
+        retryMode: 'new-url',
+        status: 'failed',
+      }),
+    )
+    expect(apiMocks.completeUpload).toHaveBeenCalledTimes(1)
+    expect(apiMocks.retryUpload).not.toHaveBeenCalled()
+    expect(fetcher).not.toHaveBeenCalled()
+
+    await expect(
+      uploadCreatePostImages(harness.getState(), {
+        dispatch: harness.dispatch,
         fetcher,
         retryImageId: image.id,
       }),
     ).resolves.toEqual(['file-1'])
 
-    expect(apiMocks.completeUpload).toHaveBeenNthCalledWith(1, [{ fileId: 'file-1' }])
+    expect(apiMocks.completeUpload).toHaveBeenCalledTimes(2)
     expect(apiMocks.retryUpload).toHaveBeenCalledWith([{ fileId: 'file-1' }])
     expect(fetcher).toHaveBeenCalledWith(
       'https://storage.example/fresh',
@@ -575,7 +592,7 @@ describe('create post upload service', () => {
     )
   })
 
-  it('allows completion-only recovery at backend attempt 5', async () => {
+  it('requires file replacement when completion fails at backend attempt 5', async () => {
     const image = createExportedImage('image-1', 'first.jpg')
     image.upload = {
       attempt: 5,
@@ -588,23 +605,14 @@ describe('create post upload service', () => {
     const harness = createDispatchHarness(state)
     const fetcher = vi.fn()
 
-    apiMocks.completeUpload
-      .mockResolvedValueOnce([
-        {
-          failedReason: 'Verification is not ready yet.',
-          fileId: 'file-1',
-          retryable: true,
-          status: 'FAILED',
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          failedReason: null,
-          fileId: 'file-1',
-          retryable: false,
-          status: 'READY',
-        },
-      ])
+    apiMocks.completeUpload.mockResolvedValueOnce([
+      {
+        failedReason: 'Verification is not ready yet.',
+        fileId: 'file-1',
+        retryable: true,
+        status: 'FAILED',
+      },
+    ])
 
     await expect(
       uploadCreatePostImages(state, { dispatch: harness.dispatch, fetcher }),
@@ -612,8 +620,7 @@ describe('create post upload service', () => {
     expect(harness.getState().images[0]?.upload).toEqual(
       expect.objectContaining({
         attempt: 5,
-        retryable: true,
-        retryMode: 'complete',
+        retryable: false,
         status: 'failed',
       }),
     )
@@ -624,9 +631,9 @@ describe('create post upload service', () => {
         fetcher,
         retryImageId: image.id,
       }),
-    ).resolves.toEqual(['file-1'])
+    ).resolves.toEqual([])
 
-    expect(apiMocks.completeUpload).toHaveBeenCalledTimes(2)
+    expect(apiMocks.completeUpload).toHaveBeenCalledTimes(1)
     expect(apiMocks.retryUpload).not.toHaveBeenCalled()
     expect(fetcher).not.toHaveBeenCalled()
   })

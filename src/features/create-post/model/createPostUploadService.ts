@@ -216,24 +216,7 @@ async function processUploadCandidate(
     return completion.fileId
   }
 
-  if (image.upload?.status === 'failed' && image.upload.retryMode === 'complete') {
-    const completion = await completeCandidate(
-      candidate.imageId,
-      runtime.fileId,
-      runtime.attempt,
-      options.dispatch,
-    )
-
-    if (completion.outcome !== 'retryable-failure') {
-      return completion.fileId
-    }
-
-    if (!canRequestFreshUploadUrl(runtime.attempt)) {
-      return null
-    }
-
-    runtime = await requestFreshUploadUrl(candidate.imageId, runtime, options.dispatch)
-  } else if (image.upload?.status === 'failed' && image.upload.retryMode === 'new-url') {
+  if (image.upload?.status === 'failed' && image.upload.retryMode === 'new-url') {
     if (!canRequestFreshUploadUrl(runtime.attempt)) {
       markUploadFailed(candidate.imageId, runtime, false, undefined, options.dispatch)
 
@@ -439,7 +422,7 @@ async function completeCandidate(
   }
 
   const completionOutcome = getCompletionOutcome(completed)
-  const retryable = completionOutcome === 'retryable-failure'
+  const retryable = completionOutcome === 'retryable-failure' && canRequestFreshUploadUrl(attempt)
 
   dispatchPatches(dispatch, [
     {
@@ -447,7 +430,7 @@ async function completeCandidate(
       fileId,
       attempt,
       retryable,
-      retryMode: retryable ? 'complete' : undefined,
+      retryMode: retryable ? 'new-url' : undefined,
       status: 'failed',
       error: completed.failedReason ?? `Upload completion returned ${completed.status}.`,
     },

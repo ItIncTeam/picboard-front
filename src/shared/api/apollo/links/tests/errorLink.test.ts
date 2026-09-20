@@ -168,7 +168,7 @@ describe('errorLink refresh-on-401 behavior', () => {
     expect(authSessionExpiredCount).toBe(0)
   })
 
-  it('refreshes and retries InitiateUploadBatch for a top-level UNAUTHENTICATED code', async () => {
+  it('refreshes and retries InitiateUploadBatch for extensions.code UNAUTHENTICATED', async () => {
     const variables = {
       input: [
         {
@@ -201,9 +201,11 @@ describe('errorLink refresh-on-401 behavior', () => {
         return new Observable<ApolloLink.Result>((observer) => {
           if (requestCount === 1) {
             const gatewayAuthError = {
-              code: 'UNAUTHENTICATED',
+              extensions: {
+                code: 'UNAUTHENTICATED',
+                statusCode: 401,
+              },
               message: 'Invalid or expired token',
-              statusCode: 401,
             }
 
             observer.next({
