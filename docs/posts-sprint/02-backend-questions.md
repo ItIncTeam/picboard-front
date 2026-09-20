@@ -260,16 +260,12 @@ No schema or integration blockers remain for the completed Posts sprint.
 
 ## Known limitations
 
-- Retry/idempotency strategy is still open for expired `uploadUrl`, failed storage `PUT`, failed
-  `completeUpload`, failed `createPost` and orphan `READY` file cleanup.
-- Partial upload failure behavior is not confirmed. Current frontend upload service fails fast if a
-  storage `PUT` fails.
-- Backend avatar data exposes `profilePictureFileId`, but no usable display URL contract.
+- Retry handling is confirmed for expired `uploadUrl`, failed storage `PUT` and retryable
+  `completeUpload` failures. Failed `createPost` idempotency and orphan `READY` file cleanup
+  remain open.
 
 ## Known follow-ups / non-blockers
 
 These require separate backend/product decisions:
 
-- retry/idempotency strategy for expired `uploadUrl`, failed storage `PUT`, failed
-  `completeUpload` and failed `createPost`, including orphan `READY` file cleanup;
-- a usable avatar display URL contract.
+- failed `createPost` idempotency and orphan `READY` file cleanup.

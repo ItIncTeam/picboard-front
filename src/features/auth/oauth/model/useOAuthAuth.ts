@@ -36,16 +36,15 @@ const hasUnverifiedEmailError = (value: unknown): boolean => {
     return false
   }
 
-  const code = value.code
+  const extensions = isRecord(value.extensions) ? value.extensions : null
   const message = value.message
   const errors = value.errors
   const graphQLErrors = value.graphQLErrors
 
   return (
-    code === 'unverified_email' ||
-    code === 'UNVERIFIED_EMAIL' ||
+    extensions?.code === 'unverified_email' ||
+    extensions?.code === 'UNVERIFIED_EMAIL' ||
     (typeof message === 'string' && message.toLowerCase().includes('unverified_email')) ||
-    hasUnverifiedEmailError(value.extensions) ||
     (Array.isArray(errors) && errors.some(hasUnverifiedEmailError)) ||
     (Array.isArray(graphQLErrors) && graphQLErrors.some(hasUnverifiedEmailError))
   )

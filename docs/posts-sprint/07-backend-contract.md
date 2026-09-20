@@ -13,6 +13,17 @@ final status is tracked in the sprint overview.
 Frontend posts/upload GraphQL operations must target the gateway endpoint for the current
 environment.
 
+## GraphQL Errors
+
+GraphQL error metadata is carried in `extensions`:
+
+- machine-readable code: `extensions.code`;
+- HTTP-like status: `extensions.statusCode`;
+- validation details: `extensions.errors`.
+
+Validation field paths use input indexes, for example `input.0.clientUploadId`. Frontend must not
+read these values from top-level error properties.
+
 ## Upload Flow
 
 Backend-confirmed flow:
@@ -112,8 +123,13 @@ Rules:
 - `uploadUrl` is not a display URL;
 - `uploadUrl` cannot be reused after expiration;
 - successful upload means HTTP `2xx`;
+- `Content-Type` must be the exact browser MIME type represented by the `mimeType` sent to
+  `initiateUploadBatch` (`JPEG` -> `image/jpeg`, `PNG` -> `image/png`);
 - the `PUT` request goes directly to storage;
 - the `PUT` request does not go to the GraphQL endpoint.
+- network failures, `429` and `5xx` use bounded retries on the same URL;
+- `403` never retries the same URL and does not require parsing the response body;
+- an expired URL requires `retryUpload` before the next `PUT`.
 
 ## `completeUpload`
 
@@ -151,6 +167,10 @@ type CompleteUploadPayload = {
 `retryable` is the stable frontend signal for whether a failed file may retry. Frontend does not
 branch on `failedReason` text.
 
+After `completeUpload` returns `FAILED` with `retryable: true`, frontend must not call
+`completeUpload` again for that failed state. The only recovery flow is `retryUpload` -> fresh URL
+-> `PUT` the same exported file -> `completeUpload`.
+
 ## `retryUpload`
 
 Verified live mutation:
@@ -172,8 +192,10 @@ type RetryUploadPayload = {
 }
 ```
 
-`retryUpload` preserves `fileId` and returns a fresh presigned URL. Backend `attempt` is
-authoritative and the backend allows at most five server upload attempts.
+`retryUpload` moves the file from `FAILED` to `PENDING`, preserves `fileId`, returns a fresh
+presigned URL and consumes one server attempt. Backend `attempt` is authoritative and the backend
+allows at most five total server upload attempts. Frontend calls `retryUpload` only when it will
+immediately use the returned URL for `PUT`; at attempt `5`, recovery requires file replacement.
 
 ## `createPost`
 
@@ -360,7 +382,7 @@ type CreatePostUploadIntegrationState = {
     expiresAt?: string
     attempt?: number
     retryable?: boolean
-    retryMode?: 'complete' | 'new-url' | 'same-url'
+    retryMode?: 'new-url' | 'same-url'
     status: 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
   }
 }
@@ -410,12 +432,8 @@ Current frontend flow:
 The implemented Posts contract is not blocked. Remaining questions require separate backend/product
 decisions:
 
-1. Backend confirmation that completion-first handling is safe for every
-   `completeUpload FAILED + retryable: true` result. The current frontend retries completion first
-   without parsing `failedReason`, then requests a fresh URL only when another server upload
-   attempt is available.
-2. `createPost` idempotency and cleanup of orphan `READY` files.
-3. Avatar upload/attach/replace/delete mutations; public avatar read/display is verified.
+1. `createPost` idempotency and cleanup of orphan `READY` files.
+2. Avatar upload/attach/replace/delete mutations; public avatar read/display is verified.
 
 ## Current invariants
 

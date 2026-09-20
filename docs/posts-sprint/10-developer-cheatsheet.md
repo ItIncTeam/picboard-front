@@ -252,7 +252,13 @@
 - `completeUpload` получает массив `{ fileId }` и возвращает `fileId`, `status`, `failedReason` и
   `retryable`.
 - `retryUpload` получает массив `{ fileId }` и возвращает новый `uploadUrl`, `expiresAt` и
-  backend-owned `attempt` для того же `fileId`.
+  backend-owned `attempt` для того же `fileId`. Вызов переводит `FAILED` в `PENDING` и
+  расходует одну из пяти общих серверных попыток.
+- После `completeUpload -> FAILED + retryable: true` разрешен только путь `retryUpload` -> новый
+  URL -> `PUT` того же экспортированного файла -> `completeUpload`; повторный `completeUpload`
+  для `FAILED` запрещен.
+- Network errors, `429` and `5xx` use bounded retries on the same URL. `403` never retries the
+  same URL. At attempt `5`, require file replacement.
 - `createPost` получает упорядоченные `fileIds` и опциональное `description` (до 500 символов).
 - `updatePostDescription` получает `postId` and `description`.
 - `deletePost` получает `postId`.

@@ -29,17 +29,12 @@ const hasUnauthenticatedCode = (value: unknown): boolean => {
     return false
   }
 
-  const code = value.code
-
-  if (code === unauthenticatedCode) {
-    return true
-  }
-
+  const extensions = isRecord(value.extensions) ? value.extensions : null
   const errors = value.errors
   const graphQLErrors = value.graphQLErrors
 
   return (
-    hasUnauthenticatedCode(value.extensions) ||
+    extensions?.code === unauthenticatedCode ||
     (Array.isArray(errors) && errors.some(hasUnauthenticatedCode)) ||
     (Array.isArray(graphQLErrors) && graphQLErrors.some(hasUnauthenticatedCode))
   )

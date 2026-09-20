@@ -40,9 +40,18 @@ The backend returns an auth error when `me` is called without a token:
 
 ```json
 {
-  "message": "Unauthorized",
-  "code": "UNAUTHENTICATED",
-  "statusCode": 401
+  "data": {
+    "me": null
+  },
+  "errors": [
+    {
+      "message": "Unauthorized",
+      "extensions": {
+        "code": "UNAUTHENTICATED",
+        "statusCode": 401
+      }
+    }
+  ]
 }
 ```
 
@@ -72,14 +81,32 @@ Verified `username` validation:
 - Lowercase and uppercase letters are allowed.
 - `-` and `_` are the only allowed special characters.
 
-Backend field-level validation error shape:
+Backend field-level validation details are returned through `extensions.errors`:
 
 ```json
 {
-  "field": "username",
-  "message": "Username must be 6-30 characters..."
+  "data": {
+    "signUp": null
+  },
+  "errors": [
+    {
+      "message": "Validation failed",
+      "extensions": {
+        "code": "BAD_USER_INPUT",
+        "statusCode": 400,
+        "errors": [
+          {
+            "field": "input.username",
+            "message": "Username must be 6-30 characters..."
+          }
+        ]
+      }
+    }
+  ]
 }
 ```
+
+Indexed batch fields include the input index, for example `input.0.clientUploadId`.
 
 Confirmation email is delivered, but can land in spam. The confirmation link
 contains the confirmation `code` in the query string.
@@ -114,9 +141,18 @@ Invalid credentials response:
 
 ```json
 {
-  "message": "Invalid credentials",
-  "code": "UNAUTHENTICATED",
-  "statusCode": 401
+  "data": {
+    "signIn": null
+  },
+  "errors": [
+    {
+      "message": "Invalid credentials",
+      "extensions": {
+        "code": "UNAUTHENTICATED",
+        "statusCode": 401
+      }
+    }
+  ]
 }
 ```
 

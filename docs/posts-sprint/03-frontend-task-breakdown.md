@@ -343,4 +343,4 @@ The gateway HTTPS/TLS certificate blocker is resolved, and Public Home uses ISR 
 
 Known non-blocking product/backend decision:
 
-- retry/idempotency and orphan-file cleanup for failed upload and publish steps.
+- `createPost` idempotency and orphan `READY` file cleanup.

@@ -139,10 +139,13 @@ Detailed flow:
 - Do not send original `image.file` when `image.exported.file` is required.
 - Do not add GraphQL Upload for post media.
 - Same-URL storage retries are bounded and apply only to network failures, `429` and `5xx`.
-- Storage `403`, an expired URL and a backend-confirmed retryable completion failure can request a
-  fresh presigned URL through `retryUpload` for the same `fileId` and exported `File`.
+- Storage `403` never retries the same URL. Storage `403`, an expired URL and a backend-confirmed
+  retryable completion failure require a fresh presigned URL through `retryUpload` for the same
+  `fileId` and exported `File` before the next `PUT`.
 - `retryUpload` is called for one failed file at a time. Its backend `attempt` is authoritative and
-  cannot exceed `5`.
+  cannot exceed `5`; each call moves `FAILED` to `PENDING` and consumes a server attempt.
+- Call `retryUpload` only when its returned URL will be used immediately for `PUT`. At attempt `5`,
+  require file replacement.
 
 ## Error handling
 
@@ -158,9 +161,10 @@ The current implementation:
 - require file replacement when `completeUpload` returns `FAILED` with `retryable: false`;
 - skip `createPost` unless all current images are `ready`.
 
-The completion retry path does not branch on `failedReason` text. It retries `completeUpload`
-before requesting a new URL for a retryable completion failure. Resumable uploads and retrying a
-failed `createPost` remain outside this upload service.
+The completion retry path does not branch on `failedReason` text. After `completeUpload` returns
+`FAILED` with `retryable: true`, it must call `retryUpload`, `PUT` the same exported file to the
+fresh URL and only then call `completeUpload` again. Resumable uploads and retrying a failed
+`createPost` remain outside this upload service.
 
 ## Upload service boundaries
 

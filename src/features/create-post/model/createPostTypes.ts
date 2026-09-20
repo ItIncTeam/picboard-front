@@ -40,7 +40,7 @@ export type CreatePostImageArtifact = {
 
 export type CreatePostUploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed' | 'ready'
 
-export type CreatePostUploadRetryMode = 'complete' | 'new-url' | 'same-url'
+export type CreatePostUploadRetryMode = 'new-url' | 'same-url'
 
 /**
  * Upload patch from backend upload pipeline.
