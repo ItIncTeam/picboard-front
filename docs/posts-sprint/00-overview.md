@@ -107,8 +107,8 @@ Posts GraphQL operations use the gateway endpoint for the active environment.
 ## Known follow-ups / non-blockers
 
 - Backend avatar contract currently exposes `profilePictureFileId` without a usable display URL.
-- Upload retry/idempotency and cleanup of orphan `READY` files require a separate backend/product
-  decision.
+- `createPost` idempotency and cleanup of orphan `READY` files require a separate
+  backend/product decision.
 - Profile reconciliation for posts deleted externally remains a separate edge case.
 - Create zoom behavior remains out of scope until product defines its step, range and reset
   semantics.

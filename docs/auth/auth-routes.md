@@ -111,9 +111,18 @@ Verified invalid credentials error:
 
 ```json
 {
-  "message": "Invalid credentials",
-  "code": "UNAUTHENTICATED",
-  "statusCode": 401
+  "data": {
+    "signIn": null
+  },
+  "errors": [
+    {
+      "message": "Invalid credentials",
+      "extensions": {
+        "code": "UNAUTHENTICATED",
+        "statusCode": 401
+      }
+    }
+  ]
 }
 ```
 

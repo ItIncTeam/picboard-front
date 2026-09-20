@@ -39,6 +39,7 @@ type CompletionResult = {
 }
 
 const postImagePurpose = 'POST_IMAGE'
+const initialServerUploadAttempt = 1
 const sameUrlRetryDelays = [100, 250]
 const maxServerUploadAttempt = 5
 
@@ -170,6 +171,7 @@ function createUploadingPatch(
     fileId: payload.fileId,
     uploadUrl: payload.uploadUrl,
     expiresAt: payload.expiresAt,
+    attempt: initialServerUploadAttempt,
     retryable: undefined,
     retryMode: undefined,
     status: 'uploading',
@@ -182,6 +184,7 @@ function createUploadRuntime(
 ): UploadRuntime {
   if (initiated) {
     return {
+      attempt: initialServerUploadAttempt,
       expiresAt: initiated.expiresAt,
       fileId: initiated.fileId,
       uploadUrl: initiated.uploadUrl,
@@ -216,14 +219,25 @@ async function processUploadCandidate(
     return completion.fileId
   }
 
-  if (image.upload?.status === 'failed' && image.upload.retryMode === 'new-url') {
+  if (image.upload?.status === 'failed') {
     if (!canRequestFreshUploadUrl(runtime.attempt)) {
       markUploadFailed(candidate.imageId, runtime, false, undefined, options.dispatch)
 
       return null
     }
 
-    runtime = await requestFreshUploadUrl(candidate.imageId, runtime, options.dispatch)
+    const nextRuntime = await requestFreshUploadUrl(
+      candidate.imageId,
+      runtime,
+      options.dispatch,
+      options.now,
+    )
+
+    if (!nextRuntime) {
+      return null
+    }
+
+    runtime = nextRuntime
   }
 
   while (true) {
@@ -234,7 +248,18 @@ async function processUploadCandidate(
         return null
       }
 
-      runtime = await requestFreshUploadUrl(candidate.imageId, runtime, options.dispatch)
+      const nextRuntime = await requestFreshUploadUrl(
+        candidate.imageId,
+        runtime,
+        options.dispatch,
+        options.now,
+      )
+
+      if (!nextRuntime) {
+        return null
+      }
+
+      runtime = nextRuntime
       continue
     }
 
@@ -274,17 +299,29 @@ async function processUploadCandidate(
         return null
       }
 
-      runtime = await requestFreshUploadUrl(candidate.imageId, runtime, options.dispatch)
+      const nextRuntime = await requestFreshUploadUrl(
+        candidate.imageId,
+        runtime,
+        options.dispatch,
+        options.now,
+      )
+
+      if (!nextRuntime) {
+        return null
+      }
+
+      runtime = nextRuntime
       continue
     }
 
-    const retryable = putOutcome === 'retryable-failure'
+    const retryable =
+      putOutcome === 'retryable-failure' && canRequestFreshUploadUrl(runtime.attempt)
 
     markUploadFailed(
       candidate.imageId,
       runtime,
       retryable,
-      retryable ? 'same-url' : undefined,
+      retryable ? 'new-url' : undefined,
       options.dispatch,
     )
 
@@ -346,7 +383,8 @@ async function requestFreshUploadUrl(
   imageId: string,
   current: UploadRuntime,
   dispatch: UploadCreatePostImagesOptions['dispatch'],
-): Promise<UploadRuntime> {
+  now: UploadCreatePostImagesOptions['now'],
+): Promise<UploadRuntime | null> {
   if (!canRequestFreshUploadUrl(current.attempt)) {
     markUploadFailed(imageId, current, false, undefined, dispatch)
     throw new Error(`Upload retry limit reached for image ${imageId}.`)
@@ -362,6 +400,21 @@ async function requestFreshUploadUrl(
   }
 
   const next = getRetryPayload(current, payload)
+
+  if (!isUsableUploadRuntime(next, now)) {
+    const retryable = canRequestFreshUploadUrl(next.attempt)
+
+    markUploadFailed(
+      imageId,
+      next,
+      retryable,
+      retryable ? 'new-url' : undefined,
+      dispatch,
+      `Upload retry returned an unusable URL for image ${imageId}.`,
+    )
+
+    return null
+  }
 
   dispatchPatches(dispatch, [
     {
@@ -466,6 +519,7 @@ function markUploadFailed(
   retryable: boolean,
   retryMode: CreatePostUploadPatch['retryMode'],
   dispatch: UploadCreatePostImagesOptions['dispatch'],
+  error = `Storage upload failed for image ${imageId}.`,
 ): void {
   dispatchPatches(dispatch, [
     {
@@ -477,7 +531,7 @@ function markUploadFailed(
       retryable,
       retryMode,
       status: 'failed',
-      error: `Storage upload failed for image ${imageId}.`,
+      error,
     },
   ])
 }
@@ -490,6 +544,19 @@ function isExpired(expiresAt: string, now: UploadCreatePostImagesOptions['now'])
   const expiresAtTime = Date.parse(expiresAt)
 
   return Number.isFinite(expiresAtTime) && expiresAtTime <= (now?.() ?? Date.now())
+}
+
+function isUsableUploadRuntime(
+  runtime: UploadRuntime,
+  now: UploadCreatePostImagesOptions['now'],
+): boolean {
+  const expiresAtTime = Date.parse(runtime.expiresAt)
+
+  return (
+    runtime.uploadUrl.length > 0 &&
+    Number.isFinite(expiresAtTime) &&
+    expiresAtTime > (now?.() ?? Date.now())
+  )
 }
 
 function dispatchPatches(
