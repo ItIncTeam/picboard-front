@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 
 import { mapPostEntityToPost, PostDetails, type PostEntity, type PostImage } from '@/entities/post'
 import { useSession } from '@/features/auth/session-management'
@@ -11,7 +11,6 @@ import { EditPostForm, EditPostMenu } from '@/features/edit-post'
 import { Close } from '@/shared/assets'
 import { getSafeReturnToPath } from '@/shared/lib/auth'
 import { IconButton } from '@/shared/ui/icon-button'
-import { Modal } from '@/shared/ui/modal'
 import { formatRelativePostTime, PublicPostCarousel } from '@/widgets/public-post-card'
 
 import type { InitialPostData } from './api/loadInitialPost'
@@ -19,6 +18,28 @@ import styles from './post-details-page.module.css'
 
 type PostDetailsContentProps = {
   data: InitialPostData
+}
+
+type PostDetailsPageShellProps = {
+  children: ReactNode
+  onCloseAction: () => void
+}
+
+export function PostDetailsPageShell({ children, onCloseAction }: PostDetailsPageShellProps) {
+  return (
+    <section className={styles.page}>
+      <button
+        aria-hidden
+        className={styles.overlay}
+        onClick={onCloseAction}
+        tabIndex={-1}
+        type="button"
+      />
+      <div className={styles.frame}>
+        <div className={styles.body}>{children}</div>
+      </div>
+    </section>
+  )
 }
 
 function EditPostMediaPreview({ image }: { image: PostImage | undefined }) {
@@ -72,15 +93,7 @@ export function PostDetailsContent({ data }: PostDetailsContentProps) {
       postId={entity.id}
     />
   ) : (
-    <Modal
-      bodyClassName={styles.body}
-      className={styles.modal}
-      hideCloseButton
-      hideHeader
-      modalTitle="Post details"
-      onCloseAction={closePage}
-      open
-    >
+    <PostDetailsPageShell onCloseAction={closePage}>
       <PostDetails
         author={displayPost.author}
         caption={displayPost.caption}
@@ -110,6 +123,6 @@ export function PostDetailsContent({ data }: PostDetailsContentProps) {
           />
         }
       />
-    </Modal>
+    </PostDetailsPageShell>
   )
 }

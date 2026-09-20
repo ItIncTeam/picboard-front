@@ -6,7 +6,7 @@ import { getCachedInitialPost } from './loadInitialPost'
 const METADATA_DESCRIPTION_MAX_LENGTH = 160
 
 function getPostAuthorName(displayName: string | null, username: string): string {
-  return displayName?.trim() || username
+  return displayName?.trim() || username.trim() || 'Post'
 }
 
 export async function generatePostDetailsMetadata(postId: string): Promise<Metadata> {

@@ -209,9 +209,9 @@ sign-in; элементы владельца по-прежнему завися�
 
 ### D2.3. Public Post SSR и metadata
 
-**Статус:** IMPLEMENTED. `/posts/[postId]` загружает `getCachedInitialPost`, отдаёт HTML, вызывает
-`notFound()` для отсутствующего поста и локальный `error.tsx` с `unstable_retry()`. Apollo seed
-остаётся в D2.6.
+**Статус:** IMPLEMENTED. `/posts/[postId]` загружает `getCachedInitialPost`, рендерит Post Details
+в HTML страницы без Portal, вызывает `notFound()` для отсутствующего поста и локальный `error.tsx`
+с `unstable_retry()`. Apollo seed остаётся в D2.6. Перехваченный modal-вариант — D2.4.
 
 **Цель:** отдать прямой маршрут Post как публичную SSR-страницу.
 
@@ -222,8 +222,8 @@ sign-in; элементы владельца по-прежнему завися�
 **Сложность:** Сложная.
 **Зависит от backend:** Нет; зависит от D2.1 и D2.2.
 
-**Готово:** Post присутствует в начальном HTML; metadata не делает второй GraphQL-запрос; Retry
-перезагружает Server Component; гость и авторизованный пользователь видят один публичный контент.
+**Готово:** Post присутствует в начальном HTML без Portal; metadata не делает второй GraphQL-запрос;
+Retry перезагружает Server Component; гость и авторизованный пользователь видят один публичный контент.
 
 **Основные проверки:** SSR, 404, техническая ошибка, Retry, один запрос для страницы и metadata,
 следующий HTTP request и отсутствие запроса при hydration.

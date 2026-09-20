@@ -246,7 +246,9 @@ route user id.
 прямую ссылку без редиректа на sign-in. `/posts/create` остается в `(protected)/(main)`.
 
 Route adapter передаёт `postId` в `views/post-details-page`. View загружает пост на сервере через
-`getCachedInitialPost` (`cache: 'no-store'`) и отдаёт его в HTML. После hydration браузер не
+`getCachedInitialPost` (`cache: 'no-store'`) и рендерит Post Details в дереве страницы, без
+Radix `Dialog.Portal`, чтобы описание и автор попали в начальный HTML. Перехваченный overlay
+остаётся modal-вариантом в D2.4. После hydration браузер не
 повторяет начальный `post(id)`; гость видит пост без `/me`. Отсутствующий пост вызывает `notFound()`,
 техническая ошибка обрабатывается локальным `error.tsx` с `unstable_retry()`. `generateMetadata`
 берёт `title` и `description` из того же cached loader. View показывает carousel / description / дату и

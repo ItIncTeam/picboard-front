@@ -7,9 +7,9 @@ import { PostDetails, type PostEntity, type PostImage } from '@/entities/post'
 import { EditPostForm, EditPostMenu } from '@/features/edit-post'
 import { Close } from '@/shared/assets'
 import { IconButton } from '@/shared/ui/icon-button'
-import { Modal } from '@/shared/ui/modal'
 import { formatRelativePostTime, PublicPostCarousel } from '@/widgets/public-post-card'
 
+import { PostDetailsPageShell } from './PostDetailsContent'
 import styles from './post-details-page.module.css'
 
 const meta = {
@@ -97,15 +97,7 @@ function PostDetailsPreview({ startInEdit = false }: { startInEdit?: boolean }) 
       postId={entity.id}
     />
   ) : (
-    <Modal
-      bodyClassName={styles.body}
-      className={styles.modal}
-      hideCloseButton
-      hideHeader
-      modalTitle="Post details"
-      onCloseAction={() => undefined}
-      open
-    >
+    <PostDetailsPageShell onCloseAction={() => undefined}>
       <PostDetails
         author={entity.author}
         caption={entity.description ?? undefined}
@@ -126,7 +118,7 @@ function PostDetailsPreview({ startInEdit = false }: { startInEdit?: boolean }) 
           />
         }
       />
-    </Modal>
+    </PostDetailsPageShell>
   )
 }
 

@@ -81,6 +81,26 @@ describe('generatePostDetailsMetadata', () => {
     })
   })
 
+  it('falls back to Post when displayName and username are empty', async () => {
+    loadInitialPostMocks.getCachedInitialPost.mockResolvedValueOnce({
+      baselineKey: 'baseline-1',
+      post: createPost({
+        author: {
+          avatar: null,
+          displayName: '   ',
+          id: 'owner-1',
+          profilePictureFileId: null,
+          username: '   ',
+        },
+      }),
+    })
+
+    await expect(generatePostDetailsMetadata('post-1')).resolves.toEqual({
+      description: 'Original description',
+      title: 'Post',
+    })
+  })
+
   it('calls notFound when the post is missing', async () => {
     loadInitialPostMocks.getCachedInitialPost.mockResolvedValueOnce(null)
 
