@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D2.2–D2.3, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -188,6 +188,9 @@ sign-in; элементы владельца по-прежнему завися�
 
 ### D2.2. Начальные данные Public Post
 
+**Статус:** IMPLEMENTED. Серверный loader живёт в `entities/post/api` (`getPostQueryData`) и
+`views/post-details-page/api/loadInitialPost`. Страница подключает его в D2.3.
+
 **Цель:** загружать полный Post на сервере без запроса из браузера.
 
 **Объём:** `loadInitialPost(postId)`, прямой GraphQL `fetch` с `cache: 'no-store'`,
@@ -206,6 +209,10 @@ sign-in; элементы владельца по-прежнему завися�
 
 ### D2.3. Public Post SSR и metadata
 
+**Статус:** IMPLEMENTED. `/posts/[postId]` загружает `getCachedInitialPost`, рендерит Post Details
+в HTML страницы без Portal, вызывает `notFound()` для отсутствующего поста и локальный `error.tsx`
+с `unstable_retry()`. Apollo seed остаётся в D2.6. Перехваченный modal-вариант — D2.4.
+
 **Цель:** отдать прямой маршрут Post как публичную SSR-страницу.
 
 **Объём:** Server Component, `notFound()`, локальный `error.tsx`, `unstable_retry()`,
@@ -215,8 +222,8 @@ sign-in; элементы владельца по-прежнему завися�
 **Сложность:** Сложная.
 **Зависит от backend:** Нет; зависит от D2.1 и D2.2.
 
-**Готово:** Post присутствует в начальном HTML; metadata не делает второй GraphQL-запрос; Retry
-перезагружает Server Component; гость и авторизованный пользователь видят один публичный контент.
+**Готово:** Post присутствует в начальном HTML без Portal; metadata не делает второй GraphQL-запрос;
+Retry перезагружает Server Component; гость и авторизованный пользователь видят один публичный контент.
 
 **Основные проверки:** SSR, 404, техническая ошибка, Retry, один запрос для страницы и metadata,
 следующий HTTP request и отсутствие запроса при hydration.
