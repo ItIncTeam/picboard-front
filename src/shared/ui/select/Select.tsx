@@ -30,6 +30,7 @@ export type SelectSharedProps = {
   triggerAriaLabel?: string
   triggerClassName?: string
   valueLabelClassName?: string
+  onBlur?: ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>['onBlur']
 }
 
 export type SelectProps = SelectSharedProps & ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
@@ -63,6 +64,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       value,
       defaultValue,
       onValueChange,
+      onBlur,
       ...props
     },
     ref,
@@ -117,6 +119,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             }
             aria-invalid={isError || undefined}
             aria-describedby={isError ? errorId : undefined}
+            onBlur={onBlur}
           >
             <SelectPrimitive.Value asChild placeholder={placeholder}>
               <span className={styles['select__value']}>

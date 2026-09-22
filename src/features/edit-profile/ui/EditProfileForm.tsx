@@ -9,7 +9,9 @@ import { DatePicker } from '@/shared/ui/date-picker'
 import { Input } from '@/shared/ui/input'
 import { Select } from '@/shared/ui/select'
 import { TextArea } from '@/shared/ui/text-area/TextArea'
+import { DocModal } from '@/widgets/doc-modal'
 
+import { createEditProfileValidationRules } from '../model/editProfileValidation'
 import type { EditProfileFormProps, EditProfileFormValues } from '../model/types'
 import styles from './edit-profile-form.module.css'
 
@@ -21,8 +23,9 @@ export function EditProfileForm({
 }: EditProfileFormProps) {
   const { t } = useI18n()
   const formId = useId()
-  const requiredFieldMessage = t.profile.edit.requiredField
+  const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const validationRules = createEditProfileValidationRules(t.profile.edit)
   const {
     control,
     handleSubmit,
@@ -57,7 +60,7 @@ export function EditProfileForm({
         <Controller
           control={control}
           name="username"
-          rules={{ required: requiredFieldMessage }}
+          rules={validationRules.username}
           render={({ field, fieldState }) => (
             <Input
               {...field}
@@ -71,7 +74,7 @@ export function EditProfileForm({
         <Controller
           control={control}
           name="firstName"
-          rules={{ required: requiredFieldMessage }}
+          rules={validationRules.firstName}
           render={({ field, fieldState }) => (
             <Input
               {...field}
@@ -85,7 +88,7 @@ export function EditProfileForm({
         <Controller
           control={control}
           name="lastName"
-          rules={{ required: requiredFieldMessage }}
+          rules={validationRules.lastName}
           render={({ field, fieldState }) => (
             <Input
               {...field}
@@ -99,17 +102,34 @@ export function EditProfileForm({
         <Controller
           control={control}
           name="dateOfBirth"
-          render={({ field }) => (
-            <DatePicker
-              className={styles.dateOfBirthField}
-              label={t.profile.edit.dateOfBirth}
-              onValueChange={(value) => {
-                if (value instanceof Date) {
-                  field.onChange(value)
-                }
-              }}
-              value={field.value}
-            />
+          rules={validationRules.dateOfBirth}
+          render={({ field, fieldState }) => (
+            <div>
+              <DatePicker
+                className={styles.dateOfBirthField}
+                errorMessage={fieldState.error?.message}
+                label={t.profile.edit.dateOfBirth}
+                onBlur={field.onBlur}
+                onValueChange={(value) => {
+                  if (value instanceof Date) {
+                    field.onChange(value)
+                  }
+                }}
+                value={field.value}
+              />
+              {fieldState.error?.type === 'minimumAge' ? (
+                <p className={styles.privacyPolicyHint}>
+                  {t.profile.edit.privacyPolicyHint}{' '}
+                  <button
+                    className={styles.privacyPolicyLink}
+                    onClick={() => setIsPrivacyPolicyOpen(true)}
+                    type="button"
+                  >
+                    {t.profile.edit.privacyPolicy}
+                  </button>
+                </p>
+              ) : null}
+            </div>
           )}
         />
 
@@ -121,6 +141,7 @@ export function EditProfileForm({
               <Select
                 errorMessage={fieldState.error?.message}
                 label={t.profile.edit.selectYourCountry}
+                onBlur={field.onBlur}
                 onValueChange={(country) => {
                   if (country !== field.value) {
                     setValue('city', '', { shouldDirty: true, shouldValidate: true })
@@ -143,6 +164,7 @@ export function EditProfileForm({
                 disabled={!selectedCountry || cityOptions.length === 0}
                 errorMessage={fieldState.error?.message}
                 label={t.profile.edit.selectYourCity}
+                onBlur={field.onBlur}
                 onValueChange={field.onChange}
                 options={cityOptions}
                 placeholder={t.profile.edit.city}
@@ -155,6 +177,7 @@ export function EditProfileForm({
         <Controller
           control={control}
           name="aboutMe"
+          rules={validationRules.aboutMe}
           render={({ field, fieldState }) => (
             <TextArea
               {...field}
@@ -180,6 +203,9 @@ export function EditProfileForm({
           {t.profile.edit.saveChanges}
         </Button>
       </div>
+      {isPrivacyPolicyOpen ? (
+        <DocModal kind="privacy" onCloseAction={() => setIsPrivacyPolicyOpen(false)} />
+      ) : null}
     </section>
   )
 }

@@ -38,7 +38,8 @@ type Props = {
   today?: Date
   dayOverrides?: DatePickerDayOverride[]
   onValueChange?: (value: Date | DateRangeValue) => void
-} & Omit<ComponentPropsWithoutRef<'div'>, 'defaultValue' | 'onChange'>
+  onBlur?: () => void
+} & Omit<ComponentPropsWithoutRef<'div'>, 'defaultValue' | 'onBlur' | 'onChange'>
 
 type CalendarDay = {
   date: Date
@@ -77,6 +78,7 @@ export const DatePicker = ({
   errorMessage,
   today = new Date(),
   dayOverrides = [],
+  onBlur,
   onValueChange,
   className,
   id,
@@ -94,7 +96,7 @@ export const DatePicker = ({
     defaultValue ?? fallbackValue,
   )
   const selectedValue = value === undefined ? uncontrolledValue : value
-  const monthDate = getMonthDate(selectedValue)
+  const monthDate = getMonthDate(selectedValue, today)
   const [visibleMonth, setVisibleMonth] = useState(monthDate)
 
   const calendarDays = useMemo(() => getCalendarDays(visibleMonth, today), [today, visibleMonth])
@@ -142,6 +144,7 @@ export const DatePicker = ({
         )}
         disabled={isDisabled}
         id={triggerId}
+        onBlur={onBlur}
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
       >
@@ -253,9 +256,9 @@ const getCalendarDays = (monthDate: Date, today: Date): CalendarDay[] => {
   })
 }
 
-const getMonthDate = (value: Date | DateRangeValue | null): Date => {
+const getMonthDate = (value: Date | DateRangeValue | null, fallbackDate: Date): Date => {
   if (!value) {
-    return new Date(defaultSingleDate.getFullYear(), defaultSingleDate.getMonth(), 1)
+    return new Date(fallbackDate.getFullYear(), fallbackDate.getMonth(), 1)
   }
 
   const date = value instanceof Date ? value : (value.to ?? value.from ?? defaultSingleDate)
