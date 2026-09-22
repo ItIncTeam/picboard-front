@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 
+import { PostDetailsContent } from '@/widgets/post-details-modal'
+
 import { getCachedInitialPost } from './api/loadInitialPost'
-import { PostDetailsContent } from './PostDetailsContent'
 
 type PostDetailsPageProps = {
   postId: string
