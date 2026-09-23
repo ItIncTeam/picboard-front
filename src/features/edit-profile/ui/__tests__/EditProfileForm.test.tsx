@@ -11,6 +11,7 @@ import { EditProfileForm } from '../EditProfileForm'
 type MockSelectProps = {
   disabled?: boolean
   label?: string
+  onBlur?: () => void
   onValueChange?: (value: string) => void
   options: ReadonlyArray<SelectOption>
   placeholder?: string
@@ -18,12 +19,21 @@ type MockSelectProps = {
 }
 
 vi.mock('@/shared/ui/select', () => ({
-  Select: ({ disabled, label, onValueChange, options, placeholder, value }: MockSelectProps) => (
+  Select: ({
+    disabled,
+    label,
+    onBlur,
+    onValueChange,
+    options,
+    placeholder,
+    value,
+  }: MockSelectProps) => (
     <label>
       {label}
       <select
         aria-label={label}
         disabled={disabled}
+        onBlur={onBlur}
         onChange={(event) => onValueChange?.(event.target.value)}
         value={value}
       >
@@ -35,6 +45,16 @@ vi.mock('@/shared/ui/select', () => ({
         ))}
       </select>
     </label>
+  ),
+}))
+
+vi.mock('@/widgets/doc-modal', () => ({
+  DocModal: ({ onCloseAction }: { onCloseAction: () => void }) => (
+    <div role="dialog">
+      <button onClick={onCloseAction} type="button">
+        Close Privacy Policy
+      </button>
+    </div>
   ),
 }))
 
@@ -285,5 +305,46 @@ describe('EditProfileForm', () => {
     await setSelectValue(countrySelect, '')
 
     expect(citySelect).toBeDisabled()
+  })
+
+  it('keeps form values when Privacy Policy opens from the age error', async () => {
+    const today = new Date()
+    const underageDate = new Date(today.getFullYear() - 12, today.getMonth(), today.getDate())
+    const view = await renderForm({
+      initialValues: { ...initialValues, dateOfBirth: underageDate },
+    })
+    mountedRoots.push(view)
+    const usernameInput = view.container.querySelector('input[name="username"]')
+
+    if (!(usernameInput instanceof HTMLInputElement)) {
+      throw new Error('Expected username input.')
+    }
+
+    await setInputValue(usernameInput, 'updated-user')
+    await submitForm(view.container.querySelector('form'))
+
+    await waitFor(() => expect(view.container.textContent).toContain('at least 13 years old'))
+
+    const privacyPolicyButton = Array.from(view.container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Privacy Policy',
+    )
+
+    await act(async () => {
+      privacyPolicyButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    await waitFor(() => expect(document.body.querySelector('[role="dialog"]')).not.toBeNull())
+    expect(usernameInput).toHaveValue('updated-user')
+
+    const closeButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Close Privacy Policy'),
+    )
+
+    await act(async () => {
+      closeButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    await waitFor(() => expect(document.body.querySelector('[role="dialog"]')).toBeNull())
+    expect(usernameInput).toHaveValue('updated-user')
   })
 })

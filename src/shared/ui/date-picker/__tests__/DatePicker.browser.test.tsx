@@ -46,4 +46,24 @@ describe('DatePicker', () => {
     expect(labelId).not.toBeNull()
     expect(labelId ? document.getElementById(labelId)?.textContent : null).toBe('Date of birth')
   })
+
+  it('opens on the selected month or the supplied current month', () => {
+    const container = document.createElement('div')
+    const root = createRoot(container)
+    containers.push(container)
+    roots.push(root)
+    document.body.append(container)
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <DatePicker defaultOpen today={new Date(2026, 8, 22)} value={null} />
+          <DatePicker defaultOpen today={new Date(2026, 8, 22)} value={new Date(1990, 1, 14)} />
+        </I18nProvider>,
+      )
+    })
+
+    expect(container.textContent).toContain('September 2026')
+    expect(container.textContent).toContain('February 1990')
+  })
 })

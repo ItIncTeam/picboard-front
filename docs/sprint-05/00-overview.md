@@ -2,7 +2,7 @@
 
 ## Статус
 
-**D1.1–D1.2, D2.2–D2.4, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+**D1.1–D1.2, D2.2–D2.4, D3.1–D3.3 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
 Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. D2.2–D2.3 отдают
 публичный пост через `loadInitialPost` (`cache: 'no-store'`) в HTML `/posts/[postId]` без Portal;
@@ -10,10 +10,10 @@
 `@modal/(.)posts/[postId]` поверх исходной страницы; прямой заход и reload остаются canonical SSR.
 В D1.3 подготовлена безопасная часть Public User
 contract foundation; полная атомарная загрузка начальных данных ждёт
-backend-контракт публичных счётчиков и безопасный Public User. D3.1 частично реализована как
-изолированная RHF-форма: Privacy Policy trigger через `DocModal` остаётся незавершённым. D3.3
-реализована как зависимые Country/City select через props. Валидация, production-источник
-Country/City и backend-интеграция остаются отдельными задачами.
+backend-контракт публичных счётчиков и безопасный Public User. D3.1 реализована как изолированная
+RHF-форма с Privacy Policy trigger через `DocModal`. D3.2 реализована с правилами валидации и возраста,
+а D3.3 — зависимые Country/City select через props. Production-источник Country/City и
+backend-интеграция остаются отдельными задачами.
 
 ## Цель
 

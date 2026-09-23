@@ -21,6 +21,30 @@
   width: 100%;
 }
 
+.privacyPolicyHint {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-light-900, #c3c3c3);
+}
+
+.privacyPolicyLink {
+  cursor: pointer;
+
+  padding: 0;
+  border: 0;
+
+  font: inherit;
+  color: var(--color-accent-500, #397df6);
+  text-decoration: underline;
+
+  background: transparent;
+}
+
+.privacyPolicyLink:focus-visible {
+  outline: 2px solid var(--color-focus, #397df6);
+  outline-offset: 2px;
+}
+
 .aboutMeField {
   height: 4.625rem;
 }
