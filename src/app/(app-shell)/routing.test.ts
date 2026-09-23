@@ -53,6 +53,26 @@ describe('persistent app shell routing', () => {
     expect(fallbackSource).toContain('CreatePostPage')
   })
 
+  it('keeps intercepted Post modal public and distinct from canonical page', () => {
+    const interceptedRoute = appRoute('@modal', '(.)posts', '[postId]', 'page.tsx')
+    const fallbackRoute = appRoute('(posts)', 'posts', '[postId]', 'page.tsx')
+
+    expect(existsSync(interceptedRoute)).toBe(true)
+    expect(existsSync(fallbackRoute)).toBe(true)
+    expect(existsSync(appRoute('@modal', '(.)posts', '[postId]', 'error.tsx'))).toBe(true)
+
+    const interceptedSource = readFileSync(interceptedRoute, 'utf8')
+    const fallbackSource = readFileSync(fallbackRoute, 'utf8')
+
+    expect(interceptedSource).toContain('PostDetailsModal')
+    expect(interceptedSource).toContain('PostDetailsUnavailable')
+    expect(interceptedSource).toContain('getCachedInitialPost')
+    expect(interceptedSource).not.toContain('ProtectedRouteBoundary')
+    expect(interceptedSource).not.toContain('generateMetadata')
+    expect(fallbackSource).toContain('PostDetailsPage')
+    expect(fallbackSource).toContain('generatePostDetailsMetadata')
+  })
+
   it('keeps Post Details public and Create Post protected', () => {
     const postDetailsRoute = appRoute('(posts)', 'posts', '[postId]', 'page.tsx')
     const protectedPostDetailsRoute = appRoute(

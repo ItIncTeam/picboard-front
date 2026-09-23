@@ -61,6 +61,10 @@ export const en = {
     createPostModal: {
       title: 'Create post',
     },
+    postDetailsModal: {
+      title: 'Post details',
+      unavailable: 'Post is unavailable',
+    },
   },
   createPost: {
     flowAriaLabel: 'Create post flow',

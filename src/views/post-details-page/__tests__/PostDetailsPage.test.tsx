@@ -6,7 +6,7 @@ import '@/app/globals.css'
 import type { PostEntity } from '@/entities/post'
 import { I18nProvider } from '@/shared/lib/i18n'
 
-import { PostDetailsContent } from '../PostDetailsContent'
+import { PostDetailsContent } from '@/widgets/post-details-modal'
 
 const apiMocks = vi.hoisted(() => ({
   deletePost: vi.fn(),
@@ -14,6 +14,7 @@ const apiMocks = vi.hoisted(() => ({
 }))
 
 const navigationMocks = vi.hoisted(() => ({
+  back: vi.fn(),
   replace: vi.fn(),
   searchParams: new URLSearchParams(),
 }))
@@ -46,7 +47,7 @@ vi.mock('@/features/auth/session-management', () => ({
 }))
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: navigationMocks.replace }),
+  useRouter: () => ({ back: navigationMocks.back, replace: navigationMocks.replace }),
   useSearchParams: () => navigationMocks.searchParams,
 }))
 
@@ -201,6 +202,7 @@ describe('PostDetailsContent', () => {
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
     apiMocks.deletePost.mockReset()
     apiMocks.updatePostDescription.mockReset()
+    navigationMocks.back.mockReset()
     navigationMocks.replace.mockReset()
     navigationMocks.searchParams = new URLSearchParams()
     synchronizationMocks.synchronizeDeletedPost.mockReset()

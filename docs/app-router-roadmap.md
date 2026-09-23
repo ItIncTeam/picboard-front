@@ -39,6 +39,8 @@ src/app/
       default.tsx
       [...catchAll]/page.tsx
       (.)posts/create/page.tsx
+      (.)posts/[postId]/page.tsx
+      (.)posts/[postId]/error.tsx
     (profile)/
       profile/[userId]/page.tsx
     (posts)/
@@ -211,12 +213,17 @@ widgets/public-auth-shell
 Route-based modals живут в `app/(app-shell)/@modal`. Они нужны для контента, который можно
 открыть отдельным URL.
 
-Сейчас подключен Create Post modal с Upload, Crop, Filters и Publication steps:
+Сейчас подключены Create Post и Post Details intercept:
 
 - soft navigation на `/posts/create` внутри `(app-shell)` открывает
   `@modal/(.)posts/create/page.tsx` поверх текущей Main/Profile/Details page;
 - прямой заход или reload `/posts/create` рендерит обычный fallback route
   `(protected)/(main)/posts/create/page.tsx`;
+- soft navigation на `/posts/[postId]` открывает `@modal/(.)posts/[postId]/page.tsx` →
+  `widgets/post-details-modal` поверх текущей страницы; Close использует `router.back()`,
+  очищенный `returnTo` только как запасной путь; нет поста → локальное unavailable; техошибка →
+  локальный Retry; без `generateMetadata` и без `ProtectedRouteBoundary`;
+- прямой заход или reload `/posts/[postId]` остаётся canonical SSR в `(posts)/posts/[postId]`;
 - `@modal/default.tsx` и `@modal/[...catchAll]/page.tsx` возвращают `null`, чтобы slot не оставался
   активным на unmatched routes.
 
@@ -247,19 +254,21 @@ route user id.
 
 Route adapter передаёт `postId` в `views/post-details-page`. View загружает пост на сервере через
 `getCachedInitialPost` (`cache: 'no-store'`) и рендерит Post Details в дереве страницы, без
-Radix `Dialog.Portal`, чтобы описание и автор попали в начальный HTML. Перехваченный overlay
-остаётся modal-вариантом в D2.4. После hydration браузер не
-повторяет начальный `post(id)`; гость видит пост без `/me`. Отсутствующий пост вызывает `notFound()`,
-техническая ошибка обрабатывается локальным `error.tsx` с `unstable_retry()`. `generateMetadata`
+Radix `Dialog.Portal`, чтобы описание и автор попали в начальный HTML. Soft navigation на тот же URL
+открывает `@modal/(.)posts/[postId]` → `widgets/post-details-modal` с тем же loader и Details через
+shared `Modal`. После hydration браузер не
+повторяет начальный `post(id)`; гость видит пост без `/me`. На canonical page отсутствующий пост
+вызывает `notFound()`, в intercepted modal — локальное unavailable; техническая ошибка обрабатывается
+локальным `error.tsx` с `unstable_retry()`. `generateMetadata` есть только у canonical page и
 берёт `title` и `description` из того же cached loader. View показывает carousel / description / дату и
 mapped `PostEntity.author`. Owner-only `Edit Post`
 определяется сравнением session user id с `PostEntity.ownerId` и сменяет overlay Details, а не
 открывает вторую модалку поверх. Details и Edit делят wide-ящик Create/Publication
 (`60.75rem × 35.25rem`, колонки `51fr / 50fr`); шапка Edit входит в эту высоту. Edit показывает
-текущий слайд Details статичной картинкой, без стрелок и пагинации. Закрытие использует существующий
-`getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. `router.back()` для details не
-используется. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Close и успешный
-delete используют один и тот же sanitized `returnTo`. Меню `...` одно на владельца и передаёт соседний
+текущий слайд Details статичной картинкой, без стрелок и пагинации. Закрытие canonical page использует
+существующий `getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. Закрытие intercepted modal —
+`router.back()`, `returnTo` только как запасной путь. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Close и успешный
+delete на canonical page используют один и тот же sanitized `returnTo`. Меню `...` одно на владельца и передаёт соседний
 `Delete Post` в `DeletePostFlow` без второй проверки владельца; confirmation, synchronization и
 redirect остаются внутри delete flow, а view передаёт уже безопасный `returnTo`.
 

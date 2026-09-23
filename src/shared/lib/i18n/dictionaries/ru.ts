@@ -61,6 +61,10 @@ export const ru = {
     createPostModal: {
       title: 'Создать пост',
     },
+    postDetailsModal: {
+      title: 'Детали поста',
+      unavailable: 'Пост недоступен',
+    },
   },
   createPost: {
     flowAriaLabel: 'Процесс создания поста',

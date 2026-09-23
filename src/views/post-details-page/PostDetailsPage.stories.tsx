@@ -7,10 +7,9 @@ import { PostDetails, type PostEntity, type PostImage } from '@/entities/post'
 import { EditPostForm, EditPostMenu } from '@/features/edit-post'
 import { Close } from '@/shared/assets'
 import { IconButton } from '@/shared/ui/icon-button'
+import { PostDetailsPageShell } from '@/widgets/post-details-modal'
+import styles from '@/widgets/post-details-modal/post-details-content.module.css'
 import { formatRelativePostTime, PublicPostCarousel } from '@/widgets/public-post-card'
-
-import { PostDetailsPageShell } from './PostDetailsContent'
-import styles from './post-details-page.module.css'
 
 const meta = {
   title: 'Views/PostDetailsPage',

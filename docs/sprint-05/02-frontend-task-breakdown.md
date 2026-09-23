@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D2.2–D2.3, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D2.2–D2.4, D3.3 IMPLEMENTED / D3.1, D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -229,6 +229,12 @@ Retry перезагружает Server Component; гость и авториз�
 следующий HTTP request и отсутствие запроса при hydration.
 
 ### D2.4. Перехваченное модальное окно Post
+
+**Статус:** IMPLEMENTED. Soft navigation на `/posts/[postId]` открывает
+`@modal/(.)posts/[postId]` → `PostDetailsModal` поверх текущей App Shell страницы. Тот же
+`getCachedInitialPost` и Post Details, что у canonical page; Close — `router.back()`, очищенный
+`returnTo` только как запасной путь. Нет поста → локальное «Post is unavailable»; техошибка →
+локальный `error.tsx` с Retry. Без `generateMetadata` и без `ProtectedRouteBoundary`.
 
 **Цель:** открывать canonical Post поверх исходной страницы через существующий `@modal`.
 
