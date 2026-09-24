@@ -2,6 +2,7 @@
 
 import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useState } from 'react'
 
 import type { PostImage } from '@/entities/post'
@@ -15,6 +16,7 @@ type PublicPostCarouselProps = {
   media: PostImage[]
   activeIndex?: number
   onActiveIndexChange?: (index: number) => void
+  postId?: string
 }
 
 const THUMBNAIL_IMAGE_SIZES =
@@ -26,6 +28,7 @@ export function PublicPostCarousel({
   fit = 'cover',
   media,
   onActiveIndexChange,
+  postId,
 }: PublicPostCarouselProps) {
   const { t } = useI18n()
   const [uncontrolledIndex, setUncontrolledIndex] = useState(0)
@@ -64,16 +67,30 @@ export function PublicPostCarousel({
     setActiveIndex((safeActiveIndex + 1) % media.length)
   }
 
+  const image = (
+    <Image
+      alt={activeMedia.alt || t.widgets.publicPostCard.imageAlt}
+      className={styles.mediaImage}
+      fill
+      sizes={fit === 'contain' ? DETAILS_IMAGE_SIZES : THUMBNAIL_IMAGE_SIZES}
+      src={activeMedia.url}
+      unoptimized
+    />
+  )
+
   return (
     <div className={styles.carousel} data-fit={fit}>
-      <Image
-        alt={activeMedia.alt || t.widgets.publicPostCard.imageAlt}
-        className={styles.mediaImage}
-        fill
-        sizes={fit === 'contain' ? DETAILS_IMAGE_SIZES : THUMBNAIL_IMAGE_SIZES}
-        src={activeMedia.url}
-        unoptimized
-      />
+      {postId ? (
+        <Link
+          aria-label={`${t.posts.card.viewPostPrefix} ${postId}`}
+          className={styles.mediaLink}
+          href={`/posts/${postId}`}
+        >
+          {image}
+        </Link>
+      ) : (
+        image
+      )}
 
       {hasMultipleMedia ? (
         <>
