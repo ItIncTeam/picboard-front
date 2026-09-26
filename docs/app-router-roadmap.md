@@ -267,7 +267,9 @@ mapped `PostEntity.author`. Owner-only `Edit Post`
 (`60.75rem × 35.25rem`, колонки `51fr / 50fr`); шапка Edit входит в эту высоту. Edit показывает
 текущий слайд Details статичной картинкой, без стрелок и пагинации. Закрытие canonical page использует
 существующий `getSafeReturnToPath`: явный `?returnTo=`, иначе `/main`. Закрытие intercepted modal —
-`router.back()`, `returnTo` только как запасной путь. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`. Close и успешный
+`router.back()`, `returnTo` только как запасной путь. Сетка профиля передаёт `returnTo=/profile/[userId]` в `PostCard`.
+Public Home и Main используют `PublicPostCard`: media, `createdAt` и description → `/posts/[postId]`,
+автор → `/profile/[authorId]`; carousel controls и Show more / Hide не навигируют. Close и успешный
 delete на canonical page используют один и тот же sanitized `returnTo`. Меню `...` одно на владельца и передаёт соседний
 `Delete Post` в `DeletePostFlow` без второй проверки владельца; confirmation, synchronization и
 redirect остаются внутри delete flow, а view передаёт уже безопасный `returnTo`.

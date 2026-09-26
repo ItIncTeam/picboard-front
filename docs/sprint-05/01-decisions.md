@@ -214,7 +214,9 @@ SSR и первый hydration render используют server props. Посл
 Все полноценные публичные Post cards в Public Home, Main, Profile и других текущих лентах/сетках
 ведут через обычный Link на `/posts/[postId]`; автор — на `/profile/[authorId]`. Внутри приложения
 маршрут Post может открыться через `@modal`, direct/reload остаётся публичным SSR. Ссылка покрывает
-media/details surface, не весь `article`; carousel controls не запускают переход.
+media и details surface (`createdAt` + description), не весь `article`; carousel controls и
+Show more / Hide не запускают переход. Profile может передать `returnTo` в post href через
+`PostCard` — только fallback для Close.
 
 ### Решение 36. Метаданные публичных страниц
 

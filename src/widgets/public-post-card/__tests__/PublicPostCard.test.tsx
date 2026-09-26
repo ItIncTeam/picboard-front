@@ -1,4 +1,4 @@
-import { act } from 'react'
+import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -7,6 +7,11 @@ import '@/app/globals.css'
 import { I18nProvider } from '@/shared/lib/i18n'
 import type { PublicPostCardModel } from '../model/types'
 import { PublicPostCard } from '../ui/PublicPostCard'
+
+vi.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children, ...props }: ComponentProps<'a'>) => <a {...props}>{children}</a>,
+}))
 
 vi.mock('next/image', () => ({
   __esModule: true,
@@ -32,7 +37,10 @@ const post: PublicPostCardModel = {
   createdAt: 'invalid',
   description: 'A'.repeat(120),
   id: 'post-1',
-  media: [{ alt: 'Post image', id: 'media-1', url: 'https://example.com/post.jpg' }],
+  media: [
+    { alt: 'Post image', id: 'media-1', url: 'https://example.com/post.jpg' },
+    { alt: 'Post image 2', id: 'media-2', url: 'https://example.com/post-2.jpg' },
+  ],
 }
 
 function renderCard(postToRender = post): RenderResult {
@@ -114,5 +122,43 @@ describe('PublicPostCard', () => {
     expect(
       view.container.querySelector('[aria-label="Backend Author avatar"] img'),
     ).toHaveAttribute('src', 'https://example.com/avatar.jpg')
+  })
+
+  it('links media, createdAt, and description to the post and author to the profile', () => {
+    const view = renderCard()
+    mountedRoots.push(view)
+
+    expect(
+      view.container.querySelector('a[aria-label="View post post-1"][href="/posts/post-1"]'),
+    ).toBeInstanceOf(HTMLAnchorElement)
+    expect(view.container.querySelector('a[href="/posts/post-1"] time')).toBeInstanceOf(
+      HTMLTimeElement,
+    )
+    expect(view.container.querySelector('p a[href="/posts/post-1"]')?.textContent).toContain('…')
+    expect(view.container.querySelector('a[href="/profile/owner-1"]')?.textContent).toContain(
+      'Backend Author',
+    )
+  })
+
+  it('keeps carousel controls and description toggle outside post navigation', () => {
+    const view = renderCard()
+    mountedRoots.push(view)
+
+    const article = view.container.querySelector('article')
+    const previous = view.container.querySelector('button[aria-label="Show previous image"]')
+    const next = view.container.querySelector('button[aria-label="Show next image"]')
+    const dots = view.container.querySelectorAll('button[aria-pressed]')
+    const toggle = Array.from(view.container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Show more',
+    )
+
+    expect(article?.firstElementChild?.tagName).toBe('DIV')
+    expect(previous).toBeInstanceOf(HTMLButtonElement)
+    expect(next).toBeInstanceOf(HTMLButtonElement)
+    expect(dots.length).toBe(2)
+    expect(previous?.closest('a')).toBeNull()
+    expect(next?.closest('a')).toBeNull()
+    expect(Array.from(dots).every((dot) => dot.closest('a') === null)).toBe(true)
+    expect(toggle?.closest('a')).toBeNull()
   })
 })

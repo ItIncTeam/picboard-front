@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D2.2–D2.4, D3.1–D3.3 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D2.2–D2.5, D3.1–D3.3 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -252,6 +252,12 @@ Retry перезагружает Server Component; гость и авториз�
 перезагрузка, недоступность, техническая ошибка/Retry; `returnTo` остаётся только запасным путём.
 
 ### D2.5. Ссылки в публичных карточках Post
+
+**Статус:** IMPLEMENTED. `PostCard` линкует media на `/posts/[postId]` (опциональный `returnTo` для
+Profile Close fallback). `PublicPostCard` / `PublicPostsGrid` линкуют media, `createdAt` и
+description на `/posts/[postId]`, автора (аватар + имя) на `/profile/[authorId]`; carousel controls
+и Show more / Hide остаются кнопками вне Link. Soft navigation из Main/Profile попадает в
+intercepted modal (D2.4); direct/reload `/posts/[postId]` — canonical SSR.
 
 **Цель:** сделать публичные посты и их авторов доступными из всех текущих лент и сеток.
 
