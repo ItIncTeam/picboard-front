@@ -131,7 +131,7 @@ getMe
   ↓
 authenticated
   ↓
-redirect to protected entry route
+redirect to validated returnTo or protected entry route
 ```
 
 `refreshToken` is only used for bootstrap/session restore.
@@ -205,11 +205,16 @@ discarded and the original operation is not retried.
 `ProtectedRouteBoundary` is a client component and reads session state:
 
 - `bootstrapping` shows a loading state;
-- `anonymous` redirects to `/auth/sign-in`;
+- `anonymous` redirects to `/auth/sign-in?returnTo=<encoded protected path>`;
 - `authenticated` renders `children`.
 
 Redirect behavior stays in `ProtectedRouteBoundary`; protected layouts do not read cookies and do
 not call backend APIs directly.
+
+`returnTo` keeps the originally requested protected route path, including query params. The sign-in
+view validates `returnTo` before navigation and only accepts same-app relative paths that start with
+`/`, do not start with `//`, and do not start with `/auth`. Unsafe or missing values fall back to
+`/main`.
 
 ## Logout Flow
 

@@ -1,0 +1,147 @@
+.modal {
+  width: min(60.75rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  height: min(35.25rem, calc(100vh - 2rem));
+  height: min(35.25rem, calc(100dvh - 2rem));
+  max-height: calc(100dvh - 2rem);
+}
+
+.body {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 51fr) minmax(0, 50fr);
+  align-items: stretch;
+
+  height: 100%;
+  min-height: 0;
+}
+
+.media {
+  position: relative;
+  min-width: 0;
+  min-height: 18rem;
+  background-color: var(--color-surface-secondary);
+}
+
+.media > * {
+  aspect-ratio: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.form {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 12px;
+  align-content: start;
+
+  min-width: 0;
+  padding: 12px 24px 24px;
+}
+
+.authorRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-inverse);
+
+  background: var(--color-primary);
+}
+
+.authorName {
+  overflow: hidden;
+
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-md);
+  color: var(--color-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.descriptionField {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.descriptionField > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.textArea {
+  box-sizing: border-box;
+  width: 100%;
+  height: 7.5rem;
+  min-height: 7.5rem;
+}
+
+.counter {
+  justify-self: end;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+  color: var(--color-text-secondary);
+}
+
+.counter[data-over-limit='true'] {
+  color: var(--color-status-danger);
+}
+
+.footer {
+  display: grid;
+  gap: 12px;
+  align-self: end;
+}
+
+.saveError {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+  color: var(--color-status-danger);
+}
+
+.saveButton {
+  justify-self: end;
+}
+
+@media (width <= 720px) {
+  .modal {
+    height: auto;
+    min-height: 0;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+  }
+
+  .media {
+    aspect-ratio: 1;
+    min-height: 14rem;
+  }
+}

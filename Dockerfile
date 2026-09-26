@@ -9,6 +9,12 @@ RUN npm install --ignore-scripts
 #но package.json остался неизменным, то стейдж с установкой зависимостей повторно не выполняется, что экономит время.
 FROM node:22.11-alpine as builder
 WORKDIR /app
+ARG NEXT_PUBLIC_GRAPHQL_ENDPOINT
+ENV NEXT_PUBLIC_GRAPHQL_ENDPOINT=$NEXT_PUBLIC_GRAPHQL_ENDPOINT
+ARG NEXT_PUBLIC_OAUTH_BASE_URL
+ENV NEXT_PUBLIC_OAUTH_BASE_URL=$NEXT_PUBLIC_OAUTH_BASE_URL
+ARG NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=$NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 COPY . .
 COPY --from=dependencies /app/node_modules ./node_modules
 RUN npm run build:production

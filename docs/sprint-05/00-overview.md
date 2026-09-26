@@ -1,0 +1,99 @@
+# Sprint 05: обзор
+
+## Статус
+
+**D1.1–D1.2, D2.2–D2.5, D3.1–D3.4 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+
+Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. D2.2–D2.3 отдают
+публичный пост через `loadInitialPost` (`cache: 'no-store'`) в HTML `/posts/[postId]` без Portal;
+после hydration начальный `post(id)` не повторяется. D2.4 открывает тот же пост через
+`@modal/(.)posts/[postId]` поверх исходной страницы; прямой заход и reload остаются canonical SSR.
+D2.5 добавляет единый Link-контракт карточек: media/details → `/posts/[postId]`, автор →
+`/profile/[authorId]`; carousel и Show more не навигируют. В D1.3 подготовлена безопасная часть Public User
+contract foundation; полная атомарная загрузка начальных данных ждёт
+backend-контракт публичных счётчиков и безопасный Public User. D3.1 реализована как изолированная
+RHF-форма с Privacy Policy trigger через `DocModal`. D3.2 реализована с правилами валидации и возраста,
+D3.3 — зависимые Country/City select через props, а D3.4 — локальный Avatar draft с preview и cleanup
+object URL. Production-источник Country/City и backend-интеграция остаются отдельными задачами.
+
+## Цель
+
+Реализовать редактирование профиля и аватара, публичный профиль с постами и публичную страницу
+поста. Публичные страницы должны работать через SSR, а после hydration продолжать работу с
+существующим Apollo Client без повторного начального запроса.
+
+## Архитектура
+
+- `/profile/[userId]` и `/posts/[postId]` доступны без авторизации и формируют свежие начальные
+  данные на каждый HTTP-запрос через `cache: 'no-store'`.
+- Сервер передаёт полные сериализуемые данные. Локальная клиентская граница записывает их в
+  существующий Apollo Client; новый клиент или слой состояния не создаётся.
+- Профиль загружается атомарно: пользователь, счётчики и первая страница постов. Неполные данные не
+  отображаются и не записываются в кэш.
+- Пагинация и polling постов профиля остаются локальными. Публичная страница поста отображается из
+  серверных данных и локального состояния.
+- Переход к посту из Main или Profile открывает перехваченный маршрут в `@modal`. Прямой URL
+  показывает самостоятельную страницу.
+- Публичные посты кликабельны в Public Home, Main, Profile и других текущих лентах/сетках. Пост
+  ведёт на `/posts/[postId]`, имя и аватар автора — на `/profile/[authorId]`.
+- Anonymous, authenticated non-owner и owner видят один публичный контент. `/me` добавляет только
+  подтверждённые действия текущего пользователя и владельца; просмотр не требует авторизации.
+- Edit Profile и Avatar — независимые возможности. Они используют существующие компоненты и не
+  объединяются общей машиной состояний.
+
+## Готово на backend
+
+- `user(id)`, `profilePosts(input)` и `post(id)` доступны без авторизации.
+- Отсутствующие user/post возвращают `null`; неизвестный userId для `profilePosts` возвращает
+  пустую connection.
+- `profilePosts` поддерживает cursor pagination, default `first = 8` и диапазон `1–8`.
+- Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
+  использует `avatar?.url`, а `avatar === null` — fallback. URL подписанный, действует 15 минут,
+  не является постоянным идентификатором и обновляется каждым новым `user`, `feed` или `post`
+  запросом с `avatar { url }`; отдельный timer/refresh-manager не нужен.
+- `PostEntity` содержит author, ownerId, attachments, `createdAt` и `updatedAt`.
+- Live gateway verification 2026-09-19 confirmed the separation: public `User`, private session
+  `Me` and auth payload `UserOutput`. `feed.author` and `post.author` are public `User` values and
+  expose nullable `avatar { id url }` without private account fields.
+- Post attachments имеют signed display URL; наблюдаемый срок — 900 секунд.
+
+## Блокеры backend
+
+- Поля профиля, их типы и обязательность; операции чтения и сохранения; формат ошибок.
+- Публичные `publicationsCount`, `followersCount` и `followingCount`.
+- Назначение загрузки аватара и операции установки, замены и удаления.
+- Источник и формат значений Country/City.
+- Гарантированная сортировка и cursor semantics `profilePosts`.
+
+### CLOSED: CRITICAL BACKEND / SECURITY
+
+Anonymous `user(id)`, `feed.author` и `post.author` не должны раскрывать `email`,
+`isConfirmed`, `confirmationCode`, `confirmationCodeExpDate` и другие приватные auth/account
+fields. Live gateway verification 2026-09-19 confirmed that all three surfaces resolve to public
+`User`; selecting these private fields is rejected during GraphQL validation.
+
+Временные поля, запросы, мутации, фиктивные счётчики и имитация успешного сохранения запрещены.
+
+## Решения продукта
+
+Не входят в реализацию без отдельного подтверждения и готового backend-контракта:
+
+- списки Followers и Following;
+- Follow и Unfollow.
+
+За пределами Sprint 05 остаются удаление подписчика, Send Message, comments, replies, likes и
+engagement controls. Наличие этих элементов в Figma не расширяет объём спринта.
+
+## Документы
+
+- [Журнал решений](./01-decisions.md) — подтверждённые архитектурные решения.
+- [План frontend-задач](./02-frontend-task-breakdown.md) — основной документ для выполнения.
+- [Style Guide](../style_guide_full.md), [Architecture](../architecture.md),
+  [Layer Ownership](../layer-ownership.md), [App Router Roadmap](../app-router-roadmap.md) — общие
+  правила проекта.
+
+## Следующий шаг
+
+Продолжить Public Profile/Post без закрытого security-блокера. Независимые frontend-задачи Edit
+Profile и Avatar можно начинать без ожидания backend; production integration записи профиля и
+аватара ждёт готовых контрактов.

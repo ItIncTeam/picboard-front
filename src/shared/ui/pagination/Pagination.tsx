@@ -4,6 +4,7 @@ import * as SelectPrimitive from '@radix-ui/react-select'
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 
 import { cn } from '@/shared/lib/cn'
+import { useI18n } from '@/shared/lib/i18n'
 
 import styles from './pagination.module.css'
 
@@ -22,8 +23,8 @@ export type PaginationProps = {
   className?: string
   ariaLabel?: string
   showPageSizeSelect?: boolean
-  onPageChange: (page: number) => void
-  onPageSizeChange?: (pageSize: number) => void
+  onPageChangeAction: (page: number) => void
+  onPageSizeChangeAction?: (pageSize: number) => void
 }
 
 const clampPage = (page: number, totalPages: number): number => {
@@ -73,17 +74,18 @@ export const Pagination = ({
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   disabled = false,
   className,
-  ariaLabel = 'Pagination',
+  ariaLabel,
   showPageSizeSelect = true,
-  onPageChange,
-  onPageSizeChange,
+  onPageChangeAction,
+  onPageSizeChangeAction,
 }: PaginationProps) => {
+  const { t } = useI18n()
   const safeTotalPages = Math.max(totalPages, 1)
   const activePage = clampPage(currentPage, safeTotalPages)
   const pageItems = getPageItems(activePage, safeTotalPages)
   const isPreviousDisabled = disabled || activePage === 1
   const isNextDisabled = disabled || activePage === safeTotalPages
-  const isPageSizeSelectDisabled = disabled || !onPageSizeChange
+  const isPageSizeSelectDisabled = disabled || !onPageSizeChangeAction
 
   const handlePageChange = (page: number): void => {
     const nextPage = clampPage(page, safeTotalPages)
@@ -92,20 +94,23 @@ export const Pagination = ({
       return
     }
 
-    onPageChange(nextPage)
+    onPageChangeAction(nextPage)
   }
 
   const handlePageSizeChange = (nextPageSize: string): void => {
-    onPageSizeChange?.(Number(nextPageSize))
+    onPageSizeChangeAction?.(Number(nextPageSize))
   }
 
   return (
-    <nav className={cn(styles.pagination, className)} aria-label={ariaLabel}>
+    <nav
+      className={cn(styles.pagination, className)}
+      aria-label={ariaLabel ?? t.ui.pagination.ariaLabel}
+    >
       <button
         className={cn(styles.pagination__control, styles.pagination__arrow)}
         type="button"
         disabled={isPreviousDisabled}
-        aria-label="Go to previous page"
+        aria-label={t.ui.pagination.previousPage}
         onClick={() => handlePageChange(activePage - 1)}
       >
         <ChevronLeftIcon aria-hidden />
@@ -131,7 +136,7 @@ export const Pagination = ({
                 className={cn(styles.pagination__control, styles.pagination__page)}
                 type="button"
                 disabled={disabled}
-                aria-label={`Go to page ${item}`}
+                aria-label={`${t.ui.pagination.pagePrefix} ${item}`}
                 aria-current={isCurrent ? 'page' : undefined}
                 data-active={isCurrent || undefined}
                 onClick={() => handlePageChange(item)}
@@ -147,7 +152,7 @@ export const Pagination = ({
         className={cn(styles.pagination__control, styles.pagination__arrow)}
         type="button"
         disabled={isNextDisabled}
-        aria-label="Go to next page"
+        aria-label={t.ui.pagination.nextPage}
         onClick={() => handlePageChange(activePage + 1)}
       >
         <ChevronRightIcon aria-hidden />
@@ -155,7 +160,7 @@ export const Pagination = ({
 
       {showPageSizeSelect ? (
         <div className={styles.pagination__pageSize}>
-          <span className={styles.pagination__pageSizeText}>Show</span>
+          <span className={styles.pagination__pageSizeText}>{t.ui.pagination.show}</span>
           <SelectPrimitive.Root
             value={String(pageSize)}
             disabled={isPageSizeSelectDisabled}
@@ -163,7 +168,7 @@ export const Pagination = ({
           >
             <SelectPrimitive.Trigger
               className={styles.pagination__selectTrigger}
-              aria-label="Items per page"
+              aria-label={t.ui.pagination.itemsPerPage}
             >
               <SelectPrimitive.Value />
               <SelectPrimitive.Icon asChild>
@@ -191,7 +196,7 @@ export const Pagination = ({
               </SelectPrimitive.Content>
             </SelectPrimitive.Portal>
           </SelectPrimitive.Root>
-          <span className={styles.pagination__pageSizeText}>on page</span>
+          <span className={styles.pagination__pageSizeText}>{t.ui.pagination.onPage}</span>
         </div>
       ) : null}
     </nav>

@@ -1,16 +1,15 @@
 'use client'
 
-import NextLink from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo } from 'react'
 
 import { authRoutes } from '@/shared/lib/auth'
-import { Button } from '@/shared/ui/button'
 import { Text, Title } from '@/shared/ui/typography'
 import { AuthFormCard } from '@/views/auth/ui/auth-form-card'
 import { AuthViewShell } from '@/widgets/auth-view-shell'
 
 import styles from './confirm-password-recovery-view.module.css'
+import { PasswordRecoveryExpired } from './ui'
 
 const getCreateNewPasswordHref = (code: string) => {
   return `${authRoutes.createNewPassword}?code=${encodeURIComponent(code)}`
@@ -31,6 +30,10 @@ export default function ConfirmPasswordRecoveryView() {
 
   const hasCode = Boolean(code)
 
+  if (!hasCode) {
+    return <PasswordRecoveryExpired />
+  }
+
   return (
     <AuthViewShell>
       <AuthFormCard>
@@ -39,21 +42,9 @@ export default function ConfirmPasswordRecoveryView() {
         </Title>
 
         <div className={styles.content}>
-          <Text
-            aria-live="polite"
-            className={styles.message}
-            color={!hasCode ? 'var(--color-status-danger)' : undefined}
-          >
-            {hasCode
-              ? 'Verifying your recovery link...'
-              : 'Invalid recovery link. Please request a new password reset.'}
+          <Text aria-live="polite" className={styles.message}>
+            Verifying your recovery link...
           </Text>
-
-          {!hasCode && (
-            <Button asChild className={styles.action}>
-              <NextLink href={authRoutes.forgotPassword}>Request Password Reset</NextLink>
-            </Button>
-          )}
         </div>
       </AuthFormCard>
     </AuthViewShell>

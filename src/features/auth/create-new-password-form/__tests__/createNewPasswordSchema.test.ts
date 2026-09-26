@@ -1,10 +1,26 @@
 import { describe, expect, it } from 'vitest'
 
-import { createNewPasswordSchema } from '../createNewPasswordSchema'
+import { type Dictionary } from '@/shared/lib/i18n/dictionaries'
+
+import { createNewPasswordSchema } from '@/features/auth/create-new-password-form'
+
+const mockT = {
+  auth: {
+    errors: {
+      passwordRequired: 'Password is required',
+      passwordTooShort: 'Minimum number of characters 6',
+      passwordConfirm: 'Confirm your password',
+      passwordsMismatch: 'The passwords must match',
+      passwordInvalidChars: 'Password must contain a-z, A-Z, ! " # $ % &...',
+    },
+  },
+} as unknown as Dictionary
+
+const schema = createNewPasswordSchema(mockT)
 
 describe('createNewPasswordSchema', () => {
   it('uses the sign-up minimum password length rule', () => {
-    const result = createNewPasswordSchema.safeParse({
+    const result = schema.safeParse({
       password: 'Aa!',
       passwordConfirmation: 'Aa!',
     })
@@ -16,7 +32,7 @@ describe('createNewPasswordSchema', () => {
   })
 
   it('uses the sign-up password complexity rule', () => {
-    const result = createNewPasswordSchema.safeParse({
+    const result = schema.safeParse({
       password: 'password',
       passwordConfirmation: 'password',
     })
@@ -28,7 +44,7 @@ describe('createNewPasswordSchema', () => {
   })
 
   it('requires password confirmation to match', () => {
-    const result = createNewPasswordSchema.safeParse({
+    const result = schema.safeParse({
       password: 'Password1!',
       passwordConfirmation: 'Password2!',
     })
@@ -38,7 +54,7 @@ describe('createNewPasswordSchema', () => {
   })
 
   it('accepts a password that matches sign-up requirements', () => {
-    const result = createNewPasswordSchema.safeParse({
+    const result = schema.safeParse({
       password: 'Password1!',
       passwordConfirmation: 'Password1!',
     })

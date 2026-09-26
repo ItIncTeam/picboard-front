@@ -1,6 +1,6 @@
 .root {
   position: sticky;
-  z-index: 10;
+  z-index: 50;
   top: 0;
 
   border-bottom: 1px solid var(--color-border-secondary);
@@ -26,12 +26,140 @@
   align-items: center;
 }
 
-@media (width <= 760px) {
+.authActions {
+  display: flex;
+}
+
+.sidebarTrigger {
+  all: unset;
+
+  cursor: pointer;
+
+  position: relative;
+
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+
+  color: var(--color-text-primary);
+
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.sidebarTrigger:hover {
+  border-color: var(--color-border-primary);
+  background-color: var(--color-surface-secondary);
+}
+
+.sidebarTrigger:active {
+  transform: translateY(1px);
+}
+
+.sidebarTrigger:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.sidebarTriggerIcon {
+  position: relative;
+  flex-shrink: 0;
+  width: 20px;
+  height: 16px;
+}
+
+.sidebarTriggerLine {
+  position: absolute;
+  left: 0;
+
+  width: 20px;
+  height: 2px;
+  border-radius: 999px;
+
+  background: currentcolor;
+
+  transition:
+    opacity 0.18s ease,
+    transform 0.22s ease,
+    top 0.22s ease;
+}
+
+.sidebarTriggerLine:nth-child(1) {
+  top: 0;
+}
+
+.sidebarTriggerLine:nth-child(2) {
+  top: 7px;
+}
+
+.sidebarTriggerLine:nth-child(3) {
+  top: 14px;
+}
+
+.sidebarTrigger[data-open='true'] .sidebarTriggerLine:nth-child(1) {
+  top: 7px;
+  transform: rotate(45deg);
+}
+
+.sidebarTrigger[data-open='true'] .sidebarTriggerLine:nth-child(2) {
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.sidebarTrigger[data-open='true'] .sidebarTriggerLine:nth-child(3) {
+  top: 7px;
+  transform: rotate(-45deg);
+}
+
+@media (width < 768px) {
   .inner {
     gap: 16px;
+    justify-content: flex-start;
   }
 
   .actions {
     gap: 16px;
+    margin-left: auto;
+  }
+
+  .sidebarTrigger {
+    display: inline-flex;
+  }
+}
+
+@media (width < 480px) {
+  .inner[data-guest='true'] {
+    flex-wrap: wrap;
+    row-gap: 12px;
+    justify-content: space-between;
+    padding-block: 8px;
+  }
+
+  .inner[data-guest='true'] .actions {
+    display: contents;
+  }
+
+  .inner[data-guest='true'] .actions > :first-child {
+    margin-left: auto;
+  }
+
+  .inner[data-guest='true'] .authActions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+    order: 2;
+  }
+
+  .inner[data-guest='true'] .authActions > * {
+    justify-content: space-between;
+    width: 100%;
   }
 }

@@ -1,3 +1,3 @@
-export { privacyParagraphs } from './privacy/content'
-export { termsParagraphs } from './terms/content'
+export { privacyParagraphs, privacyParagraphsByLanguage } from './privacy/content'
+export { termsParagraphs, termsParagraphsByLanguage } from './terms/content'
 export { LegalDocumentBody } from './ui/LegalDocumentBody'

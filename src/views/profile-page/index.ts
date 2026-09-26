@@ -1,1 +1,1 @@
-export { ProfilePage } from './ProfilePage'
+export { ProfilePage, ProfileRelationsPage } from './ProfilePage'

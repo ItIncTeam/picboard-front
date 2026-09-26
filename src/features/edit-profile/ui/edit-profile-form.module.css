@@ -1,0 +1,72 @@
+.root {
+  width: min(53.5rem, 100%);
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+
+  width: min(40.625rem, 100%);
+  margin-left: auto;
+  padding-top: 1.5rem;
+}
+
+.locationFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.dateOfBirthField {
+  width: 100%;
+}
+
+.privacyPolicyHint {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-light-900, #c3c3c3);
+}
+
+.privacyPolicyLink {
+  cursor: pointer;
+
+  padding: 0;
+  border: 0;
+
+  font: inherit;
+  color: var(--color-accent-500, #397df6);
+  text-decoration: underline;
+
+  background: transparent;
+}
+
+.privacyPolicyLink:focus-visible {
+  outline: 2px solid var(--color-focus, #397df6);
+  outline-offset: 2px;
+}
+
+.aboutMeField {
+  height: 4.625rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-dark-300, #4c4c4c);
+}
+
+.visuallyHidden {
+  position: absolute;
+
+  overflow: hidden;
+
+  width: 1px;
+  height: 1px;
+
+  white-space: nowrap;
+
+  clip-path: inset(50%);
+}

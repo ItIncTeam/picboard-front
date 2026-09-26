@@ -1,0 +1,20 @@
+.modal {
+  width: min(378px, calc(100vw - 32px));
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: flex-end;
+
+  width: 100%;
+}
+
+.message {
+  align-self: stretch;
+}
+
+.button {
+  min-width: 96px;
+}
