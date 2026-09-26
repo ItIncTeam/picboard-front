@@ -1,0 +1,37 @@
+.root {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+
+.fileInput {
+  pointer-events: none;
+
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  opacity: 0;
+}
+
+.preview,
+.previewPlaceholder {
+  width: 10.5rem;
+  height: 10.5rem;
+  border-radius: 50%;
+}
+
+.preview {
+  object-fit: cover;
+}
+
+.previewPlaceholder {
+  background: var(--color-dark-500, #171717);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

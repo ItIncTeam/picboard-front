@@ -2,7 +2,7 @@
 
 ## Статус
 
-**D1.1–D1.2, D2.2–D2.5, D3.1–D3.3 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+**D1.1–D1.2, D2.2–D2.5, D3.1–D3.4 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
 Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. D2.2–D2.3 отдают
 публичный пост через `loadInitialPost` (`cache: 'no-store'`) в HTML `/posts/[postId]` без Portal;
@@ -13,8 +13,8 @@ D2.5 добавляет единый Link-контракт карточек: med
 contract foundation; полная атомарная загрузка начальных данных ждёт
 backend-контракт публичных счётчиков и безопасный Public User. D3.1 реализована как изолированная
 RHF-форма с Privacy Policy trigger через `DocModal`. D3.2 реализована с правилами валидации и возраста,
-а D3.3 — зависимые Country/City select через props. Production-источник Country/City и
-backend-интеграция остаются отдельными задачами.
+D3.3 — зависимые Country/City select через props, а D3.4 — локальный Avatar draft с preview и cleanup
+object URL. Production-источник Country/City и backend-интеграция остаются отдельными задачами.
 
 ## Цель
 
