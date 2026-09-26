@@ -115,6 +115,13 @@ describe('AvatarDraftPicker', () => {
     )
   })
 
+  it('keeps the hidden file input out of keyboard navigation', async () => {
+    const view = await renderPicker()
+    renderedPickers.push(view)
+
+    expect(view.container.querySelector('input[type="file"]')).toHaveAttribute('tabindex', '-1')
+  })
+
   it('accepts a file exactly 10 MiB and rejects a larger file', async () => {
     createObjectUrl.mockReturnValueOnce('blob:allowed')
     const view = await renderPicker()

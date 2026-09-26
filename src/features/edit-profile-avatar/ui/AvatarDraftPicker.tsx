@@ -34,6 +34,7 @@ export function AvatarDraftPicker() {
         aria-label={t.profile.avatar.selectPhoto}
         className={styles.fileInput}
         onChange={handleFileChange}
+        tabIndex={-1}
         type="file"
       />
 
