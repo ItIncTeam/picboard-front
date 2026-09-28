@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D2.2–D2.5, D3.1–D3.4 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D2.2–D2.5, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -368,7 +368,7 @@ Storybook; рабочий маршрут не получает временны�
 ### D3.4. Выбор, проверка и предпросмотр Avatar
 
 **Статус:** реализован локальный Avatar draft: JPEG/PNG, лимит 10 MiB, preview через object URL,
-безопасная замена, Cancel и cleanup URL. Decode и crop остаются в D3.5.
+безопасная замена, Cancel и cleanup URL. Decode и crop реализованы в D3.5.
 
 **Цель:** управлять локальным черновиком Avatar и его ресурсами.
 
@@ -386,6 +386,10 @@ Storybook; рабочий маршрут не получает временны�
 замена, Cancel, unmount и отсутствие object URL для недопустимого кандидата.
 
 ### D3.5. Обрезка Avatar и обработка decode
+
+**Статус:** IMPLEMENTED. Валидный файл остаётся кандидатом до `onReady` существующего cropper;
+подтверждённый `AvatarCropSelection` хранит исходный `File` и квадратные неокруглённые координаты.
+Ошибочный или отменённый candidate освобождает только свой object URL, без canvas, Blob или upload.
 
 **Цель:** вернуть подтверждённую квадратную область декодированного изображения без
 upload/export.
