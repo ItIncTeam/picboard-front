@@ -1,12 +1,18 @@
+import { ApolloClient, ApolloLink, InMemoryCache, Observable } from '@apollo/client/core'
+import { ApolloProvider } from '@apollo/client/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
-import type { PostEntity } from '@/entities/post'
+import { postQuery, type PostEntity } from '@/entities/post'
 import { I18nProvider } from '@/shared/lib/i18n'
 
 import { PostDetailsContent } from '@/widgets/post-details-modal'
+
+type PostQueryData = {
+  post: PostEntity | null
+}
 
 const apiMocks = vi.hoisted(() => ({
   deletePost: vi.fn(),
@@ -132,16 +138,43 @@ function createPost(overrides: Partial<PostEntity> = {}): PostEntity {
   }
 }
 
-function renderPage(entity: PostEntity = createPost()): RenderResult {
+let apolloNetworkCalls = 0
+let apolloClient: ApolloClient
+
+function createTestApolloClient(): ApolloClient {
+  apolloNetworkCalls = 0
+
+  return new ApolloClient({
+    cache: new InMemoryCache(),
+    link: new ApolloLink(() => {
+      apolloNetworkCalls += 1
+
+      return new Observable((observer) => {
+        observer.error(new Error('Unexpected Apollo network request in Post Details tests.'))
+      })
+    }),
+  })
+}
+
+function renderPage(
+  entity: PostEntity = createPost(),
+  options: { chrome?: 'page' | 'modal'; onCloseAction?: () => void } = {},
+): RenderResult {
   const container = document.createElement('div')
   const root = createRoot(container)
 
   document.body.append(container)
   act(() =>
     root.render(
-      <I18nProvider>
-        <PostDetailsContent data={{ baselineKey: 'baseline-1', post: entity }} />
-      </I18nProvider>,
+      <ApolloProvider client={apolloClient}>
+        <I18nProvider>
+          <PostDetailsContent
+            chrome={options.chrome}
+            data={{ baselineKey: 'baseline-1', post: entity }}
+            onCloseAction={options.onCloseAction}
+          />
+        </I18nProvider>
+      </ApolloProvider>,
     ),
   )
 
@@ -200,6 +233,7 @@ describe('PostDetailsContent', () => {
     }
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
+    apolloClient = createTestApolloClient()
     apiMocks.deletePost.mockReset()
     apiMocks.updatePostDescription.mockReset()
     navigationMocks.back.mockReset()
@@ -219,6 +253,65 @@ describe('PostDetailsContent', () => {
       container.remove()
     })
     mountedRoots.length = 0
+  })
+
+  it('seeds postQuery into Apollo cache without a browser post(id) request', async () => {
+    const entity = createPost()
+    const view = renderPage(entity)
+    mountedRoots.push(view)
+
+    await waitFor(() => {
+      const cached = apolloClient.readQuery<PostQueryData>({
+        query: postQuery,
+        variables: { id: 'post-1' },
+      })
+
+      expect(cached?.post?.id).toBe(entity.id)
+      expect(cached?.post?.description).toBe(entity.description)
+      expect(cached?.post?.ownerId).toBe(entity.ownerId)
+      expect(cached?.post?.author.id).toBe(entity.author.id)
+    })
+
+    expect(apolloNetworkCalls).toBe(0)
+    expect(getDialogText()).toContain('Original description')
+  })
+
+  it('closes the modal view through onCloseAction after delete', async () => {
+    sessionMocks.status = 'authenticated'
+    sessionMocks.userId = 'owner-1'
+    apiMocks.deletePost.mockResolvedValue(true)
+    const onCloseAction = vi.fn()
+
+    const view = renderPage(createPost(), { chrome: 'modal', onCloseAction })
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(getDialogText()).toContain('Original description'))
+
+    act(() => {
+      document.body.querySelector<HTMLButtonElement>('button[aria-label="Post actions"]')?.click()
+    })
+
+    await waitFor(() => expect(getDialogText()).toContain('Delete Post'))
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Delete Post')
+        ?.click()
+    })
+
+    await waitFor(() =>
+      expect(getDialogText()).toContain('Are you sure you want to delete this post?'),
+    )
+
+    act(() => {
+      Array.from(document.body.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Yes')
+        ?.click()
+    })
+
+    await waitFor(() => expect(onCloseAction).toHaveBeenCalledTimes(1))
+    expect(synchronizationMocks.synchronizeDeletedPost).toHaveBeenCalledWith('post-1')
+    expect(navigationMocks.replace).not.toHaveBeenCalled()
   })
 
   it('renders server-provided post data without requesting post(id)', () => {

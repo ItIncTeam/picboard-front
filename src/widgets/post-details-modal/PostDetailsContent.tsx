@@ -15,6 +15,7 @@ import { IconButton } from '@/shared/ui/icon-button'
 import { Modal } from '@/shared/ui/modal'
 import { formatRelativePostTime, PublicPostCarousel } from '@/widgets/public-post-card'
 
+import { useSeedPostDetailsCache } from './lib/useSeedPostDetailsCache'
 import type { PostDetailsData } from './model/types'
 import styles from './post-details-content.module.css'
 import modalStyles from './post-details-modal.module.css'
@@ -79,6 +80,8 @@ export function PostDetailsContent({
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
 
+  useSeedPostDetailsCache(data)
+
   const safeReturnTo = getSafeReturnToPath(searchParams.get('returnTo'))
 
   const closePage = () => {
@@ -120,7 +123,7 @@ export function PostDetailsContent({
       headerAction={
         <>
           {isOwner ? (
-            <DeletePostFlow postId={entity.id} returnTo={safeReturnTo}>
+            <DeletePostFlow onDeletedAction={closePage} postId={entity.id} returnTo={safeReturnTo}>
               {({ openDeleteConfirmAction }) => (
                 <EditPostMenu
                   onDeleteAction={openDeleteConfirmAction}

@@ -213,6 +213,24 @@ describe('DeletePostFlow', () => {
 
   it('deletes, synchronizes app state, and redirects to main without returnTo', async () => {
     const deletePostAction = vi.fn().mockResolvedValue(true)
+    const synchronizePostDeletionAction = vi.fn().mockResolvedValue(undefined)
+    const view = renderDeletePostFlow({
+      deletePostAction,
+      postId: 'post-7',
+      synchronizePostDeletionAction,
+    })
+    mountedRoots.push(view)
+
+    clickButton(getButton(view.container, 'Delete Post'))
+    await clickButtonAndFlush(getButton(view.container, 'Yes'))
+
+    expect(deletePostAction).toHaveBeenCalledWith({ postId: 'post-7' })
+    expect(synchronizePostDeletionAction).toHaveBeenCalledWith('post-7')
+    expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
+  })
+
+  it('closes through onDeletedAction instead of default replace', async () => {
+    const deletePostAction = vi.fn().mockResolvedValue(true)
     const onDeletedAction = vi.fn()
     const synchronizePostDeletionAction = vi.fn().mockResolvedValue(undefined)
     const view = renderDeletePostFlow({
@@ -229,7 +247,7 @@ describe('DeletePostFlow', () => {
     expect(deletePostAction).toHaveBeenCalledWith({ postId: 'post-7' })
     expect(synchronizePostDeletionAction).toHaveBeenCalledWith('post-7')
     expect(onDeletedAction).toHaveBeenCalledTimes(1)
-    expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
+    expect(navigationMocks.router.replace).not.toHaveBeenCalled()
   })
 
   it('redirects to a safe returnTo path after deletion', async () => {
@@ -279,7 +297,7 @@ describe('DeletePostFlow', () => {
     })
   })
 
-  it('redirects to main when the success callback rejects after deletion', async () => {
+  it('still closes through onDeletedAction when the callback rejects', async () => {
     const deletePostAction = vi.fn().mockResolvedValue(true)
     const onDeletedAction = vi.fn().mockRejectedValue(new Error('Callback failed.'))
     const synchronizePostDeletionAction = vi.fn().mockResolvedValue(undefined)
@@ -294,12 +312,12 @@ describe('DeletePostFlow', () => {
     await clickButtonAndFlush(getButton(view.container, 'Yes'))
 
     await waitFor(() => {
-      expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
-      expect(navigationMocks.router.replace).toHaveBeenCalledTimes(1)
+      expect(onDeletedAction).toHaveBeenCalledTimes(1)
     })
+    expect(navigationMocks.router.replace).not.toHaveBeenCalled()
   })
 
-  it('redirects to main when the success callback throws synchronously after deletion', async () => {
+  it('still closes through onDeletedAction when the callback throws synchronously', async () => {
     const deletePostAction = vi.fn().mockResolvedValue(true)
     const onDeletedAction = vi.fn(() => {
       throw new Error('Synchronous callback failed.')
@@ -316,9 +334,9 @@ describe('DeletePostFlow', () => {
     await clickButtonAndFlush(getButton(view.container, 'Yes'))
 
     await waitFor(() => {
-      expect(navigationMocks.router.replace).toHaveBeenCalledWith('/main')
-      expect(navigationMocks.router.replace).toHaveBeenCalledTimes(1)
+      expect(onDeletedAction).toHaveBeenCalledTimes(1)
     })
+    expect(navigationMocks.router.replace).not.toHaveBeenCalled()
   })
 
   it('redirects to main when synchronization fails after deletion', async () => {

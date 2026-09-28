@@ -2,14 +2,15 @@
 
 ## Статус
 
-**D1.1–D1.2, D2.2–D2.5, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+**D1.1–D1.2, D2.2–D2.6, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
 Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. D2.2–D2.3 отдают
 публичный пост через `loadInitialPost` (`cache: 'no-store'`) в HTML `/posts/[postId]` без Portal;
 после hydration начальный `post(id)` не повторяется. D2.4 открывает тот же пост через
 `@modal/(.)posts/[postId]` поверх исходной страницы; прямой заход и reload остаются canonical SSR.
 D2.5 добавляет единый Link-контракт карточек: media/details → `/posts/[postId]`, автор →
-`/profile/[authorId]`; carousel и Show more не навигируют. В D1.3 подготовлена безопасная часть Public User
+`/profile/[authorId]`; carousel и Show more не навигируют. D2.6 seed'ит SSR post в существующий Apollo cache
+через route-local `writeQuery(postQuery)` и синхронизирует Edit/Delete без повторного browser `post(id)`. В D1.3 подготовлена безопасная часть Public User
 contract foundation; полная атомарная загрузка начальных данных ждёт
 backend-контракт публичных счётчиков и безопасный Public User. D3.1 реализована как изолированная
 RHF-форма с Privacy Policy trigger через `DocModal`. D3.2 реализована с правилами валидации и возраста,
