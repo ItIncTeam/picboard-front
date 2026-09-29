@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D2.2–D2.5, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D2.2–D2.6, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -211,7 +211,7 @@ sign-in; элементы владельца по-прежнему завися�
 
 **Статус:** IMPLEMENTED. `/posts/[postId]` загружает `getCachedInitialPost`, рендерит Post Details
 в HTML страницы без Portal, вызывает `notFound()` для отсутствующего поста и локальный `error.tsx`
-с `unstable_retry()`. Apollo seed остаётся в D2.6. Перехваченный modal-вариант — D2.4.
+с `unstable_retry()`. Apollo seed реализован в D2.6. Перехваченный modal-вариант — D2.4.
 
 **Цель:** отдать прямой маршрут Post как публичную SSR-страницу.
 
@@ -276,6 +276,12 @@ canonical Link; весь `article` не обёрнут в Link; карусель
 previous/next без перехода, клавиатура/focus и единый Link-контракт для Public Home и Main.
 
 ### D2.6. Apollo seed и синхронизация Post mutations
+
+**Статус:** IMPLEMENTED. Route-local `useSeedPostDetailsCache` пишет полный `postQuery` через
+`writeQuery` в `useEffect` (повтор при смене `baselineKey`). UI остаётся на `initialPost`/`displayPost`
+без клиентского `useQuery(postQuery)`. Edit обновляет локальный state и normalized cache ответом
+мутации; Delete вычищает Post из cache (`synchronizeDeletedPost`) и закрывает view через
+`closePage` (modal → `router.back()` / page → `returnTo`).
 
 **Цель:** связать Post из SSR с существующим Apollo cache и mutations владельца.
 
