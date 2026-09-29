@@ -278,7 +278,7 @@ previous/next без перехода, клавиатура/focus и едины�
 ### D2.6. Apollo seed и синхронизация Post mutations
 
 **Статус:** IMPLEMENTED. Route-local `useSeedPostDetailsCache` пишет полный `postQuery` через
-`writeQuery` в `useEffect` и хранит `seededBaselineKey`. UI остаётся на `initialPost`/`displayPost`
+`writeQuery` в `useEffect` (повтор при смене `baselineKey`). UI остаётся на `initialPost`/`displayPost`
 без клиентского `useQuery(postQuery)`. Edit обновляет локальный state и normalized cache ответом
 мутации; Delete вычищает Post из cache (`synchronizeDeletedPost`) и закрывает view через
 `closePage` (modal → `router.back()` / page → `returnTo`).

@@ -1,7 +1,7 @@
 'use client'
 
 import { useApolloClient } from '@apollo/client/react'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
 import { postQuery } from '@/entities/post/api/postQuery'
 import type { PostEntity } from '@/entities/post/model/backendTypes'
@@ -40,7 +40,6 @@ function toSeededPost(post: PostEntity) {
 
 export function useSeedPostDetailsCache({ baselineKey, post }: UseSeedPostDetailsCacheInput): void {
   const client = useApolloClient()
-  const seededBaselineKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     client.writeQuery({
@@ -52,6 +51,5 @@ export function useSeedPostDetailsCache({ baselineKey, post }: UseSeedPostDetail
         id: post.id,
       },
     })
-    seededBaselineKeyRef.current = baselineKey
   }, [baselineKey, client, post])
 }
