@@ -139,7 +139,7 @@ Local modal живет рядом с feature или widget, если это об
 Пример route-based места:
 
 ```txt
-src/app/(protected)/(main)/@modal
+src/app/(app-shell)/@modal
 ```
 
 Пример local места:

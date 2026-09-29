@@ -3,10 +3,12 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { authRoutes } from '@/shared/lib/auth'
+import { I18nProvider } from '@/shared/lib/i18n'
 
-import { CreateNewPasswordForm } from '../CreateNewPasswordForm'
+import { CreateNewPasswordForm } from '@/features/auth/create-new-password-form'
 
 const apiMocks = vi.hoisted(() => ({
+  passwordReset: vi.fn(),
   setNewPassword: vi.fn(),
 }))
 
@@ -16,11 +18,15 @@ const navigationMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/features/auth/api/passwordRecoveryApi', () => ({
+  passwordReset: apiMocks.passwordReset,
   setNewPassword: apiMocks.setNewPassword,
 }))
 
 vi.mock('@/shared/assets', () => ({
   CloseEyeIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GithubIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+  GoogleIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
+  LogOutIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
   OpenEyeIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
   SearchIcon: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />,
 }))
@@ -53,7 +59,11 @@ function renderForm(searchParams = new URLSearchParams({ code: 'recovery-code' }
   document.body.append(container)
 
   act(() => {
-    root.render(<CreateNewPasswordForm />)
+    root.render(
+      <I18nProvider>
+        <CreateNewPasswordForm />
+      </I18nProvider>,
+    )
   })
 
   return { container, root }

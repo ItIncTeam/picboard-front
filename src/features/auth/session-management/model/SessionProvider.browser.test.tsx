@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LogoutButton } from '@/features/auth/logout-button'
 import { authRoutes, clearAccessToken, getAccessToken, setAccessToken } from '@/shared/lib/auth'
+import { I18nProvider } from '@/shared/lib/i18n'
 
 import { SessionProvider } from './SessionProvider'
 import type { SessionContextValue } from './types'
@@ -18,6 +19,17 @@ const apiMocks = vi.hoisted(() => ({
 const navigationMocks = vi.hoisted(() => ({
   replace: vi.fn(),
 }))
+
+const assetMocks = vi.hoisted(() => {
+  const IconStub = () => <span />
+
+  return {
+    BellIcon: IconStub,
+    Close: IconStub,
+    LogOutIcon: IconStub,
+    MenuIcon: IconStub,
+  }
+})
 
 vi.mock('../api', () => ({
   getMe: apiMocks.getMe,
@@ -35,7 +47,10 @@ vi.mock('next/image', () => ({
   default: () => null,
 }))
 
+vi.mock('@/shared/assets', () => assetMocks)
+
 const user = {
+  avatar: null,
   bio: null,
   displayName: null,
   email: 'user@example.com',
@@ -70,13 +85,15 @@ function renderSessionProvider(): RenderResult {
 
   act(() => {
     root.render(
-      <SessionProvider>
-        <SessionProbe
-          onSession={(session) => {
-            latestSession = session
-          }}
-        />
-      </SessionProvider>,
+      <I18nProvider>
+        <SessionProvider>
+          <SessionProbe
+            onSession={(session) => {
+              latestSession = session
+            }}
+          />
+        </SessionProvider>
+      </I18nProvider>,
     )
   })
 

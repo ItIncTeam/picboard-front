@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DocumentNode, OperationDefinitionNode } from 'graphql'
+import { print, type DocumentNode, type OperationDefinitionNode } from 'graphql'
 
 const apolloMocks = vi.hoisted(() => ({
   mutate: vi.fn(),
@@ -13,7 +13,7 @@ vi.mock('@/shared/api', () => ({
   },
 }))
 
-import { logout, refreshToken } from './api'
+import { getMe, logout, refreshToken } from './api'
 
 function getOperationDefinition(document: DocumentNode): OperationDefinitionNode {
   const operation = document.definitions.find(
@@ -43,6 +43,31 @@ describe('auth session GraphQL helpers', () => {
   afterEach(() => {
     apolloMocks.mutate.mockReset()
     apolloMocks.query.mockReset()
+  })
+
+  it('loads private Me fields with a nullable avatar', async () => {
+    const user = {
+      avatar: {
+        id: 'avatar-file-1',
+        url: 'https://cdn.example/avatar.jpg',
+      },
+      bio: null,
+      displayName: 'User Name',
+      email: 'user@example.com',
+      id: 'user-id',
+      isConfirmed: true,
+      profilePictureFileId: 'avatar-file-1',
+      username: 'username',
+    }
+
+    apolloMocks.query.mockResolvedValueOnce({ data: { me: user } })
+
+    await expect(getMe()).resolves.toEqual(user)
+
+    const request = apolloMocks.query.mock.calls[0]?.[0]
+    const document = print(request.query).replace(/\s+/g, ' ')
+
+    expect(document).toContain('avatar { id url }')
   })
 
   it('calls refreshToken without input variables', async () => {

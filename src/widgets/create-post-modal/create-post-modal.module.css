@@ -1,0 +1,20 @@
+.modal {
+  width: fit-content;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  border-color: var(--color-dark-100);
+}
+
+.body {
+  overflow: hidden;
+  padding: 0;
+}
+
+@media (width <= 640px) {
+  .modal {
+    max-width: calc(100vw - 1.5rem);
+    max-height: calc(100vh - 1.5rem);
+    max-height: calc(100dvh - 1.5rem);
+  }
+}

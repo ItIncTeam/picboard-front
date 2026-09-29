@@ -2,7 +2,7 @@
 @import '../shared/styles/typography.css';
 
 :root {
-  --public-header-height: 64px;
+  --public-header-height: 60px;
   --public-header-padding-x: 24px;
 }
 

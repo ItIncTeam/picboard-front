@@ -40,13 +40,6 @@ git commit -m "SCRUM-0 feat: title"
 <JIRA-ID> <type>: <description>
 ```
 
-Примеры:
-
-```bash
-git commit -m "SCRUM-17 feat: add login form"
-git commit -m "SCRUM-17 fix: validate email field"
-```
-
 ---
 
 ## 3. Обновить ветку через rebase

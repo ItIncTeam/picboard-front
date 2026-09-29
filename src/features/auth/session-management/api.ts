@@ -12,6 +12,10 @@ const meQuery = gql`
       displayName
       bio
       profilePictureFileId
+      avatar {
+        id
+        url
+      }
     }
   }
 `
@@ -31,6 +35,10 @@ const logoutMutation = gql`
 `
 
 export type CurrentUser = {
+  avatar: {
+    id: string
+    url: string
+  } | null
   bio: string | null
   displayName: string | null
   email: string

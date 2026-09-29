@@ -1,0 +1,29 @@
+.root {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+
+  width: min(100% - (2 * var(--public-header-padding-x)), 972px);
+  margin: 24px auto 0;
+  padding: 32px 16px;
+  border: 1px dashed var(--color-border-secondary);
+  border-radius: 8px;
+
+  text-align: center;
+
+  background: var(--color-surface-secondary);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-md);
+}
+
+.description {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+  color: var(--color-text-secondary);
+}

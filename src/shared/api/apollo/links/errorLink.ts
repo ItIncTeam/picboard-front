@@ -20,13 +20,17 @@ const invalidateAuthSession = (): void => {
   notifyAuthSessionExpired()
 }
 
+const getGraphQLErrorCode = (graphQLError: CombinedGraphQLErrors['errors'][number]): unknown => {
+  return graphQLError.extensions?.code
+}
+
 const hasAuthGraphQLError = (error: unknown): boolean => {
   if (!CombinedGraphQLErrors.is(error)) {
     return false
   }
 
-  return error.errors.some(({ extensions }) => {
-    const code = extensions?.code
+  return error.errors.some((graphQLError) => {
+    const code = getGraphQLErrorCode(graphQLError)
 
     return typeof code === 'string' && authErrorCodes.has(code)
   })
@@ -37,8 +41,8 @@ const hasRefreshableGraphQLError = (error: unknown): boolean => {
     return false
   }
 
-  return error.errors.some(({ extensions }) => {
-    const code = extensions?.code
+  return error.errors.some((graphQLError) => {
+    const code = getGraphQLErrorCode(graphQLError)
 
     return typeof code === 'string' && refreshableAuthErrorCodes.has(code)
   })

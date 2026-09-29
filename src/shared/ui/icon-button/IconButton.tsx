@@ -1,7 +1,9 @@
-import { type MouseEventHandler, type ReactNode, type SVGProps } from 'react'
+import { forwardRef, type MouseEventHandler, type ReactNode, type SVGProps } from 'react'
 
 import clsx from 'clsx'
 import Image from 'next/image'
+
+import { Tooltip } from '@/shared/ui/tooltip'
 
 import styles from './icon-button.module.css'
 
@@ -15,7 +17,8 @@ type IconButtonBaseProps = {
   indicatorCount?: number
   label: string
   onClick?: MouseEventHandler<HTMLButtonElement>
-}
+  tooltip?: string
+} & React.ComponentPropsWithoutRef<'button'>
 
 type IconButtonProps = IconButtonBaseProps &
   (
@@ -39,20 +42,44 @@ function getIconElement(props: IconButtonProps): ReactNode {
   return <Image className={styles.icon} src={props.src} alt="" width={24} height={24} aria-hidden />
 }
 
-export function IconButton(props: IconButtonProps) {
-  const { className, disabled, indicatorCount = 0, label, onClick } = props
-  const hasIndicator = indicatorCount > 0
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  function IconButton(props, ref) {
+    const {
+      className,
+      disabled,
+      indicatorCount = 0,
+      label,
+      onClick,
+      tooltip,
+      icon: _icon,
+      src: _src,
+      ...rest
+    } = props
+    const hasIndicator = indicatorCount > 0
 
-  return (
-    <button
-      className={clsx(styles.button, className)}
-      disabled={disabled}
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-    >
-      {getIconElement(props)}
-      {hasIndicator && <span className={styles.indicator}>{indicatorCount}</span>}
-    </button>
-  )
-}
+    const button = (
+      <button
+        ref={ref}
+        className={clsx(styles.button, className)}
+        disabled={disabled}
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        {...rest}
+      >
+        {getIconElement(props)}
+        {hasIndicator && <span className={styles.indicator}>{indicatorCount}</span>}
+      </button>
+    )
+
+    if (!tooltip) {
+      return button
+    }
+
+    return (
+      <Tooltip content={tooltip} side="bottom">
+        <span className={styles.tooltipTrigger}>{button}</span>
+      </Tooltip>
+    )
+  },
+)

@@ -3,7 +3,10 @@
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 import type { ComponentPropsWithoutRef } from 'react'
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
+
+import { useI18n } from '@/shared/lib/i18n'
+import type { Dictionary } from '@/shared/lib/i18n/dictionaries'
 
 import s from './date-picker.module.css'
 
@@ -35,7 +38,8 @@ type Props = {
   today?: Date
   dayOverrides?: DatePickerDayOverride[]
   onValueChange?: (value: Date | DateRangeValue) => void
-} & Omit<ComponentPropsWithoutRef<'div'>, 'defaultValue' | 'onChange'>
+  onBlur?: () => void
+} & Omit<ComponentPropsWithoutRef<'div'>, 'defaultValue' | 'onBlur' | 'onChange'>
 
 type CalendarDay = {
   date: Date
@@ -44,8 +48,6 @@ type CalendarDay = {
   isToday: boolean
   isWeekend: boolean
 }
-
-const weekDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const
 
 const defaultSingleDate = new Date(2023, 10, 11)
 
@@ -76,10 +78,16 @@ export const DatePicker = ({
   errorMessage,
   today = new Date(),
   dayOverrides = [],
+  onBlur,
   onValueChange,
   className,
+  id,
   ...rest
 }: Props) => {
+  const { language, t } = useI18n()
+  const generatedId = useId()
+  const triggerId = `${id ?? generatedId}-trigger`
+  const labelId = `${triggerId}-label`
   const isDisabled = disabled || state === 'disabled'
   const isError = Boolean(errorMessage) || state === 'error'
   const [isOpen, setIsOpen] = useState(defaultOpen)
@@ -88,14 +96,15 @@ export const DatePicker = ({
     defaultValue ?? fallbackValue,
   )
   const selectedValue = value === undefined ? uncontrolledValue : value
-  const monthDate = getMonthDate(selectedValue)
+  const monthDate = getMonthDate(selectedValue, today)
   const [visibleMonth, setVisibleMonth] = useState(monthDate)
 
   const calendarDays = useMemo(() => getCalendarDays(visibleMonth, today), [today, visibleMonth])
   const displayValue = getDisplayValue(selectedValue, mode)
-  const resolvedLabel = label ?? (mode === 'range' ? 'Date range' : 'Date')
+  const resolvedLabel =
+    label ?? (mode === 'range' ? t.ui.datePicker.dateRange : t.ui.datePicker.date)
   const resolvedErrorMessage =
-    errorMessage ?? (state === 'error' ? getDefaultErrorMessage(mode) : '')
+    errorMessage ?? (state === 'error' ? getDefaultErrorMessage(mode, t) : '')
 
   const handlePreviousMonth = (): void => {
     setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))
@@ -116,11 +125,16 @@ export const DatePicker = ({
   }
 
   return (
-    <div className={clsx(s.datePicker, className)} {...rest}>
-      <label className={clsx(s.datePicker__label, isDisabled && s.datePicker__label_disabled)}>
+    <div className={clsx(s.datePicker, className)} id={id} {...rest}>
+      <label
+        className={clsx(s.datePicker__label, isDisabled && s.datePicker__label_disabled)}
+        htmlFor={triggerId}
+        id={labelId}
+      >
         {resolvedLabel}
       </label>
       <button
+        aria-labelledby={labelId}
         className={clsx(
           s.datePicker__input,
           state === 'hover' && s.datePicker__input_hover,
@@ -129,6 +143,8 @@ export const DatePicker = ({
           isDisabled && s.datePicker__input_disabled,
         )}
         disabled={isDisabled}
+        id={triggerId}
+        onBlur={onBlur}
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
       >
@@ -143,10 +159,12 @@ export const DatePicker = ({
       {isOpen && (
         <div className={s.datePicker__popup}>
           <div className={s.datePicker__header}>
-            <span className={s.datePicker__monthTitle}>{formatMonthTitle(visibleMonth)}</span>
+            <span className={s.datePicker__monthTitle}>
+              {formatMonthTitle(visibleMonth, language)}
+            </span>
             <div className={s.datePicker__navigation}>
               <button
-                aria-label="Previous month"
+                aria-label={t.ui.datePicker.previousMonth}
                 className={s.datePicker__navigationButton}
                 type="button"
                 onClick={handlePreviousMonth}
@@ -154,7 +172,7 @@ export const DatePicker = ({
                 <ChevronLeftIcon />
               </button>
               <button
-                aria-label="Next month"
+                aria-label={t.ui.datePicker.nextMonth}
                 className={s.datePicker__navigationButton}
                 type="button"
                 onClick={handleNextMonth}
@@ -165,7 +183,7 @@ export const DatePicker = ({
           </div>
 
           <div className={s.datePicker__weekDays}>
-            {weekDays.map((weekDay) => (
+            {t.ui.datePicker.weekDays.map((weekDay) => (
               <span className={s.datePicker__weekDay} key={weekDay}>
                 {weekDay}
               </span>
@@ -238,9 +256,9 @@ const getCalendarDays = (monthDate: Date, today: Date): CalendarDay[] => {
   })
 }
 
-const getMonthDate = (value: Date | DateRangeValue | null): Date => {
+const getMonthDate = (value: Date | DateRangeValue | null, fallbackDate: Date): Date => {
   if (!value) {
-    return new Date(defaultSingleDate.getFullYear(), defaultSingleDate.getMonth(), 1)
+    return new Date(fallbackDate.getFullYear(), fallbackDate.getMonth(), 1)
   }
 
   const date = value instanceof Date ? value : (value.to ?? value.from ?? defaultSingleDate)
@@ -336,16 +354,16 @@ const getNextValue = (
   return { from: value.from, to: date }
 }
 
-const getDefaultErrorMessage = (mode: DatePickerMode): string => {
-  return mode === 'range' ? 'Error, select current month or last month' : 'Error!'
+const getDefaultErrorMessage = (mode: DatePickerMode, t: Dictionary): string => {
+  return mode === 'range' ? t.ui.datePicker.rangeError : t.ui.datePicker.defaultError
 }
 
 const addMonths = (date: Date, months: number): Date => {
   return new Date(date.getFullYear(), date.getMonth() + months, 1)
 }
 
-const formatMonthTitle = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-US', {
+const formatMonthTitle = (date: Date, language: string): string => {
+  return new Intl.DateTimeFormat(language, {
     month: 'long',
     year: 'numeric',
   }).format(date)

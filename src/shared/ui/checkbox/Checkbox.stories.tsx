@@ -60,7 +60,7 @@ export const Controlled: Story = {
       <Checkbox
         label="I agree to the Terms of Service"
         checked={checked}
-        onCheckedChange={(next) => setChecked(next === true)}
+        onCheckedChangeAction={(next) => setChecked(next === true)}
       />
     )
   },
