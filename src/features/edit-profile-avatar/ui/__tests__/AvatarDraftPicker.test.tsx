@@ -1,5 +1,6 @@
-import { act } from 'react'
+import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { useForm } from 'react-hook-form'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { I18nProvider } from '@/shared/lib/i18n'
@@ -61,6 +62,32 @@ vi.mock('react-advanced-cropper', async () => {
   }
 })
 
+vi.mock('@/shared/ui/modal', () => ({
+  Modal: ({
+    children,
+    hideCloseButton,
+    modalTitle,
+    onCloseAction,
+    open,
+  }: {
+    children: React.ReactNode
+    hideCloseButton?: boolean
+    modalTitle: string
+    onCloseAction: () => void
+    open: boolean
+  }) =>
+    open ? (
+      <section aria-label={modalTitle} role="dialog">
+        {!hideCloseButton ? (
+          <button aria-label="Close" onClick={onCloseAction} type="button">
+            Close
+          </button>
+        ) : null}
+        {children}
+      </section>
+    ) : null,
+}))
+
 type RenderResult = { container: HTMLDivElement; root: Root }
 
 const createObjectUrl = vi.fn()
@@ -72,7 +99,40 @@ function createFile(name: string, type: string, size = 1): File {
   return new File([new ArrayBuffer(size)], name, { type })
 }
 
-async function renderPicker(): Promise<RenderResult> {
+function createDeferred<T>() {
+  let resolve: (value: T | PromiseLike<T>) => void = () => undefined
+  let reject: (reason?: unknown) => void = () => undefined
+
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve
+    reject = promiseReject
+  })
+
+  return { promise, reject, resolve }
+}
+
+function AvatarPickerWithProfileForm(props: ComponentProps<typeof AvatarDraftPicker>) {
+  const {
+    formState: { isDirty },
+    register,
+  } = useForm({ defaultValues: { username: 'profile-owner' } })
+
+  return (
+    <>
+      <input aria-label="Username" {...register('username')} />
+      <output data-rhf-dirty={isDirty} />
+      <AvatarDraftPicker {...props} />
+    </>
+  )
+}
+
+async function renderPicker({
+  initialSavedAvatarUrl = null,
+  onDeleteAvatar = vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  withProfileForm = false,
+}: Partial<ComponentProps<typeof AvatarDraftPicker>> & {
+  withProfileForm?: boolean
+} = {}): Promise<RenderResult> {
   const container = document.createElement('div')
   const root = createRoot(container)
   document.body.append(container)
@@ -80,7 +140,17 @@ async function renderPicker(): Promise<RenderResult> {
   await act(async () => {
     root.render(
       <I18nProvider>
-        <AvatarDraftPicker />
+        {withProfileForm ? (
+          <AvatarPickerWithProfileForm
+            initialSavedAvatarUrl={initialSavedAvatarUrl}
+            onDeleteAvatar={onDeleteAvatar}
+          />
+        ) : (
+          <AvatarDraftPicker
+            initialSavedAvatarUrl={initialSavedAvatarUrl}
+            onDeleteAvatar={onDeleteAvatar}
+          />
+        )}
       </I18nProvider>,
     )
   })
@@ -377,5 +447,142 @@ describe('AvatarDraftPicker', () => {
     view.container.remove()
 
     expect(revokeObjectUrl).toHaveBeenCalledWith('blob:unmounted')
+  })
+
+  it('opens and closes deletion confirmation only for a saved avatar', async () => {
+    const onDeleteAvatar = vi.fn<() => Promise<void>>().mockResolvedValue(undefined)
+    const view = await renderPicker({
+      initialSavedAvatarUrl: 'https://cdn.example/avatar.jpg',
+      onDeleteAvatar,
+    })
+    renderedPickers.push(view)
+
+    expect(view.container.querySelector('img')).toHaveAttribute(
+      'src',
+      'https://cdn.example/avatar.jpg',
+    )
+
+    await clickButton(view.container, 'Delete photo')
+
+    expect(view.container.querySelector('[role="dialog"]')).toBeInstanceOf(HTMLElement)
+
+    await clickButton(view.container, 'No')
+
+    expect(view.container.querySelector('[role="dialog"]')).toBeNull()
+    expect(onDeleteAvatar).not.toHaveBeenCalled()
+
+    await clickButton(view.container, 'Delete photo')
+    await clickButton(view.container, 'Close')
+
+    expect(view.container.querySelector('[role="dialog"]')).toBeNull()
+    expect(onDeleteAvatar).not.toHaveBeenCalled()
+  })
+
+  it('does not expose deletion for a draft or crop candidate', async () => {
+    const view = await renderPicker()
+    renderedPickers.push(view)
+
+    expect(
+      Array.from(view.container.querySelectorAll('button')).some(
+        (button) => button.textContent === 'Delete photo',
+      ),
+    ).toBe(false)
+
+    createObjectUrl.mockReturnValueOnce('blob:candidate')
+    await selectFile(view.container, createFile('candidate.jpg', 'image/jpeg'))
+
+    expect(
+      Array.from(view.container.querySelectorAll('button')).some(
+        (button) => button.textContent === 'Delete photo',
+      ),
+    ).toBe(false)
+  })
+
+  it('blocks Avatar actions and duplicate deletion while deletion is pending', async () => {
+    const deletion = createDeferred<void>()
+    const onDeleteAvatar = vi.fn<() => Promise<void>>().mockReturnValue(deletion.promise)
+    const view = await renderPicker({
+      initialSavedAvatarUrl: 'https://cdn.example/avatar.jpg',
+      onDeleteAvatar,
+    })
+    renderedPickers.push(view)
+
+    await clickButton(view.container, 'Delete photo')
+    await act(async () => {
+      getButton(view.container, 'Yes').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(onDeleteAvatar).toHaveBeenCalledOnce()
+    expect(getButton(view.container, 'Deleting')).toBeDisabled()
+    expect(getButton(view.container, 'No')).toBeDisabled()
+    expect(getButton(view.container, 'Replace profile photo')).toBeDisabled()
+    expect(view.container.querySelector('input[type="file"]')).toBeDisabled()
+    expect(view.container.querySelector('[aria-label="Close"]')).toBeNull()
+
+    await act(async () => {
+      getButton(view.container, 'Deleting').dispatchEvent(
+        new MouseEvent('click', { bubbles: true }),
+      )
+      deletion.resolve()
+      await deletion.promise
+    })
+
+    expect(onDeleteAvatar).toHaveBeenCalledOnce()
+    expect(view.container.querySelector('[role="dialog"]')).toBeNull()
+    expect(view.container.querySelector('img')).toBeNull()
+  })
+
+  it('keeps the saved avatar after an error and allows deletion retry', async () => {
+    const onDeleteAvatar = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce(undefined)
+    const view = await renderPicker({
+      initialSavedAvatarUrl: 'https://cdn.example/avatar.jpg',
+      onDeleteAvatar,
+    })
+    renderedPickers.push(view)
+
+    await clickButton(view.container, 'Delete photo')
+    await act(async () => {
+      getButton(view.container, 'Yes').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(view.container.querySelector('[role="alert"]')).toHaveTextContent(
+      'Could not delete the profile photo. Please try again.',
+    )
+    expect(view.container.querySelector('img')).toHaveAttribute(
+      'src',
+      'https://cdn.example/avatar.jpg',
+    )
+    expect(getButton(view.container, 'Yes')).toBeEnabled()
+
+    await act(async () => {
+      getButton(view.container, 'Yes').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(onDeleteAvatar).toHaveBeenCalledTimes(2)
+    expect(view.container.querySelector('[role="dialog"]')).toBeNull()
+    expect(view.container.querySelector('img')).toBeNull()
+  })
+
+  it('does not change React Hook Form state after saved avatar deletion', async () => {
+    const view = await renderPicker({
+      initialSavedAvatarUrl: 'https://cdn.example/avatar.jpg',
+      withProfileForm: true,
+    })
+    renderedPickers.push(view)
+
+    await clickButton(view.container, 'Delete photo')
+    await act(async () => {
+      getButton(view.container, 'Yes').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      await Promise.resolve()
+    })
+
+    expect(view.container.querySelector('[aria-label="Username"]')).toHaveValue('profile-owner')
+    expect(view.container.querySelector('output')).toHaveAttribute('data-rhf-dirty', 'false')
   })
 })

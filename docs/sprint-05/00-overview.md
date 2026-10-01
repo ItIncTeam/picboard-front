@@ -2,7 +2,7 @@
 
 ## Статус
 
-**D1.1–D1.2, D2.2–D2.6, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+**D1.1–D1.2, D2.2–D2.6, D3.1–D3.6 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
 Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. D2.2–D2.3 отдают
 публичный пост через `loadInitialPost` (`cache: 'no-store'`) в HTML `/posts/[postId]` без Portal;
@@ -15,8 +15,9 @@ contract foundation; полная атомарная загрузка начал
 backend-контракт публичных счётчиков и безопасный Public User. D3.1 реализована как изолированная
 RHF-форма с Privacy Policy trigger через `DocModal`. D3.2 реализована с правилами валидации и возраста,
 D3.3 — зависимые Country/City select через props, D3.4 — локальный Avatar draft с preview и cleanup
-object URL, а D3.5 — квадратный crop с decode handling без export/upload. Production-источник
-Country/City и backend-интеграция остаются отдельными задачами.
+object URL, D3.5 — квадратный crop с decode handling без export/upload, а D3.6 — локальное
+подтверждение удаления сохранённого Avatar без optimistic update. Production-источник Country/City
+и backend-интеграция остаются отдельными задачами.
 
 ## Цель
 

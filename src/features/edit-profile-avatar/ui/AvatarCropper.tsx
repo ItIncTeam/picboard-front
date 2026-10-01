@@ -17,6 +17,7 @@ import styles from './avatar-draft-picker.module.css'
 
 type AvatarCropperProps = {
   candidate: AvatarCandidate
+  disabled?: boolean
   onCancel: (candidateId: number) => void
   onError: (candidateId: number) => void
   onSave: (candidateId: number, selection: AvatarCropSelection) => void
@@ -32,7 +33,13 @@ function getSelection(cropper: CropperRef, source: File): AvatarCropSelection | 
   return createAvatarCropSelection(source, coordinates)
 }
 
-export function AvatarCropper({ candidate, onCancel, onError, onSave }: AvatarCropperProps) {
+export function AvatarCropper({
+  candidate,
+  disabled = false,
+  onCancel,
+  onError,
+  onSave,
+}: AvatarCropperProps) {
   const { t } = useI18n()
   const [selection, setSelection] = useState<AvatarCropSelection | null>(null)
   const readyCandidateIdRef = useRef<number | null>(null)
@@ -70,6 +77,7 @@ export function AvatarCropper({ candidate, onCancel, onError, onSave }: AvatarCr
         <Cropper
           key={candidate.id}
           className={styles.cropper}
+          disabled={disabled}
           onChange={updateSelection}
           onError={handleError}
           onReady={handleReady}
@@ -80,13 +88,18 @@ export function AvatarCropper({ candidate, onCancel, onError, onSave }: AvatarCr
 
       <div className={styles.actions}>
         <Button
-          disabled={!selection}
+          disabled={!selection || disabled}
           onClick={() => selection && onSave(candidate.id, selection)}
           type="button"
         >
           {t.profile.avatar.saveCrop}
         </Button>
-        <Button onClick={() => onCancel(candidate.id)} type="button" variant="textButton">
+        <Button
+          disabled={disabled}
+          onClick={() => onCancel(candidate.id)}
+          type="button"
+          variant="textButton"
+        >
           {t.profile.avatar.cancel}
         </Button>
       </div>
