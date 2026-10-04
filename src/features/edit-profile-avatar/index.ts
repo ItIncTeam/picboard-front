@@ -1,4 +1,5 @@
 export { AvatarDraftPicker } from './ui/AvatarDraftPicker'
+export type { OnDeleteAvatar } from './ui/AvatarDraftPicker'
 export {
   ACCEPTED_AVATAR_MIME_TYPES,
   createAvatarCropSelection,
