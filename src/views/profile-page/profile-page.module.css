@@ -104,30 +104,34 @@
   background: var(--color-surface-secondary);
 }
 
-.skeletonIdentity,
+.skeletonIdentity {
+  display: grid;
+  gap: 4px;
+}
+
+.skeletonUsername {
+  width: min(100%, 240px);
+  height: var(--line-height-lg);
+}
+
+.skeletonDisplayName {
+  width: min(72%, 172px);
+  height: var(--line-height-md);
+}
+
 .skeletonAbout {
   display: grid;
   gap: 8px;
 }
 
-.skeletonUsername {
-  width: min(100%, 240px);
-  height: 28px;
-}
-
-.skeletonDisplayName {
-  width: min(72%, 172px);
-  height: 18px;
-}
-
 .skeletonAboutTitle {
   width: min(42%, 112px);
-  height: 20px;
+  height: var(--line-height-md);
 }
 
 .skeletonBio {
   width: min(100%, 420px);
-  height: 36px;
+  height: var(--line-height-md);
 }
 
 .counters {

@@ -324,7 +324,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
           className={styles.profileHeader}
           data-testid="profile-header-skeleton"
         >
-          <div className={`${styles.avatar} ${styles.skeletonBlock}`} />
+          <div className={styles.avatar} />
 
           <div className={styles.profileInfo}>
             <div className={styles.skeletonIdentity}>
@@ -338,7 +338,10 @@ export function ProfilePage({ userId }: ProfilePageProps) {
             </div>
           </div>
         </header>
-        <PostGrid isLoading skeletonCount={PROFILE_POSTS_PAGE_SIZE} />
+        <div className={styles.publications}>
+          <h2 className={styles.publicationsTitle}>{t.profile.publications}</h2>
+          <PostGrid isLoading skeletonCount={PROFILE_POSTS_PAGE_SIZE} />
+        </div>
       </section>
     )
   }
