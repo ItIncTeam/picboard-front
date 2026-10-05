@@ -328,7 +328,28 @@ describe('ProfilePage', () => {
     )
   })
 
-  it('uses readable fallbacks for empty profile text fields', async () => {
+  it('renders the public avatar display URL instead of the file identifier', async () => {
+    const avatarUrl = 'https://example.com/avatar.jpg?signature=temporary'
+    apiMocks.getUser.mockResolvedValue(
+      createUser({
+        avatar: { id: 'avatar-file', url: avatarUrl },
+        profilePictureFileId: 'avatar-file',
+      }),
+    )
+
+    const view = renderProfile()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(view.container.textContent).toContain('profile_username'))
+
+    expect(view.container.querySelector('img[alt="profile_username avatar"]')).toHaveAttribute(
+      'src',
+      avatarUrl,
+    )
+    expect(view.container.querySelector('svg[aria-label="profile_username avatar"]')).toBeNull()
+  })
+
+  it('uses readable fallbacks for empty profile text fields and a null avatar', async () => {
     apiMocks.getUser.mockResolvedValue(
       createUser({ bio: '   ', displayName: '   ', username: '   ' }),
     )
@@ -342,6 +363,8 @@ describe('ProfilePage', () => {
       'role',
       'img',
     )
+    expect(view.container.querySelector('svg[aria-label="Profile avatar"]')).not.toBeNull()
+    expect(view.container.querySelector('img[alt="Profile avatar"]')).toBeNull()
   })
 
   it('renders the existing not-found state for a missing public user', async () => {
