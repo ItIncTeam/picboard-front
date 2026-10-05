@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useQuery } from '@apollo/client/react'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
@@ -383,6 +384,8 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   const isOwner = sessionStatus === 'authenticated' && sessionUser?.id === userId
   const posts = mapPostEntitiesToPosts(mergePosts(firstPagePosts, currentPaginationState.history))
   const username = currentProfileUserState.user.username.trim() || t.profile.title
+  const avatarUrl = currentProfileUserState.user.avatar?.url
+  const avatarLabel = `${username} ${t.profile.avatarSuffix}`
   const hasDisplayName = Boolean(currentProfileUserState.user.displayName?.trim())
   const bio = currentProfileUserState.user.bio?.trim()
     ? currentProfileUserState.user.bio
@@ -391,12 +394,24 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   return (
     <section aria-labelledby="profile-title" className={styles.root}>
       <header className={styles.profileHeader}>
-        <div
-          aria-label={`${username} ${t.profile.avatarSuffix}`}
-          className={styles.avatar}
-          role="img"
-        >
-          <PersonIcon aria-hidden className={styles.avatarIcon} focusable="false" />
+        <div className={styles.avatar}>
+          {avatarUrl ? (
+            <Image
+              alt={avatarLabel}
+              className={styles.avatarImage}
+              fill
+              sizes="(max-width: 480px) 72px, (max-width: 720px) 96px, 192px"
+              src={avatarUrl}
+              unoptimized
+            />
+          ) : (
+            <PersonIcon
+              aria-label={avatarLabel}
+              className={styles.avatarIcon}
+              focusable="false"
+              role="img"
+            />
+          )}
         </div>
 
         <div className={styles.profileInfo}>

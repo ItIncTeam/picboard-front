@@ -93,6 +93,8 @@ Dev 2 меняет общее Link-поведение `PostCard`, `PublicPostCar
 **Статус:** часть Public User contract foundation синхронизирована с текущей формой
 `User.avatar`, безопасным Public User и подтверждёнными правилами signed URL. Общая Profile
 operation, server loader и полный `InitialProfileData` не реализованы и ждут публичные счётчики.
+Рабочий `ProfilePage` отображает `user.avatar?.url` через Next/Image; при null Avatar сохраняется
+`PersonIcon` fallback. Signed URL используется только для отображения, без таймеров обновления.
 
 **Цель:** получить пользователя, счётчики и первую страницу `profilePosts` одним GraphQL POST.
 
