@@ -98,6 +98,22 @@ Public Home, Profile и Post Details не становятся protected routes.
 `/`, `/main`, `/profile/[userId]` и `/posts/[postId]` сохраняет тот же Header/Sidebar instance.
 Общий layout не читает cookies/headers, не вызывает backend и не делает redirect.
 
+`AppRouteShell` держит постоянную DOM-границу только вокруг routed `children` внутри
+`AdaptiveAppShell`. При переходах между Main, Profile, Favorites и Settings она выполняет
+CSS fade-in `opacity: 0 → 1`, 160 ms, ease-out. Header, Sidebar и соседний slot `@modal`
+находятся вне этой границы; существующий `<main>` остаётся единственным shell scroll container.
+Граница не имеет route key, не удерживает предыдущие страницы и не вмешивается в navigation,
+history, focus или scroll restoration. Новый переход отменяет предыдущую анимацию и запускает
+её на том же DOM-узле, без очереди и remount.
+
+Триггер читает основной `children` slot через `useSelectedLayoutSegments()`, исключая route
+groups. Анимация разрешена только между разными перечисленными разделами при неизменной
+authenticated session. Initial load/hydration, session bootstrap/auth redirects, Profile A → B,
+Settings tabs, query/hash changes, refresh, polling и pagination не запускают эффект.
+Canonical Post и Create routes исключены; opening/closing/changing intercepted `@modal`
+не меняет основной slot и не анимирует фон. `prefers-reduced-motion: reduce` полностью отключает
+эффект. Experimental ViewTransition API и новые зависимости не используются.
+
 `src/app/(app-shell)/(protected)/layout.tsx` оборачивает main-app `children` в
 `ProtectedRouteBoundary`. Отдельный `src/app/(protected)/layout.tsx` сохраняет ту же boundary для
 admin routes вне app shell.

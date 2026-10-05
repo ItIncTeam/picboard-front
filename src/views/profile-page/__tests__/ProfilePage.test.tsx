@@ -278,6 +278,7 @@ describe('ProfilePage', () => {
     expect(view.container.querySelector('[aria-label="Loading publications"]')).toBeInstanceOf(
       HTMLElement,
     )
+    expect(view.container.querySelector('h2')).toHaveTextContent('Publications')
     expect(apiMocks.useQuery).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -289,13 +290,19 @@ describe('ProfilePage', () => {
   })
 
   it.each([320, 480, 720, 1024])(
-    'keeps the loading skeleton stable without horizontal overflow at $width px',
+    'matches loading and loaded profile geometry without horizontal overflow at $width px',
     async (width) => {
       await page.viewport(width, 720)
-      apiMocks.getUser.mockReturnValue(new Promise(() => undefined))
+      const user = createDeferred<PublicUser>()
+      apiMocks.getUser.mockReturnValue(user.promise)
       apiMocks.result = {
+        data: {
+          profilePosts: createConnection(
+            Array.from({ length: 8 }, (_, index) => createPost(`post-${index}`)),
+          ),
+        },
         fetchMore: apiMocks.fetchMore,
-        loading: true,
+        loading: false,
         refetch: apiMocks.refetch,
         variables: { input: { first: 8, userId: 'profile-user' } },
       }
@@ -303,9 +310,30 @@ describe('ProfilePage', () => {
       const view = renderProfile()
       mountedRoots.push(view)
       const postsSkeleton = view.container.querySelector('[aria-label="Loading publications"]')
+      const avatarSkeleton = view.container.querySelector(
+        '[data-testid="profile-header-skeleton"] > div',
+      )
+      const gridTop = postsSkeleton?.getBoundingClientRect().top
+      const avatarSize = avatarSkeleton?.getBoundingClientRect().width
 
       expect(postsSkeleton?.children).toHaveLength(8)
       expect(view.container.querySelector('[data-testid="profile-header-skeleton"]')).toBeVisible()
+      expect(getComputedStyle(avatarSkeleton as Element).borderRadius).toBe('50%')
+      expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
+
+      await act(async () => user.resolve(createUser()))
+      await waitFor(() => expect(view.container.textContent).toContain('profile_username'))
+
+      expect(
+        view.container
+          .querySelector('a[href="/posts/post-0?returnTo=%2Fprofile%2Fprofile-user"]')
+          ?.getBoundingClientRect().top,
+      ).toBe(gridTop)
+      expect(
+        view.container
+          .querySelector('[aria-label="profile_username avatar"]')
+          ?.parentElement?.getBoundingClientRect().width,
+      ).toBe(avatarSize)
       expect(view.container.scrollWidth).toBeLessThanOrEqual(view.container.clientWidth)
     },
   )
