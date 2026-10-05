@@ -288,7 +288,7 @@ previous/next без перехода, клавиатура/focus и едины�
 `writeQuery` в `useEffect` (повтор при смене `baselineKey`). UI остаётся на `initialPost`/`displayPost`
 без клиентского `useQuery(postQuery)`. Edit обновляет локальный state и normalized cache ответом
 мутации; Delete вычищает Post из cache (`synchronizeDeletedPost`) и закрывает view через
-`closePage` (modal → `router.back()` / page → `returnTo`).
+`closePage` (modal → `router.back()` / page → безопасный `returnTo`, иначе `/profile/[ownerId]`).
 
 **Цель:** связать Post из SSR с существующим Apollo cache и mutations владельца.
 
