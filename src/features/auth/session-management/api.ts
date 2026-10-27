@@ -9,12 +9,28 @@ const meQuery = gql`
       email
       username
       isConfirmed
+      firstName
+      lastName
       displayName
-      bio
+      dateOfBirth
+      aboutMe
       profilePictureFileId
       avatar {
         id
         url
+      }
+      countryId
+      cityId
+      country {
+        id
+        code
+        name
+        nameRu
+      }
+      city {
+        id
+        name
+        nameRu
       }
     }
   }
@@ -34,16 +50,36 @@ const logoutMutation = gql`
   }
 `
 
+export type Country = {
+  code: string | null
+  id: string | null
+  name: string | null
+  nameRu: string | null
+}
+
+export type City = {
+  id: string | null
+  name: string | null
+  nameRu: string | null
+}
+
 export type CurrentUser = {
+  aboutMe: string | null
   avatar: {
     id: string
     url: string
   } | null
-  bio: string | null
+  city: City | null
+  cityId: string | null
+  country: Country | null
+  countryId: string | null
+  dateOfBirth: string | null
   displayName: string | null
   email: string
+  firstName: string | null
   id: string
   isConfirmed: boolean
+  lastName: string | null
   profilePictureFileId: string | null
   username: string
 }
@@ -53,7 +89,7 @@ export type RefreshTokenPayload = {
 }
 
 type MeResponse = {
-  me: CurrentUser
+  me: CurrentUser | null
 }
 
 type RefreshTokenResponse = {
