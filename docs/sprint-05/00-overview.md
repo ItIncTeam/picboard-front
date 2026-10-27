@@ -22,7 +22,9 @@ object URL, D3.5 — квадратный crop с decode handling без export/
 D1.7 синхронизирует session `Me` и `CurrentUser` с
 [backend-контрактом](./07-backend-contract.md), источником правды для D1.7/D1.8:
 `aboutMe` вместо `bio`, поля имени, даты рождения и локации. Auth/session flow не изменён.
-Frontend `updateProfile` пока не реализован; session tests/mocks обновлены без запуска.
+Frontend `updateProfile` пока не реализован. Проверка D1.7 без live backend завершена:
+focused auth tests (26 файлов, 113 тестов), lint, stylelint, format check и typecheck прошли.
+Production build и проверка реальной сессии отложены до восстановления backend.
 
 ## Цель
 

@@ -80,13 +80,19 @@ describe('auth session GraphQL helpers', () => {
     expect(request.fetchPolicy).toBe('network-only')
   })
 
-  it('preserves nullable profile fields from Me', async () => {
+  it.each([
+    { city: null, country: null },
+    {
+      city: { id: null, name: null, nameRu: null },
+      country: { code: null, id: null, name: null, nameRu: null },
+    },
+  ])('preserves nullable profile fields from Me: %j', async ({ city, country }) => {
     const user: CurrentUser = {
       aboutMe: null,
       avatar: null,
-      city: null,
+      city,
       cityId: null,
-      country: null,
+      country,
       countryId: null,
       dateOfBirth: null,
       displayName: null,
@@ -103,6 +109,27 @@ describe('auth session GraphQL helpers', () => {
 
     await expect(getMe()).resolves.toEqual(user)
   })
+
+  it.each([{ data: { me: null } }, { data: {} }, {}])(
+    'rejects a missing Me payload: %j',
+    async (response) => {
+      apolloMocks.query.mockResolvedValueOnce(response)
+
+      await expect(getMe()).rejects.toThrow('Failed to load current user.')
+    },
+  )
+
+  it.each(['Unauthorized', 'Internal server error', 'Network request failed'])(
+    'propagates a rejected Me request: %s',
+    async (message) => {
+      const error = new Error(message)
+
+      apolloMocks.query.mockRejectedValueOnce(error)
+
+      await expect(getMe()).rejects.toBe(error)
+      expect(apolloMocks.mutate).not.toHaveBeenCalled()
+    },
+  )
 
   it('calls refreshToken without input variables', async () => {
     apolloMocks.mutate.mockResolvedValueOnce({

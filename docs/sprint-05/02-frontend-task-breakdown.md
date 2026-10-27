@@ -179,7 +179,7 @@ cursor, Profile A → B и `router.refresh()`.
 
 ### D1.7. Синхронизация Me с profile read-model
 
-**Статус:** IMPLEMENTED; тесты обновлены, но не запускались по инструкции задачи.
+**Статус:** IMPLEMENTED; focused auth tests и статические проверки прошли без live backend.
 
 `features/auth/session-management` запрашивает полный `Me` из раздела 7
 [backend-контракта](./07-backend-contract.md). `CurrentUser` использует `aboutMe`,
@@ -187,6 +187,18 @@ nullable поля профиля и простые типы Country/City. Пол
 Bootstrap `refreshToken` → `getMe`, access token, refresh queue и logout не изменены.
 Существующие session API tests и SessionProvider mock синхронизированы с новым типом.
 `updateProfile` и загрузка/удаление аватара в D1.7 не входят.
+
+Проверка D1.7 при недоступном backend:
+
+- `pnpm exec vitest run --project unit --project browser src/features/auth src/shared/api/apollo/links/tests src/shared/lib/auth`
+  — 26 файлов, 113 тестов прошли; Apollo/session API замоканы.
+- `pnpm lint`, `pnpm lint:styles`, `pnpm format:check`, `pnpm typecheck` — прошли.
+- Me tests проверяют точный selection из раздела 7 backend-контракта, nullable profile/location
+  values, отсутствующий payload и отклонённые запросы. SessionProvider tests проверяют bootstrap,
+  дедупликацию refresh, порядок token → Me, sign-in sync, stale bootstrap, expiration и logout
+  при успешном и неуспешном backend-ответе.
+- Точные output SDL/nullability остаются неподтверждёнными; TypeScript сохраняет conservative null.
+  Production build, live `me` и cookie/session flow ждут восстановления backend.
 
 ---
 

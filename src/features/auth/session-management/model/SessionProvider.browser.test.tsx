@@ -3,7 +3,13 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LogoutButton } from '@/features/auth/logout-button'
-import { authRoutes, clearAccessToken, getAccessToken, setAccessToken } from '@/shared/lib/auth'
+import {
+  authRoutes,
+  clearAccessToken,
+  getAccessToken,
+  notifyAuthSessionExpired,
+  setAccessToken,
+} from '@/shared/lib/auth'
 import { I18nProvider } from '@/shared/lib/i18n'
 
 import type { CurrentUser } from '../api'
@@ -72,6 +78,19 @@ type RenderResult = {
   container: HTMLDivElement
   getLatestSession: () => SessionContextValue | null
   root: Root
+}
+
+function createDeferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolveDeferred: ((value: T) => void) | null = null
+  const promise = new Promise<T>((resolve) => {
+    resolveDeferred = resolve
+  })
+
+  if (!resolveDeferred) {
+    throw new Error('Failed to create deferred promise.')
+  }
+
+  return { promise, resolve: resolveDeferred }
 }
 
 function SessionProbe({ onSession }: { onSession: (session: SessionContextValue) => void }) {
@@ -177,6 +196,9 @@ describe('SessionProvider auth flow', () => {
     expect(apiMocks.getMe).toHaveBeenCalledTimes(1)
     expect(getAccessToken()).toBe('access-token')
     expect(view.getLatestSession()?.user).toEqual(user)
+    expect(apiMocks.refreshToken.mock.invocationCallOrder[0]).toBeLessThan(
+      apiMocks.getMe.mock.invocationCallOrder[0],
+    )
   })
 
   it('moves to anonymous when refreshToken fails during bootstrap', async () => {
@@ -215,10 +237,89 @@ describe('SessionProvider auth flow', () => {
     expect(view.getLatestSession()?.user).toBeNull()
   })
 
-  it('logs out by calling logout, clearing accessToken, moving anonymous, and redirecting', async () => {
+  it('deduplicates concurrent refresh calls and sets the token before loading Me', async () => {
+    const refresh = createDeferred<{ accessToken: string }>()
+
+    apiMocks.refreshToken.mockReturnValueOnce(refresh.promise)
+    apiMocks.getMe.mockImplementationOnce(async () => {
+      expect(getAccessToken()).toBe('refreshed-token')
+      return user
+    })
+
+    const view = renderSessionProvider()
+
+    mountedRoots.push(view)
+
+    const session = view.getLatestSession()
+    const firstRefresh = session?.refreshSession()
+    const secondRefresh = session?.refreshSession()
+
+    expect(firstRefresh).toBeInstanceOf(Promise)
+    expect(firstRefresh).toBe(secondRefresh)
+    expect(apiMocks.refreshToken).toHaveBeenCalledTimes(1)
+    expect(apiMocks.getMe).not.toHaveBeenCalled()
+
+    await act(async () => {
+      refresh.resolve({ accessToken: 'refreshed-token' })
+      await firstRefresh
+    })
+
+    expect(view.getLatestSession()?.status).toBe('authenticated')
+    expect(view.getLatestSession()?.user).toEqual(user)
+    expect(apiMocks.getMe).toHaveBeenCalledTimes(1)
+  })
+
+  it('syncs sign-in using the current token without another refresh', async () => {
+    apiMocks.refreshToken.mockRejectedValueOnce(new Error('No refresh cookie'))
+
+    const view = renderSessionProvider()
+
+    mountedRoots.push(view)
+
+    await waitFor(() => {
+      expect(view.getLatestSession()?.status).toBe('anonymous')
+    })
+
+    apiMocks.getMe.mockResolvedValueOnce(user)
+    setAccessToken('sign-in-token')
+
+    await act(async () => {
+      await view.getLatestSession()?.authenticateWithCurrentToken()
+    })
+
+    expect(apiMocks.refreshToken).toHaveBeenCalledTimes(1)
+    expect(apiMocks.getMe).toHaveBeenCalledTimes(1)
+    expect(getAccessToken()).toBe('sign-in-token')
+    expect(view.getLatestSession()?.user).toEqual(user)
+    expect(view.getLatestSession()?.status).toBe('authenticated')
+  })
+
+  it('discards a stale bootstrap result after sign-in', async () => {
+    const refresh = createDeferred<{ accessToken: string }>()
+
+    apiMocks.refreshToken.mockReturnValueOnce(refresh.promise)
+    apiMocks.getMe.mockResolvedValueOnce(user)
+
+    const view = renderSessionProvider()
+
+    mountedRoots.push(view)
+    setAccessToken('sign-in-token')
+
+    await act(async () => {
+      await view.getLatestSession()?.authenticateWithCurrentToken()
+      refresh.resolve({ accessToken: 'stale-bootstrap-token' })
+      await refresh.promise
+    })
+
+    expect(getAccessToken()).toBe('sign-in-token')
+    expect(apiMocks.getMe).toHaveBeenCalledTimes(1)
+    expect(view.getLatestSession()?.status).toBe('authenticated')
+    expect(view.getLatestSession()?.user).toEqual(user)
+  })
+
+  it('clears the session when the auth layer reports expiration', async () => {
     apiMocks.refreshToken.mockResolvedValueOnce({ accessToken: 'access-token' })
     apiMocks.getMe.mockResolvedValueOnce(user)
-    apiMocks.logout.mockResolvedValueOnce('Logged out')
 
     const view = renderSessionProvider()
 
@@ -228,21 +329,50 @@ describe('SessionProvider auth flow', () => {
       expect(view.getLatestSession()?.status).toBe('authenticated')
     })
 
-    const logoutButton = view.container.querySelector('button[aria-label="Sign out"]')
-
-    expect(logoutButton).toBeInstanceOf(HTMLButtonElement)
-
     act(() => {
-      logoutButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-    })
-
-    await waitFor(() => {
-      expect(apiMocks.logout).toHaveBeenCalledTimes(1)
-      expect(view.getLatestSession()?.status).toBe('anonymous')
-      expect(navigationMocks.replace).toHaveBeenCalledWith(authRoutes.signIn)
+      notifyAuthSessionExpired()
     })
 
     expect(getAccessToken()).toBeNull()
+    expect(view.getLatestSession()?.status).toBe('anonymous')
     expect(view.getLatestSession()?.user).toBeNull()
   })
+
+  it.each([false, true])(
+    'clears the local session and redirects on logout (API fails: %s)',
+    async (fails) => {
+      apiMocks.refreshToken.mockResolvedValueOnce({ accessToken: 'access-token' })
+      apiMocks.getMe.mockResolvedValueOnce(user)
+      if (fails) {
+        apiMocks.logout.mockRejectedValueOnce(new Error('Internal server error'))
+      } else {
+        apiMocks.logout.mockResolvedValueOnce('Logged out')
+      }
+
+      const view = renderSessionProvider()
+
+      mountedRoots.push(view)
+
+      await waitFor(() => {
+        expect(view.getLatestSession()?.status).toBe('authenticated')
+      })
+
+      const logoutButton = view.container.querySelector('button[aria-label="Sign out"]')
+
+      expect(logoutButton).toBeInstanceOf(HTMLButtonElement)
+
+      act(() => {
+        logoutButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      })
+
+      await waitFor(() => {
+        expect(apiMocks.logout).toHaveBeenCalledTimes(1)
+        expect(view.getLatestSession()?.status).toBe('anonymous')
+        expect(navigationMocks.replace).toHaveBeenCalledWith(authRoutes.signIn)
+      })
+
+      expect(getAccessToken()).toBeNull()
+      expect(view.getLatestSession()?.user).toBeNull()
+    },
+  )
 })
