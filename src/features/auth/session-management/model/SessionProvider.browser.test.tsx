@@ -6,6 +6,7 @@ import { LogoutButton } from '@/features/auth/logout-button'
 import { authRoutes, clearAccessToken, getAccessToken, setAccessToken } from '@/shared/lib/auth'
 import { I18nProvider } from '@/shared/lib/i18n'
 
+import type { CurrentUser } from '../api'
 import { SessionProvider } from './SessionProvider'
 import type { SessionContextValue } from './types'
 import { useSession } from './useSession'
@@ -49,13 +50,20 @@ vi.mock('next/image', () => ({
 
 vi.mock('@/shared/assets', () => assetMocks)
 
-const user = {
+const user: CurrentUser = {
+  aboutMe: null,
   avatar: null,
-  bio: null,
+  city: null,
+  cityId: null,
+  country: null,
+  countryId: null,
+  dateOfBirth: null,
   displayName: null,
   email: 'user@example.com',
+  firstName: null,
   id: 'user-id',
   isConfirmed: true,
+  lastName: null,
   profilePictureFileId: null,
   username: 'username',
 }

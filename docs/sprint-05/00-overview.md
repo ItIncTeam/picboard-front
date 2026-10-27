@@ -2,7 +2,7 @@
 
 ## Статус
 
-**D1.1–D1.2, D2.2–D2.6, D3.1–D3.6 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+**D1.1–D1.2, D1.7, D2.2–D2.6, D3.1–D3.6 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
 Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. D2.2–D2.3 отдают
 публичный пост через `loadInitialPost` (`cache: 'no-store'`) в HTML `/posts/[postId]` без Portal;
@@ -18,6 +18,11 @@ D3.3 — зависимые Country/City select через props, D3.4 — ло�
 object URL, D3.5 — квадратный crop с decode handling без export/upload, а D3.6 — локальное
 подтверждение удаления сохранённого Avatar без optimistic update. Production-источник Country/City
 и backend-интеграция остаются отдельными задачами.
+
+D1.7 синхронизирует session `Me` и `CurrentUser` с
+[backend-контрактом](./07-backend-contract.md), источником правды для D1.7/D1.8:
+`aboutMe` вместо `bio`, поля имени, даты рождения и локации. Auth/session flow не изменён.
+Frontend `updateProfile` пока не реализован; session tests/mocks обновлены без запуска.
 
 ## Цель
 
@@ -62,7 +67,6 @@ object URL, D3.5 — квадратный crop с decode handling без export/
 
 ## Блокеры backend
 
-- Поля профиля, их типы и обязательность; операции чтения и сохранения; формат ошибок.
 - Публичные `publicationsCount`, `followersCount` и `followingCount`.
 - Назначение загрузки аватара и операции установки, замены и удаления.
 - Источник и формат значений Country/City.
@@ -91,6 +95,7 @@ engagement controls. Наличие этих элементов в Figma не р
 
 - [Журнал решений](./01-decisions.md) — подтверждённые архитектурные решения.
 - [План frontend-задач](./02-frontend-task-breakdown.md) — основной документ для выполнения.
+- [Backend-контракт профиля](./07-backend-contract.md) — источник правды для D1.7/D1.8.
 - [Style Guide](../style_guide_full.md), [Architecture](../architecture.md),
   [Layer Ownership](../layer-ownership.md), [App Router Roadmap](../app-router-roadmap.md) — общие
   правила проекта.
