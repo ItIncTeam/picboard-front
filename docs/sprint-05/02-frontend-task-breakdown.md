@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D2.2–D2.6, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D1.7–D1.8, D2.2–D2.6, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -27,10 +27,14 @@
 Frontend-интеграции также ждут:
 
 - `publicationsCount`, `followersCount`, `followingCount`;
-- Edit Profile read/update contract;
 - Avatar upload/attach/replace/delete contract;
 - production-источник Country/City;
 - подтверждение стабильной сортировки и cursor semantics `profilePosts`.
+
+Контракт чтения/сохранения Edit Profile доступен в
+[07-backend-contract.md](./07-backend-contract.md) — источник правды для D1.7/D1.8.
+Синхронизация `Me` реализована в D1.7; API и синхронизация `updateProfile` реализованы в D1.8.
+Settings и submit UX формы пока не подключены.
 
 Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
 использует `avatar?.url`, а `avatar === null` — fallback. URL подписанный, действует 15 минут и не
@@ -174,6 +178,50 @@ cursor, Profile A → B и `router.refresh()`.
 
 ---
 
+### D1.7. Синхронизация Me с profile read-model
+
+**Статус:** IMPLEMENTED; focused auth tests и статические проверки прошли без live backend.
+
+`features/auth/session-management` запрашивает полный `Me` из раздела 7
+[backend-контракта](./07-backend-contract.md). `CurrentUser` использует `aboutMe`,
+nullable поля профиля и простые типы Country/City. Поле `bio` удалено без alias.
+Bootstrap `refreshToken` → `getMe`, access token, refresh queue и logout не изменены.
+Существующие session API tests и SessionProvider mock синхронизированы с новым типом.
+`updateProfile` и загрузка/удаление аватара в D1.7 не входят.
+
+Проверка D1.7 при недоступном backend:
+
+- `pnpm exec vitest run --project unit --project browser src/features/auth src/shared/api/apollo/links/tests src/shared/lib/auth`
+  — 26 файлов, 113 тестов прошли; Apollo/session API замоканы.
+- `pnpm lint`, `pnpm lint:styles`, `pnpm format:check`, `pnpm typecheck` — прошли.
+- Me tests проверяют точный selection из раздела 7 backend-контракта, nullable profile/location
+  values, отсутствующий payload и отклонённые запросы. SessionProvider tests проверяют bootstrap,
+  дедупликацию refresh, порядок token → Me, sign-in sync, stale bootstrap, expiration и logout
+  при успешном и неуспешном backend-ответе.
+- Точные output SDL/nullability остаются неподтверждёнными; TypeScript сохраняет conservative null.
+  Production build, live `me` и cookie/session flow ждут восстановления backend.
+
+---
+
+### D1.8. Синхронизация CurrentUser после updateProfile (FRONT-178)
+
+**Статус:** IMPLEMENTED; verification uses mocks, backend unavailable.
+
+`updateProfile` API и синхронизация Me cache/session реализованы по
+[backend-контракту](./07-backend-contract.md). Callback захватывается **до** mutation;
+старые callbacks и повторные вызовы после успешной синхронизации отбрасываются.
+API, FSD-границы и пример использования: [Session Architecture](../auth/auth-session-architecture.md#profile-update-synchronization-front-178--d18).
+Settings, submit UX и avatar mutations остаются вне D1.8.
+
+Проверки: focused API/auth/browser suite (28 файлов, 142 теста), lint, stylelint,
+format check и typecheck прошли. Tests покрывают cache/session sync, nullable/cleared fields,
+ошибки mutation, logout/expiration, user switch, bootstrap/refresh guards и stale callbacks.
+`pnpm test`: 691 passed, 6 failed и 1 suite import error; те же сбои воспроизведены на `dev`
+(PublicHome DOM assertions, PostDetails test без ApolloProvider, browser Next/Link import).
+Production build и live cookie/session flow не запускались.
+
+---
+
 ## Dev 2 — Public Post и навигация
 
 ### D2.1. Публичная структура маршрута Post
@@ -288,7 +336,7 @@ previous/next без перехода, клавиатура/focus и едины�
 `writeQuery` в `useEffect` (повтор при смене `baselineKey`). UI остаётся на `initialPost`/`displayPost`
 без клиентского `useQuery(postQuery)`. Edit обновляет локальный state и normalized cache ответом
 мутации; Delete вычищает Post из cache (`synchronizeDeletedPost`) и закрывает view через
-`closePage` (modal → `router.back()` / page → `returnTo`).
+`closePage` (modal → `router.back()` / page → безопасный `returnTo`, иначе `/profile/[ownerId]`).
 
 **Цель:** связать Post из SSR с существующим Apollo cache и mutations владельца.
 

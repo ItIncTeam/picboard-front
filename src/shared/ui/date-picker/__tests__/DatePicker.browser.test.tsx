@@ -66,4 +66,68 @@ describe('DatePicker', () => {
     expect(container.textContent).toContain('September 2026')
     expect(container.textContent).toContain('February 1990')
   })
+
+  it('resets the visible month when reopened', () => {
+    const container = document.createElement('div')
+    const root = createRoot(container)
+    containers.push(container)
+    roots.push(root)
+    document.body.append(container)
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <DatePicker today={new Date(2026, 8, 22)} value={new Date(1990, 1, 14)} />
+        </I18nProvider>,
+      )
+    })
+
+    const trigger = container.querySelector('button')
+    act(() => trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    expect(container.textContent).toContain('February 1990')
+
+    const nextMonthButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.getAttribute('aria-label') === 'Next month',
+    )
+    act(() => nextMonthButton?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    expect(container.textContent).toContain('March 1990')
+
+    act(() => trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+    act(() => trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    expect(container.textContent).toContain('February 1990')
+  })
+
+  it('resets the visible month to the supplied current month when no date is selected', () => {
+    const container = document.createElement('div')
+    const root = createRoot(container)
+    containers.push(container)
+    roots.push(root)
+    document.body.append(container)
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <DatePicker today={new Date(2026, 8, 22)} value={null} />
+        </I18nProvider>,
+      )
+    })
+
+    const trigger = container.querySelector('button')
+    act(() => trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    const nextMonthButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.getAttribute('aria-label') === 'Next month',
+    )
+    act(() => nextMonthButton?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    expect(container.textContent).toContain('October 2026')
+
+    act(() => trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+    act(() => trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    expect(container.textContent).toContain('September 2026')
+  })
 })

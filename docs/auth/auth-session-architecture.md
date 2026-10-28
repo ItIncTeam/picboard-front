@@ -142,6 +142,28 @@ Invalid credentials are normalized in the sign-in form to:
 Incorrect email or password
 ```
 
+## Profile Update Synchronization (FRONT-178 / D1.8)
+
+The `entities/user/current-user` API owns Me and `updateProfile(input)`; session API re-exports
+remain compatible. A client view composes these with the form's injected `onSubmitAction`.
+Settings and form submit UX are not wired yet.
+
+**Capture a fresh callback before starting each mutation:**
+
+```ts
+const synchronize = createCurrentUserSynchronizer()
+const user = await updateProfile(input)
+const applied = synchronize(user)
+```
+
+`updateProfile` uses `no-cache` and `errorPolicy: 'none'`, so failed or late responses cannot
+normalize into Me automatically. The callback returns `false` without writes for an anonymous,
+pending, changed, or unmounted session, a replaced/cleared token, or a different user ID.
+Accepted results replace Me cache and session user, preserving backend nulls and the access token,
+without extra requests. Replacing the session snapshot invalidates older callbacks and replays.
+The snapshot includes its completed request ID, so callbacks created during pending logout or
+session restore are also rejected. Existing auth-error refresh/invalidation policy is unchanged.
+
 ## Auth Error Refresh And Invalidation
 
 Apollo `errorLink` handles:

@@ -10,7 +10,14 @@ import {
   type ReactNode,
 } from 'react'
 
-import { clearAccessToken, setAccessToken, subscribeAuthSessionExpired } from '@/shared/lib/auth'
+import { writeCurrentUserCache, type CurrentUser } from '@/entities/user/current-user'
+import {
+  clearAccessToken,
+  getAccessToken,
+  getTokenVersion,
+  setAccessToken,
+  subscribeAuthSessionExpired,
+} from '@/shared/lib/auth'
 
 import { getMe, logout as requestLogout, refreshToken } from '../api'
 import type { SessionContextValue, SessionState } from './types'
@@ -28,19 +35,26 @@ export const SessionContext = createContext<SessionContextValue | null>(null)
 
 export function SessionProvider({ children }: SessionProviderProps) {
   const [session, setSession] = useState<SessionState>(initialSessionState)
+  const sessionSnapshotRef = useRef({ state: initialSessionState, requestId: 0 })
   const didBootstrapRef = useRef(false)
   const isMountedRef = useRef(false)
   const refreshPromiseRef = useRef<Promise<void> | null>(null)
   const sessionRequestIdRef = useRef(0)
 
+  const commitSession = useCallback((nextSession: SessionState) => {
+    sessionSnapshotRef.current = { state: nextSession, requestId: sessionRequestIdRef.current }
+    setSession(nextSession)
+  }, [])
+
   const setAnonymousSession = useCallback(() => {
+    sessionRequestIdRef.current += 1
     clearAccessToken()
 
-    setSession({
+    commitSession({
       status: 'anonymous',
       user: null,
     })
-  }, [])
+  }, [commitSession])
 
   const authenticateWithCurrentToken = useCallback(async () => {
     const requestId = ++sessionRequestIdRef.current
@@ -52,7 +66,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         return
       }
 
-      setSession({
+      commitSession({
         status: 'authenticated',
         user,
       })
@@ -63,7 +77,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
       throw error
     }
-  }, [setAnonymousSession])
+  }, [commitSession, setAnonymousSession])
 
   const refreshSession = useCallback(() => {
     if (refreshPromiseRef.current) {
@@ -88,7 +102,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
           return
         }
 
-        setSession({
+        commitSession({
           status: 'authenticated',
           user,
         })
@@ -104,7 +118,37 @@ export function SessionProvider({ children }: SessionProviderProps) {
     })()
 
     return refreshPromiseRef.current
-  }, [setAnonymousSession])
+  }, [commitSession, setAnonymousSession])
+
+  const createCurrentUserSynchronizer = useCallback((): ((user: CurrentUser) => boolean) => {
+    const snapshot = sessionSnapshotRef.current
+
+    if (
+      snapshot.state.status !== 'authenticated' ||
+      snapshot.requestId !== sessionRequestIdRef.current ||
+      !getAccessToken()
+    ) {
+      return () => false
+    }
+
+    const tokenVersion = getTokenVersion()
+
+    return (user: CurrentUser): boolean => {
+      if (
+        !isMountedRef.current ||
+        sessionSnapshotRef.current !== snapshot ||
+        sessionRequestIdRef.current !== snapshot.requestId ||
+        getTokenVersion() !== tokenVersion ||
+        user.id !== snapshot.state.user?.id
+      ) {
+        return false
+      }
+
+      writeCurrentUserCache(user)
+      commitSession({ status: 'authenticated', user })
+      return true
+    }
+  }, [commitSession])
 
   const logout = useCallback(async () => {
     const requestId = ++sessionRequestIdRef.current
@@ -143,13 +187,21 @@ export function SessionProvider({ children }: SessionProviderProps) {
     () => ({
       ...session,
       authenticateWithCurrentToken,
+      createCurrentUserSynchronizer,
       isAuthenticated: session.status === 'authenticated',
       isBootstrapping: session.status === 'bootstrapping',
       logout,
       refreshSession,
       setAnonymousSession,
     }),
-    [authenticateWithCurrentToken, logout, refreshSession, session, setAnonymousSession],
+    [
+      authenticateWithCurrentToken,
+      createCurrentUserSynchronizer,
+      logout,
+      refreshSession,
+      session,
+      setAnonymousSession,
+    ],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

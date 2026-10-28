@@ -469,7 +469,7 @@ describe('PostDetailsContent', () => {
         ?.click()
     })
 
-    await waitFor(() => expect(navigationMocks.replace).toHaveBeenCalledWith('/main'))
+    await waitFor(() => expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/owner-1'))
     expect(apiMocks.deletePost).toHaveBeenCalledWith({ postId: 'post-1' })
     expect(synchronizationMocks.synchronizeDeletedPost).toHaveBeenCalledWith('post-1')
   })
@@ -511,7 +511,7 @@ describe('PostDetailsContent', () => {
     expect(apiMocks.deletePost).toHaveBeenCalledWith({ postId: 'post-1' })
   })
 
-  it('falls back to /main when deleting with an unsafe returnTo', async () => {
+  it('falls back to the owner profile when deleting with an unsafe returnTo', async () => {
     sessionMocks.status = 'authenticated'
     sessionMocks.userId = 'owner-1'
     apiMocks.deletePost.mockResolvedValue(true)
@@ -544,7 +544,7 @@ describe('PostDetailsContent', () => {
         ?.click()
     })
 
-    await waitFor(() => expect(navigationMocks.replace).toHaveBeenCalledWith('/main'))
+    await waitFor(() => expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/owner-1'))
   })
 
   it('hides Edit and Delete actions for an authenticated user who does not own the post', async () => {
@@ -603,7 +603,7 @@ describe('PostDetailsContent', () => {
     expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/user-1')
   })
 
-  it('closes a direct post link to /main', async () => {
+  it('closes a direct post link to the owner profile', async () => {
     const view = renderPage()
     mountedRoots.push(view)
 
@@ -613,7 +613,7 @@ describe('PostDetailsContent', () => {
       document.body.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
     })
 
-    expect(navigationMocks.replace).toHaveBeenCalledWith('/main')
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/owner-1')
   })
 
   it('closes to a safe returnTo path', async () => {
@@ -631,7 +631,7 @@ describe('PostDetailsContent', () => {
     expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/user-1')
   })
 
-  it('falls back to /main when returnTo is unsafe', async () => {
+  it('falls back to the owner profile when returnTo is unsafe', async () => {
     navigationMocks.searchParams = new URLSearchParams({ returnTo: '//evil.example' })
 
     const view = renderPage()
@@ -643,7 +643,7 @@ describe('PostDetailsContent', () => {
       document.body.querySelector<HTMLButtonElement>('button[aria-label="Close"]')?.click()
     })
 
-    expect(navigationMocks.replace).toHaveBeenCalledWith('/main')
+    expect(navigationMocks.replace).toHaveBeenCalledWith('/profile/owner-1')
   })
 
   it('asks for confirmation when closing a dirty edit form', async () => {
