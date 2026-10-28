@@ -15,7 +15,7 @@ const messages = {
   usernameLength: 'username-length',
 }
 
-const today = new Date(2026, 8, 22)
+const today = new Date(Date.UTC(2026, 8, 22, 12))
 const rules = createEditProfileValidationRules(messages, today)
 
 describe('edit profile validation', () => {
@@ -27,6 +27,7 @@ describe('edit profile validation', () => {
     ['user name', 'username-invalid'],
     ['пользователь', 'username-invalid'],
     ['user_name-12', true],
+    ['user!name', true],
     ['  user_name-12  ', true],
   ])('validates username %j', (value, expectedResult) => {
     expect(rules.username.validate(value)).toBe(expectedResult)
@@ -38,6 +39,8 @@ describe('edit profile validation', () => {
     ['A'.repeat(51), 'first-name-length'],
     ['Анна', true],
     ['Anna', true],
+    ['Anna Maria', true],
+    ["Anna-Marie O'Neil", true],
     ['Anna1', 'first-name-invalid'],
   ])('validates first name %j', (value, expectedResult) => {
     expect(rules.firstName.validate(value)).toBe(expectedResult)
@@ -48,6 +51,7 @@ describe('edit profile validation', () => {
     ['   ', 'required'],
     ['Иванова', true],
     ['Ivanova', true],
+    ["O'Neil-Smith", true],
     ['Иванова-1', 'last-name-invalid'],
     ['A'.repeat(51), 'last-name-length'],
   ])('validates last name %j', (value, expectedResult) => {
@@ -58,6 +62,7 @@ describe('edit profile validation', () => {
     ['', true],
     ['A'.repeat(200), true],
     ['A'.repeat(201), 'about-me-too-long'],
+    [' ' + 'A'.repeat(200) + ' ', true],
   ])('validates About Me length', (value, expectedResult) => {
     expect(rules.aboutMe.validate(value)).toBe(expectedResult)
   })
@@ -70,6 +75,19 @@ describe('edit profile validation', () => {
     expect(rules.dateOfBirth.validate.minimumAge(new Date(2013, 8, 22))).toBe(true)
     expect(rules.dateOfBirth.validate.minimumAge(new Date(2013, 8, 23))).toBe(
       'date-of-birth-too-young',
+    )
+  })
+
+  it('uses the UTC day when local dates cross midnight', () => {
+    const utcRules = createEditProfileValidationRules(
+      messages,
+      new Date('2026-09-22T00:30:00+03:00'),
+    )
+    expect(utcRules.dateOfBirth.validate.minimumAge(new Date(2013, 8, 22))).toBe(
+      'date-of-birth-too-young',
+    )
+    expect(utcRules.dateOfBirth.validate.notInFuture(new Date(2026, 8, 22))).toBe(
+      'date-of-birth-in-future',
     )
   })
 

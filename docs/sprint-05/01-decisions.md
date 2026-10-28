@@ -125,13 +125,13 @@ cropper refs, параметры загрузки и код Create Post нару
 ### Решение 21. Дата рождения и возраст
 
 Дата рождения имеет тип `Date | null` и необязательна. Дата из будущего запрещена, минимальный
-возраст — 13 лет по календарным году, месяцу и дню. Сериализация, timezone и backend errors
-определяются после проверки контракта.
+возраст — 13 лет по UTC-дню backend. В D3.7 подтверждены календарная сериализация YYYY-MM-DD
+без UTC-сдвига и обработка USER_UNDER_13 с Privacy Policy trigger по [контракту](./07-backend-contract.md).
 
 ### Решение 22. Проверка полей Edit Profile
 
-Username: обязательно, 6–30, латиница, цифры, `_`, `-`. First/Last Name: обязательно, 1–50,
-латиница или кириллица. Country/City необязательны. About Me необязательно, до 200 символов без
+Username: обязательно, 6–30, латиница, цифры, `!`, `_`, `-`. First/Last Name: обязательно, 1–50,
+латиница или кириллица, пробелы, дефис и апостроф (уточнено контрактом в D3.7). Country/City необязательны. About Me необязательно, до 200 символов без
 дополнительного списка разрешённых знаков. Проверка обязательности учитывает пробелы.
 
 ### Решение 23. Сохранение Edit Profile
@@ -144,13 +144,15 @@ RHF `handleSubmit`. Успех вызывает `reset(savedValues)` с отве
 
 `EditProfileFormValues` всегда содержит `username`, `firstName`, `lastName`, `country`,
 `city`, `aboutMe` как строки и `dateOfBirth: Date | null`. Необязательные строки представлены
-как `''`; Avatar в форму не входит. Backend DTO заранее не создаётся.
+как `''`; Avatar в форму не входит. В D3.7 DTO строится при submit: обязательные строки
+trim'ятся, неизменённые optional поля опускаются по dirtyFields, очистка передаётся как null.
 
 ### Решение 25. Country и City
 
 Форма получает `countryOptions` и `cityOptionsByCountryValue` через props на основе
-`SelectOption`. Значения считаются внутренними ключами UI. Пустой или изменившийся Country
-очищает City; источник географических данных определяется backend-аудитом.
+`SelectOption`. В D3.7 saved values — backend countryId/cityId. Пустой или изменившийся Country
+очищает City. Async countries/cities lookup пока не реализован: рабочий маршрут показывает saved
+location в disabled Select, без production mocks. При изменении локации DTO передаёт оба ID/null.
 
 ### Решение 26. Календарь даты рождения
 

@@ -1,5 +1,5 @@
-import { MainSectionPage } from '@/views/main-section-page'
+import { ProfileSettingsPage } from '@/views/settings-page'
 
 export default function Page() {
-  return <MainSectionPage section="profile-settings" />
+  return <ProfileSettingsPage />
 }
