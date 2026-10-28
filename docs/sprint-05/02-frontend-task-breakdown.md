@@ -1,6 +1,6 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D1.7, D2.2–D2.6, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус: **D1.1–D1.2, D1.7–D1.8, D2.2–D2.6, D3.1–D3.5 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
@@ -33,7 +33,8 @@ Frontend-интеграции также ждут:
 
 Контракт чтения/сохранения Edit Profile доступен в
 [07-backend-contract.md](./07-backend-contract.md) — источник правды для D1.7/D1.8.
-Синхронизация `Me` реализована в D1.7; frontend-интеграция `updateProfile` не реализована.
+Синхронизация `Me` реализована в D1.7; API и синхронизация `updateProfile` реализованы в D1.8.
+Settings и submit UX формы пока не подключены.
 
 Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
 использует `avatar?.url`, а `avatar === null` — fallback. URL подписанный, действует 15 минут и не
@@ -199,6 +200,25 @@ Bootstrap `refreshToken` → `getMe`, access token, refresh queue и logout не
   при успешном и неуспешном backend-ответе.
 - Точные output SDL/nullability остаются неподтверждёнными; TypeScript сохраняет conservative null.
   Production build, live `me` и cookie/session flow ждут восстановления backend.
+
+---
+
+### D1.8. Синхронизация CurrentUser после updateProfile (FRONT-178)
+
+**Статус:** IMPLEMENTED; verification uses mocks, backend unavailable.
+
+`updateProfile` API и синхронизация Me cache/session реализованы по
+[backend-контракту](./07-backend-contract.md). Callback захватывается **до** mutation;
+старые callbacks и повторные вызовы после успешной синхронизации отбрасываются.
+API, FSD-границы и пример использования: [Session Architecture](../auth/auth-session-architecture.md#profile-update-synchronization-front-178--d18).
+Settings, submit UX и avatar mutations остаются вне D1.8.
+
+Проверки: focused API/auth/browser suite (28 файлов, 142 теста), lint, stylelint,
+format check и typecheck прошли. Tests покрывают cache/session sync, nullable/cleared fields,
+ошибки mutation, logout/expiration, user switch, bootstrap/refresh guards и stale callbacks.
+`pnpm test`: 691 passed, 6 failed и 1 suite import error; те же сбои воспроизведены на `dev`
+(PublicHome DOM assertions, PostDetails test без ApolloProvider, browser Next/Link import).
+Production build и live cookie/session flow не запускались.
 
 ---
 

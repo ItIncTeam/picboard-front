@@ -2,7 +2,7 @@
 
 ## Статус
 
-**D1.1–D1.2, D1.7, D2.2–D2.6, D3.1–D3.6 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
+**D1.1–D1.2, D1.7–D1.8, D2.2–D2.6, D3.1–D3.6 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**
 
 Подтверждены решения 1–40 и пакет backend-задач. D1.1 и D1.2 реализованы. D2.2–D2.3 отдают
 публичный пост через `loadInitialPost` (`cache: 'no-store'`) в HTML `/posts/[postId]` без Portal;
@@ -22,7 +22,8 @@ object URL, D3.5 — квадратный crop с decode handling без export/
 D1.7 синхронизирует session `Me` и `CurrentUser` с
 [backend-контрактом](./07-backend-contract.md), источником правды для D1.7/D1.8:
 `aboutMe` вместо `bio`, поля имени, даты рождения и локации. Auth/session flow не изменён.
-Frontend `updateProfile` пока не реализован. Проверка D1.7 без live backend завершена:
+D1.8 реализует `updateProfile` API и guarded синхронизацию Me cache/session из ответа без
+повторных Me/refreshToken requests. Settings и submit UX формы пока не подключены. Проверка D1.7 без live backend завершена:
 focused auth tests (26 файлов, 113 тестов), lint, stylelint, format check и typecheck прошли.
 Production build и проверка реальной сессии отложены до восстановления backend.
 
