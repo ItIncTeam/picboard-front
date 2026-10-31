@@ -12,8 +12,19 @@ import { TextArea } from '@/shared/ui/text-area/TextArea'
 import { DocModal } from '@/widgets/doc-modal'
 
 import { createEditProfileValidationRules } from '../model/editProfileValidation'
+import { collectProfileSubmitFieldErrors } from '../model/profileSubmitErrors'
 import type { EditProfileFormProps, EditProfileFormValues } from '../model/types'
 import styles from './edit-profile-form.module.css'
+
+const backendFieldToFormField: Record<string, keyof EditProfileFormValues> = {
+  aboutMe: 'aboutMe',
+  cityId: 'city',
+  countryId: 'country',
+  dateOfBirth: 'dateOfBirth',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  username: 'username',
+}
 
 export function EditProfileForm({
   cityOptionsByCountryValue,
@@ -28,8 +39,10 @@ export function EditProfileForm({
   const validationRules = createEditProfileValidationRules(t.profile.edit)
   const {
     control,
+    clearErrors,
     handleSubmit,
     reset,
+    setError,
     setValue,
     formState: { isDirty, isSubmitting, isValid },
   } = useForm<EditProfileFormValues>({
@@ -40,13 +53,33 @@ export function EditProfileForm({
   const cityOptions = cityOptionsByCountryValue[selectedCountry] ?? []
 
   const onSubmit = async (values: EditProfileFormValues): Promise<void> => {
+    clearErrors()
     setSubmitError(null)
 
     try {
       const savedValues = await onSubmitAction(values)
       reset(savedValues)
-    } catch {
-      setSubmitError(t.profile.edit.saveFailed)
+    } catch (error) {
+      const fieldErrors = collectProfileSubmitFieldErrors(error)
+      let hasUnhandledError = false
+
+      fieldErrors.forEach(({ code, field, message }) => {
+        const formField = backendFieldToFormField[field]
+
+        if (!code || !formField) {
+          hasUnhandledError = true
+          return
+        }
+
+        setError(formField, {
+          message,
+          type: code === 'USER_UNDER_13' && formField === 'dateOfBirth' ? 'minimumAge' : 'server',
+        })
+      })
+
+      if (fieldErrors.length === 0 || hasUnhandledError) {
+        setSubmitError(t.profile.edit.saveFailed)
+      }
     }
   }
 

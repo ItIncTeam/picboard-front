@@ -267,6 +267,63 @@ describe('EditProfileForm', () => {
     expect(view.container.querySelector('[role="alert"]')).toBeNull()
   })
 
+  it('shows a backend field error without clearing the form', async () => {
+    const onSubmitAction = vi.fn().mockRejectedValue({
+      errors: [
+        {
+          extensions: {
+            code: 'USERNAME_TAKEN',
+            errors: [{ field: 'username', message: 'Username is already taken.' }],
+          },
+        },
+      ],
+    })
+    const view = await renderForm({ onSubmitAction })
+    mountedRoots.push(view)
+    const usernameInput = view.container.querySelector('input[name="username"]')
+
+    if (!(usernameInput instanceof HTMLInputElement)) {
+      throw new Error('Expected username input.')
+    }
+
+    await setInputValue(usernameInput, 'new-user')
+    await submitForm(view.container.querySelector('form'))
+
+    await waitFor(() => expect(view.container.textContent).toContain('Username is already taken.'))
+    expect(usernameInput).toHaveValue('new-user')
+    expect(view.container.querySelector('[role="alert"]')).toBeNull()
+  })
+
+  it('keeps the Privacy Policy hint for a backend underage error', async () => {
+    const onSubmitAction = vi.fn().mockRejectedValue({
+      errors: [
+        {
+          extensions: {
+            code: 'USER_UNDER_13',
+            errors: [{ field: 'dateOfBirth', message: 'Age must be at least 13.' }],
+          },
+        },
+      ],
+    })
+    const view = await renderForm({
+      initialValues: { ...initialValues, dateOfBirth: new Date(2000, 4, 17) },
+      onSubmitAction,
+    })
+    mountedRoots.push(view)
+    const usernameInput = view.container.querySelector('input[name="username"]')
+
+    if (!(usernameInput instanceof HTMLInputElement)) {
+      throw new Error('Expected username input.')
+    }
+
+    await setInputValue(usernameInput, 'new-user')
+    await submitForm(view.container.querySelector('form'))
+
+    await waitFor(() => expect(view.container.textContent).toContain('Age must be at least 13.'))
+    expect(view.container.textContent).toContain('Learn more in our')
+    expect(usernameInput).toHaveValue('new-user')
+  })
+
   it('updates City options and clears City when Country changes', async () => {
     const locationInitialValues = {
       ...initialValues,
