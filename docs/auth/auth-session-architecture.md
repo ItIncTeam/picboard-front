@@ -146,7 +146,7 @@ Incorrect email or password
 
 The `entities/user/current-user` API owns Me and `updateProfile(input)`; session API re-exports
 remain compatible. A client view composes these with the form's injected `onSubmitAction`.
-Settings and form submit UX are not wired yet.
+The settings profile view now composes this API with EditProfileForm (Sprint 05 D3.7).
 
 **Capture a fresh callback before starting each mutation:**
 

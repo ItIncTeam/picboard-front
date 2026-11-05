@@ -34,8 +34,8 @@ type EditProfileValidationRules = {
   }
 }
 
-const usernamePattern = /^[A-Za-z0-9_-]+$/
-const namePattern = /^[A-Za-zА-Яа-яЁё]+$/
+const usernamePattern = /^[A-Za-z0-9!_-]+$/
+const namePattern = /^[A-Za-zА-Яа-яЁё '-]+$/
 
 const getTrimmedValue = (value: string): string => value.trim()
 
@@ -65,72 +65,75 @@ export const isAtLeastAge = (dateOfBirth: Date, minimumAge: number, today: Date)
 
 export const createEditProfileValidationRules = (
   messages: EditProfileValidationMessages,
-  today: Date = new Date(),
-): EditProfileValidationRules => ({
-  username: {
-    validate: (value) => {
-      const normalizedValue = getTrimmedValue(value)
+  now: Date = new Date(),
+): EditProfileValidationRules => {
+  const today = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  return {
+    username: {
+      validate: (value) => {
+        const normalizedValue = getTrimmedValue(value)
 
-      if (!normalizedValue) {
-        return messages.requiredField
-      }
-
-      if (!hasLengthBetween(normalizedValue, 6, 30)) {
-        return messages.usernameLength
-      }
-
-      return usernamePattern.test(normalizedValue) || messages.usernameInvalid
-    },
-  },
-  firstName: {
-    validate: (value) => {
-      const normalizedValue = getTrimmedValue(value)
-
-      if (!normalizedValue) {
-        return messages.requiredField
-      }
-
-      if (!hasLengthBetween(normalizedValue, 1, 50)) {
-        return messages.firstNameLength
-      }
-
-      return namePattern.test(normalizedValue) || messages.firstNameInvalid
-    },
-  },
-  lastName: {
-    validate: (value) => {
-      const normalizedValue = getTrimmedValue(value)
-
-      if (!normalizedValue) {
-        return messages.requiredField
-      }
-
-      if (!hasLengthBetween(normalizedValue, 1, 50)) {
-        return messages.lastNameLength
-      }
-
-      return namePattern.test(normalizedValue) || messages.lastNameInvalid
-    },
-  },
-  dateOfBirth: {
-    validate: {
-      notInFuture: (value) => {
-        if (!value) {
-          return true
+        if (!normalizedValue) {
+          return messages.requiredField
         }
 
-        return compareCalendarDates(value, today) <= 0 || messages.dateOfBirthInFuture
-      },
-      minimumAge: (value) => {
-        if (!value || compareCalendarDates(value, today) > 0) {
-          return true
+        if (!hasLengthBetween(normalizedValue, 6, 30)) {
+          return messages.usernameLength
         }
 
-        return isAtLeastAge(value, 13, today) || messages.dateOfBirthTooYoung
+        return usernamePattern.test(normalizedValue) || messages.usernameInvalid
       },
     },
-  },
-  aboutMe: {
-    validate: (value) => value.length <= 200 || messages.aboutMeTooLong,
-  },
-})
+    firstName: {
+      validate: (value) => {
+        const normalizedValue = getTrimmedValue(value)
+
+        if (!normalizedValue) {
+          return messages.requiredField
+        }
+
+        if (!hasLengthBetween(normalizedValue, 1, 50)) {
+          return messages.firstNameLength
+        }
+
+        return namePattern.test(normalizedValue) || messages.firstNameInvalid
+      },
+    },
+    lastName: {
+      validate: (value) => {
+        const normalizedValue = getTrimmedValue(value)
+
+        if (!normalizedValue) {
+          return messages.requiredField
+        }
+
+        if (!hasLengthBetween(normalizedValue, 1, 50)) {
+          return messages.lastNameLength
+        }
+
+        return namePattern.test(normalizedValue) || messages.lastNameInvalid
+      },
+    },
+    dateOfBirth: {
+      validate: {
+        notInFuture: (value) => {
+          if (!value) {
+            return true
+          }
+
+          return compareCalendarDates(value, today) <= 0 || messages.dateOfBirthInFuture
+        },
+        minimumAge: (value) => {
+          if (!value || compareCalendarDates(value, today) > 0) {
+            return true
+          }
+
+          return isAtLeastAge(value, 13, today) || messages.dateOfBirthTooYoung
+        },
+      },
+    },
+    aboutMe: {
+      validate: (value) => value.trim().length <= 200 || messages.aboutMeTooLong,
+    },
+  }
+}
