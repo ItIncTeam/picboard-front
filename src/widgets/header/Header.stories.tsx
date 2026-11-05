@@ -10,6 +10,7 @@ const sessionContextValue: SessionContextValue = {
   status: 'authenticated',
   user: null,
   authenticateWithCurrentToken: async () => {},
+  createCurrentUserSynchronizer: () => () => false,
   isAuthenticated: true,
   isBootstrapping: false,
   logout: async () => {},

@@ -114,6 +114,14 @@ export const DatePicker = ({
     setVisibleMonth((currentMonth) => addMonths(currentMonth, 1))
   }
 
+  const handleToggleCalendar = (): void => {
+    if (!isOpen) {
+      setVisibleMonth(getMonthDate(selectedValue, today))
+    }
+
+    setIsOpen(!isOpen)
+  }
+
   const handleSelectDay = (date: Date): void => {
     const nextValue = getNextValue(date, selectedValue, mode)
 
@@ -146,7 +154,7 @@ export const DatePicker = ({
         id={triggerId}
         onBlur={onBlur}
         type="button"
-        onClick={() => setIsOpen((currentValue) => !currentValue)}
+        onClick={handleToggleCalendar}
       >
         <span>{displayValue}</span>
         <CalendarIcon className={s.datePicker__inputIcon} />

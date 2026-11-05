@@ -33,6 +33,14 @@ export const Default: Story = {
   },
 }
 
+export const Empty: Story = {
+  args: {
+    label: 'Date select',
+    today: mockToday,
+    value: null,
+  },
+}
+
 export const Hover: Story = {
   args: {
     state: 'hover',

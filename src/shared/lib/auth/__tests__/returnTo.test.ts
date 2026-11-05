@@ -19,4 +19,10 @@ describe('getSafeReturnToPath', () => {
 
     expect(getSafeReturnToPath(returnTo)).toBe('/main')
   })
+
+  it('uses a caller fallback when returnTo is missing or unsafe', () => {
+    expect(getSafeReturnToPath(null, '/profile/owner-1')).toBe('/profile/owner-1')
+    expect(getSafeReturnToPath('//evil.example', '/profile/owner-1')).toBe('/profile/owner-1')
+    expect(getSafeReturnToPath('/profile/user-1', '/profile/owner-1')).toBe('/profile/user-1')
+  })
 })

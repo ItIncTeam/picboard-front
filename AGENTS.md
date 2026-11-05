@@ -1,52 +1,95 @@
 # Picboard Frontend Agent Guide
 
-Use this file as the short entry point. The full source of truth is
-`docs/style_guide_full.md`.
+This file is the short entry point for coding agents. The full source of truth is `docs/style_guide_full.md`.
 
-Before changing code:
+## Before changing code
 
-1. Read `docs/style_guide_full.md` and the relevant document from `docs/`.
+1. Read `docs/style_guide_full.md` and relevant documentation from `docs/`.
 2. For product-facing changes, check `docs/project-brief.md` and stay within scope.
-3. For workflow expectations, follow `docs/work-instructions.md`.
-4. Keep changes small, local, and consistent with the existing module.
+3. Follow `docs/work-instructions.md` for workflow requirements.
+4. Inspect existing code and patterns before introducing new solutions.
 5. Prefer named exports, strict TypeScript, and no `React.FC`.
-6. Use path aliases for cross-module imports. Prefer the narrow public API for the target module
-   (for example `@/features/auth/sign-up-form`) over broad barrels such as `@/features/auth`
-   when a broad import pulls unrelated modules. Keep relative imports only for same-folder or
-   module-local files such as CSS modules and index re-exports.
-7. Verify CSS custom properties before finishing. Every `var(--...)` reference must resolve to a
-   theme token, a local custom property, or a safe fallback. For library runtime variables
-   (Radix, etc.), define local fallback values when IDE or lint tooling cannot resolve them.
-8. Do not add dependencies, refactors, or formatting-only changes unless the task needs them.
-9. Do not run build, test, lint, typecheck, or Storybook build commands during implementation unless explicitly requested or required to diagnose an issue.
-10. In the final summary:
+6. Use path aliases for cross-module imports. Prefer narrow module public APIs over broad barrels. Use relative imports for module-local files.
+7. Verify that CSS custom properties resolve to theme tokens, local definitions, or safe fallbacks.
+8. Do not add dependencies, unrelated refactors, or formatting-only changes unless required.
+9. Do not run build, test, lint, typecheck, or Storybook build commands unless explicitly requested or necessary to diagnose a concrete issue.
 
-- state what changed;
-- state what was checked;
-- state any remaining risk;
-- reference the relevant docs used for the implementation or review;
-- clearly distinguish documented requirements from personal recommendations.
+If a question can be answered by inspecting the codebase or documentation, investigate it before asking the user.
 
-  Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+## Code simplicity and maintainability
 
-Ask the questions one at a time.
+**Write the simplest correct implementation that solves the actual task.**
 
-If a question can be answered by exploring the codebase, explore the codebase instead.
+- Prefer clear, direct, idiomatic React and TypeScript.
+- Follow existing project patterns before creating abstractions.
+- Avoid unnecessary hooks, refs, state, wrappers, helpers, and type aliases.
+- Do not add speculative features, fallbacks, or configuration.
+- Do not introduce defensive checks without a realistic failure scenario.
+- Avoid duplicated logic, unnecessary object transformations, and redundant state.
+- Prefer explicit, readable control flow over clever or overly generic solutions.
+- Keep public APIs minimal and module responsibilities clear.
+- Avoid obvious comments, repetitive documentation, and boilerplate.
+- Write focused tests for meaningful behavior, contracts, and regressions.
+- Do not create redundant tests solely to increase coverage or test internal implementation details.
+- Preserve required validation, error handling, concurrency safety, and type correctness.
 
-When reviewing code:
+**Before finishing, review the complete diff for unnecessary complexity.**
 
-- validate findings against docs first;
-- do not report architecture violations without referencing the relevant document;
-- mark subjective suggestions as recommendations;
-- run verification commands only if explicitly requested or if source review reveals a concrete risk;
-- when a verification command fails, include the exact failing command, root cause, and whether the failure is a real regression, flaky test, or environment issue.
+Ask yourself:
 
-When updating architecture or behavior:
+- Can this be implemented more directly?
+- Does every new abstraction solve a real problem?
+- Is any logic, check, type, or comment redundant?
+- Does this change introduce more complexity than the task requires?
+- Would this implementation be easy for another developer to understand and maintain?
 
-- update the relevant docs in the same task;
-- keep implementation status in docs synchronized with the actual code;
-- if implementation changes make a documented "planned" feature complete, update the documentation from pending/planned to implemented/done.
-Figma https://www.figma.com/design/vEOVR2cLJ7mgszs8mWuw8f/Inctagram--Copy-?node-id=301-4851&m=dev
+Remove unnecessary complexity before reporting completion.
+
+Never sacrifice correctness, readability, or required safety to reduce line count.
+
+## Scope and architecture
+
+- Follow the project's FSD architecture and documented layer ownership.
+- Modify only files relevant to the task.
+- Avoid unrelated cleanup and large rewrites.
+- Do not create reusable abstractions for a single hypothetical use case.
+- Do not change runtime behavior merely to hide failures in external services or test environments.
+- Keep test mocks and fixtures out of production behavior.
+
+## Documentation
+
+When changing architecture or behavior:
+
+- Update the relevant documentation in the same task.
+- Keep documented implementation status aligned with actual code.
+- Change planned/pending to implemented/done only when functionality is actually complete.
+- Avoid duplicating explanations already present in existing documentation.
+
+## Code review
+
+- Validate findings against project documentation and actual code.
+- Reference the relevant architectural rule when reporting violations.
+- Distinguish confirmed defects from subjective recommendations.
+- Do not invent issues or propose refactoring without a concrete benefit.
+- Run verification only when explicitly requested or when a concrete risk requires it.
+- For failed checks, report the exact command, root cause, and whether the issue is a regression, flaky test, or environment failure.
+
+## Final response
+
+Keep the summary concise and factual:
+
+1. What changed.
+2. What was verified.
+3. Remaining risks or limitations.
+4. Relevant documentation.
+5. Any recommendations, clearly separated from requirements.
+
+Do not inflate the report with repetitive explanations or unsupported claims.
+
+## Design reference
+
+[Figma — Picboard](https://www.figma.com/design/vEOVR2cLJ7mgszs8mWuw8f/Inctagram--Copy-?node-id=301-4851&m=dev)
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

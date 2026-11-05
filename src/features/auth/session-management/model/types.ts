@@ -1,4 +1,4 @@
-import type { CurrentUser } from '../api'
+import type { CurrentUser } from '@/entities/user/current-user'
 
 export type SessionStatus = 'bootstrapping' | 'authenticated' | 'anonymous'
 
@@ -9,6 +9,7 @@ export type SessionState = {
 
 export type SessionContextValue = SessionState & {
   authenticateWithCurrentToken: () => Promise<void>
+  createCurrentUserSynchronizer: () => (user: CurrentUser) => boolean
   isAuthenticated: boolean
   isBootstrapping: boolean
   logout: () => Promise<void>

@@ -82,7 +82,10 @@ export function PostDetailsContent({
 
   useSeedPostDetailsCache(data)
 
-  const safeReturnTo = getSafeReturnToPath(searchParams.get('returnTo'))
+  const safeReturnTo = getSafeReturnToPath(
+    searchParams.get('returnTo'),
+    `/profile/${encodeURIComponent(entity.ownerId)}`,
+  )
 
   const closePage = () => {
     if (onCloseAction) {
