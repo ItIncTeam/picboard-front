@@ -1,15 +1,53 @@
 # Редактирование профиля — контракт для фронтенда
 
-Документ описывает **уже реализованный** бэкенд: мутацию `updateProfile` и read-model профиля,
-который она возвращает. Всё ниже проверено на живом инстансе users-subgraph (локальный Postgres,
-справочник 250 стран / 34 160 городов) с включёнными прод-пайпами валидации.
+## Проверка источников на 2026-11-11
 
-**Статус:** `updateProfile` работает, покрыта тестами (21 unit + 6 e2e).
-**Вне этого документа:** загрузка/удаление фото профиля (в разработке), счётчики профиля
-и подписки (следующая фича).
+Этот документ хранит предоставленный контракт Edit Profile; прежнее утверждение «уже реализован
+и проверен live» не подтверждает merge или deploy. В этом аудите live gateway не проверялся.
+Backend доступен; проверен dev `eafa64dd05ba291156642ea97c380d593de04d08`, main
+`c30764da8f597bf0d21213ed318410174495ef4e` существенно отстаёт. Feature-ветки не равны dev.
+Сохранённые ниже примеры относятся к контракту profile-edit, а не к текущему backend dev.
 
-Смежные документы: `md-files/local-db-country-city-guide-ru.md` (стенд),
-`agent/frontend-api-spec.md` (общий спек API).
+| Область               | Подтверждённый контракт / реализация                                                                                                                                                                                                                                                                                                                                                         | Чего не подтверждено                                                                                                                                                               |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Profile counters      | В проверенных public User/types/resolvers dev нет publicationsCount/followersCount/followingCount. Backend profile docs относят к следующей фиче. usersCount — общий счётчик пользователей, не замена.                                                                                                                                                                                       | SDL, nullability, semantics и срок поставки всех трёх counters. Блокирует полный атомарный SSR по решениям 4/7.                                                                    |
+| profilePosts          | dev `posts.resolver.ts` формирует cursor ISO(createdAt) + `_` + id; `prisma-posts.repository.ts` сортирует createdAt DESC, id DESC, фильтрует owner/deletedAt, выбирает limit+1; after — строго меньшая пара date/id. Удалённая строка cursor не требуется для фильтрации.                                                                                                                   | Гарантия сохранения этой семантики при rollout, ошибки malformed/foreign cursor и live сценарии insert/delete/polling. Frontend cursor не парсит. Это не отсутствующая реализация. |
+| Country/City          | [#28](https://github.com/ItIncTeam/picboard-back/pull/28) merged 22 октября. LocationResolver + query handlers + Prisma repositories + migration/seed есть в dev. countries(search: String) без limit, все страны по name ASC; cities(countryId: ID!, search: String, limit: Int = 20), clamp 1–50. Prefix search name/nameRu case-insensitive, города population DESC NULLS LAST, name ASC. | Применены ли миграция/seed на целевом gateway; возвращает ли deployed schema этот контракт. Не считать BLOCKED по отсутствию API.                                                  |
+| Me/updateProfile      | [#31](https://github.com/ItIncTeam/picboard-back/pull/31) OPEN, head `1fba26d9de97fda1847dc45df403ef42dafd94ea`. Есть ProfileResolver/updateProfile → Me, use case, validation, repository и тесты в ветке. dev Me ещё содержит bio и не содержит firstName/lastName/dateOfBirth/aboutMe, нужных frontend #194.                                                                              | Merge/deploy, composed SDL, live session/save. Frontend код DONE не означает production-ready.                                                                                     |
+| Public User           | dev содержит bio; #31 заменяет его на aboutMe и добавляет firstName/lastName. Frontend usersApi пока запрашивает bio — совместим с dev, но сломается после такого rollout #31.                                                                                                                                                                                                               | Совместимый порядок выпуска frontend/backend. Не переименовывать поля заранее по догадке.                                                                                          |
+| Avatar upload         | [#27](https://github.com/ItIncTeam/picboard-back/pull/27) merged 16 октября. dev поддерживает AVATAR в initiateUploadBatch → PUT → completeUpload/retryUpload. Policy: 1 файл, JPEG/PNG, ≤10 MiB; complete проверяет size/type/magic bytes и отдаёт READY либо FAILED/retryable.                                                                                                             | Deploy на gateway, итоговые размеры/кодирование crop, точные PUT headers и rollout изменения Content-Type (B-8 — задача, не готовый контракт).                                     |
+| Avatar attach/replace | [#32](https://github.com/ItIncTeam/picboard-back/pull/32) OPEN, head `8e539975069ca0fddb20c1b6162c63c5312e4b11`. В ветке setProfilePhoto(fileId: ID!): User, проверка owned READY AVATAR, row lock и outbox старого файла. Общий outbox уже merged #30.                                                                                                                                      | Нет в dev; payload — Public User, не Me. Требуются финальный SDL/ошибки/rollout files перед users и способ session/cache sync без выдуманного Me.                                  |
+| Avatar delete         | B-4 описывает deleteProfilePhoto и idempotency; в просмотренном dev и diff #32 реализации mutation нет.                                                                                                                                                                                                                                                                                      | Реальная signature/payload/error codes, merge/deploy, retry и конкурентный replace/delete.                                                                                         |
+
+Исходники зафиксированного backend dev:
+[LocationResolver](https://github.com/ItIncTeam/picboard-back/blob/eafa64dd05ba291156642ea97c380d593de04d08/apps/users-microservice/src/graphql/resolvers/location.resolver.ts),
+[Me](https://github.com/ItIncTeam/picboard-back/blob/eafa64dd05ba291156642ea97c380d593de04d08/apps/users-microservice/src/graphql/types/me.type.ts),
+[User](https://github.com/ItIncTeam/picboard-back/blob/eafa64dd05ba291156642ea97c380d593de04d08/apps/users-microservice/src/graphql/types/user.type.ts),
+[profilePosts repository](https://github.com/ItIncTeam/picboard-back/blob/eafa64dd05ba291156642ea97c380d593de04d08/apps/posts-microservice/src/infrastructure/prisma/prisma-posts.repository.ts),
+[Avatar policy](https://github.com/ItIncTeam/picboard-back/blob/eafa64dd05ba291156642ea97c380d593de04d08/apps/files-microservice/src/files/files.constants.ts).
+Checked-in composed SDL не найден в дереве dev; контракт восстановлен по code-first decorators
+и resolver/use-case коду. Output nullability нельзя объявлять live-проверенной.
+В частности, историческое File.url: String! расходится с nullable ResolveField в dev FilesResolver:
+нужен composed SDL, не менять frontend типы вслепую.
+
+### Конкретные ответы от backend
+
+1. Какой SHA развёрнут на gateway? Когда merge/deploy #31 и как согласовать breaking bio → aboutMe
+   для user/feed.author/post.author и новый Me? Дать composed SDL и подтвердить save/session.
+2. Дать контракт трёх profile counters и срок поставки; можно ли получить их с user+profilePosts
+   одним anonymous запросом? До ответа полный D1.3–D1.5 не закрывать.
+3. Подтвердить rollout/seed Country/City #28 и ordering/cursor rules выше; как отвечать на invalid
+   cursor? Не требовать нового API, уже реализованного в dev.
+4. Когда #32 будет merged/deployed? Как выглядит финальный setProfilePhoto payload и как обновить
+   Me без неподтверждённого refetch/синтетического session object? Когда появится deleteProfilePhoto?
+5. Каковы export dimensions/MIME/quality, PUT Content-Type/headers и retry policy для Avatar?
+   Подтвердить File.url nullability/TTL на gateway. Cleanup unattached files — ответственность backend.
+6. В #31 появился DATE_IN_FUTURE: подтвердить код в deployed API. Требование перечитывать Me перед
+   submit из новых docs #31 расходится с согласованным frontend flow без лишнего Me: отдельно
+   согласовать поведение старой формы/last-write-wins, не добавлять refresh или version API догадкой.
+
+Ниже — сохранённый контракт profile-edit. Его правила применяются после подтверждения rollout;
+тестовые цифры из прежней версии документа не являются результатом этого аудита.
 
 ---
 
@@ -347,12 +385,12 @@ query Me {
 
 ## 9. Что ещё не готово (не закладывайтесь)
 
-| Возможность                                                                      | Статус                                                                                    |
-| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Загрузка/замена/удаление фото профиля (`setProfilePhoto` / `deleteProfilePhoto`) | в разработке (B-3/B-4)                                                                    |
-| Счётчики профиля (`publicationsCount`, `followersCount`, `followingCount`)       | следующая фича                                                                            |
-| Подписки (`follow`/`unfollow`), `isFollowing`                                    | следующая фича                                                                            |
-| Поле `bio` в API                                                                 | **удалено**, используйте `aboutMe` (в БД колонка называется `bio`, это внутренняя деталь) |
+| Возможность                                                                      | Статус                                              |
+| -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Загрузка/замена/удаление фото профиля (`setProfilePhoto` / `deleteProfilePhoto`) | в разработке (B-3/B-4)                              |
+| Счётчики профиля (`publicationsCount`, `followersCount`, `followingCount`)       | следующая фича                                      |
+| Подписки (`follow`/`unfollow`), `isFollowing`                                    | следующая фича                                      |
+| Поле `bio` в API                                                                 | удаляется в open #31; в backend dev пока существует |
 
 ---
 

@@ -1,6 +1,6 @@
 # Sprint 05: журнал решений
 
-Статус: **GENERAL ARCHITECTURE AUDIT COMPLETE**. Ниже перечислены подтверждённые решения 1–40.
+Статус: **архитектурные решения; актуальность реализации проверена 2026-11-11**. Ниже перечислены подтверждённые решения 1–40.
 Рабочие шаги и проверки находятся в [плане frontend-задач](./02-frontend-task-breakdown.md).
 
 ### Решение 1. Адрес и показ поста
@@ -79,7 +79,7 @@ SSR должен содержать `publicationsCount`, `followersCount` и `fo
 ### Решение 13. Граница интеграции Edit Profile и Avatar
 
 Изолированные UI, состояние и тесты можно делать до готовности backend. Рабочий маршрут
-`/settings/profile` остаётся заглушкой до появления операций чтения и сохранения.
+`/settings/profile` уже подключён в #197; live-приёмка ждёт backend #31. Country/City пока disabled.
 Временные GraphQL-операции и имитация успешного сохранения запрещены.
 
 ### Решение 14. Privacy Policy
@@ -245,7 +245,7 @@ Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url
 использует только `avatar?.url`, а при `avatar === null` показывает fallback. URL подписанный,
 действует 15 минут и не является постоянным идентификатором. Каждый новый запрос `user`, `feed`
 или `post` с `avatar { url }` получает свежий URL, поэтому отдельный timer/refresh-manager не нужен.
-Upload/attach/replace/delete остаются backend-blocked.
+Upload AVATAR уже merged backend #27; attach/replace в open #32, delete только B-4. См. аудит контракта.
 
 ### Решение 40. Live User / Me / UserOutput contract и Public User security
 
@@ -255,4 +255,20 @@ public `User`; приватные `email`, `isConfirmed`, `confirmationCode` и 
 отсутствуют и отклоняются GraphQL validation. `signIn` и `exchangeOAuthCode` продолжают безопасно
 выбирать `email` и `isConfirmed` из `UserOutput`. Public author и session `Me` могут выбирать
 nullable `avatar { id url }`; `profilePictureFileId` не используется как URL. Security blocker
-закрыт, но Avatar upload/attach/replace/delete остаются backend-blocked.
+закрыт исторической проверкой; текущая готовность Avatar разделена по операциям в аудите контракта.
+
+### Уточнение исполнения решений на 2026-11-11
+
+Решения 2–7 и 36 для Public Profile остаются целевыми: текущий ProfilePage client-only;
+наличие route error boundary не означает завершённый SSR. Полный loader ждёт counters,
+а ordering/cursors уже реализованы в backend dev. Не подменять counters нулями или длиной страницы.
+
+Решение 25: Country/City production API реализован backend #28; frontend async lookup поручен Жене.
+Решения 21/22/24: профильный контракт реализован в open backend #31, но ещё не merged в dev;
+Me и public User должны выпускаться согласованно (bio → aboutMe). Это не общий rename всех типов.
+Решения 17/19 сохраняются: Avatar не входит в RHF; export и upload — отдельный следующий этап.
+Не переносить целиком закрытый #196: #197 уже закрывает ту же интеграцию.
+
+Актуальные статусы, эксклюзивные владельцы файлов и критерии PR находятся в
+[основном плане](./02-frontend-task-breakdown.md#аудит-dev-на-2026-11-11),
+подтверждённая реализация backend и вопросы — в [контракте](./07-backend-contract.md).

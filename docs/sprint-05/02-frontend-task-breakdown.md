@@ -1,9 +1,94 @@
 # Sprint 05: план frontend-задач
 
-Статус: **D1.1–D1.2, D1.7–D1.8, D2.2–D2.6, D3.1–D3.7 IMPLEMENTED / D1.3 CONTRACT FOUNDATION PARTIAL / BACKEND BLOCKED**.
+Статус на 2026-11-11: **спринт PARTIAL**. Аудит ниже уточняет реализацию и backend-зависимости; DONE означает наличие кода, а не live-приёмку.
 
 Основные решения находятся в [Decision Log](./01-decisions.md). Здесь перечислены только задачи
 команды. Каждая рассчитана примерно на 1–2 рабочих дня и должна завершаться своими тестами.
+
+## Аудит dev на 2026-11-11
+
+Источники: frontend dev `75cf9ffdf94f98f4c1b8c4d63e24efb4f0a455d5` (совпадает с локальным HEAD),
+backend dev `eafa64dd05ba291156642ea97c380d593de04d08`. GitHub API и код прочитаны;
+тесты, сборка, lint/typecheck и live mutations не запускались. Старые результаты проверок ниже —
+исторические отчёты, не результаты этого аудита. Работа стенда и актуальный composed SDL не подтверждены.
+
+[Frontend PR #194](https://github.com/ItIncTeam/picboard-front/pull/194) merged 27 октября,
+[#195](https://github.com/ItIncTeam/picboard-front/pull/195) merged 28 октября,
+[#197](https://github.com/ItIncTeam/picboard-front/pull/197) merged 5 ноября.
+[#196](https://github.com/ItIncTeam/picboard-front/pull/196) **closed, not merged** 6 ноября.
+Единственный открытый frontend PR — [#192 Deploy](https://github.com/ItIncTeam/picboard-front/pull/192),
+`dev → main`; это не отдельная реализация Sprint 05. История merged #169–#197 сверена с текущим кодом.
+
+### Статусы всех задач
+
+| Задача | Статус      | Доказательство и остаток                                                                                                                                            |
+| ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1.1   | DONE        | `views/profile-page/ProfileHeader.tsx`: props UI, counters, owner settings; #171/#174. Рабочий ProfilePage пока дублирует шапку без counters; подключение — D1.4.   |
+| D1.2   | DONE        | `ProfilePage.tsx` → `PostGrid` с canonical href и returnTo; #172/#184.                                                                                              |
+| D1.3   | PARTIAL     | `entities/user/api/usersApi.ts`: безопасный User/avatar; #173/#178/#189. Нет общей operation, server loader, counters и InitialProfileData.                         |
+| D1.4   | PARTIAL     | Route adapter передаёт только userId; `ProfilePage` — client component с getUser в effect. Есть error boundary (#180), но нет Profile SSR/metadata/server notFound. |
+| D1.5   | NOT STARTED | Нет Profile seed/baseline/skipToken; текущий useQuery стартует на клиенте. Post seed не закрывает эту задачу.                                                       |
+| D1.6   | PARTIAL     | `ProfilePage.tsx`: fetchMore, history, pollInterval 60000, защита request/revision; нет сброса по SSR baseline. Backend ordering уже реализован, см. контракт.      |
+| D1.7   | DONE        | #194: `entities/user/api/currentUserApi.ts`, session CurrentUser/Me. Совместимость со стендом не проверена; новый Me пока в backend #31.                            |
+| D1.8   | DONE        | #195: updateProfile no-cache и guarded synchronizer в session-management. Live сохранение не подтверждено.                                                          |
+| D2.1   | DONE        | #169: публичный `/posts/[postId]`, без protected boundary.                                                                                                          |
+| D2.2   | DONE        | #175: `views/post-details-page/api/loadInitialPost.ts`, getPostQueryData, baselineKey.                                                                              |
+| D2.3   | DONE        | #175: canonical route, cached loader/metadata, server rendering, ошибки и notFound.                                                                                 |
+| D2.4   | DONE        | #181: `@modal/(.)posts/[postId]`, back/локальные ошибки.                                                                                                            |
+| D2.5   | DONE        | #184: PostCard/PublicPostCard/PublicPostsGrid canonical Links, отдельные carousel controls.                                                                         |
+| D2.6   | DONE        | #186/#191: `useSeedPostDetailsCache`, displayPost, edit/delete cache и выход к owner.                                                                               |
+| D3.1   | DONE        | #176/#197: `features/edit-profile/ui/EditProfileForm.tsx`, RHF/reset/submit/DocModal.                                                                               |
+| D3.2   | DONE        | #182/#193/#197: validation, UTC age, календарная DOB, DatePicker.                                                                                                   |
+| D3.3   | PARTIAL     | Props-зависимость Country → City есть; `ProfileSettingsPage.tsx` передаёт locationDisabled, справочник/поиск не подключены. Backend lookup уже merged #28.          |
+| D3.4   | DONE        | #185: `edit-profile-avatar/model/useAvatarDraft.ts`, MIME/10 MiB/preview/cleanup.                                                                                   |
+| D3.5   | DONE        | #187: AvatarCropper + candidate/decode/квадратные координаты, без export/upload.                                                                                    |
+| D3.6   | DONE        | #188: AvatarDeleteConfirm и injected OnDeleteAvatar, pending/retry. Production delete сюда не входит.                                                               |
+| D3.7   | PARTIAL     | #197: `views/settings-page/ProfileSettingsPage.tsx`, реальный submit и session sync. Lookup disabled; live API требует подтверждения backend #31.                   |
+| D3.8   | BLOCKED     | Нет production Avatar pipeline/композиции в settings. Upload есть на backend dev, attach/replace только open #32, delete пока ticket B-4.                           |
+
+### Что брать из #196
+
+Не переносить PR целиком и не открывать второй PR на интеграцию Edit Profile: route/view,
+prefill, updateProfile, mapper, field errors и reset уже реализованы #197. В dev также уже есть
+browser coverage backend errors/underage/privacy/retry в `ProfileSettingsPage.browser.test.tsx`.
+
+Полезный отсутствующий фрагмент: `profileFormMapper.ts` из #196 проверяет формат YYYY-MM-DD и
+реальную календарную дату (round-trip year/month/day); dev `getEditProfileValues` просто делает
+slice(0, 10) + Date. Это кандидат на точечный перенос **только при подтверждении формата DOB**:
+проверка invalid DOB и её тест отсутствуют в dev. Не заменять mapper целиком: вариант #196 всегда
+передаёт optional поля и может очистить неизменённые данные; #197 использует dirtyFields.
+Рекурсивный сборщик ошибок #196 и новый `views/settings-profile-page` не переносить: они дублируют
+текущий API/`views/settings-page`; #197 уже обрабатывает подтверждённые коды и stale session.
+Тесты #196 с plain object errors не копировать вместо реального CombinedGraphQLErrors.
+
+### Оставшаяся работа и следующие PR
+
+P0 — сначала, P1 — после указанных зависимостей. Пути ниже закреплены за одним владельцем.
+Не создавать PR только ради загрузки разработчика: Posts уже реализованы.
+
+| Разработчик | Приоритет / следующий небольшой PR                                                                                                      | Файлы (исключительное владение)                                                                                                                                                    | Зависимости и критерии готовности                                                                                                                                                                                                                                                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Семён       | P0: сверить Public User после backend #31; P1: D1.3 loader                                                                              | `entities/user/api/usersApi.ts`, `views/profile-page/api/*`                                                                                                                        | До смены bio → aboutMe получить целевой SDL/дату rollout #31. Loader после counters: один anonymous no-store POST, полный User+counters+posts, null отдельно от technical error, baselineKey. Не выдумывать counters.                                                                                                                                                       |
+| Семён       | P1: D1.4–D1.5 SSR + seed; затем отдельный D1.6 continuation                                                                             | `views/profile-page/*`, `app/(app-shell)/(profile)/profile/[userId]/*`                                                                                                             | После loader: HTML гостю, page/metadata один fetch, server 404, retry; затем seed без initial browser fetch; baseline reset, polling/fetchMore сохраняют историю и локальные ошибки. Shared PostCard не менять.                                                                                                                                                             |
+| Никита      | P0: приёмка D2.1–D2.6; PR только на воспроизводимый дефект                                                                              | `views/post-details-page/*`, `widgets/post-details-modal/*`, `entities/post/*`, существующие PostCard/PublicPostCard/PublicPostsGrid                                               | Direct/reload SSR, soft modal, back/forward, edit/delete/cache, guest/owner. Если backend подтвердит новый author contract, отдельный узкий PR selection/types. Не переписывать Posts и не брать Profile pagination; общий upload API менять только после согласования с Ксенией.                                                                                           |
+| Ксения      | P0: узкая сверка Edit Profile с backend #31 (DATE_IN_FUTURE, DOB); P1: Avatar export/upload, затем отдельный attach/replace и delete PR | `features/edit-profile/model/editProfileErrors*`, `editProfileValues*`, `features/edit-profile-avatar/*`, `entities/user/api/currentUserApi.ts` и `current-user.ts`                | Не повторять #196/#197. DATE_IN_FUTURE в актуальном #31 отсутствует в frontend field-code mapping. Export только после согласования размеров/MIME. Upload AVATAR начинается по Save, READY до attach. Attach после #32/rollout; delete только после реальной mutation/payload. Не синтезировать Me из Public User payload.                                                  |
+| Женя        | P0: D3.3 lookup API и async Country/City UI; затем отдельный PR wiring settings                                                         | `entities/user/api/locationApi.ts` (предлагаемый), `features/edit-profile/ui/*`, `features/edit-profile/model/types.ts`, `features/edit-profile/index.ts`, `views/settings-page/*` | Backend #28 уже merged: countries cache, cities debounce около 250 ms, loading/error/retry, reset City при смене Country, игнорировать старые ответы, сохранить selected prefill вне результатов поиска. Wiring сохранения после подтверждения #31: оба ID/null и dirty semantics, без нового Me. Avatar добавляет в settings только Женя после готового public API Ксении. |
+
+Ксения не меняет EditProfileForm/types/index и settings параллельно с Женей; Семён не меняет
+currentUserApi/session, а использует существующий synchronizer. Если понадобится изменение session,
+его делает Семён отдельным последовательным PR после API Ксении, без параллельного редактирования.
+Документы спринта синхронизирует Семён после merge. Все — aliases между модулями, relative внутри,
+route adapter в app, композиция в views, без feature-to-feature imports и API в widgets.
+
+**Backend-independent:** сохранить узкие границы UI/API Country/City, реализовать поиск по уже
+доступному контракту #28; приёмка текущего Post; точечные подтверждённые ошибки Edit Profile.
+Не создавать второй form mapper или общий coordinator Avatar+RHF.
+
+**Backend-dependent:** live Me/updateProfile и location submit (#31), Public User migration,
+D1.3–D1.5 (counters), финальная D1.6 приёмка cursor/polling на целевом стенде,
+Avatar export-параметры/PUT headers, attach/replace (#32), delete (B-4) и cache/session integration.
+До подтверждения не включать несуществующие mutations, fake success, нулевые counters,
+новые follow/likes/comments, refresh-token после смены username или новый Apollo Client.
 
 ## Общие правила
 
@@ -28,8 +113,8 @@ Frontend-интеграции также ждут:
 
 - `publicationsCount`, `followersCount`, `followingCount`;
 - Avatar upload/attach/replace/delete contract;
-- production-источник Country/City;
-- подтверждение стабильной сортировки и cursor semantics `profilePosts`.
+- rollout/seed Country/City на целевом gateway (код уже merged backend #28);
+- приёмка реализованных ordering/cursors на целевом gateway (код уже подтверждён).
 
 Контракт чтения/сохранения Edit Profile доступен в
 [07-backend-contract.md](./07-backend-contract.md) — источник правды для D1.7/D1.8.
@@ -43,7 +128,7 @@ Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url
 
 Ошибки для неверного `first` или cursor желательно улучшить, но это не блокирует Profile SSR.
 
-## Владение кодом
+## Исходное деление задач (актуальные владельцы — в таблице аудита)
 
 - **Dev 1:** Public Profile, его SSR, Apollo continuation и локальная пагинация.
 - **Dev 2:** Public Post, маршруты, общие ссылки карточек и синхронизация Post mutations.
@@ -409,7 +494,7 @@ DatePicker открывается на выбранном или текущем 
 
 **Статус:** реализована зависимость через `countryOptions` и `cityOptionsByCountryValue` props:
 смена Country очищает City, список берётся для текущей Country, а City выключен без доступных
-вариантов. Production-источник options остаётся backend-зависимостью.
+вариантов. Production lookup не подключён на frontend; backend dev реализован (#28).
 
 **Цель:** реализовать зависимые Select без временного набора production-данных.
 
@@ -418,8 +503,7 @@ DatePicker открывается на выбранном или текущем 
 
 **Оценка:** 1 день.
 **Сложность:** Простая.
-**Зависит от backend:** Частично — изолированный UI можно сделать сейчас, production-источник
-ожидается.
+**Зависит от backend:** Контракт lookup реализован в dev (#28); для live-приёмки нужны deploy/seed и сохранение через #31.
 
 **Готово:** значения вариантов остаются непрозрачными ключами UI; фикстуры живут только в тестах и
 Storybook; рабочий маршрут не получает временный список стран.
@@ -495,7 +579,7 @@ bitmap.
 
 ### D3.7. Интеграция Edit Profile с backend
 
-**Статус:** IMPLEMENTED для чтения/сохранения профиля; async Country/City lookup — отдельная задача.
+**Статус:** PARTIAL целиком; чтение/сохранение подключено на frontend (#197), async lookup отсутствует, live-приёмка ждёт backend #31.
 
 `/settings/profile` → `views/settings-page` собирает session и EditProfileForm без feature-to-feature imports.
 CurrentUser даёт prefill без нового Me. Callback D1.8 захватывается **до** updateProfile;
@@ -504,7 +588,7 @@ Submit сериализован; editable поля выключены до за�
 Optional поля опускаются по dirtyFields, очистка передаёт null; DOB — календарная YYYY-MM-DD,
 возраст сверяется с UTC-днём. GraphQL codes/field details попадают в RHF; USER_UNDER_13 даёт Privacy Policy.
 
-Production lookup API отсутствует: saved Country/City показаны read-only и не отправляются без изменений.
+Frontend lookup API отсутствует (backend #28 уже merged): saved Country/City показаны read-only и не отправляются без изменений.
 Отдельно нужны countries(search), cities(countryId, search, limit), debounce и loading/error/clearing UX
 по [контракту](./07-backend-contract.md#7-prefill-формы-me). Production mocks и Avatar mutations не добавлены.
 
@@ -547,15 +631,7 @@ replace/delete не оптимистические; правила жизни si
 **Основные проверки:** ограничения export, upload/complete, attach, replace, delete/retry, URL для
 отображения, синхронизация cache/session и очистка object URL.
 
-## Что можно начинать сразу
+## Текущий порядок завершения
 
-- Dev 1: D1.1, D1.2.
-- Dev 2: D2.1–D2.6; CRITICAL SECURITY закрыт live verification 2026-09-19.
-- Dev 3: D3.1–D3.6. Для D3.3 пока используются только props и тестовые фикстуры.
-
-## Что ждёт backend
-
-- Dev 1: D1.3–D1.5; завершение D1.6 ждёт гарантий сортировки и cursor.
-- Dev 3: D3.7 и D3.8; production-источник для D3.3.
-- Dev 2: контрактных блокеров для базового Public Post нет; утечка приватных полей Public User
-  закрыта live verification 2026-09-19.
+Следовать таблице аудита выше. D1.1–D1.2, D2.1–D2.6 и D3.1–D3.6 повторно не реализовывать.
+Country/City не считать отсутствующим backend; Avatar upload не путать с сохранением фото.
