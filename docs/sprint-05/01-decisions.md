@@ -203,8 +203,8 @@ date dependency требуют отдельного решения продук�
 неполные обязательные данные, HTTP/transport и invalid JSON остаются техническими ошибками.
 `post: null` с ошибками не превращается в 404. `errorPolicy: 'all'` без классификации errors и
 валидации payload запрещён; те же правила нужны feed/profilePosts, SSR и Apollo seed.
-Точная обработка author-related paths входит в отдельную задачу совместимости D2.7, а не
-в повторную реализацию D2.1–D2.6. Сейчас loader отвергает любые GraphQL errors и null author.
+Точная обработка author-related paths входит в отдельную задачу совместимости D2.8, а не
+в повторную реализацию D2.1–D2.7. Сейчас loader отвергает любые GraphQL errors и null author.
 
 `loadInitialPost(postId)` возвращает `null` только для подтверждённого отсутствия поста.
 Локальные `error.tsx` используют `unstable_retry()` и не показывают детали или digest.
@@ -240,7 +240,7 @@ SSR и первый hydration render используют server props. Посл
 
 Все полноценные публичные Post cards в Public Home, Main, Profile и других текущих лентах/сетках
 ведут через обычный Link на `/posts/[postId]`; существующий автор — на `/profile/[authorId]`.
-При null author ссылка автора отсутствует (задача D2.7). Внутри приложения
+При null author ссылка автора отсутствует (задача D2.8). Внутри приложения
 маршрут Post может открыться через `@modal`, direct/reload остаётся публичным SSR. Ссылка покрывает
 media и details surface (`createdAt` + description), не весь `article`; carousel controls и
 Show more / Hide не запускают переход. Profile может передать `returnTo` в post href через
@@ -303,7 +303,7 @@ nullable author зафиксированы выше, но ещё не реали
 
 Country/City (#28), профиль/Me/aboutMe (#31), set/delete Avatar (#32/#34) и nullable author (#35)
 есть в backend dev `3b151ac`; production rollout не подтверждён. Public User selection frontend
-ещё содержит удалённый bio и требует точечной правки. D1.7/D1.8, D2.1–D2.6 и D3.7 не повторять;
+ещё содержит удалённый bio и требует точечной правки. D1.7/D1.8, D2.1–D2.7 и D3.7 не повторять;
 #196 целиком не переносить. Export/upload Avatar остаются в D3.8, отдельно от RHF.
 
 Актуальные статусы, эксклюзивные владельцы файлов и критерии PR находятся в

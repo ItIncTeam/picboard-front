@@ -37,8 +37,9 @@ Backend #31/#32/#34 merged 11 ноября, #35 — 12 ноября. Production 
 | D2.3   | DONE        | #175: canonical route, cached loader/metadata, server rendering, ошибки и notFound.                                                                                               |
 | D2.4   | DONE        | #181: `@modal/(.)posts/[postId]`, back/локальные ошибки.                                                                                                                          |
 | D2.5   | DONE        | #184: PostCard/PublicPostCard/PublicPostsGrid canonical Links, отдельные carousel controls.                                                                                       |
-| D2.6   | DONE        | #186/#191: `useSeedPostDetailsCache`, displayPost, edit/delete cache и выход к owner.                                                                                             |
-| D2.7   | NOT STARTED | Совместимость с #35: nullable author, UI/metadata fallback и проверяемые partial GraphQL responses; текущие типы/UI/SSR validator требуют автора.                                 |
+| D2.6   | DONE        | #186: `useSeedPostDetailsCache`, displayPost, edit/delete cache.                                                                                                                  |
+| D2.7   | DONE        | FRONT-177, #191: canonical Close/Delete fallback в профиль владельца.                                                                                                             |
+| D2.8   | NOT STARTED | Совместимость с #35: nullable author, UI/metadata fallback и проверяемые partial GraphQL responses; текущие типы/UI/SSR validator требуют автора.                                 |
 | D3.1   | DONE        | #176/#197: `features/edit-profile/ui/EditProfileForm.tsx`, RHF/reset/submit/DocModal.                                                                                             |
 | D3.2   | DONE        | #182/#193/#197: validation, UTC age, календарная DOB, DatePicker.                                                                                                                 |
 | D3.3   | PARTIAL     | Props-зависимость Country → City есть; `ProfileSettingsPage.tsx` передаёт locationDisabled, справочник/поиск не подключены. Backend lookup уже merged #28.                        |
@@ -71,8 +72,8 @@ P0 — сначала, P1 — после указанных зависимост
 | Разработчик | Следующий небольшой PR                                                                        | Файлы (исключительное владение)                                                                                                                                                    | Критерии готовности                                                                                                                                                                                                                                                                                                                            |
 | ----------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Семён       | P0: Public User aboutMe; затем D1.3 loader                                                    | `entities/user/api/usersApi.ts`, `views/profile-page/api/*`                                                                                                                        | Исправить selection/тип/чтение bio → aboutMe под backend dev; согласовать production rollout. Один anonymous no-store POST: User+posts, counters не запрашивать, UI «—», baselineKey; errors по решению 30.                                                                                                                                    |
-| Семён       | P1: D1.4–D1.5 SSR + seed, затем D1.6 continuation                                             | `views/profile-page/*`, `app/(app-shell)/(profile)/profile/[userId]/*`                                                                                                             | SSR без ожидания counters, единый page/metadata fetch, 404/retry, seed без browser initial fetch; baseline reset и локальные polling/fetchMore errors. Полная совместимость posts зависит от D2.7.                                                                                                                                             |
-| Никита      | P0: D2.7 nullable author/fallback/partial responses; затем приёмка D2.1–D2.6                  | `views/post-details-page/*`, `widgets/post-details-modal/*`, `entities/post/*`, существующие PublicPostCard/PublicPostsGrid                                                        | Типы, validator, UI/metadata и feed/profilePosts: author null допустим; author-related errors.path проверяются до cache/display. Не скрывать все errors через errorPolicy: all. Direct/modal/cache/edit/delete не переписывать.                                                                                                                |
+| Семён       | P1: D1.4–D1.5 SSR + seed, затем D1.6 continuation                                             | `views/profile-page/*`, `app/(app-shell)/(profile)/profile/[userId]/*`                                                                                                             | SSR без ожидания counters, единый page/metadata fetch, 404/retry, seed без browser initial fetch; baseline reset и локальные polling/fetchMore errors. Полная совместимость posts зависит от D2.8.                                                                                                                                             |
+| Никита      | P0: D2.8 nullable author/fallback/partial responses; затем приёмка D2.1–D2.7                  | `views/post-details-page/*`, `widgets/post-details-modal/*`, `entities/post/*`, существующие PublicPostCard/PublicPostsGrid                                                        | Типы, validator, UI/metadata и feed/profilePosts: author null допустим; author-related errors.path проверяются до cache/display. Не скрывать все errors через errorPolicy: all. Direct/modal/cache/edit/delete не переписывать.                                                                                                                |
 | Ксения      | P0: точечная validation/errors сверка #31; P1: D3.8 export/upload, set/replace, delete и sync | `features/edit-profile/model/editProfileErrors*`, `editProfileValues*`, `features/edit-profile-avatar/*`, `entities/user/api/currentUserApi.ts` и `current-user.ts`                | DATE_IN_FUTURE, календарные даты, минимум одна буква в имени, Country not found, пустой aboutMe → null; dirtyFields сохранить. Upload AVATAR по Save, READY до set. После set/delete перечитать Me с guarded sync; публичный User обновить отдельно. Не повторять D1.7/D1.8/D3.7. Изменение UI validation согласовать с Женей последовательно. |
 | Женя        | P0: D3.3 lookup API/async UI, затем wiring settings                                           | `entities/user/api/locationApi.ts` (предлагаемый), `features/edit-profile/ui/*`, `features/edit-profile/model/types.ts`, `features/edit-profile/index.ts`, `views/settings-page/*` | Backend #28/#31 merged: countries cache, cities debounce около 250 ms, loading/error/retry, reset City, защита от старых ответов, selected prefill вне поиска. Пара ID/null только при изменении локации. Avatar компоновать после готового API Ксении.                                                                                        |
 
@@ -83,7 +84,7 @@ currentUserApi/session, а использует существующий synchro
 route adapter в app, композиция в views, без feature-to-feature imports и API в widgets.
 
 **Можно реализовывать по backend dev:** Public User aboutMe, D1.3–D1.6 с counters «—»,
-D2.7, Country/City lookup и wiring, точечную сверку Edit Profile, Avatar pipeline и Me/User sync.
+D2.8, Country/City lookup и wiring, точечную сверку Edit Profile, Avatar pipeline и Me/User sync.
 Общий upload API Никита и Ксения меняют только последовательно по согласованной границе.
 Новый form mapper или coordinator Avatar+RHF не нужен.
 
@@ -192,7 +193,7 @@ bio. Нужны aboutMe и совместимое чтение в ProfilePage, �
 Недоступные counters показывать как «—» только в UI, не запрашивать и не seed'ить.
 
 **Объём:** operation, переменные без after, fetch с cache: 'no-store', проверка обязательных
-данных и InitialProfileData с baselineKey. Nullable author и partial errors — по решению 30/D2.7.
+данных и InitialProfileData с baselineKey. Nullable author и partial errors — по решению 30/D2.8.
 
 **Оценка:** 2 дня.
 **Сложность:** Сложная.
@@ -233,7 +234,7 @@ payload, nullable author, user null, id/\_\_typename, отсутствие count
 
 **Оценка:** 1–2 дня.
 **Сложность:** Сложная.
-**Зависит от backend:** Контракт User/posts есть в dev; зависит от D1.3 и D2.7, counters не блокируют.
+**Зависит от backend:** Контракт User/posts есть в dev; зависит от D1.3 и D2.8, counters не блокируют.
 
 **Готово:** первое клиентское отображение совпадает с SSR; старый cache не читается до заполнения
 для текущего baseline; `cache-first` не создаёт запрос из браузера; неполный cache не заменяет
@@ -338,11 +339,11 @@ sign-in; элементы владельца по-прежнему завися�
 **Оценка:** 1–2 дня.
 **Сложность:** Средняя.
 **Зависит от backend:** PostEntity/вложения и `null` для отсутствующего поста подтверждены;
-совместимость с nullable author #35 выделена в D2.7.
+совместимость с nullable author #35 выделена в D2.8.
 
 **Готово:** успешная загрузка возвращает полный Post; `null` отделён от технической ошибки;
 невалидные обязательные данные и технические ошибки не попадают в Apollo Client; новая загрузка
-получает новый baseline. Допустимые author-related partial responses — дополнение D2.7 к
+получает новый baseline. Допустимые author-related partial responses — дополнение D2.8 к
 реализованному loader, который сейчас отвергает любые errors/null author.
 
 **Основные проверки:** HTTP/transport, неверный JSON, GraphQL errors, `null`, необязательный файл
@@ -444,7 +445,13 @@ previous/next без перехода, клавиатура/focus и едины�
 
 ---
 
-### D2.7. Совместимость с nullable Post.author и partial GraphQL responses
+### D2.7. Canonical Close/Delete fallback (FRONT-177)
+
+**Статус:** IMPLEMENTED — [PR #191](https://github.com/ItIncTeam/picboard-front/pull/191).
+Canonical Close/Delete fallback ведёт в профиль владельца `/profile/[ownerId]`.
+Задача завершена; повторная реализация не требуется.
+
+### D2.8. Совместимость с nullable Post.author и partial GraphQL responses
 
 **Статус:** NOT STARTED. Backend #35 merged; frontend типы/UI/metadata требуют автора,
 getPostQueryData отвергает null author и любые GraphQL errors. Это узкая задача совместимости.
@@ -459,7 +466,7 @@ owner actions по ownerId/session. Для post/feed/profilePosts классиф
 Post null с errors не считается 404; невалидные обязательные данные не записываются в cache.
 
 **Основные проверки:** author null без errors и data+errors с author-related path; другие errors,
-неполный payload, metadata/links, SSR seed и последующие polling/fetchMore. D2.1–D2.6 не повторять.
+неполный payload, metadata/links, SSR seed и последующие polling/fetchMore. D2.1–D2.7 не повторять.
 
 ## Dev 3 — Edit Profile и Avatar
 
@@ -660,8 +667,8 @@ replace/delete не оптимистические; правила жизни si
 
 ## Текущий порядок завершения
 
-Следовать таблице аудита выше. D1.1–D1.2, D1.7–D1.8, D2.1–D2.6, D3.1–D3.2 и D3.4–D3.7
+Следовать таблице аудита выше. D1.1–D1.2, D1.7–D1.8, D2.1–D2.7, D3.1–D3.2 и D3.4–D3.7
 повторно не реализовывать; D3.3 завершить интеграцией lookup.
-Country/City и Avatar mutations не считать отсутствующим backend. D2.7 — совместимость с #35;
+Country/City и Avatar mutations не считать отсутствующим backend. D2.8 — совместимость с #35;
 D3.3/D3.8 — оставшиеся интеграции. UI counters «—» не блокирует Profile SSR.
 OPEN UX decision о Me перед submit и неподтверждённый production rollout не считать реализацией.
