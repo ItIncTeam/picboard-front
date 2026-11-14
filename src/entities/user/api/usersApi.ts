@@ -8,7 +8,7 @@ const userQuery = gql`
       id
       username
       displayName
-      bio
+      aboutMe
       profilePictureFileId
       avatar {
         id
@@ -25,7 +25,7 @@ export type PublicUserAvatar = {
 
 export type PublicUser = {
   avatar: PublicUserAvatar | null
-  bio: string | null
+  aboutMe: string | null
   displayName: string | null
   id: string
   profilePictureFileId: string | null
