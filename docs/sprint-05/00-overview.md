@@ -2,19 +2,21 @@
 
 ## Статус
 
-**PARTIAL — аудит 2026-11-11.** Frontend dev `75cf9ff` подтверждён через GitHub.
+**PARTIAL — актуализировано на 2026-11-14.** Frontend dev `75cf9ff`, backend dev `3b151ac`.
 #194/#195/#197 merged; #196 closed без merge. Полная таблица D1/D2/D3 и следующие PR
-для Семёна, Никиты, Ксении и Жени — в [плане задач](./02-frontend-task-breakdown.md#аудит-dev-на-2026-11-11).
+для Семёна, Никиты, Ксении и Жени — в [плане задач](./02-frontend-task-breakdown.md#аудит-dev-на-2026-11-14).
 
 Готовы Public Post SSR/modal/cache/edit/delete, Profile UI/grid, Me/session sync,
 Edit Profile save wiring и локальные Avatar draft/crop/delete-confirm UI.
 Country/City остаются disabled в settings; Avatar не подключён к production pipeline.
 Public Profile пока client-only: нет атомарного SSR, metadata и Apollo seed.
 
-Backend dev доступен: Country/City #28 и Avatar upload #27 merged; updateProfile/новый Me
-только в open #31, attach/replace только в open #32; delete — пока ticket.
-Counters отсутствуют, ordering/cursors profilePosts уже реализованы.
-Frontend live-приёмка не подтверждена; прежний общий BACKEND BLOCKED был слишком широким.
+В backend dev merged: Country/City #28, Avatar upload #27, updateProfile/новый Me #31,
+setProfilePhoto #32, deleteProfilePhoto #34 и nullable Post.author #35.
+Public User уже использует aboutMe вместо удалённого bio; frontend ещё запрашивает bio.
+Для nullable author/fallback/partial responses нужна отдельная задача совместимости.
+Counters недоступны: временно показывать «—», без блокировки Profile SSR.
+Ordering/cursors profilePosts реализованы. Production rollout и frontend live-приёмка не подтверждены.
 Детали, источники и вопросы — в [контракте](./07-backend-contract.md).
 
 ## Цель
@@ -29,39 +31,45 @@ Frontend live-приёмка не подтверждена; прежний об�
   данные на каждый HTTP-запрос через `cache: 'no-store'`.
 - Сервер передаёт полные сериализуемые данные. Локальная клиентская граница записывает их в
   существующий Apollo Client; новый клиент или слой состояния не создаётся.
-- Профиль загружается атомарно: пользователь, счётчики и первая страница постов. Неполные данные не
-  отображаются и не записываются в кэш.
+- Профиль загружается атомарно: пользователь и первая страница постов. Недоступные счётчики
+  отображаются как «—» только в UI, не запрашиваются и не подменяются данными в Apollo.
+  Обязательные данные проверяются; nullable author и допустимые partial responses — по решению 30.
 - Пагинация и polling постов профиля остаются локальными. Публичная страница поста отображается из
   серверных данных и локального состояния.
 - Переход к посту из Main или Profile открывает перехваченный маршрут в `@modal`. Прямой URL
   показывает самостоятельную страницу.
 - Публичные посты кликабельны в Public Home, Main, Profile и других текущих лентах/сетках. Пост
-  ведёт на `/posts/[postId]`, имя и аватар автора — на `/profile/[authorId]`.
+  ведёт на `/posts/[postId]`, имя и аватар существующего автора — на `/profile/[authorId]`.
+  При `author: null` нужен fallback без ссылки на несуществующего автора.
 - Anonymous, authenticated non-owner и owner видят один публичный контент. `/me` добавляет только
   подтверждённые действия текущего пользователя и владельца; просмотр не требует авторизации.
 - Edit Profile и Avatar — независимые возможности. Они используют существующие компоненты и не
   объединяются общей машиной состояний.
 
-## Готово на backend
+## Реализовано в backend dev (production rollout не подтверждён)
 
 - `user(id)`, `profilePosts(input)` и `post(id)` доступны без авторизации.
 - Отсутствующие user/post возвращают `null`; неизвестный userId для `profilePosts` возвращает
   пустую connection.
 - `profilePosts` поддерживает cursor pagination, default `first = 8` и диапазон `1–8`.
-- Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
-  использует `avatar?.url`, а `avatar === null` — fallback. URL подписанный, действует 15 минут,
-  не является постоянным идентификатором и обновляется каждым новым `user`, `feed` или `post`
-  запросом с `avatar { url }`; отдельный timer/refresh-manager не нужен.
-- `PostEntity` содержит author, ownerId, attachments, `createdAt` и `updatedAt`.
+- `User.avatar` nullable. Для `File.url` в dev расходятся `@Field()` и nullable `ResolveField`;
+  точная nullability требует composed SDL. Signed URL служит только для отображения;
+  исторически наблюдался TTL 900 секунд, текущий gateway не проверен. Timer/refresh-manager не добавляется.
+- `PostEntity` содержит nullable author, ownerId, attachments, `createdAt` и `updatedAt`.
+- `updateProfile` возвращает `Me`; Public User использует `aboutMe`, без приватных account fields.
+- Avatar: `initiateUploadBatch` с AVATAR → PUT → `completeUpload` (READY) →
+  `setProfilePhoto(fileId: ID!): User!`; удаление — `deleteProfilePhoto: Boolean!` без аргументов.
+  После Avatar mutations отдельно синхронизируются Me/session и публичный User.
 - Live gateway verification 2026-09-19 confirmed the separation: public `User`, private session
   `Me` and auth payload `UserOutput`. `feed.author` and `post.author` are public `User` values and
   expose nullable `avatar { id url }` without private account fields.
 - Post attachments имеют signed display URL; наблюдаемый срок — 900 секунд.
 
-## Блокеры backend
+## Оставшиеся зависимости и приёмка
 
-- Публичные `publicationsCount`, `followersCount` и `followingCount`.
-- Avatar: upload AVATAR уже merged; attach/replace ждут #32, delete ждёт реализации B-4.
+- Реальные `publicationsCount`, `followersCount` и `followingCount` — будущая интеграция;
+  временное UI «—» позволяет завершать SSR без них.
+- Avatar: frontend pipeline и синхронизация, export-параметры и подтверждение rollout #27/#32/#34.
 - Подтверждение deploy/seed Country/City (код и формат уже доступны в backend dev).
 - Live-приёмка реализованной сортировки createdAt DESC, id DESC и cursor semantics `profilePosts`.
 
@@ -72,7 +80,8 @@ Anonymous `user(id)`, `feed.author` и `post.author` не должны раск�
 fields. Live gateway verification 2026-09-19 confirmed that all three surfaces resolve to public
 `User`; selecting these private fields is rejected during GraphQL validation.
 
-Временные поля, запросы, мутации, фиктивные счётчики и имитация успешного сохранения запрещены.
+Временные GraphQL fields/mutations, фиктивные числовые счётчики и имитация успеха запрещены.
+UI «—» означает отсутствие данных, не ноль и не длину страницы.
 
 ## Решения продукта
 
@@ -95,7 +104,8 @@ engagement controls. Наличие этих элементов в Figma не р
 
 ## Следующий шаг
 
-Женя подключает Country/City по существующему контракту; Ксения сверяет #31 и готовит Avatar
-по подтверждённым частям. Семён согласует counters и rollout public User, затем завершает SSR.
-Никита принимает готовый Post flow и исправляет только подтверждённые дефекты.
+Женя подключает Country/City; Ксения сверяет validation/errors #31 и подключает Avatar с отдельной
+синхронизацией Me/User. Семён исправляет Public User selection и завершает SSR с counters «—».
+Никита выполняет отдельную задачу nullable author/fallback/partial responses и принимает готовый Post flow.
+Перечитывание Me перед Edit Profile submit остаётся OPEN UX decision.
 Файлы, зависимости и критерии небольших PR закреплены в основном плане задач.
