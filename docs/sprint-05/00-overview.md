@@ -15,7 +15,7 @@ Public Profile пока client-only: нет атомарного SSR, metadata �
 В backend dev merged: Country/City #28, Avatar upload #27, updateProfile/новый Me #31,
 setProfilePhoto #32, deleteProfilePhoto #34 и nullable Post.author #35.
 Public User уже использует aboutMe вместо удалённого bio; frontend ещё запрашивает bio.
-Для nullable author/fallback/partial responses нужна отдельная задача совместимости D2.8.
+Nullable author/fallback/partial responses закрыты в D2.8 (FRONT-180).
 Counters недоступны: временно показывать «—», без блокировки Profile SSR.
 Ordering/cursors profilePosts реализованы. Production rollout и frontend live-приёмка не подтверждены.
 Детали, источники и вопросы — в [контракте](./07-backend-contract.md).

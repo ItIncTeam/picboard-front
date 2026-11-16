@@ -152,6 +152,23 @@ describe('useSeedPostDetailsCache', () => {
     expect(networkCalls).toBe(0)
   })
 
+  it('seeds a post with null author without inventing one', async () => {
+    const post = createPost({ author: null })
+
+    renderSeed('baseline-null-author', post)
+
+    await waitFor(() => {
+      expect(
+        client.readQuery<PostQueryData>({
+          query: postQuery,
+          variables: { id: 'post-1' },
+        })?.post?.author,
+      ).toBeNull()
+    })
+
+    expect(networkCalls).toBe(0)
+  })
+
   it('does not issue a network request while seeding a new baseline', async () => {
     const post = createPost()
 
@@ -184,6 +201,11 @@ describe('useSeedPostDetailsCache', () => {
     })
 
     const updatedPost = createPost({ description: 'Updated description' })
+    const updatedAuthor = updatedPost.author
+
+    if (!updatedAuthor) {
+      throw new Error('Expected updated post author for cache mutation fixture.')
+    }
 
     act(() => {
       client.writeQuery({
@@ -197,11 +219,9 @@ describe('useSeedPostDetailsCache', () => {
               file: attachment.file ? { ...attachment.file, __typename: 'File' } : null,
             })),
             author: {
-              ...updatedPost.author,
+              ...updatedAuthor,
               __typename: 'User',
-              avatar: updatedPost.author.avatar
-                ? { ...updatedPost.author.avatar, __typename: 'File' }
-                : null,
+              avatar: updatedAuthor.avatar ? { ...updatedAuthor.avatar, __typename: 'File' } : null,
             },
           },
         },

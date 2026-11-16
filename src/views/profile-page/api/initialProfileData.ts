@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { PostAuthor, PostEntity } from '@/entities/post/model/backendTypes'
+import type { PostEntity } from '@/entities/post/model/backendTypes'
 import type { PublicUser } from '@/entities/user/api/usersApi'
 
 const avatarSchema = z
@@ -23,9 +23,6 @@ const authorSchema = z.object({
 const userSchema = authorSchema.extend({
   aboutMe: z.string().nullable(),
 }) satisfies z.ZodType<PublicUser>
-
-// D2.8 owns nullable author in the shared Post contract.
-type InitialProfilePost = Omit<PostEntity, 'author'> & { author: PostAuthor | null }
 
 const postSchema = z.object({
   __typename: z.literal('PostEntity'),
@@ -55,7 +52,7 @@ const postSchema = z.object({
         .nullable(),
     }),
   ),
-}) satisfies z.ZodType<InitialProfilePost>
+}) satisfies z.ZodType<PostEntity>
 
 export const initialProfileResponseSchema = z.object({
   user: userSchema.nullable(),

@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { getPostAuthorDisplayName } from '@/entities/post/lib/getPostAuthorDisplayName'
 import { useI18n } from '@/shared/lib/i18n'
 import { formatRelativePostTime } from '../lib/formatRelativePostTime'
 import type { PublicPostCardModel } from '../model/types'
@@ -15,30 +16,40 @@ type PublicPostCardProps = {
 }
 
 export function PublicPostCard({ post }: PublicPostCardProps) {
-  const authorName = post.author.displayName?.trim() || post.author.username
-  const avatarFallback = authorName.charAt(0).toUpperCase()
   const { language, t } = useI18n()
+  const authorName = getPostAuthorDisplayName(post.author, t.widgets.publicPostCard.unknownAuthor)
+  const avatarFallback = authorName.charAt(0).toUpperCase()
   const postHref = `/posts/${post.id}`
-  const authorHref = `/profile/${post.author.id}`
+  const authorHref = post.author ? `/profile/${post.author.id}` : null
+
+  const authorContent = (
+    <>
+      <span
+        aria-label={`${authorName} ${t.profile.avatarSuffix}`}
+        className={styles.avatar}
+        role="img"
+      >
+        {post.author?.avatar ? (
+          <Image alt="" fill sizes="36px" src={post.author.avatar.url} unoptimized />
+        ) : (
+          <span aria-hidden>{avatarFallback}</span>
+        )}
+      </span>
+      <span className={styles.authorName}>{authorName}</span>
+    </>
+  )
 
   return (
     <article className={styles.card} data-post-id={post.id}>
       <PublicPostCarousel media={post.media} postId={post.id} />
 
-      <Link className={styles.authorLink} href={authorHref}>
-        <span
-          aria-label={`${authorName} ${t.profile.avatarSuffix}`}
-          className={styles.avatar}
-          role="img"
-        >
-          {post.author.avatar ? (
-            <Image alt="" fill sizes="36px" src={post.author.avatar.url} unoptimized />
-          ) : (
-            <span aria-hidden>{avatarFallback}</span>
-          )}
-        </span>
-        <span className={styles.authorName}>{authorName}</span>
-      </Link>
+      {authorHref ? (
+        <Link className={styles.authorLink} href={authorHref}>
+          {authorContent}
+        </Link>
+      ) : (
+        <div className={styles.authorLink}>{authorContent}</div>
+      )}
 
       <Link className={styles.contentLink} href={postHref}>
         <time className={styles.createdAt} dateTime={post.createdAt}>

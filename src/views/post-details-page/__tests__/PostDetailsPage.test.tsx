@@ -269,7 +269,7 @@ describe('PostDetailsContent', () => {
       expect(cached?.post?.id).toBe(entity.id)
       expect(cached?.post?.description).toBe(entity.description)
       expect(cached?.post?.ownerId).toBe(entity.ownerId)
-      expect(cached?.post?.author.id).toBe(entity.author.id)
+      expect(cached?.post?.author?.id).toBe(entity.author?.id)
     })
 
     expect(apolloNetworkCalls).toBe(0)

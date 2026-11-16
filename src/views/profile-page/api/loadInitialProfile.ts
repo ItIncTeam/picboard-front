@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { PROFILE_POSTS_PAGE_SIZE } from '@/entities/post/api/profilePostsConstants'
+import { isProfilePostsAuthorErrorPath } from '@/entities/post/lib/graphqlAuthorErrors'
 
 import { initialProfileResponseSchema, type InitialProfileData } from './initialProfileData'
 import { initialProfileQuery } from './initialProfileQuery'
@@ -33,26 +34,7 @@ export async function loadInitialProfile(userId: string): Promise<InitialProfile
   const data = initialProfileResponseSchema.parse(payload.data)
 
   for (const { path } of payload.errors ?? []) {
-    const [root, edges, index, node, author, ...fields] = path ?? []
-    const authorFields = ['id', 'username', 'displayName', 'profilePictureFileId', '__typename']
-    const isAuthorPath =
-      fields.length === 0 ||
-      (fields.length === 1 && authorFields.includes(String(fields[0]))) ||
-      (fields[0] === 'avatar' &&
-        (fields.length === 1 ||
-          (fields.length === 2 && ['id', 'url', '__typename'].includes(String(fields[1])))))
-
-    if (
-      !data.user ||
-      root !== 'profilePosts' ||
-      edges !== 'edges' ||
-      typeof index !== 'number' ||
-      !Number.isInteger(index) ||
-      !data.profilePosts.edges[index] ||
-      node !== 'node' ||
-      author !== 'author' ||
-      !isAuthorPath
-    ) {
+    if (!data.user || !isProfilePostsAuthorErrorPath(path, data.profilePosts.edges.length)) {
       throw new Error('Public Profile GraphQL request failed.')
     }
   }

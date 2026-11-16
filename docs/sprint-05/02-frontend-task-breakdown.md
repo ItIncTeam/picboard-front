@@ -39,7 +39,7 @@ Backend #31/#32/#34 merged 11 ноября, #35 — 12 ноября. Production 
 | D2.5   | DONE        | #184: PostCard/PublicPostCard/PublicPostsGrid canonical Links, отдельные carousel controls.                                                                                       |
 | D2.6   | DONE        | #186: `useSeedPostDetailsCache`, displayPost, edit/delete cache.                                                                                                                  |
 | D2.7   | DONE        | FRONT-177, #191: canonical Close/Delete fallback в профиль владельца.                                                                                                             |
-| D2.8   | NOT STARTED | Совместимость с #35: nullable author, UI/metadata fallback и проверяемые partial GraphQL responses; текущие типы/UI/SSR validator требуют автора.                                 |
+| D2.8   | DONE        | FRONT-180: nullable author в общих типах/mapper/UI/metadata; author-related partial GraphQL responses для post/feed/profilePosts; fallback без ссылки автора.                     |
 | D3.1   | DONE        | #176/#197: `features/edit-profile/ui/EditProfileForm.tsx`, RHF/reset/submit/DocModal.                                                                                             |
 | D3.2   | DONE        | #182/#193/#197: validation, UTC age, календарная DOB, DatePicker.                                                                                                                 |
 | D3.3   | PARTIAL     | Props-зависимость Country → City есть; `ProfileSettingsPage.tsx` передаёт locationDisabled, справочник/поиск не подключены. Backend lookup уже merged #28.                        |
@@ -453,8 +453,9 @@ Canonical Close/Delete fallback ведёт в профиль владельца 
 
 ### D2.8. Совместимость с nullable Post.author и partial GraphQL responses
 
-**Статус:** NOT STARTED. Backend #35 merged; frontend типы/UI/metadata требуют автора,
-getPostQueryData отвергает null author и любые GraphQL errors. Это узкая задача совместимости.
+**Статус:** DONE (FRONT-180). Nullable author в shared PostEntity/Post/PublicPostCardModel,
+validator/mapper, UI/metadata fallback без ссылки автора; post/feed/profilePosts классифицируют
+author-related errors.path до display/cache.
 
 **Объём:** nullable DTO/view types и validator; fallback имени/аватара/metadata без ссылки автора;
 owner actions по ownerId/session. Для post/feed/profilePosts классифицировать errors.path и
