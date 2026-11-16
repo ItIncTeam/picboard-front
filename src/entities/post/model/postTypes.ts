@@ -7,7 +7,7 @@ export type PostImage = {
 }
 
 export type Post = {
-  author: PostAuthor
+  author: PostAuthor | null
   id: string
   caption?: string
   createdAtLabel?: string

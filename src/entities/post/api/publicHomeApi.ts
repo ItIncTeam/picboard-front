@@ -1,6 +1,7 @@
 import { gql } from '@apollo/client'
 import { print } from 'graphql'
 
+import { isFeedAuthorErrorPath } from '../lib/graphqlAuthorErrors'
 import type { PostEntity } from '../model/backendTypes'
 import { postFieldsFragment } from './postFragments'
 
@@ -11,7 +12,7 @@ export type PublicHomeQueryData = {
 
 type GraphqlResponse<TData> = {
   data?: TData
-  errors?: Array<{ message?: string }>
+  errors?: Array<{ message?: string; path?: Array<string | number> }>
 }
 
 export const publicHomeQuery = gql`
@@ -88,12 +89,7 @@ export async function getPublicHomeQueryData(): Promise<PublicHomeQueryData> {
 
   const data = payload.data
 
-  if (
-    payload.errors?.length ||
-    !data ||
-    !Array.isArray(data.feed) ||
-    typeof data.usersCount !== 'number'
-  ) {
+  if (!data || !Array.isArray(data.feed) || typeof data.usersCount !== 'number') {
     console.error('[PublicHome] request failed', {
       endpoint,
       errorCount: payload.errors?.length ?? 0,
@@ -101,6 +97,18 @@ export async function getPublicHomeQueryData(): Promise<PublicHomeQueryData> {
       kind: 'graphql',
     })
     throw new Error(PUBLIC_HOME_ERROR_MESSAGE)
+  }
+
+  for (const error of payload.errors ?? []) {
+    if (!isFeedAuthorErrorPath(error.path, data.feed.length)) {
+      console.error('[PublicHome] request failed', {
+        endpoint,
+        errorCount: payload.errors?.length ?? 0,
+        errors: payload.errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
+        kind: 'graphql',
+      })
+      throw new Error(PUBLIC_HOME_ERROR_MESSAGE)
+    }
   }
 
   return data

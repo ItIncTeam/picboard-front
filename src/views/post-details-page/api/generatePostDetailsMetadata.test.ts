@@ -101,6 +101,21 @@ describe('generatePostDetailsMetadata', () => {
     })
   })
 
+  it('uses Post fallback metadata when author is null', async () => {
+    loadInitialPostMocks.getCachedInitialPost.mockResolvedValueOnce({
+      baselineKey: 'baseline-1',
+      post: createPost({
+        author: null,
+        description: null,
+      }),
+    })
+
+    await expect(generatePostDetailsMetadata('post-1')).resolves.toEqual({
+      description: 'Post',
+      title: 'Post',
+    })
+  })
+
   it('calls notFound when the post is missing', async () => {
     loadInitialPostMocks.getCachedInitialPost.mockResolvedValueOnce(null)
 

@@ -50,6 +50,7 @@ export const en = {
       imageOf: 'of',
       justNow: 'Just now',
       recently: 'Recently',
+      unknownAuthor: 'Unknown user',
     },
     docModal: {
       backToSignUp: 'Back to Sign Up',
@@ -307,6 +308,7 @@ export const en = {
       ariaLabel: 'Post details',
       title: 'Post details',
       fallback: 'Details skeleton. getPostById is blocked by backend contract.',
+      unknownAuthor: 'Unknown user',
     },
   },
   publicHome: {

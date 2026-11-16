@@ -170,7 +170,7 @@ describe('Public Post GraphQL boundary', () => {
     await expect(getPostQueryData('post-1')).resolves.toEqual(payload)
   })
 
-  it('rejects GraphQL errors instead of returning a post', async () => {
+  it('rejects unrelated GraphQL errors instead of returning a post', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', graphqlEndpoint)
     vi.stubGlobal(
@@ -194,6 +194,57 @@ describe('Public Post GraphQL boundary', () => {
         endpoint: graphqlEndpoint,
         errorCount: 1,
         errors: ['Gateway unavailable'],
+        kind: 'graphql',
+      }),
+    )
+  })
+
+  it.each([
+    undefined,
+    ['post', 'author'],
+    ['post', 'author', 'username'],
+    ['post', 'author', 'avatar', 'url'],
+  ])('accepts a null author with an optional author resolution error: %j', async (path) => {
+    const payload = createPostEntity({ author: null })
+
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', graphqlEndpoint)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        mockJsonResponse({
+          data: {
+            post: payload,
+          },
+          ...(path ? { errors: [{ message: 'Author unavailable', path }] } : {}),
+        }),
+      ),
+    )
+
+    await expect(getPostQueryData('post-1')).resolves.toEqual(payload)
+  })
+
+  it('does not turn a null post with errors into a missing post', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', graphqlEndpoint)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        mockJsonResponse({
+          data: {
+            post: null,
+          },
+          errors: [{ message: 'Author unavailable', path: ['post', 'author'] }],
+        }),
+      ),
+    )
+
+    await expect(getPostQueryData('post-1')).rejects.toThrow(
+      'Post data is temporarily unavailable.',
+    )
+    expect(consoleError).toHaveBeenCalledWith(
+      '[PublicPost] request failed',
+      expect.objectContaining({
+        endpoint: graphqlEndpoint,
         kind: 'graphql',
       }),
     )

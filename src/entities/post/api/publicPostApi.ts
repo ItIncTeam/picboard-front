@@ -6,11 +6,12 @@ import type {
   PostAuthor,
   PostEntity,
 } from '../model/backendTypes'
+import { isPostAuthorErrorPath } from '../lib/graphqlAuthorErrors'
 import { postQuery } from './postQuery'
 
 type GraphqlResponse<TData> = {
   data?: TData
-  errors?: Array<{ message?: string }>
+  errors?: Array<{ message?: string; path?: Array<string | number> }>
 }
 
 type PostQueryData = {
@@ -98,7 +99,7 @@ function isPostEntity(value: unknown): value is PostEntity {
     typeof value.createdAt === 'string' &&
     typeof value.updatedAt === 'string' &&
     (value.description === null || typeof value.description === 'string') &&
-    isPostAuthor(value.author) &&
+    (value.author === null || isPostAuthor(value.author)) &&
     Array.isArray(value.attachments) &&
     value.attachments.every(isPostAttachment)
   )
@@ -114,6 +115,21 @@ function logTransportFailure(endpoint: string, error: unknown): void {
     message: cause instanceof Error ? cause.message : String(cause),
     name: cause instanceof Error ? cause.name : 'UnknownError',
   })
+}
+
+function throwGraphqlFailure(
+  endpoint: string,
+  errors: GraphqlResponse<PostQueryData>['errors'],
+  message?: string,
+): never {
+  console.error('[PublicPost] request failed', {
+    endpoint,
+    errorCount: errors?.length ?? 0,
+    errors: errors?.map(({ message: item }) => item ?? 'Unknown GraphQL error') ?? [],
+    kind: 'graphql',
+    ...(message ? { message } : {}),
+  })
+  throw new Error(PUBLIC_POST_ERROR_MESSAGE)
 }
 
 export async function getPostQueryData(id: string): Promise<PostEntity | null> {
@@ -169,27 +185,26 @@ export async function getPostQueryData(id: string): Promise<PostEntity | null> {
 
   const data = payload.data
 
-  if (payload.errors?.length || !data || !('post' in data)) {
-    console.error('[PublicPost] request failed', {
-      endpoint,
-      errorCount: payload.errors?.length ?? 0,
-      errors: payload.errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
-      kind: 'graphql',
-    })
-    throw new Error(PUBLIC_POST_ERROR_MESSAGE)
+  if (!data || !('post' in data)) {
+    throwGraphqlFailure(endpoint, payload.errors)
   }
 
   if (data.post === null) {
+    if (payload.errors?.length) {
+      throwGraphqlFailure(endpoint, payload.errors)
+    }
+
     return null
   }
 
   if (!isPostEntity(data.post)) {
-    console.error('[PublicPost] request failed', {
-      endpoint,
-      kind: 'graphql',
-      message: 'Post payload is incomplete.',
-    })
-    throw new Error(PUBLIC_POST_ERROR_MESSAGE)
+    throwGraphqlFailure(endpoint, payload.errors, 'Post payload is incomplete.')
+  }
+
+  for (const error of payload.errors ?? []) {
+    if (!isPostAuthorErrorPath(error.path)) {
+      throwGraphqlFailure(endpoint, payload.errors)
+    }
   }
 
   return data.post
