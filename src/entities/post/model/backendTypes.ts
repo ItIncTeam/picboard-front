@@ -34,7 +34,7 @@ export type PostAuthor = {
 
 export type PostEntity = {
   attachments: PostAttachmentEntity[]
-  author: PostAuthor
+  author: PostAuthor | null
   createdAt: string
   description: string | null
   id: string

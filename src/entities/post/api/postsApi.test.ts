@@ -1,3 +1,4 @@
+import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { visit, type DocumentNode, type OperationDefinitionNode } from 'graphql'
 
@@ -150,6 +151,7 @@ describe('posts GraphQL helpers', () => {
     expect(getRootFieldSelectionNames(request.query)).toEqual(['usersCount', 'feed'])
     expect(getVariableNames(request.query)).toEqual([])
     expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
+    expect(request.errorPolicy).toBe('all')
     expect(request.variables).toBeUndefined()
   })
 
@@ -165,6 +167,39 @@ describe('posts GraphQL helpers', () => {
     const error = new Error('Apollo feed error')
 
     apolloMocks.query.mockRejectedValueOnce(error)
+
+    await expect(feed()).rejects.toBe(error)
+  })
+
+  it('accepts feed author-related GraphQL errors with complete feed data', async () => {
+    const payload = [createPostEntity({ author: null })]
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'Author unavailable', path: ['feed', 0, 'author'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        feed: payload,
+        usersCount: 1,
+      },
+      error,
+    })
+
+    await expect(feed()).resolves.toEqual(payload)
+  })
+
+  it('rejects unrelated feed GraphQL errors even when feed data is present', async () => {
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'usersCount failed', path: ['usersCount'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        feed: [createPostEntity()],
+        usersCount: 1,
+      },
+      error,
+    })
 
     await expect(feed()).rejects.toBe(error)
   })
@@ -185,6 +220,7 @@ describe('posts GraphQL helpers', () => {
     expect(getOperationName(request.query)).toBe('Post')
     expect(getVariableNames(request.query)).toEqual(['id'])
     expect(request.variables).toEqual({ id: 'post-1' })
+    expect(request.errorPolicy).toBe('all')
     expect(request.query.loc?.source.body).toContain('query Post($id: String!)')
     expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
     expect(getFieldSelectionNames(request.query, 'attachments')).toEqual([
@@ -216,6 +252,37 @@ describe('posts GraphQL helpers', () => {
     const error = new Error('Apollo post error')
 
     apolloMocks.query.mockRejectedValueOnce(error)
+
+    await expect(post('post-1')).rejects.toBe(error)
+  })
+
+  it('accepts a null author with an author-related GraphQL error', async () => {
+    const payload = createPostEntity({ author: null })
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'Author unavailable', path: ['post', 'author'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        post: payload,
+      },
+      error,
+    })
+
+    await expect(post('post-1')).resolves.toEqual(payload)
+  })
+
+  it('does not turn a null post with GraphQL errors into a missing post', async () => {
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'Author unavailable', path: ['post', 'author'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        post: null,
+      },
+      error,
+    })
 
     await expect(post('post-1')).rejects.toBe(error)
   })
@@ -253,6 +320,7 @@ describe('posts GraphQL helpers', () => {
     expect(getOperationName(request.query)).toBe('ProfilePosts')
     expect(getVariableNames(request.query)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
+    expect(request.errorPolicy).toBe('all')
     expect(getFieldSelectionNames(request.query, 'profilePosts')).toEqual(['edges', 'pageInfo'])
     expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
     expect(getFieldSelectionNames(request.query, 'pageInfo')).toEqual([
@@ -306,6 +374,36 @@ describe('posts GraphQL helpers', () => {
     await expect(profilePosts({ userId: 'user-1' })).rejects.toThrow(
       'Profile posts loading failed. Please try again.',
     )
+  })
+
+  it('accepts profilePosts author-related GraphQL errors with complete connection data', async () => {
+    const payload = {
+      edges: [
+        {
+          cursor: 'cursor-1',
+          node: createPostEntity({ author: null }),
+        },
+      ],
+      pageInfo: {
+        endCursor: 'cursor-1',
+        hasNextPage: false,
+        startCursor: 'cursor-1',
+      },
+    }
+    const error = new CombinedGraphQLErrors({
+      errors: [
+        { message: 'Author unavailable', path: ['profilePosts', 'edges', 0, 'node', 'author'] },
+      ],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        profilePosts: payload,
+      },
+      error,
+    })
+
+    await expect(profilePosts({ userId: 'user-1' })).resolves.toEqual(payload)
   })
 
   it('propagates Apollo profilePosts errors', async () => {

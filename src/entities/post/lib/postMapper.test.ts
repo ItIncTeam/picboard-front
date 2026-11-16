@@ -123,4 +123,8 @@ describe('post mapper', () => {
       },
     ])
   })
+
+  it('preserves a null author without inventing one', () => {
+    expect(mapPostEntityToPost(createPostEntity({ author: null })).author).toBeNull()
+  })
 })

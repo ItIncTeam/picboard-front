@@ -50,6 +50,7 @@ export const ru = {
       imageOf: 'из',
       justNow: 'Только что',
       recently: 'Недавно',
+      unknownAuthor: 'Неизвестный пользователь',
     },
     docModal: {
       backToSignUp: 'Назад к регистрации',
@@ -309,6 +310,7 @@ export const ru = {
       ariaLabel: 'Детали поста',
       title: 'Детали поста',
       fallback: 'Заглушка деталей. getPostById заблокирован контрактом backend.',
+      unknownAuthor: 'Неизвестный пользователь',
     },
   },
   publicHome: {

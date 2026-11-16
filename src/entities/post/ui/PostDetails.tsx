@@ -4,11 +4,12 @@ import Image from 'next/image'
 import type { ReactNode } from 'react'
 
 import { useI18n } from '@/shared/lib/i18n'
+import { getPostAuthorDisplayName } from '../lib/getPostAuthorDisplayName'
 import type { PostAuthor } from '../model/backendTypes'
 import styles from './post.module.css'
 
 type PostDetailsProps = {
-  author: PostAuthor
+  author: PostAuthor | null
   caption?: string
   createdAt?: string
   createdAtLabel?: string
@@ -25,7 +26,7 @@ export function PostDetails({
   media,
 }: PostDetailsProps) {
   const { t } = useI18n()
-  const authorName = author.displayName?.trim() || author.username
+  const authorName = getPostAuthorDisplayName(author, t.posts.details.unknownAuthor)
   const avatarFallback = authorName.charAt(0).toUpperCase()
 
   return (
@@ -39,7 +40,7 @@ export function PostDetails({
             className={styles.avatar}
             role="img"
           >
-            {author.avatar ? (
+            {author?.avatar ? (
               <Image
                 alt=""
                 className={styles.avatarImage}

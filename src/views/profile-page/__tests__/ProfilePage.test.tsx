@@ -282,6 +282,7 @@ describe('ProfilePage', () => {
     expect(apiMocks.useQuery).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
+        errorPolicy: 'all',
         notifyOnNetworkStatusChange: false,
         pollInterval: 60_000,
         variables: { input: { first: 8, userId: 'profile-user' } },

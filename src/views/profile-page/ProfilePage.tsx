@@ -2,15 +2,18 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { useQuery } from '@apollo/client/react'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import {
+  isProfilePostsAuthorErrorPath,
   mapPostEntitiesToPosts,
   PostGrid,
   PROFILE_POSTS_PAGE_SIZE,
   profilePostsQuery,
   type PageInfo,
+  type PostConnection,
   type PostEntity,
   type ProfilePostsQueryData,
   type ProfilePostsQueryVariables,
@@ -48,6 +51,19 @@ type PaginationStatus = {
   isLoading: boolean
   revision: number
   userId: string
+}
+
+function areOnlyProfilePostsAuthorErrors(
+  error: Error | undefined,
+  connection: PostConnection | undefined,
+): boolean {
+  if (!error || !connection || !CombinedGraphQLErrors.is(error)) {
+    return false
+  }
+
+  return error.errors.every((graphQLError) =>
+    isProfilePostsAuthorErrorPath(graphQLError.path, connection.edges.length),
+  )
 }
 
 function mergePosts(currentPosts: PostEntity[], nextPosts: PostEntity[]): PostEntity[] {
@@ -136,6 +152,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     refetch: refetchProfilePosts,
     variables: profilePostsVariables,
   } = useQuery<ProfilePostsQueryData, ProfilePostsQueryVariables>(profilePostsQuery, {
+    errorPolicy: 'all',
     notifyOnNetworkStatusChange: false,
     pollInterval: 60_000,
     variables: {
@@ -306,6 +323,9 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   const currentProfileUserState: ProfileUserState =
     profileUserState.userId === userId ? profileUserState : { status: 'loading', userId }
   const hasUsablePostsData = Boolean(firstPageConnection)
+  const hasBlockingProfilePostsError =
+    Boolean(profilePostsError) &&
+    !areOnlyProfilePostsAuthorErrors(profilePostsError, firstPageConnection)
 
   if (
     currentProfileUserState.status === 'loading' ||
@@ -346,7 +366,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     )
   }
 
-  if (currentProfileUserState.status === 'error' || (profilePostsError && !hasUsablePostsData)) {
+  if (currentProfileUserState.status === 'error' || hasBlockingProfilePostsError) {
     return (
       <section aria-labelledby="profile-title" className={styles.root}>
         <h1 className={styles.visuallyHidden} id="profile-title">

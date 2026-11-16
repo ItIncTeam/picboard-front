@@ -1,8 +1,14 @@
 import { gql } from '@apollo/client'
+import { CombinedGraphQLErrors } from '@apollo/client/errors'
 
 import { apolloClient } from '@/shared/api'
 
 import type { PostConnection, PostEntity } from '@/entities/post'
+import {
+  isFeedAuthorErrorPath,
+  isPostAuthorErrorPath,
+  isProfilePostsAuthorErrorPath,
+} from '../lib/graphqlAuthorErrors'
 import { postFieldsFragment } from './postFragments'
 import { postQuery } from './postQuery'
 import { PROFILE_POSTS_PAGE_SIZE } from './profilePostsConstants'
@@ -119,8 +125,28 @@ function assertProfilePostsFirst(first: number | undefined): void {
   }
 }
 
+function assertAllowedAuthorErrors(
+  error: unknown,
+  isAllowedPath: (path: ReadonlyArray<string | number> | undefined) => boolean,
+): void {
+  if (!error) {
+    return
+  }
+
+  if (!CombinedGraphQLErrors.is(error)) {
+    throw error
+  }
+
+  for (const graphQLError of error.errors) {
+    if (!isAllowedPath(graphQLError.path)) {
+      throw error
+    }
+  }
+}
+
 export const feed = async (): Promise<PostEntity[]> => {
   const response = await apolloClient.query<FeedQueryData>({
+    errorPolicy: 'all',
     query: feedQuery,
   })
 
@@ -130,11 +156,14 @@ export const feed = async (): Promise<PostEntity[]> => {
     throw new Error('Feed loading failed. Please try again.')
   }
 
+  assertAllowedAuthorErrors(response.error, (path) => isFeedAuthorErrorPath(path, payload.length))
+
   return payload
 }
 
 export const post = async (id: string): Promise<PostEntity | null> => {
   const response = await apolloClient.query<PostResponse, { id: string }>({
+    errorPolicy: 'all',
     query: postQuery,
     variables: {
       id,
@@ -145,6 +174,16 @@ export const post = async (id: string): Promise<PostEntity | null> => {
     throw new Error('Post loading failed. Please try again.')
   }
 
+  if (response.data.post === null) {
+    if (response.error) {
+      throw response.error
+    }
+
+    return null
+  }
+
+  assertAllowedAuthorErrors(response.error, isPostAuthorErrorPath)
+
   return response.data.post
 }
 
@@ -152,6 +191,7 @@ export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnec
   assertProfilePostsFirst(input.first)
 
   const response = await apolloClient.query<ProfilePostsQueryData, ProfilePostsQueryVariables>({
+    errorPolicy: 'all',
     query: profilePostsQuery,
     variables: {
       input,
@@ -163,6 +203,10 @@ export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnec
   if (!payload) {
     throw new Error('Profile posts loading failed. Please try again.')
   }
+
+  assertAllowedAuthorErrors(response.error, (path) =>
+    isProfilePostsAuthorErrorPath(path, payload.edges.length),
+  )
 
   return payload
 }

@@ -2,7 +2,13 @@
 
 import { type ReactNode, useState } from 'react'
 
-import { updatePostDescription, type PostAuthor, type PostEntity } from '@/entities/post'
+import {
+  getPostAuthorDisplayName,
+  updatePostDescription,
+  type PostAuthor,
+  type PostEntity,
+} from '@/entities/post'
+import { useI18n } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Modal } from '@/shared/ui/modal'
 import { TextArea } from '@/shared/ui/text-area/TextArea'
@@ -13,7 +19,7 @@ import { EditPostCloseConfirm } from './EditPostCloseConfirm'
 import styles from './edit-post-form.module.css'
 
 type EditPostFormProps = {
-  author: PostAuthor
+  author: PostAuthor | null
   description: string
   media: ReactNode
   onCloseAction: () => void
@@ -39,7 +45,8 @@ export function EditPostForm({
   postId,
   synchronizePostUpdateAction = synchronizeUpdatedPost,
 }: EditPostFormProps) {
-  const authorName = author.displayName?.trim() || author.username
+  const { t } = useI18n()
+  const authorName = getPostAuthorDisplayName(author, t.posts.details.unknownAuthor)
   const avatarFallback = authorName.charAt(0).toUpperCase()
   const [draft, setDraft] = useState(description)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
