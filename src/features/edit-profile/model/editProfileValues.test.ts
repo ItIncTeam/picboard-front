@@ -74,5 +74,8 @@ describe('Edit Profile backend mapping', () => {
     expect(
       getUpdateProfileInput({ ...values, country: 'new-country', city: '' }, { country: true }),
     ).toMatchObject({ countryId: 'new-country', cityId: null })
+    expect(
+      getUpdateProfileInput({ ...values, country: 'country', city: 'new-city' }, { city: true }),
+    ).toMatchObject({ countryId: 'country', cityId: 'new-city' })
   })
 })

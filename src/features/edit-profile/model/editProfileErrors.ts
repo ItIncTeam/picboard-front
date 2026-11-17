@@ -26,6 +26,10 @@ export function getEditProfileErrors(
       'USER_UNDER_13',
       { field: 'dateOfBirth', message: messages.dateOfBirthTooYoung, type: 'minimumAge' },
     ],
+    [
+      'DATE_IN_FUTURE',
+      { field: 'dateOfBirth', message: messages.dateOfBirthInFuture, type: 'server' },
+    ],
     ['CITY_NOT_IN_COUNTRY', { field: 'city', message: messages.cityNotInCountry, type: 'server' }],
   ])
 
