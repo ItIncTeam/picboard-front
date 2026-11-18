@@ -35,8 +35,8 @@ type EditProfileValidationRules = {
 }
 
 const usernamePattern = /^[A-Za-z0-9!_-]+$/
-const namePattern = /^[A-Za-zА-Яа-яЁё '-]+$/
-const nameLetterPattern = /[A-Za-zА-Яа-яЁё]/
+const namePattern =
+  /^(?=.*[\p{Script=Latin}\p{Script=Cyrillic}])[\p{Script=Latin}\p{Script=Cyrillic} '-]+$/u
 
 const getTrimmedValue = (value: string): string => value.trim()
 
@@ -97,10 +97,7 @@ export const createEditProfileValidationRules = (
           return messages.firstNameLength
         }
 
-        return (
-          (namePattern.test(normalizedValue) && nameLetterPattern.test(normalizedValue)) ||
-          messages.firstNameInvalid
-        )
+        return namePattern.test(normalizedValue) || messages.firstNameInvalid
       },
     },
     lastName: {
@@ -115,10 +112,7 @@ export const createEditProfileValidationRules = (
           return messages.lastNameLength
         }
 
-        return (
-          (namePattern.test(normalizedValue) && nameLetterPattern.test(normalizedValue)) ||
-          messages.lastNameInvalid
-        )
+        return namePattern.test(normalizedValue) || messages.lastNameInvalid
       },
     },
     dateOfBirth: {
