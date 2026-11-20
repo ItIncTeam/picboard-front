@@ -1,1 +1,1 @@
-// Placeholder - not implemented yet
+export { ProfileSettingsPage } from './ProfileSettingsPage'

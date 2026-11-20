@@ -10,9 +10,15 @@ export type EditProfileFormValues = {
   aboutMe: string
 }
 
+export type EditProfileDirtyFields = Partial<Record<keyof EditProfileFormValues, boolean>>
+
 export type EditProfileFormProps = {
+  locationDisabled?: boolean
   initialValues: EditProfileFormValues
   countryOptions: SelectOption[]
   cityOptionsByCountryValue: Record<string, SelectOption[]>
-  onSubmitAction: (values: EditProfileFormValues) => Promise<EditProfileFormValues>
+  onSubmitAction: (
+    values: EditProfileFormValues,
+    dirtyFields: EditProfileDirtyFields,
+  ) => Promise<EditProfileFormValues>
 }

@@ -11,7 +11,7 @@ import styles from './profile-page.module.css'
 
 export type ProfileHeaderData = {
   avatarUrl: string | null
-  bio: string | null
+  aboutMe: string | null
   displayName: string | null
   followersCount: number
   followingCount: number
@@ -29,7 +29,7 @@ export function ProfileHeader({ data, isOwner }: ProfileHeaderProps) {
   const username = data.username.trim() || t.profile.title
   const avatarLabel = `${username} ${t.profile.avatarSuffix}`
   const hasDisplayName = Boolean(data.displayName?.trim())
-  const bio = data.bio?.trim() ? data.bio : t.profile.noInformation
+  const aboutMe = data.aboutMe?.trim() ? data.aboutMe : t.profile.noInformation
 
   return (
     <header className={styles.profileHeader}>
@@ -86,7 +86,7 @@ export function ProfileHeader({ data, isOwner }: ProfileHeaderProps) {
 
         <div className={styles.about}>
           <h2 className={styles.aboutTitle}>{t.profile.about}</h2>
-          <p className={styles.bio}>{bio}</p>
+          <p className={styles.bio}>{aboutMe}</p>
         </div>
       </div>
     </header>

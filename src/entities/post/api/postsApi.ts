@@ -5,8 +5,10 @@ import { apolloClient } from '@/shared/api'
 import type { PostConnection, PostEntity } from '@/entities/post'
 import { postFieldsFragment } from './postFragments'
 import { postQuery } from './postQuery'
+import { PROFILE_POSTS_PAGE_SIZE } from './profilePostsConstants'
 
 export { postQuery } from './postQuery'
+export { PROFILE_POSTS_PAGE_SIZE } from './profilePostsConstants'
 
 export const feedQuery = gql`
   ${postFieldsFragment}
@@ -96,7 +98,6 @@ type DeletePostResponse = {
 }
 
 const POST_DESCRIPTION_MAX_LENGTH = 500
-export const PROFILE_POSTS_PAGE_SIZE = 8
 
 function assertDescriptionLength(description: string | null | undefined): void {
   if (

@@ -170,7 +170,10 @@ on-demand `revalidatePath('/')`. Для изменения `usersCount` отде
 не заменяет `/`.
 
 `settings/layout.tsx` рендерит `SettingsNavigation` с реальными ссылками на существующие settings
-routes; form features не владеют этой навигацией. `admin/layout.tsx` пока остаётся лёгким.
+routes; form features не владеют этой навигацией. `/settings/profile` подключает
+`views/settings-page/ProfileSettingsPage`: CurrentUser prefill, updateProfile и D1.8 sync без нового Me.
+Country/City пока показывают saved location в disabled Select; async lookup — отдельная задача.
+`admin/layout.tsx` пока остаётся лёгким.
 
 ## Файлы page.tsx
 

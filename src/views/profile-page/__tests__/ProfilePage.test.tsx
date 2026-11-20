@@ -116,7 +116,7 @@ function createDeferred<T>(): Deferred<T> {
 function createUser(overrides: Partial<PublicUser> = {}): PublicUser {
   return {
     avatar: null,
-    bio: 'Profile biography',
+    aboutMe: 'Profile biography',
     displayName: 'Display Name',
     id: 'profile-user',
     profilePictureFileId: null,
@@ -379,7 +379,7 @@ describe('ProfilePage', () => {
 
   it('uses readable fallbacks for empty profile text fields and a null avatar', async () => {
     apiMocks.getUser.mockResolvedValue(
-      createUser({ bio: '   ', displayName: '   ', username: '   ' }),
+      createUser({ aboutMe: '   ', displayName: '   ', username: '   ' }),
     )
 
     const view = renderProfile()
@@ -484,7 +484,7 @@ describe('ProfilePage', () => {
       await page.viewport(width, 640)
       apiMocks.getUser.mockResolvedValue(
         createUser({
-          bio: 'LongUnbrokenBiography'.repeat(24),
+          aboutMe: 'LongUnbrokenBiography'.repeat(24),
           displayName: 'LongUnbrokenDisplayName'.repeat(12),
           username: 'long_unbroken_username'.repeat(12),
         }),
