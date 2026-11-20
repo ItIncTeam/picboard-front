@@ -44,4 +44,23 @@ describe('Edit Profile field errors', () => {
     expect(getEditProfileErrors(error, en.profile.edit)).toEqual([])
     expect(getEditProfileErrors(new Error('USERNAME_TAKEN'), en.profile.edit)).toEqual([])
   })
+
+  it('maps DATE_IN_FUTURE to dateOfBirth when the backend omits field details', () => {
+    const error = new CombinedGraphQLErrors({
+      errors: [
+        {
+          message: 'Date of birth cannot be in the future',
+          extensions: { code: 'DATE_IN_FUTURE' },
+        },
+      ],
+    })
+
+    expect(getEditProfileErrors(error, en.profile.edit)).toEqual([
+      {
+        field: 'dateOfBirth',
+        message: en.profile.edit.dateOfBirthInFuture,
+        type: 'server',
+      },
+    ])
+  })
 })

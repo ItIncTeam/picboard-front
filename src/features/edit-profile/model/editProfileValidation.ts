@@ -35,7 +35,8 @@ type EditProfileValidationRules = {
 }
 
 const usernamePattern = /^[A-Za-z0-9!_-]+$/
-const namePattern = /^[A-Za-zА-Яа-яЁё '-]+$/
+const namePattern =
+  /^(?=.*[\p{Script=Latin}\p{Script=Cyrillic}])[\p{Script=Latin}\p{Script=Cyrillic} '-]+$/u
 
 const getTrimmedValue = (value: string): string => value.trim()
 

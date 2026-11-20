@@ -39,8 +39,13 @@ describe('edit profile validation', () => {
     ['A'.repeat(51), 'first-name-length'],
     ['Анна', true],
     ['Anna', true],
+    ['Élodie', true],
+    ['Łukasz', true],
+    ['Іван', true],
+    ['Їрина', true],
     ['Anna Maria', true],
     ["Anna-Marie O'Neil", true],
+    [" -' ", 'first-name-invalid'],
     ['Anna1', 'first-name-invalid'],
   ])('validates first name %j', (value, expectedResult) => {
     expect(rules.firstName.validate(value)).toBe(expectedResult)
@@ -51,7 +56,12 @@ describe('edit profile validation', () => {
     ['   ', 'required'],
     ['Иванова', true],
     ['Ivanova', true],
+    ['Élodie', true],
+    ['Łukasz', true],
+    ['Іван', true],
+    ['Їрина', true],
     ["O'Neil-Smith", true],
+    ["-'", 'last-name-invalid'],
     ['Иванова-1', 'last-name-invalid'],
     ['A'.repeat(51), 'last-name-length'],
   ])('validates last name %j', (value, expectedResult) => {
