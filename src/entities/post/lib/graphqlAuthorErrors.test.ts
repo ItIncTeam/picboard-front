@@ -104,6 +104,25 @@ describe('graphqlAuthorErrors', () => {
     )
     expect(isConsistentPostAuthorError(['post', 'author', 'avatar', 'url'], withAuthor)).toBe(false)
 
+    const withNullProfilePicture = createPost({
+      author: {
+        avatar: null,
+        displayName: 'Author',
+        id: 'user-1',
+        profilePictureFileId: null,
+        username: 'author',
+      },
+    })
+    expect(
+      isConsistentPostAuthorError(
+        ['post', 'author', 'profilePictureFileId'],
+        withNullProfilePicture,
+      ),
+    ).toBe(true)
+    expect(
+      isConsistentPostAuthorError(['post', 'author', 'profilePictureFileId'], withAuthor),
+    ).toBe(false)
+
     expect(isConsistentFeedAuthorError(['feed', 0, 'author'], [withoutAuthor])).toBe(true)
     expect(isConsistentFeedAuthorError(['feed', 0, 'author'], [withAuthor])).toBe(false)
 

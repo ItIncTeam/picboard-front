@@ -226,6 +226,36 @@ describe('loadInitialProfile', () => {
     await expect(loadInitialProfile('user-1')).rejects.toThrow()
   })
 
+  it('accepts profilePictureFileId errors when that field is null', async () => {
+    const data = createData()
+    const node = data.profilePosts.edges[0].node
+    respond({
+      data: {
+        ...data,
+        profilePosts: {
+          ...data.profilePosts,
+          edges: [
+            {
+              ...data.profilePosts.edges[0],
+              node: {
+                ...node,
+                author: { ...node.author, profilePictureFileId: null },
+              },
+            },
+          ],
+        },
+      },
+      errors: [
+        {
+          path: ['profilePosts', 'edges', 0, 'node', 'author', 'profilePictureFileId'],
+        },
+      ],
+    })
+    const result = await loadInitialProfile('user-1')
+    expect(result?.posts.edges[0].node.author?.profilePictureFileId).toBeNull()
+    expect(result?.posts.edges[0].node.author?.id).toBe('user-1')
+  })
+
   it('rejects avatar-related errors when avatar data is still present', async () => {
     respond({
       data: createData(),

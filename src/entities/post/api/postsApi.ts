@@ -148,16 +148,26 @@ function assertAllowedAuthorErrors(
 export const feed = async (): Promise<PostEntity[]> => {
   const response = await apolloClient.query<FeedQueryData>({
     errorPolicy: 'all',
+    fetchPolicy: 'no-cache',
     query: feedQuery,
   })
 
   const payload = response.data?.feed
+  const usersCount = response.data?.usersCount
 
-  if (!payload || !payload.every(isPostEntity)) {
+  if (!payload || !payload.every(isPostEntity) || typeof usersCount !== 'number') {
     throw new Error('Feed loading failed. Please try again.')
   }
 
   assertAllowedAuthorErrors(response.error, (path) => isConsistentFeedAuthorError(path, payload))
+
+  apolloClient.writeQuery({
+    data: {
+      feed: payload,
+      usersCount,
+    },
+    query: feedQuery,
+  })
 
   return payload
 }
@@ -165,6 +175,7 @@ export const feed = async (): Promise<PostEntity[]> => {
 export const post = async (id: string): Promise<PostEntity | null> => {
   const response = await apolloClient.query<PostResponse, { id: string }>({
     errorPolicy: 'all',
+    fetchPolicy: 'no-cache',
     query: postQuery,
     variables: {
       id,
@@ -182,6 +193,16 @@ export const post = async (id: string): Promise<PostEntity | null> => {
       throw response.error
     }
 
+    apolloClient.writeQuery({
+      data: {
+        post: null,
+      },
+      query: postQuery,
+      variables: {
+        id,
+      },
+    })
+
     return null
   }
 
@@ -191,6 +212,16 @@ export const post = async (id: string): Promise<PostEntity | null> => {
 
   assertAllowedAuthorErrors(response.error, (path) => isConsistentPostAuthorError(path, postEntity))
 
+  apolloClient.writeQuery({
+    data: {
+      post: postEntity,
+    },
+    query: postQuery,
+    variables: {
+      id,
+    },
+  })
+
   return postEntity
 }
 
@@ -199,6 +230,7 @@ export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnec
 
   const response = await apolloClient.query<ProfilePostsQueryData, ProfilePostsQueryVariables>({
     errorPolicy: 'all',
+    fetchPolicy: 'no-cache',
     query: profilePostsQuery,
     variables: {
       input,
@@ -214,6 +246,16 @@ export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnec
   assertAllowedAuthorErrors(response.error, (path) =>
     isConsistentProfilePostsAuthorError(path, payload),
   )
+
+  apolloClient.writeQuery({
+    data: {
+      profilePosts: payload,
+    },
+    query: profilePostsQuery,
+    variables: {
+      input,
+    },
+  })
 
   return payload
 }

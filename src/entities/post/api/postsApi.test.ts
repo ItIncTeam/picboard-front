@@ -5,12 +5,16 @@ import { visit, type DocumentNode, type OperationDefinitionNode } from 'graphql'
 const apolloMocks = vi.hoisted(() => ({
   mutate: vi.fn(),
   query: vi.fn(),
+  readQuery: vi.fn(),
+  writeQuery: vi.fn(),
 }))
 
 vi.mock('@/shared/api', () => ({
   apolloClient: {
     mutate: apolloMocks.mutate,
     query: apolloMocks.query,
+    readQuery: apolloMocks.readQuery,
+    writeQuery: apolloMocks.writeQuery,
   },
 }))
 
@@ -131,6 +135,8 @@ describe('posts GraphQL helpers', () => {
   afterEach(() => {
     apolloMocks.mutate.mockReset()
     apolloMocks.query.mockReset()
+    apolloMocks.readQuery.mockReset()
+    apolloMocks.writeQuery.mockReset()
   })
 
   it('loads feed posts', async () => {
@@ -152,7 +158,15 @@ describe('posts GraphQL helpers', () => {
     expect(getVariableNames(request.query)).toEqual([])
     expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
     expect(request.errorPolicy).toBe('all')
+    expect(request.fetchPolicy).toBe('no-cache')
     expect(request.variables).toBeUndefined()
+    expect(apolloMocks.writeQuery).toHaveBeenCalledWith({
+      data: {
+        feed: payload,
+        usersCount: 9213,
+      },
+      query: request.query,
+    })
   })
 
   it('throws when feed returns no payload', async () => {
@@ -213,6 +227,56 @@ describe('posts GraphQL helpers', () => {
     })
 
     await expect(feed()).rejects.toBe(error)
+    expect(apolloMocks.writeQuery).not.toHaveBeenCalled()
+  })
+
+  it('accepts profilePictureFileId author errors when that field is null', async () => {
+    const payload = [
+      createPostEntity({
+        author: {
+          avatar: null,
+          displayName: 'Backend Author',
+          id: 'user-1',
+          profilePictureFileId: null,
+          username: 'backend_author',
+        },
+      }),
+    ]
+    const error = new CombinedGraphQLErrors({
+      errors: [
+        { message: 'File id unavailable', path: ['feed', 0, 'author', 'profilePictureFileId'] },
+      ],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        feed: payload,
+        usersCount: 1,
+      },
+      error,
+    })
+
+    await expect(feed()).resolves.toEqual(payload)
+    expect(apolloMocks.writeQuery).toHaveBeenCalled()
+  })
+
+  it('does not replace cached feed data when a rejected response arrives', async () => {
+    const cachedFeed = [createPostEntity({ id: 'cached-post' })]
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'usersCount failed', path: ['usersCount'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        feed: [createPostEntity({ id: 'rejected-post' })],
+        usersCount: 1,
+      },
+      error,
+    })
+
+    await expect(feed()).rejects.toBe(error)
+    expect(apolloMocks.writeQuery).not.toHaveBeenCalled()
+    expect(cachedFeed[0]?.id).toBe('cached-post')
   })
 
   it('rejects unrelated feed GraphQL errors even when feed data is present', async () => {
@@ -229,6 +293,7 @@ describe('posts GraphQL helpers', () => {
     })
 
     await expect(feed()).rejects.toBe(error)
+    expect(apolloMocks.writeQuery).not.toHaveBeenCalled()
   })
 
   it('loads a post by id', async () => {
@@ -248,8 +313,16 @@ describe('posts GraphQL helpers', () => {
     expect(getVariableNames(request.query)).toEqual(['id'])
     expect(request.variables).toEqual({ id: 'post-1' })
     expect(request.errorPolicy).toBe('all')
+    expect(request.fetchPolicy).toBe('no-cache')
     expect(request.query.loc?.source.body).toContain('query Post($id: String!)')
     expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
+    expect(apolloMocks.writeQuery).toHaveBeenCalledWith({
+      data: {
+        post: payload,
+      },
+      query: request.query,
+      variables: { id: 'post-1' },
+    })
     expect(getFieldSelectionNames(request.query, 'attachments')).toEqual([
       'fileId',
       'sortOrder',
@@ -297,6 +370,49 @@ describe('posts GraphQL helpers', () => {
     })
 
     await expect(post('post-1')).resolves.toEqual(payload)
+    expect(apolloMocks.writeQuery).toHaveBeenCalled()
+  })
+
+  it('accepts profilePictureFileId errors when that field is null on post', async () => {
+    const payload = createPostEntity({
+      author: {
+        avatar: null,
+        displayName: 'Backend Author',
+        id: 'user-1',
+        profilePictureFileId: null,
+        username: 'backend_author',
+      },
+    })
+    const error = new CombinedGraphQLErrors({
+      errors: [
+        { message: 'File id unavailable', path: ['post', 'author', 'profilePictureFileId'] },
+      ],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        post: payload,
+      },
+      error,
+    })
+
+    await expect(post('post-1')).resolves.toEqual(payload)
+  })
+
+  it('does not write rejected post payloads into the Apollo cache', async () => {
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'Author unavailable', path: ['post', 'author'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        post: createPostEntity(),
+      },
+      error,
+    })
+
+    await expect(post('post-1')).rejects.toBe(error)
+    expect(apolloMocks.writeQuery).not.toHaveBeenCalled()
   })
 
   it('does not turn a null post with GraphQL errors into a missing post', async () => {
@@ -348,8 +464,16 @@ describe('posts GraphQL helpers', () => {
     expect(getVariableNames(request.query)).toEqual(['input'])
     expect(request.variables).toEqual({ input })
     expect(request.errorPolicy).toBe('all')
+    expect(request.fetchPolicy).toBe('no-cache')
     expect(getFieldSelectionNames(request.query, 'profilePosts')).toEqual(['edges', 'pageInfo'])
     expect(getFieldSelectionNames(request.query, 'author')).toEqual(POST_AUTHOR_FIELD_NAMES)
+    expect(apolloMocks.writeQuery).toHaveBeenCalledWith({
+      data: {
+        profilePosts: payload,
+      },
+      query: request.query,
+      variables: { input },
+    })
     expect(getFieldSelectionNames(request.query, 'pageInfo')).toEqual([
       'startCursor',
       'endCursor',
@@ -431,6 +555,75 @@ describe('posts GraphQL helpers', () => {
     })
 
     await expect(profilePosts({ userId: 'user-1' })).resolves.toEqual(payload)
+  })
+
+  it('accepts profilePictureFileId errors for profilePosts when that field is null', async () => {
+    const payload = {
+      edges: [
+        {
+          cursor: 'cursor-1',
+          node: createPostEntity({
+            author: {
+              avatar: null,
+              displayName: 'Backend Author',
+              id: 'user-1',
+              profilePictureFileId: null,
+              username: 'backend_author',
+            },
+          }),
+        },
+      ],
+      pageInfo: {
+        endCursor: 'cursor-1',
+        hasNextPage: false,
+        startCursor: 'cursor-1',
+      },
+    }
+    const error = new CombinedGraphQLErrors({
+      errors: [
+        {
+          message: 'File id unavailable',
+          path: ['profilePosts', 'edges', 0, 'node', 'author', 'profilePictureFileId'],
+        },
+      ],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        profilePosts: payload,
+      },
+      error,
+    })
+
+    await expect(profilePosts({ userId: 'user-1' })).resolves.toEqual(payload)
+  })
+
+  it('does not write rejected profilePosts payloads into the Apollo cache', async () => {
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'Failure', path: ['profilePosts'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        profilePosts: {
+          edges: [
+            {
+              cursor: 'cursor-1',
+              node: createPostEntity(),
+            },
+          ],
+          pageInfo: {
+            endCursor: 'cursor-1',
+            hasNextPage: false,
+            startCursor: 'cursor-1',
+          },
+        },
+      },
+      error,
+    })
+
+    await expect(profilePosts({ userId: 'user-1' })).rejects.toBe(error)
+    expect(apolloMocks.writeQuery).not.toHaveBeenCalled()
   })
 
   it('propagates Apollo profilePosts errors', async () => {

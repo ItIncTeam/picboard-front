@@ -24,6 +24,7 @@ const apiMocks = vi.hoisted(() => ({
     variables: { input: { first: number; userId: string } }
   },
   useQuery: vi.fn(),
+  writeQuery: vi.fn(),
 }))
 
 const sessionMocks = vi.hoisted(() => ({
@@ -37,6 +38,9 @@ vi.mock('@/entities/user', () => ({
 
 vi.mock('@apollo/client/react', () => ({
   ApolloProvider: ({ children }: { children: React.ReactNode }) => children,
+  useApolloClient: () => ({
+    writeQuery: apiMocks.writeQuery,
+  }),
   useQuery: (...args: unknown[]) => {
     apiMocks.useQuery(...args)
     return apiMocks.result
@@ -234,6 +238,7 @@ describe('ProfilePage', () => {
     apiMocks.fetchMore.mockReset()
     apiMocks.getUser.mockReset()
     apiMocks.refetch.mockReset()
+    apiMocks.writeQuery.mockReset()
     apiMocks.refetch.mockResolvedValue(undefined)
     apiMocks.result = {
       data: { profilePosts: createConnection([]) },
@@ -608,6 +613,47 @@ describe('ProfilePage', () => {
     await waitFor(() => expect(observerRecords.some(({ active }) => active)).toBe(false))
 
     expect(apiMocks.fetchMore).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the last successful first page after a failed poll', async () => {
+    apiMocks.getUser.mockResolvedValue(createUser())
+    const firstPage = createConnection([createPost('post-1'), createPost('post-2')], {
+      endCursor: 'end-cursor-1',
+      hasNextPage: true,
+    })
+    apiMocks.result.data = { profilePosts: firstPage }
+
+    const view = renderProfile()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(view.container.querySelectorAll('article')).toHaveLength(2))
+    expect(view.container.querySelector('img[alt="post-1.jpg"]')).toBeInstanceOf(HTMLImageElement)
+
+    act(() => {
+      apiMocks.result = {
+        ...apiMocks.result,
+        data: {
+          profilePosts: createConnection([createPost('broken-post')], {
+            endCursor: 'broken-cursor',
+            hasNextPage: false,
+          }),
+        },
+        error: new CombinedGraphQLErrors({
+          errors: [{ message: 'Failure', path: ['profilePosts'] }],
+        }),
+      }
+      view.root.render(
+        <I18nProvider>
+          <ProfilePage userId="profile-user" />
+        </I18nProvider>,
+      )
+    })
+
+    await waitFor(() => expect(view.container.querySelectorAll('article')).toHaveLength(2))
+    expect(view.container.querySelector('img[alt="post-1.jpg"]')).toBeInstanceOf(HTMLImageElement)
+    expect(view.container.querySelector('img[alt="broken-post.jpg"]')).toBeNull()
+    expect(view.container.textContent).not.toContain("Couldn't load publications")
+    expect(apiMocks.writeQuery).toHaveBeenCalled()
   })
 
   it('does not append fetchMore posts when GraphQL errors are unrelated', async () => {

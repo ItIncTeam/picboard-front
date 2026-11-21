@@ -271,6 +271,35 @@ describe('Public Post GraphQL boundary', () => {
     expect(consoleError).toHaveBeenCalled()
   })
 
+  it('accepts profilePictureFileId errors when that field is null', async () => {
+    const payload = createPostEntity({
+      author: {
+        avatar: null,
+        displayName: 'Backend Author',
+        id: 'user-1',
+        profilePictureFileId: null,
+        username: 'backend_author',
+      },
+    })
+
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', graphqlEndpoint)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        mockJsonResponse({
+          data: {
+            post: payload,
+          },
+          errors: [
+            { message: 'File id unavailable', path: ['post', 'author', 'profilePictureFileId'] },
+          ],
+        }),
+      ),
+    )
+
+    await expect(getPostQueryData('post-1')).resolves.toEqual(payload)
+  })
+
   it('rejects an incomplete post payload', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const incompletePost = {

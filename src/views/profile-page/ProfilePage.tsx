@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
-import { useQuery } from '@apollo/client/react'
+import { useApolloClient, useQuery } from '@apollo/client/react'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import {
@@ -135,6 +135,7 @@ function reconcileFirstPage(
 
 export function ProfilePage({ userId }: ProfilePageProps) {
   const { t } = useI18n()
+  const apolloClient = useApolloClient()
   const { status: sessionStatus, user: sessionUser } = useSession()
   const [profileUserState, setProfileUserState] = useState<ProfileUserState>({
     status: 'loading',
@@ -152,6 +153,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   })
   const requestIdRef = useRef(0)
   const loadingMoreRequestRef = useRef<symbol | null>(null)
+  const lastGoodProfilePostsRef = useRef<PostConnection | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const {
     data: profilePostsData,
@@ -207,16 +209,48 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     rawFirstPageConnection,
   )
   const firstPageConnection = canUseFirstPageConnection ? rawFirstPageConnection : undefined
-  const firstPagePosts = firstPageConnection?.edges.map(({ node }) => node) ?? []
   const resetPaginationState =
     paginationState.userId === userId ? paginationState : createPaginationState(userId)
+  const liveFirstPagePosts = firstPageConnection?.edges.map(({ node }) => node) ?? []
   const currentPaginationState = firstPageConnection
-    ? reconcileFirstPage(resetPaginationState, firstPagePosts, firstPageConnection.pageInfo)
+    ? reconcileFirstPage(resetPaginationState, liveFirstPagePosts, firstPageConnection.pageInfo)
     : resetPaginationState
 
   if (currentPaginationState !== paginationState) {
     setPaginationState(currentPaginationState)
   }
+
+  useEffect(() => {
+    if (profilePostsVariables.input.userId !== userId) {
+      lastGoodProfilePostsRef.current = null
+      return
+    }
+
+    if (canUseFirstPageConnection && rawFirstPageConnection) {
+      lastGoodProfilePostsRef.current = rawFirstPageConnection
+      return
+    }
+
+    if (!lastGoodProfilePostsRef.current) {
+      return
+    }
+
+    apolloClient.writeQuery({
+      data: {
+        profilePosts: lastGoodProfilePostsRef.current,
+      },
+      query: profilePostsQuery,
+      variables: {
+        input: { first: PROFILE_POSTS_PAGE_SIZE, userId },
+      },
+    })
+  }, [
+    apolloClient,
+    canUseFirstPageConnection,
+    profilePostsVariables.input.userId,
+    rawFirstPageConnection,
+    userId,
+  ])
 
   const paginationPageInfo = currentPaginationState.pageInfo
   const paginationEndCursor = paginationPageInfo?.endCursor
@@ -434,7 +468,12 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   }
 
   const isOwner = sessionStatus === 'authenticated' && sessionUser?.id === userId
-  const posts = mapPostEntitiesToPosts(mergePosts(firstPagePosts, currentPaginationState.history))
+  const visibleFirstPagePosts = canUseFirstPageConnection
+    ? liveFirstPagePosts
+    : currentPaginationState.firstPageSnapshot
+  const posts = mapPostEntitiesToPosts(
+    mergePosts(visibleFirstPagePosts, currentPaginationState.history),
+  )
   const username = currentProfileUserState.user.username.trim() || t.profile.title
   const avatarUrl = currentProfileUserState.user.avatar?.url
   const avatarLabel = `${username} ${t.profile.avatarSuffix}`

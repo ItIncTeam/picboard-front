@@ -32,6 +32,10 @@ export function isAuthorStateConsistentWithErrorFields(
     return author === null || author.avatar === null
   }
 
+  if (fieldsAfterAuthor.length === 1 && fieldsAfterAuthor[0] === 'profilePictureFileId') {
+    return author === null || author.profilePictureFileId === null
+  }
+
   return author === null
 }
 
