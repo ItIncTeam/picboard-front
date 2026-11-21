@@ -218,6 +218,22 @@ describe('loadInitialProfile', () => {
     expect((await loadInitialProfile('user-1'))?.posts.edges[0].node.author?.avatar).toBeNull()
   })
 
+  it('rejects author-related errors when author data is still present', async () => {
+    respond({
+      data: createData(),
+      errors: [{ path: ['profilePosts', 'edges', 0, 'node', 'author'] }],
+    })
+    await expect(loadInitialProfile('user-1')).rejects.toThrow()
+  })
+
+  it('rejects avatar-related errors when avatar data is still present', async () => {
+    respond({
+      data: createData(),
+      errors: [{ path: ['profilePosts', 'edges', 0, 'node', 'author', 'avatar', 'url'] }],
+    })
+    await expect(loadInitialProfile('user-1')).rejects.toThrow()
+  })
+
   it.each([
     undefined,
     [],

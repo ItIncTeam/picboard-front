@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-import { getPostAuthorDisplayName } from '@/entities/post/lib/getPostAuthorDisplayName'
+import { getPostAuthorDisplayName } from '@/entities/post'
 import { useI18n } from '@/shared/lib/i18n'
 import { formatRelativePostTime } from '../lib/formatRelativePostTime'
 import type { PublicPostCardModel } from '../model/types'

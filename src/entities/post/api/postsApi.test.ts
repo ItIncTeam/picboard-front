@@ -188,6 +188,33 @@ describe('posts GraphQL helpers', () => {
     await expect(feed()).resolves.toEqual(payload)
   })
 
+  it('rejects incomplete feed posts even without GraphQL errors', async () => {
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        feed: [{ id: 'post-1', author: null }],
+        usersCount: 1,
+      },
+    })
+
+    await expect(feed()).rejects.toThrow('Feed loading failed. Please try again.')
+  })
+
+  it('rejects author-related feed errors when author data is still present', async () => {
+    const error = new CombinedGraphQLErrors({
+      errors: [{ message: 'Author unavailable', path: ['feed', 0, 'author'] }],
+    })
+
+    apolloMocks.query.mockResolvedValueOnce({
+      data: {
+        feed: [createPostEntity()],
+        usersCount: 1,
+      },
+      error,
+    })
+
+    await expect(feed()).rejects.toBe(error)
+  })
+
   it('rejects unrelated feed GraphQL errors even when feed data is present', async () => {
     const error = new CombinedGraphQLErrors({
       errors: [{ message: 'usersCount failed', path: ['usersCount'] }],

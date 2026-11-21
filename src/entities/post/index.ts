@@ -19,10 +19,14 @@ export { getPostQueryData } from './api/publicPostApi'
 export { getPublicHomeQueryData, type PublicHomeQueryData } from './api/publicHomeApi'
 export { getPostAuthorDisplayName } from './lib/getPostAuthorDisplayName'
 export {
+  isConsistentFeedAuthorError,
+  isConsistentPostAuthorError,
+  isConsistentProfilePostsAuthorError,
   isFeedAuthorErrorPath,
   isPostAuthorErrorPath,
   isProfilePostsAuthorErrorPath,
 } from './lib/graphqlAuthorErrors'
+export { isPostConnection, isPostEntity } from './lib/isPostEntity'
 export { mapPostEntitiesToPosts, mapPostEntityToPost } from './lib/postMapper'
 export type {
   File,

@@ -1,7 +1,8 @@
 import { gql } from '@apollo/client'
 import { print } from 'graphql'
 
-import { isFeedAuthorErrorPath } from '../lib/graphqlAuthorErrors'
+import { isConsistentFeedAuthorError } from '../lib/graphqlAuthorErrors'
+import { isPostEntity } from '../lib/isPostEntity'
 import type { PostEntity } from '../model/backendTypes'
 import { postFieldsFragment } from './postFragments'
 
@@ -38,6 +39,19 @@ function logTransportFailure(endpoint: string, error: unknown): void {
     message: cause instanceof Error ? cause.message : String(cause),
     name: cause instanceof Error ? cause.name : 'UnknownError',
   })
+}
+
+function throwGraphqlFailure(
+  endpoint: string,
+  errors: GraphqlResponse<PublicHomeQueryData>['errors'],
+): never {
+  console.error('[PublicHome] request failed', {
+    endpoint,
+    errorCount: errors?.length ?? 0,
+    errors: errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
+    kind: 'graphql',
+  })
+  throw new Error(PUBLIC_HOME_ERROR_MESSAGE)
 }
 
 export async function getPublicHomeQueryData(): Promise<PublicHomeQueryData> {
@@ -90,24 +104,16 @@ export async function getPublicHomeQueryData(): Promise<PublicHomeQueryData> {
   const data = payload.data
 
   if (!data || !Array.isArray(data.feed) || typeof data.usersCount !== 'number') {
-    console.error('[PublicHome] request failed', {
-      endpoint,
-      errorCount: payload.errors?.length ?? 0,
-      errors: payload.errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
-      kind: 'graphql',
-    })
-    throw new Error(PUBLIC_HOME_ERROR_MESSAGE)
+    throwGraphqlFailure(endpoint, payload.errors)
+  }
+
+  if (!data.feed.every(isPostEntity)) {
+    throwGraphqlFailure(endpoint, payload.errors)
   }
 
   for (const error of payload.errors ?? []) {
-    if (!isFeedAuthorErrorPath(error.path, data.feed.length)) {
-      console.error('[PublicHome] request failed', {
-        endpoint,
-        errorCount: payload.errors?.length ?? 0,
-        errors: payload.errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
-        kind: 'graphql',
-      })
-      throw new Error(PUBLIC_HOME_ERROR_MESSAGE)
+    if (!isConsistentFeedAuthorError(error.path, data.feed)) {
+      throwGraphqlFailure(endpoint, payload.errors)
     }
   }
 

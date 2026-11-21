@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { PROFILE_POSTS_PAGE_SIZE } from '@/entities/post/api/profilePostsConstants'
-import { isProfilePostsAuthorErrorPath } from '@/entities/post/lib/graphqlAuthorErrors'
+import { isConsistentProfilePostsAuthorError } from '@/entities/post/lib/graphqlAuthorErrors'
 
 import { initialProfileResponseSchema, type InitialProfileData } from './initialProfileData'
 import { initialProfileQuery } from './initialProfileQuery'
@@ -34,7 +34,7 @@ export async function loadInitialProfile(userId: string): Promise<InitialProfile
   const data = initialProfileResponseSchema.parse(payload.data)
 
   for (const { path } of payload.errors ?? []) {
-    if (!data.user || !isProfilePostsAuthorErrorPath(path, data.profilePosts.edges.length)) {
+    if (!data.user || !isConsistentProfilePostsAuthorError(path, data.profilePosts)) {
       throw new Error('Public Profile GraphQL request failed.')
     }
   }

@@ -250,6 +250,27 @@ describe('Public Post GraphQL boundary', () => {
     )
   })
 
+  it('rejects author-related errors when author data is still present', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', graphqlEndpoint)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        mockJsonResponse({
+          data: {
+            post: createPostEntity(),
+          },
+          errors: [{ message: 'Author unavailable', path: ['post', 'author'] }],
+        }),
+      ),
+    )
+
+    await expect(getPostQueryData('post-1')).rejects.toThrow(
+      'Post data is temporarily unavailable.',
+    )
+    expect(consoleError).toHaveBeenCalled()
+  })
+
   it('rejects an incomplete post payload', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const incompletePost = {

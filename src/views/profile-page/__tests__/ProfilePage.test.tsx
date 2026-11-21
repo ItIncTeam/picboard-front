@@ -1,3 +1,4 @@
+import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { page } from 'vitest/browser'
@@ -607,6 +608,78 @@ describe('ProfilePage', () => {
     await waitFor(() => expect(observerRecords.some(({ active }) => active)).toBe(false))
 
     expect(apiMocks.fetchMore).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not append fetchMore posts when GraphQL errors are unrelated', async () => {
+    apiMocks.getUser.mockResolvedValue(createUser())
+    apiMocks.result.data = {
+      profilePosts: createConnection([createPost('post-1')], {
+        endCursor: 'end-cursor-1',
+        hasNextPage: true,
+      }),
+    }
+    apiMocks.fetchMore.mockResolvedValueOnce({
+      data: {
+        profilePosts: createConnection([createPost('post-2')], {
+          endCursor: 'end-cursor-2',
+          hasNextPage: false,
+        }),
+      },
+      error: new CombinedGraphQLErrors({
+        errors: [{ message: 'Failure', path: ['profilePosts'] }],
+      }),
+    })
+
+    const view = renderProfile()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(observerRecords.some(({ active }) => active)).toBe(true))
+    await triggerIntersection()
+
+    await waitFor(() =>
+      expect(view.container.textContent).toContain(
+        'Could not load more publications. Please try again.',
+      ),
+    )
+    expect(view.container.querySelectorAll('article')).toHaveLength(1)
+    expect(view.container.querySelector('img[alt="post-2.jpg"]')).toBeNull()
+  })
+
+  it('appends fetchMore posts when only consistent author errors are present', async () => {
+    apiMocks.getUser.mockResolvedValue(createUser())
+    apiMocks.result.data = {
+      profilePosts: createConnection([createPost('post-1')], {
+        endCursor: 'end-cursor-1',
+        hasNextPage: true,
+      }),
+    }
+    apiMocks.fetchMore.mockResolvedValueOnce({
+      data: {
+        profilePosts: createConnection([{ ...createPost('post-2'), author: null }], {
+          endCursor: 'end-cursor-2',
+          hasNextPage: false,
+        }),
+      },
+      error: new CombinedGraphQLErrors({
+        errors: [
+          {
+            message: 'Author unavailable',
+            path: ['profilePosts', 'edges', 0, 'node', 'author'],
+          },
+        ],
+      }),
+    })
+
+    const view = renderProfile()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(observerRecords.some(({ active }) => active)).toBe(true))
+    await triggerIntersection()
+
+    await waitFor(() => expect(view.container.querySelectorAll('article')).toHaveLength(2))
+    expect(view.container.textContent).not.toContain(
+      'Could not load more publications. Please try again.',
+    )
   })
 
   it('preserves a post displaced from the first-page boundary and rebuilds the cursor chain', async () => {

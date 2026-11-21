@@ -204,7 +204,8 @@ date dependency требуют отдельного решения продук�
 `post: null` с ошибками не превращается в 404. `errorPolicy: 'all'` без классификации errors и
 валидации payload запрещён; те же правила нужны feed/profilePosts, SSR и Apollo seed.
 Точная обработка author-related paths входит в отдельную задачу совместимости D2.8, а не
-в повторную реализацию D2.1–D2.7. Сейчас loader отвергает любые GraphQL errors и null author.
+в повторную реализацию D2.1–D2.7. Frontend D2.8 принимает null author и author-related partial
+errors с проверкой согласованности данных; остальные errors остаются техническими.
 
 `loadInitialPost(postId)` возвращает `null` только для подтверждённого отсутствия поста.
 Локальные `error.tsx` используют `unstable_retry()` и не показывают детали или digest.

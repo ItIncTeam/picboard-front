@@ -147,6 +147,71 @@ describe('Public Home GraphQL boundary', () => {
     expect(consoleError).toHaveBeenCalled()
   })
 
+  it('rejects incomplete feed posts before display', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', graphqlEndpoint)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              feed: [{ id: 'post-1', author: null }],
+              usersCount: 1,
+            },
+          }),
+          { status: 200 },
+        ),
+      ),
+    )
+
+    await expect(getPublicHomeQueryData()).rejects.toThrow(
+      'Public Home data is temporarily unavailable.',
+    )
+    expect(consoleError).toHaveBeenCalled()
+  })
+
+  it('rejects author-related feed errors when author data is still present', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    vi.stubEnv('NEXT_PUBLIC_GRAPHQL_ENDPOINT', graphqlEndpoint)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              feed: [
+                {
+                  attachments: [],
+                  author: {
+                    avatar: null,
+                    displayName: 'Author',
+                    id: 'user-1',
+                    profilePictureFileId: null,
+                    username: 'author',
+                  },
+                  createdAt: '2026-07-04T12:00:00.000Z',
+                  description: null,
+                  id: 'post-1',
+                  ownerId: 'user-1',
+                  updatedAt: '2026-07-04T12:00:00.000Z',
+                },
+              ],
+              usersCount: 1,
+            },
+            errors: [{ message: 'Author unavailable', path: ['feed', 0, 'author'] }],
+          }),
+          { status: 200 },
+        ),
+      ),
+    )
+
+    await expect(getPublicHomeQueryData()).rejects.toThrow(
+      'Public Home data is temporarily unavailable.',
+    )
+    expect(consoleError).toHaveBeenCalled()
+  })
+
   it('logs minimal HTTP diagnostics without reading the response body', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const text = vi.fn()

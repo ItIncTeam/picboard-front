@@ -5,10 +5,11 @@ import { apolloClient } from '@/shared/api'
 
 import type { PostConnection, PostEntity } from '@/entities/post'
 import {
-  isFeedAuthorErrorPath,
-  isPostAuthorErrorPath,
-  isProfilePostsAuthorErrorPath,
+  isConsistentFeedAuthorError,
+  isConsistentPostAuthorError,
+  isConsistentProfilePostsAuthorError,
 } from '../lib/graphqlAuthorErrors'
+import { isPostConnection, isPostEntity } from '../lib/isPostEntity'
 import { postFieldsFragment } from './postFragments'
 import { postQuery } from './postQuery'
 import { PROFILE_POSTS_PAGE_SIZE } from './profilePostsConstants'
@@ -127,7 +128,7 @@ function assertProfilePostsFirst(first: number | undefined): void {
 
 function assertAllowedAuthorErrors(
   error: unknown,
-  isAllowedPath: (path: ReadonlyArray<string | number> | undefined) => boolean,
+  isAllowedError: (path: ReadonlyArray<string | number> | undefined) => boolean,
 ): void {
   if (!error) {
     return
@@ -138,7 +139,7 @@ function assertAllowedAuthorErrors(
   }
 
   for (const graphQLError of error.errors) {
-    if (!isAllowedPath(graphQLError.path)) {
+    if (!isAllowedError(graphQLError.path)) {
       throw error
     }
   }
@@ -152,11 +153,11 @@ export const feed = async (): Promise<PostEntity[]> => {
 
   const payload = response.data?.feed
 
-  if (!payload) {
+  if (!payload || !payload.every(isPostEntity)) {
     throw new Error('Feed loading failed. Please try again.')
   }
 
-  assertAllowedAuthorErrors(response.error, (path) => isFeedAuthorErrorPath(path, payload.length))
+  assertAllowedAuthorErrors(response.error, (path) => isConsistentFeedAuthorError(path, payload))
 
   return payload
 }
@@ -174,7 +175,9 @@ export const post = async (id: string): Promise<PostEntity | null> => {
     throw new Error('Post loading failed. Please try again.')
   }
 
-  if (response.data.post === null) {
+  const postEntity = response.data.post
+
+  if (postEntity === null) {
     if (response.error) {
       throw response.error
     }
@@ -182,9 +185,13 @@ export const post = async (id: string): Promise<PostEntity | null> => {
     return null
   }
 
-  assertAllowedAuthorErrors(response.error, isPostAuthorErrorPath)
+  if (!isPostEntity(postEntity)) {
+    throw new Error('Post loading failed. Please try again.')
+  }
 
-  return response.data.post
+  assertAllowedAuthorErrors(response.error, (path) => isConsistentPostAuthorError(path, postEntity))
+
+  return postEntity
 }
 
 export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnection> => {
@@ -200,12 +207,12 @@ export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnec
 
   const payload = response.data?.profilePosts
 
-  if (!payload) {
+  if (!isPostConnection(payload)) {
     throw new Error('Profile posts loading failed. Please try again.')
   }
 
   assertAllowedAuthorErrors(response.error, (path) =>
-    isProfilePostsAuthorErrorPath(path, payload.edges.length),
+    isConsistentProfilePostsAuthorError(path, payload),
   )
 
   return payload

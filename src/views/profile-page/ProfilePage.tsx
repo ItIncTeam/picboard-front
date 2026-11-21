@@ -7,7 +7,8 @@ import { useQuery } from '@apollo/client/react'
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import {
-  isProfilePostsAuthorErrorPath,
+  isConsistentProfilePostsAuthorError,
+  isPostConnection,
   mapPostEntitiesToPosts,
   PostGrid,
   PROFILE_POSTS_PAGE_SIZE,
@@ -53,16 +54,24 @@ type PaginationStatus = {
   userId: string
 }
 
-function areOnlyProfilePostsAuthorErrors(
+function areAllowedProfilePostsErrors(
   error: Error | undefined,
   connection: PostConnection | undefined,
 ): boolean {
-  if (!error || !connection || !CombinedGraphQLErrors.is(error)) {
+  if (!connection || !isPostConnection(connection)) {
+    return false
+  }
+
+  if (!error) {
+    return true
+  }
+
+  if (!CombinedGraphQLErrors.is(error)) {
     return false
   }
 
   return error.errors.every((graphQLError) =>
-    isProfilePostsAuthorErrorPath(graphQLError.path, connection.edges.length),
+    isConsistentProfilePostsAuthorError(graphQLError.path, connection),
   )
 }
 
@@ -191,8 +200,13 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     }
   }, [retryVersion, userId])
 
-  const firstPageConnection =
+  const rawFirstPageConnection =
     profilePostsVariables.input.userId === userId ? profilePostsData?.profilePosts : undefined
+  const canUseFirstPageConnection = areAllowedProfilePostsErrors(
+    profilePostsError,
+    rawFirstPageConnection,
+  )
+  const firstPageConnection = canUseFirstPageConnection ? rawFirstPageConnection : undefined
   const firstPagePosts = firstPageConnection?.edges.map(({ node }) => node) ?? []
   const resetPaginationState =
     paginationState.userId === userId ? paginationState : createPaginationState(userId)
@@ -239,8 +253,21 @@ export function ProfilePage({ userId }: ProfilePageProps) {
         },
       })
       const nextConnection = response.data?.profilePosts
+      const canUseNextConnection = areAllowedProfilePostsErrors(
+        response.error ?? undefined,
+        nextConnection,
+      )
 
-      if (requestIdRef.current !== requestId || !nextConnection) {
+      if (requestIdRef.current !== requestId) {
+        return
+      }
+
+      if (!canUseNextConnection || !nextConnection) {
+        setPaginationStatus((currentStatus) =>
+          currentStatus.userId === userId && currentStatus.revision === paginationRevision
+            ? { ...currentStatus, error: true, isLoading: false }
+            : currentStatus,
+        )
         return
       }
 
@@ -322,10 +349,12 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
   const currentProfileUserState: ProfileUserState =
     profileUserState.userId === userId ? profileUserState : { status: 'loading', userId }
-  const hasUsablePostsData = Boolean(firstPageConnection)
+  const hasUsablePostsData =
+    Boolean(firstPageConnection) || resetPaginationState.hasFirstPageSnapshot
   const hasBlockingProfilePostsError =
-    Boolean(profilePostsError) &&
-    !areOnlyProfilePostsAuthorErrors(profilePostsError, firstPageConnection)
+    !canUseFirstPageConnection &&
+    !resetPaginationState.hasFirstPageSnapshot &&
+    Boolean(rawFirstPageConnection || profilePostsError)
 
   if (
     currentProfileUserState.status === 'loading' ||
