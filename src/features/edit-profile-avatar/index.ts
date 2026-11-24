@@ -17,7 +17,10 @@ export {
 export { AvatarExportError, exportAvatarCrop } from './model/exportAvatarCrop'
 export {
   deleteAndSynchronizeProfileAvatar,
+  synchronizeProfileAvatar,
   uploadAndSetProfileAvatar,
+  type AvatarSyncOperation,
+  type AvatarSyncResult,
   type CurrentUserSynchronizer,
 } from './model/synchronizeProfileAvatar'
 export { uploadAvatar } from './model/uploadAvatar'

@@ -78,9 +78,11 @@ type MeResponse = {
   me: CurrentUser | null
 }
 
-export const getMe = async (): Promise<CurrentUser> => {
+export const getMe = async (
+  fetchPolicy: 'network-only' | 'no-cache' = 'network-only',
+): Promise<CurrentUser> => {
   const response = await apolloClient.query<MeResponse>({
-    fetchPolicy: 'network-only',
+    fetchPolicy,
     query: meQuery,
   })
 
