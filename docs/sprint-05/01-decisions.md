@@ -1,6 +1,6 @@
 # Sprint 05: журнал решений
 
-Статус: **GENERAL ARCHITECTURE AUDIT COMPLETE**. Ниже перечислены подтверждённые решения 1–40.
+Статус: **архитектурные решения; актуализировано на 2026-11-14**. Ниже перечислены подтверждённые решения 1–40.
 Рабочие шаги и проверки находятся в [плане frontend-задач](./02-frontend-task-breakdown.md).
 
 ### Решение 1. Адрес и показ поста
@@ -24,9 +24,11 @@ Apollo Client. Запросы должны содержать нужные `id` 
 
 ### Решение 4. Атомарная загрузка профиля
 
-`InitialProfileData` содержит пользователя, публичные счётчики, первую страницу постов и
-`baselineKey`. Данные отображаются и записываются в Apollo только полным набором.
-Отсутствующий пользователь вызывает `notFound()`, остальные сбои считаются технической ошибкой.
+`InitialProfileData` содержит пользователя, первую страницу постов и `baselineKey`.
+Пока counters отсутствуют в backend, UI показывает «—»; они не входят в GraphQL selection и
+не записываются в Apollo как фиктивные значения. Отсутствие counters не блокирует SSR.
+Обязательные данные валидируются целиком с учётом nullable author и решения 30.
+Отсутствующий пользователь вызывает `notFound()`, технические сбои — route error.
 
 ### Решение 5. Базовая версия и пагинация профиля
 
@@ -42,9 +44,11 @@ Apollo Client. Запросы должны содержать нужные `id` 
 
 ### Решение 7. Публичные и пользовательские данные профиля
 
-SSR должен содержать `publicationsCount`, `followersCount` и `followingCount`.
-`isFollowing`, разрешённые действия и другие данные текущего пользователя остаются на клиенте.
-Счётчик публикаций нельзя вычислять по первой странице постов.
+До появления backend counters SSR и клиент показывают «—» для `publicationsCount`,
+`followersCount` и `followingCount`. Это UI-состояние недоступности, не данные API/cache;
+нули, usersCount и длина страницы не заменяют реальные значения. Интеграция настоящих counters
+остаётся на будущее и не блокирует D1.3–D1.6. `isFollowing`, разрешённые действия и другие
+данные текущего пользователя остаются на клиенте.
 
 ### Решение 8. Данные публичного поста
 
@@ -79,7 +83,8 @@ SSR должен содержать `publicationsCount`, `followersCount` и `fo
 ### Решение 13. Граница интеграции Edit Profile и Avatar
 
 Изолированные UI, состояние и тесты можно делать до готовности backend. Рабочий маршрут
-`/settings/profile` остаётся заглушкой до появления операций чтения и сохранения.
+`/settings/profile` уже подключён в #197; backend #31 merged, production rollout и live-приёмка
+не подтверждены. Country/City пока disabled.
 Временные GraphQL-операции и имитация успешного сохранения запрещены.
 
 ### Решение 14. Privacy Policy
@@ -125,13 +130,15 @@ cropper refs, параметры загрузки и код Create Post нару
 ### Решение 21. Дата рождения и возраст
 
 Дата рождения имеет тип `Date | null` и необязательна. Дата из будущего запрещена, минимальный
-возраст — 13 лет по календарным году, месяцу и дню. Сериализация, timezone и backend errors
-определяются после проверки контракта.
+возраст — 13 лет по UTC-дню backend. В D3.7 подтверждены календарная сериализация YYYY-MM-DD
+без UTC-сдвига и обработка USER_UNDER_13 с Privacy Policy trigger по [контракту](./07-backend-contract.md).
+Backend проверяет формат YYYY-MM-DD, существование календарной даты, DATE_IN_FUTURE и возраст.
+Сверка frontend с актуальными validation/errors остаётся точечной правкой.
 
 ### Решение 22. Проверка полей Edit Profile
 
-Username: обязательно, 6–30, латиница, цифры, `_`, `-`. First/Last Name: обязательно, 1–50,
-латиница или кириллица. Country/City необязательны. About Me необязательно, до 200 символов без
+Username: обязательно, 6–30, латиница, цифры, `!`, `_`, `-`. First/Last Name: обязательно, 1–50,
+латиница или кириллица, минимум одна буква, пробелы, дефис и апостроф. Country/City необязательны. About Me необязательно, до 200 символов без
 дополнительного списка разрешённых знаков. Проверка обязательности учитывает пробелы.
 
 ### Решение 23. Сохранение Edit Profile
@@ -144,13 +151,20 @@ RHF `handleSubmit`. Успех вызывает `reset(savedValues)` с отве
 
 `EditProfileFormValues` всегда содержит `username`, `firstName`, `lastName`, `country`,
 `city`, `aboutMe` как строки и `dateOfBirth: Date | null`. Необязательные строки представлены
-как `''`; Avatar в форму не входит. Backend DTO заранее не создаётся.
+как `''`; Avatar в форму не входит. В D3.7 DTO строится при submit: обязательные строки
+trim'ятся, неизменённые optional поля опускаются по dirtyFields, очистка передаётся как null.
+Пустой aboutMe после trim сохраняется backend как null. При изменении локации передаются оба ID/null;
+без изменения локации оба поля опускаются. Перечитывание Me перед submit — **OPEN UX decision**:
+backend использует last-write-wins обязательных полей, текущий frontend дополнительный Me не делает.
+Pre-submit refetch не объявляется реализованным; version API не добавляется.
 
 ### Решение 25. Country и City
 
 Форма получает `countryOptions` и `cityOptionsByCountryValue` через props на основе
-`SelectOption`. Значения считаются внутренними ключами UI. Пустой или изменившийся Country
-очищает City; источник географических данных определяется backend-аудитом.
+`SelectOption`. В D3.7 saved values — backend countryId/cityId. Пустой или изменившийся Country
+очищает City. Async countries/cities lookup пока не реализован: рабочий маршрут показывает saved
+location в disabled Select, без production mocks. Backend lookup уже реализован в dev (#28),
+production deploy/seed не подтверждены. При изменении локации DTO передаёт оба ID/null.
 
 ### Решение 26. Календарь даты рождения
 
@@ -180,15 +194,26 @@ date dependency требуют отдельного решения продук�
 
 ### Решение 30. Границы технических ошибок поста
 
-`loadInitialPost(postId)` возвращает полные данные, `null` только для подтверждённого отсутствия
-и бросает ошибку при HTTP/transport, invalid JSON, GraphQL errors или неполном ответе. Локальные
-`error.tsx` используют `unstable_retry()` и не показывают детали или digest.
+`Post.author` nullable в backend dev (#35). `author: null` сам по себе не означает отсутствие
+поста: нужны fallback имени/аватара и metadata без обращения к полям автора, без ссылки автора.
+Действия владельца определяются по ownerId и подтверждённой сессии.
+
+Для `data + errors` frontend должен проверять `errors.path` и полноту обязательных данных:
+ошибки разрешения nullable author допускают показ поста с fallback; ошибки вне этой области,
+неполные обязательные данные, HTTP/transport и invalid JSON остаются техническими ошибками.
+`post: null` с ошибками не превращается в 404. `errorPolicy: 'all'` без классификации errors и
+валидации payload запрещён; те же правила нужны feed/profilePosts, SSR и Apollo seed.
+Точная обработка author-related paths входит в отдельную задачу совместимости D2.8, а не
+в повторную реализацию D2.1–D2.7. Сейчас loader отвергает любые GraphQL errors и null author.
+
+`loadInitialPost(postId)` возвращает `null` только для подтверждённого отсутствия поста.
+Локальные `error.tsx` используют `unstable_retry()` и не показывают детали или digest.
 
 ### Решение 31. Один GraphQL-запрос профиля
 
-Начальный профиль загружается одним raw GraphQL POST: user, счётчики и первая
-`profilePosts` page. Запрос совместим с последующим `profilePostsQuery`; `after` для первой
-страницы отсутствует. Если такой ответ невозможен, это backend blocker, а не повод делать waterfall.
+Начальный профиль загружается одним raw GraphQL POST: user и первая `profilePosts` page.
+Counters пока не запрашиваются, UI показывает «—». Запрос совместим с последующим
+`profilePostsQuery`; `after` для первой страницы отсутствует. Waterfall не добавляется.
 
 ### Решение 32. Готовность Apollo seed
 
@@ -199,20 +224,23 @@ date dependency требуют отдельного решения продук�
 ### Решение 33. Ошибки и загрузка публичного профиля
 
 `loadInitialProfile(userId)` возвращает полные данные, `null` только для подтверждённого
-отсутствия и бросает ошибку во всех остальных сбоях. `null` использует корневой
+отсутствия; допустимые author-related partial responses проверяются по решению 30,
+остальные сбои вызывают техническую ошибку. `null` использует корневой
 `not-found.tsx`; локальный `error.tsx` вызывает `unstable_retry()`. `loading.tsx` и Suspense
 для атомарной начальной загрузки не добавляются.
 
 ### Решение 34. Источник данных профиля после SSR
 
 SSR и первый hydration render используют server props. После записи совпадающей версии UI может
-читать свежие user/counters только из Apollo cache, без запроса из браузера. Неполный кэш не
-заменяет полные серверные данные; точный Apollo primitive выбирается после проверки схемы.
+читать свежий user только из Apollo cache, без запроса из браузера. Counters остаются UI «—»
+до готового API и не seed'ятся фиктивными значениями. Неполный кэш не заменяет обязательные
+серверные данные; точный Apollo primitive выбирается при реализации D1.5.
 
 ### Решение 35. Навигация по публичному контенту
 
 Все полноценные публичные Post cards в Public Home, Main, Profile и других текущих лентах/сетках
-ведут через обычный Link на `/posts/[postId]`; автор — на `/profile/[authorId]`. Внутри приложения
+ведут через обычный Link на `/posts/[postId]`; существующий автор — на `/profile/[authorId]`.
+При null author ссылка автора отсутствует (задача D2.8). Внутри приложения
 маршрут Post может открыться через `@modal`, direct/reload остаётся публичным SSR. Ссылка покрывает
 media и details surface (`createdAt` + description), не весь `article`; carousel controls и
 Show more / Hide не запускают переход. Profile может передать `returnTo` в post href через
@@ -239,11 +267,22 @@ frames и ограничения `get_design_context` фиксируются к�
 
 ### Решение 39. Read contract аватара
 
-Backend подтвердил 2026-09-11: `User.avatar: File` nullable, `File.url: String!`; frontend
-использует только `avatar?.url`, а при `avatar === null` показывает fallback. URL подписанный,
-действует 15 минут и не является постоянным идентификатором. Каждый новый запрос `user`, `feed`
-или `post` с `avatar { url }` получает свежий URL, поэтому отдельный timer/refresh-manager не нужен.
-Upload/attach/replace/delete остаются backend-blocked.
+`User.avatar` nullable. Signed URL используется только для отображения и не служит
+постоянным идентификатором; отдельный timer/refresh-manager не добавляется. Историческая
+проверка 2026-09-11 сообщала File.url: String! и TTL 15 минут, но в dev `@Field()` расходится
+с nullable `ResolveField`. Точная nullability/TTL текущего gateway требует composed SDL/приёмки;
+не менять frontend типы вслепую. Отсутствие пригодного URL требует fallback.
+
+Upload AVATAR (#27), setProfilePhoto (#32) и deleteProfilePhoto (#34) merged в backend dev.
+Frontend pipeline ещё не подключён. После READY вызывается `setProfilePhoto(fileId: ID!): User!`;
+удаление — `deleteProfilePhoto: Boolean!` без аргументов. Обе операции owner-only, замена/удаление
+ставят старый файл в outbox; повторное удаление без аватара успешно.
+
+После Avatar mutations отдельно обновляются Me/session и публичный User: set возвращает User,
+а delete — Boolean, поэтому автоматической синхронизации Me нет. D3.8 должен перечитать Me
+и применить существующий guarded synchronizer; User обновляется проверенным set payload,
+после delete — повторным публичным чтением. Запись результатов защищается от смены сессии.
+Не синтезировать Me из User/Boolean и не переносить сюда правило updateProfile «без refetch».
 
 ### Решение 40. Live User / Me / UserOutput contract и Public User security
 
@@ -253,4 +292,20 @@ public `User`; приватные `email`, `isConfirmed`, `confirmationCode` и 
 отсутствуют и отклоняются GraphQL validation. `signIn` и `exchangeOAuthCode` продолжают безопасно
 выбирать `email` и `isConfirmed` из `UserOutput`. Public author и session `Me` могут выбирать
 nullable `avatar { id url }`; `profilePictureFileId` не используется как URL. Security blocker
-закрыт, но Avatar upload/attach/replace/delete остаются backend-blocked.
+закрыт исторической проверкой; текущая готовность Avatar разделена по операциям в аудите контракта.
+
+### Уточнение исполнения решений на 2026-11-14
+
+Решения 2–7 и 36 для Public Profile остаются целевыми: текущий ProfilePage client-only;
+наличие route error boundary не означает завершённый SSR. D1.3–D1.6 продолжаются с UI counters «—»
+без ожидания backend counters; ordering/cursors уже реализованы. Новые правила counters и
+nullable author зафиксированы выше, но ещё не реализованы на frontend.
+
+Country/City (#28), профиль/Me/aboutMe (#31), set/delete Avatar (#32/#34) и nullable author (#35)
+есть в backend dev `3b151ac`; production rollout не подтверждён. Public User selection frontend
+ещё содержит удалённый bio и требует точечной правки. D1.7/D1.8, D2.1–D2.7 и D3.7 не повторять;
+#196 целиком не переносить. Export/upload Avatar остаются в D3.8, отдельно от RHF.
+
+Актуальные статусы, эксклюзивные владельцы файлов и критерии PR находятся в
+[основном плане](./02-frontend-task-breakdown.md#аудит-dev-на-2026-11-14),
+подтверждённая реализация backend и вопросы — в [контракте](./07-backend-contract.md).

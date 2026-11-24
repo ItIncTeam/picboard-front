@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useId, useRef, useState, type FormEvent } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 
 import { useI18n } from '@/shared/lib/i18n'
@@ -11,6 +11,7 @@ import { Select } from '@/shared/ui/select'
 import { TextArea } from '@/shared/ui/text-area/TextArea'
 import { DocModal } from '@/widgets/doc-modal'
 
+import { getEditProfileErrors } from '../model/editProfileErrors'
 import { createEditProfileValidationRules } from '../model/editProfileValidation'
 import type { EditProfileFormProps, EditProfileFormValues } from '../model/types'
 import styles from './edit-profile-form.module.css'
@@ -19,19 +20,23 @@ export function EditProfileForm({
   cityOptionsByCountryValue,
   countryOptions,
   initialValues,
+  locationDisabled = false,
   onSubmitAction,
 }: EditProfileFormProps) {
   const { t } = useI18n()
   const formId = useId()
+  const submitInFlightRef = useRef(false)
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const validationRules = createEditProfileValidationRules(t.profile.edit)
   const {
+    clearErrors,
     control,
     handleSubmit,
     reset,
+    setError,
     setValue,
-    formState: { isDirty, isSubmitting, isValid },
+    formState: { dirtyFields, isDirty, isSubmitting, isValid },
   } = useForm<EditProfileFormValues>({
     defaultValues: initialValues,
     mode: 'onChange',
@@ -40,19 +45,33 @@ export function EditProfileForm({
   const cityOptions = cityOptionsByCountryValue[selectedCountry] ?? []
 
   const onSubmit = async (values: EditProfileFormValues): Promise<void> => {
+    clearErrors()
     setSubmitError(null)
 
     try {
-      const savedValues = await onSubmitAction(values)
+      const savedValues = await onSubmitAction(values, dirtyFields)
       reset(savedValues)
-    } catch {
-      setSubmitError(t.profile.edit.saveFailed)
+    } catch (error) {
+      const fieldErrors = getEditProfileErrors(error, t.profile.edit)
+      if (fieldErrors.length === 0) setSubmitError(t.profile.edit.saveFailed)
+      for (const { field, message, type } of fieldErrors) setError(field, { message, type })
+    }
+  }
+
+  const submitForm = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault()
+    if (submitInFlightRef.current) return
+    submitInFlightRef.current = true
+    try {
+      await handleSubmit(onSubmit)(event)
+    } finally {
+      submitInFlightRef.current = false
     }
   }
 
   return (
     <section aria-labelledby="edit-profile-title" className={styles.root}>
-      <form className={styles.form} id={formId} noValidate onSubmit={handleSubmit(onSubmit)}>
+      <form className={styles.form} id={formId} noValidate onSubmit={submitForm}>
         <h1 className={styles.visuallyHidden} id="edit-profile-title">
           {t.profile.edit.generalInformation}
         </h1>
@@ -64,6 +83,7 @@ export function EditProfileForm({
           render={({ field, fieldState }) => (
             <Input
               {...field}
+              disabled={isSubmitting}
               autoComplete="username"
               error={fieldState.error?.message}
               label={t.profile.edit.username}
@@ -78,6 +98,7 @@ export function EditProfileForm({
           render={({ field, fieldState }) => (
             <Input
               {...field}
+              disabled={isSubmitting}
               autoComplete="given-name"
               error={fieldState.error?.message}
               label={t.profile.edit.firstName}
@@ -92,6 +113,7 @@ export function EditProfileForm({
           render={({ field, fieldState }) => (
             <Input
               {...field}
+              disabled={isSubmitting}
               autoComplete="family-name"
               error={fieldState.error?.message}
               label={t.profile.edit.lastName}
@@ -106,17 +128,28 @@ export function EditProfileForm({
           render={({ field, fieldState }) => (
             <div>
               <DatePicker
+                disabled={isSubmitting}
                 className={styles.dateOfBirthField}
                 errorMessage={fieldState.error?.message}
                 label={t.profile.edit.dateOfBirth}
                 onBlur={field.onBlur}
                 onValueChange={(value) => {
-                  if (value instanceof Date) {
+                  if (!isSubmitting && value instanceof Date) {
                     field.onChange(value)
                   }
                 }}
                 value={field.value}
               />
+              {field.value ? (
+                <Button
+                  disabled={isSubmitting}
+                  type="button"
+                  variant="textButton"
+                  onClick={() => field.onChange(null)}
+                >
+                  {t.profile.edit.clearDateOfBirth}
+                </Button>
+              ) : null}
               {fieldState.error?.type === 'minimumAge' ? (
                 <p className={styles.privacyPolicyHint}>
                   {t.profile.edit.privacyPolicyHint}{' '}
@@ -139,6 +172,7 @@ export function EditProfileForm({
             name="country"
             render={({ field, fieldState }) => (
               <Select
+                disabled={locationDisabled || isSubmitting}
                 errorMessage={fieldState.error?.message}
                 label={t.profile.edit.selectYourCountry}
                 onBlur={field.onBlur}
@@ -161,7 +195,9 @@ export function EditProfileForm({
             name="city"
             render={({ field, fieldState }) => (
               <Select
-                disabled={!selectedCountry || cityOptions.length === 0}
+                disabled={
+                  isSubmitting || locationDisabled || !selectedCountry || cityOptions.length === 0
+                }
                 errorMessage={fieldState.error?.message}
                 label={t.profile.edit.selectYourCity}
                 onBlur={field.onBlur}
@@ -181,6 +217,7 @@ export function EditProfileForm({
           render={({ field, fieldState }) => (
             <TextArea
               {...field}
+              disabled={isSubmitting}
               className={styles.aboutMeField}
               error={fieldState.error?.message}
               label={t.profile.edit.aboutMe}
@@ -189,6 +226,7 @@ export function EditProfileForm({
           )}
         />
 
+        {locationDisabled ? <p>{t.profile.edit.locationUnavailable}</p> : null}
         {submitError ? <p role="alert">{submitError}</p> : null}
       </form>
 

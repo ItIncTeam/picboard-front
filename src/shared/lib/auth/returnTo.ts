@@ -2,9 +2,12 @@ import { authRoutes } from './authRoutes'
 
 export const defaultReturnToPath = '/main'
 
-export const getSafeReturnToPath = (returnTo: string | null): string => {
+export const getSafeReturnToPath = (
+  returnTo: string | null,
+  fallback: string = defaultReturnToPath,
+): string => {
   if (!returnTo) {
-    return defaultReturnToPath
+    return fallback
   }
 
   if (
@@ -13,7 +16,7 @@ export const getSafeReturnToPath = (returnTo: string | null): string => {
     returnTo.startsWith('/auth') ||
     returnTo.includes('\\')
   ) {
-    return defaultReturnToPath
+    return fallback
   }
 
   return returnTo

@@ -163,10 +163,10 @@ Use only for primitives and infrastructure:
 - Calls the existing `deletePost` API through the post entity public API.
 - After a successful delete, synchronizes cached Feed/Profile posts and invalidates Public Home
   through the post entity server-only entrypoint.
-- After a successful delete, redirects to the `returnTo` passed by Post Details, otherwise `/main`.
-  Post Details sanitizes that path through `getSafeReturnToPath` with the same contract as close.
-  Missing or unsafe `returnTo` falls back to `/main`, even if post-success synchronization or
-  callbacks fail.
+- After a successful delete, Post Details closes through the same path as Close. A safe `returnTo`
+  wins. On the canonical page, missing or unsafe `returnTo` falls back to `/profile/[ownerId]`.
+  `DeletePostFlow` without that close callback still falls back to `/main`. Synchronization or
+  callback failure does not change the chosen path.
 - Does not own owner checks or the three-dots menu; Post Details owns that gate.
 
 ### `CreatePostCloseConfirm`
@@ -257,10 +257,11 @@ Differences:
   Opening Edit replaces the Details overlay on the same route; it does not stack a second modal.
   Closing or saving Edit returns to Details. The posts page remains the route behind the overlay.
   Details and Edit use the same Create Post wide box and Publication column split.
-- Close uses `getSafeReturnToPath` with fallback `/main`. Direct `/posts/[postId]` without `returnTo`
-  goes to `/main`; `router.back()` is not used.
+- Canonical Close and Delete use `getSafeReturnToPath`. A safe `returnTo` wins. Missing or unsafe
+  `returnTo` falls back to `/profile/[ownerId]`. Direct `/posts/[postId]` does not use `router.back()`.
 - Profile `PostGrid` passes `returnTo=/profile/[userId]` into `PostCard`, so closing or deleting from
-  details returns to that profile. Other grids omit `returnTo` and keep the `/main` fallback.
+  details returns to that profile. Other entry points omit `returnTo` and use the owner profile
+  fallback.
 - The owner `...` menu passes its Delete action to `DeletePostFlow`; the flow owns confirmation,
   mutation, synchronization and redirect without another ownership check. Post Details sanitizes
   `returnTo` once and passes that path into both close and delete.
@@ -277,8 +278,8 @@ Differences:
 - Fallback page renders same flow without modal close controls.
 - Post grid renders empty/loading/error/success states.
 - Delete confirm covers close/cancel, mutation failure and successful synchronization/navigation.
-- Delete redirects through `getSafeReturnToPath`: profile `returnTo` stays on profile, missing or
-  unsafe `returnTo` falls back to `/main`.
+- Delete redirects through `getSafeReturnToPath`: profile `returnTo` stays on profile. On the
+  canonical page, missing or unsafe `returnTo` falls back to `/profile/[ownerId]`.
 
 ## Manual QA checklist
 

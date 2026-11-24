@@ -390,8 +390,8 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   const avatarUrl = currentProfileUserState.user.avatar?.url
   const avatarLabel = `${username} ${t.profile.avatarSuffix}`
   const hasDisplayName = Boolean(currentProfileUserState.user.displayName?.trim())
-  const bio = currentProfileUserState.user.bio?.trim()
-    ? currentProfileUserState.user.bio
+  const aboutMe = currentProfileUserState.user.aboutMe?.trim()
+    ? currentProfileUserState.user.aboutMe
     : t.profile.noInformation
 
   return (
@@ -437,7 +437,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
           <div className={styles.about}>
             <h2 className={styles.aboutTitle}>{t.profile.about}</h2>
-            <p className={styles.bio}>{bio}</p>
+            <p className={styles.bio}>{aboutMe}</p>
           </div>
         </div>
       </header>

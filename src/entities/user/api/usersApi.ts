@@ -2,13 +2,13 @@ import { gql } from '@apollo/client'
 
 import { apolloClient } from '@/shared/api'
 
-const userQuery = gql`
+export const userQuery = gql`
   query User($id: String!) {
     user(id: $id) {
       id
       username
       displayName
-      bio
+      aboutMe
       profilePictureFileId
       avatar {
         id
@@ -25,7 +25,7 @@ export type PublicUserAvatar = {
 
 export type PublicUser = {
   avatar: PublicUserAvatar | null
-  bio: string | null
+  aboutMe: string | null
   displayName: string | null
   id: string
   profilePictureFileId: string | null
@@ -36,8 +36,12 @@ type UserResponse = {
   user: PublicUser | null
 }
 
-export async function getUser(id: string): Promise<PublicUser | null> {
+export async function getUser(
+  id: string,
+  fetchPolicy: 'cache-first' | 'no-cache' = 'cache-first',
+): Promise<PublicUser | null> {
   const response = await apolloClient.query<UserResponse, { id: string }>({
+    ...(fetchPolicy === 'no-cache' ? { fetchPolicy } : {}),
     query: userQuery,
     variables: { id },
   })
@@ -47,4 +51,12 @@ export async function getUser(id: string): Promise<PublicUser | null> {
   }
 
   return response.data.user
+}
+
+export function writePublicUserCache(user: PublicUser): void {
+  apolloClient.writeQuery<UserResponse, { id: string }>({
+    data: { user },
+    query: userQuery,
+    variables: { id: user.id },
+  })
 }

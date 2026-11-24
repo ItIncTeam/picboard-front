@@ -45,7 +45,7 @@ describe('user GraphQL helper', () => {
         id: 'avatar-file-1',
         url: 'https://example.com/avatar.jpg',
       },
-      bio: 'About user',
+      aboutMe: 'About user',
       displayName: 'Display Name',
       id: 'user-1',
       profilePictureFileId: null,
@@ -62,7 +62,7 @@ describe('user GraphQL helper', () => {
       'id',
       'username',
       'displayName',
-      'bio',
+      'aboutMe',
       'profilePictureFileId',
       'avatar',
     ])

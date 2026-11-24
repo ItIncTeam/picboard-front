@@ -367,6 +367,26 @@ Public user returned by `user(id)`, `feed.author` and `post.author`.
 
 Private session user returned by `me`.
 
+D1.7 aligns the session query and `CurrentUser` with the implemented profile read-model in
+the [Sprint 05 backend contract](../sprint-05/07-backend-contract.md#7-prefill-формы-me),
+the frontend-facing source of truth for D1.7/D1.8. `aboutMe` replaces the removed `Me.bio`;
+there is no compatibility alias. `dateOfBirth` stays an ISO `YYYY-MM-DD` string on the API boundary.
+`displayName` is computed by the backend from the names, with a username fallback.
+The contract explicitly allows clearing `dateOfBirth`, `aboutMe`, `countryId` and `cityId` to null.
+It confirms the field selection and behavior, but does not provide authoritative output SDL
+nullability for the new fields. Required mutation inputs do not establish read-model
+non-nullability. The frontend TypeScript model conservatively accepts null for all new profile
+fields, including every selected Country/City property; this is an implementation decision,
+not a backend SDL claim. Previously verified `Me.avatar` remains nullable.
+
+The table below retains only previously verified output types. Refer to section 7 of the linked
+contract for the full current selection. `docs/schema.graphql` retains its prior snapshot until
+authoritative SDL is available; its historical `Me.bio` entry is stale and must not be used by
+the session operation. D1.7 does not add speculative SDL to that snapshot.
+
+Session bootstrap remains `refreshToken` → store access token in memory → `getMe`.
+This migration does not implement `updateProfile` or avatar upload/delete.
+
 | Field                  | Type       | Required |
 | ---------------------- | ---------- | -------- |
 | `id`                   | `ID!`      | Yes      |
@@ -374,9 +394,11 @@ Private session user returned by `me`.
 | `username`             | `String!`  | Yes      |
 | `isConfirmed`          | `Boolean!` | Yes      |
 | `displayName`          | `String`   | No       |
-| `bio`                  | `String`   | No       |
 | `profilePictureFileId` | `ID`       | No       |
 | `avatar`               | `File`     | No       |
+
+The separate public `User` query/model is outside D1.7; its existing biography field is not
+migrated here. The source search found no frontend reads of `CurrentUser.bio`.
 
 ### `UserOutput`
 

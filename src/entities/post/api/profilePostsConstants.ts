@@ -1,0 +1,1 @@
+export const PROFILE_POSTS_PAGE_SIZE = 8

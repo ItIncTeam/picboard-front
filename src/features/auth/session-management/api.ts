@@ -2,23 +2,7 @@ import { gql } from '@apollo/client'
 
 import { apolloClient } from '@/shared/api'
 
-const meQuery = gql`
-  query Me {
-    me {
-      id
-      email
-      username
-      isConfirmed
-      displayName
-      bio
-      profilePictureFileId
-      avatar {
-        id
-        url
-      }
-    }
-  }
-`
+export { getMe, type CurrentUser, type Country, type City } from '@/entities/user/current-user'
 
 const refreshTokenMutation = gql`
   mutation RefreshToken {
@@ -34,26 +18,8 @@ const logoutMutation = gql`
   }
 `
 
-export type CurrentUser = {
-  avatar: {
-    id: string
-    url: string
-  } | null
-  bio: string | null
-  displayName: string | null
-  email: string
-  id: string
-  isConfirmed: boolean
-  profilePictureFileId: string | null
-  username: string
-}
-
 export type RefreshTokenPayload = {
   accessToken: string
-}
-
-type MeResponse = {
-  me: CurrentUser
 }
 
 type RefreshTokenResponse = {
@@ -62,21 +28,6 @@ type RefreshTokenResponse = {
 
 type LogoutResponse = {
   logout: string
-}
-
-export const getMe = async (): Promise<CurrentUser> => {
-  const response = await apolloClient.query<MeResponse>({
-    fetchPolicy: 'network-only',
-    query: meQuery,
-  })
-
-  const user = response.data?.me
-
-  if (!user) {
-    throw new Error('Failed to load current user.')
-  }
-
-  return user
 }
 
 export const refreshToken = async (): Promise<RefreshTokenPayload> => {

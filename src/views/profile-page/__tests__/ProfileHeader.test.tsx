@@ -32,7 +32,7 @@ type RenderResult = {
 
 const profile: ProfileHeaderData = {
   avatarUrl: 'https://example.com/avatar.jpg',
-  bio: 'Profile biography',
+  aboutMe: 'Profile biography',
   displayName: 'Display Name',
   followersCount: 42,
   followingCount: 7,
@@ -109,11 +109,11 @@ describe('ProfileHeader', () => {
   })
 
   it.each([
-    { bio: null, displayName: null },
-    { bio: '', displayName: '' },
-    { bio: '   ', displayName: '   ' },
-  ])('handles empty optional values', ({ bio, displayName }) => {
-    const view = renderHeader({ ...profile, bio, displayName })
+    { aboutMe: null, displayName: null },
+    { aboutMe: '', displayName: '' },
+    { aboutMe: '   ', displayName: '   ' },
+  ])('handles empty optional values', ({ aboutMe, displayName }) => {
+    const view = renderHeader({ ...profile, aboutMe, displayName })
     mountedRoots.push(view)
 
     expect(view.container.textContent).not.toContain('Display Name')
@@ -128,14 +128,14 @@ describe('ProfileHeader', () => {
     expect(view.container.querySelector('img')).toHaveAttribute('alt', 'Profile avatar')
   })
 
-  it('renders long username and bio values without changing their content', () => {
+  it('renders long username and aboutMe values without changing their content', () => {
     const username = 'profile_username_with_a_long_visible_value'
-    const bio = 'A long public biography '.repeat(20).trim()
-    const view = renderHeader({ ...profile, bio, username })
+    const aboutMe = 'A long public biography '.repeat(20).trim()
+    const view = renderHeader({ ...profile, aboutMe, username })
     mountedRoots.push(view)
 
     expect(view.container.textContent).toContain(username)
-    expect(view.container.textContent).toContain(bio)
+    expect(view.container.textContent).toContain(aboutMe)
   })
 
   it('renders a long display name and large counters without changing their values', () => {
@@ -162,7 +162,7 @@ describe('ProfileHeader', () => {
 
       const view = renderHeader({
         ...profile,
-        bio: 'LongUnbrokenBiography'.repeat(24),
+        aboutMe: 'LongUnbrokenBiography'.repeat(24),
         displayName: 'LongUnbrokenDisplayName'.repeat(12),
         followersCount: 123_456_789,
         followingCount: 987_654_321,

@@ -145,6 +145,11 @@ Invalid credentials are normalized in the sign-in form to:
 Incorrect email or password
 ```
 
+## Profile Update Synchronization (FRONT-178 / D1.8)
+
+See [profile update synchronization](./auth/auth-session-architecture.md#profile-update-synchronization-front-178--d18)
+for the API, capture-before-mutation rule, and stale-callback guards.
+
 ## Auth Error Refresh And Invalidation
 
 Apollo `errorLink` handles:
