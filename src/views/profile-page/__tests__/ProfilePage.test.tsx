@@ -1,3 +1,4 @@
+import { ApolloClient, ApolloLink, InMemoryCache, Observable } from '@apollo/client/core'
 import { CombinedGraphQLErrors } from '@apollo/client/errors'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -5,20 +6,24 @@ import { page } from 'vitest/browser'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import '@/app/globals.css'
-import type { PostConnection, PostEntity, ProfilePostsQueryData } from '@/entities/post'
+import {
+  profilePostsQuery,
+  type PostConnection,
+  type PostEntity,
+  type ProfilePostsQueryData,
+} from '@/entities/post'
 import type { PublicUser } from '@/entities/user'
 import { I18nProvider } from '@/shared/lib/i18n'
 
 import { ProfilePage } from '../ProfilePage'
 
 const apiMocks = vi.hoisted(() => ({
-  fetchMore: vi.fn(),
   getUser: vi.fn(),
+  query: vi.fn(),
   refetch: vi.fn(),
   result: null as unknown as {
     data?: ProfilePostsQueryData
     error?: Error
-    fetchMore: ReturnType<typeof vi.fn>
     loading: boolean
     refetch: ReturnType<typeof vi.fn>
     variables: { input: { first: number; userId: string } }
@@ -39,6 +44,7 @@ vi.mock('@/entities/user', () => ({
 vi.mock('@apollo/client/react', () => ({
   ApolloProvider: ({ children }: { children: React.ReactNode }) => children,
   useApolloClient: () => ({
+    query: apiMocks.query,
     writeQuery: apiMocks.writeQuery,
   }),
   useQuery: (...args: unknown[]) => {
@@ -235,14 +241,13 @@ describe('ProfilePage', () => {
     }
 
     globalWithActEnvironment.IS_REACT_ACT_ENVIRONMENT = true
-    apiMocks.fetchMore.mockReset()
     apiMocks.getUser.mockReset()
+    apiMocks.query.mockReset()
     apiMocks.refetch.mockReset()
     apiMocks.writeQuery.mockReset()
     apiMocks.refetch.mockResolvedValue(undefined)
     apiMocks.result = {
       data: { profilePosts: createConnection([]) },
-      fetchMore: apiMocks.fetchMore,
       loading: false,
       refetch: apiMocks.refetch,
       variables: { input: { first: 8, userId: 'profile-user' } },
@@ -267,7 +272,6 @@ describe('ProfilePage', () => {
   it('renders loading state and requests the first eight posts', () => {
     apiMocks.getUser.mockReturnValue(new Promise(() => undefined))
     apiMocks.result = {
-      fetchMore: apiMocks.fetchMore,
       loading: true,
       refetch: apiMocks.refetch,
       variables: { input: { first: 8, userId: 'profile-user' } },
@@ -308,7 +312,6 @@ describe('ProfilePage', () => {
             Array.from({ length: 8 }, (_, index) => createPost(`post-${index}`)),
           ),
         },
-        fetchMore: apiMocks.fetchMore,
         loading: false,
         refetch: apiMocks.refetch,
         variables: { input: { first: 8, userId: 'profile-user' } },
@@ -588,7 +591,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore.mockReturnValueOnce(
+    apiMocks.query.mockReturnValueOnce(
       nextPage.promise.then((profilePosts) => ({ data: { profilePosts } })),
     )
 
@@ -599,8 +602,11 @@ describe('ProfilePage', () => {
     await triggerIntersection()
     await triggerIntersection()
 
-    expect(apiMocks.fetchMore).toHaveBeenCalledTimes(1)
-    expect(apiMocks.fetchMore).toHaveBeenLastCalledWith({
+    expect(apiMocks.query).toHaveBeenCalledTimes(1)
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
       variables: {
         input: { after: 'end-cursor-1', first: 8, userId: 'profile-user' },
       },
@@ -612,7 +618,7 @@ describe('ProfilePage', () => {
 
     await waitFor(() => expect(observerRecords.some(({ active }) => active)).toBe(false))
 
-    expect(apiMocks.fetchMore).toHaveBeenCalledTimes(1)
+    expect(apiMocks.query).toHaveBeenCalledTimes(1)
   })
 
   it('keeps the last successful first page after a failed poll', async () => {
@@ -664,7 +670,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore.mockResolvedValueOnce({
+    apiMocks.query.mockResolvedValueOnce({
       data: {
         profilePosts: createConnection([createPost('post-2')], {
           endCursor: 'end-cursor-2',
@@ -699,7 +705,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore.mockResolvedValueOnce({
+    apiMocks.query.mockResolvedValueOnce({
       data: {
         profilePosts: createConnection([{ ...createPost('post-2'), author: null }], {
           endCursor: 'end-cursor-2',
@@ -736,7 +742,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore
+    apiMocks.query
       .mockResolvedValueOnce({
         data: {
           profilePosts: createConnection(['2', '1'].map(createPost), {
@@ -793,8 +799,11 @@ describe('ProfilePage', () => {
     ])
 
     await triggerIntersection()
-    await waitFor(() => expect(apiMocks.fetchMore).toHaveBeenCalledTimes(2))
-    expect(apiMocks.fetchMore).toHaveBeenLastCalledWith({
+    await waitFor(() => expect(apiMocks.query).toHaveBeenCalledTimes(2))
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
       variables: {
         input: { after: 'new-first-page-cursor', first: 8, userId: 'profile-user' },
       },
@@ -802,8 +811,11 @@ describe('ProfilePage', () => {
     expect(view.container.querySelectorAll('article')).toHaveLength(11)
 
     await triggerIntersection()
-    await waitFor(() => expect(apiMocks.fetchMore).toHaveBeenCalledTimes(3))
-    expect(apiMocks.fetchMore).toHaveBeenLastCalledWith({
+    await waitFor(() => expect(apiMocks.query).toHaveBeenCalledTimes(3))
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
       variables: {
         input: { after: 'new-chain-cursor', first: 8, userId: 'profile-user' },
       },
@@ -818,7 +830,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore.mockResolvedValueOnce({
+    apiMocks.query.mockResolvedValueOnce({
       data: {
         profilePosts: createConnection(['2', '1'].map(createPost), {
           endCursor: 'old-deepest-cursor',
@@ -871,7 +883,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore.mockResolvedValueOnce({
+    apiMocks.query.mockResolvedValueOnce({
       data: {
         profilePosts: createConnection(['2', '1'].map(createPost), {
           endCursor: 'initial-deepest-cursor',
@@ -976,7 +988,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore
+    apiMocks.query
       .mockResolvedValueOnce({
         data: {
           profilePosts: createConnection(['2', '1'].map(createPost), {
@@ -1008,7 +1020,10 @@ describe('ProfilePage', () => {
 
     await triggerIntersection()
 
-    expect(apiMocks.fetchMore).toHaveBeenLastCalledWith({
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
       variables: {
         input: { after: 'deepest-cursor', first: 8, userId: 'profile-user' },
       },
@@ -1025,7 +1040,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore
+    apiMocks.query
       .mockReturnValueOnce(
         oldChainPage.promise.then((profilePosts) => ({ data: { profilePosts } })),
       )
@@ -1050,8 +1065,11 @@ describe('ProfilePage', () => {
     act(() => renderProfilePage(view.root, 'profile-user'))
 
     await triggerIntersection()
-    await waitFor(() => expect(apiMocks.fetchMore).toHaveBeenCalledTimes(2))
-    expect(apiMocks.fetchMore).toHaveBeenLastCalledWith({
+    await waitFor(() => expect(apiMocks.query).toHaveBeenCalledTimes(2))
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
       variables: {
         input: { after: 'new-first-page-cursor', first: 8, userId: 'profile-user' },
       },
@@ -1076,7 +1094,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore
+    apiMocks.query
       .mockReturnValueOnce(
         oldChainPage.promise.then((profilePosts) => ({ data: { profilePosts } })),
       )
@@ -1102,7 +1120,7 @@ describe('ProfilePage', () => {
     act(() => renderProfilePage(view.root, 'profile-user'))
 
     await triggerIntersection()
-    await waitFor(() => expect(apiMocks.fetchMore).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(apiMocks.query).toHaveBeenCalledTimes(2))
     expect(view.container.textContent).toContain('Loading more publications...')
 
     oldChainPage.reject(new Error('Old cursor is no longer valid'))
@@ -1112,7 +1130,7 @@ describe('ProfilePage', () => {
 
     expect(view.container.textContent).toContain('Loading more publications...')
     expect(view.container.textContent).not.toContain('Old cursor is no longer valid')
-    expect(apiMocks.fetchMore).toHaveBeenCalledTimes(2)
+    expect(apiMocks.query).toHaveBeenCalledTimes(2)
 
     newChainPage.resolve(
       createConnection(['4', '3', '2'].map(createPost), {
@@ -1142,8 +1160,11 @@ describe('ProfilePage', () => {
     ])
 
     await triggerIntersection()
-    await waitFor(() => expect(apiMocks.fetchMore).toHaveBeenCalledTimes(3))
-    expect(apiMocks.fetchMore).toHaveBeenLastCalledWith({
+    await waitFor(() => expect(apiMocks.query).toHaveBeenCalledTimes(3))
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
       variables: {
         input: { after: 'new-chain-cursor', first: 8, userId: 'profile-user' },
       },
@@ -1160,7 +1181,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore
+    apiMocks.query
       .mockResolvedValueOnce({
         data: {
           profilePosts: createConnection([createPost('user-a-history')], {
@@ -1196,7 +1217,10 @@ describe('ProfilePage', () => {
     expect(view.container.querySelector('img[alt="user-a-history.jpg"]')).toBeNull()
 
     await triggerIntersection()
-    expect(apiMocks.fetchMore).toHaveBeenLastCalledWith({
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
       variables: {
         input: { after: 'user-b-first-cursor', first: 8, userId: 'user-b' },
       },
@@ -1214,7 +1238,7 @@ describe('ProfilePage', () => {
         hasNextPage: true,
       }),
     }
-    apiMocks.fetchMore.mockReturnValueOnce(
+    apiMocks.query.mockReturnValueOnce(
       stalePage.promise.then((profilePosts) => ({ data: { profilePosts } })),
     )
     apiMocks.result.variables = { input: { first: 8, userId: 'first-user' } }
@@ -1248,5 +1272,152 @@ describe('ProfilePage', () => {
       HTMLImageElement,
     )
     expect(view.container.querySelector('img[alt="stale-post.jpg"]')).toBeNull()
+  })
+
+  it('does not restore profile A posts into profile B Apollo cache when B is rejected', async () => {
+    const cache = new InMemoryCache()
+    const apolloClient = new ApolloClient({
+      cache,
+      link: new ApolloLink(
+        () =>
+          new Observable((observer) => {
+            observer.error(new Error('Unexpected Apollo network request in ProfilePage tests.'))
+          }),
+      ),
+    })
+    apiMocks.writeQuery.mockImplementation((options) => {
+      apolloClient.writeQuery(options)
+    })
+    apiMocks.getUser.mockImplementation((id: string) =>
+      Promise.resolve(createUser({ id, username: id })),
+    )
+
+    const profileAPosts = createConnection([createPost('user-a-post')], {
+      endCursor: 'user-a-cursor',
+      hasNextPage: false,
+    })
+    apiMocks.result = {
+      data: { profilePosts: profileAPosts },
+      loading: false,
+      refetch: apiMocks.refetch,
+      variables: { input: { first: 8, userId: 'user-a' } },
+    }
+
+    const view = renderProfile('user-a')
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(view.container.querySelectorAll('article')).toHaveLength(1))
+    expect(view.container.querySelector('img[alt="user-a-post.jpg"]')).toBeInstanceOf(
+      HTMLImageElement,
+    )
+
+    apiMocks.result = {
+      data: {
+        profilePosts: createConnection([createPost('user-b-broken')], {
+          endCursor: 'user-b-broken-cursor',
+          hasNextPage: false,
+        }),
+      },
+      error: new CombinedGraphQLErrors({
+        errors: [{ message: 'Failure', path: ['profilePosts'] }],
+      }),
+      loading: false,
+      refetch: apiMocks.refetch,
+      variables: { input: { first: 8, userId: 'user-b' } },
+    }
+    act(() => renderProfilePage(view.root, 'user-b'))
+
+    await waitFor(() =>
+      expect(view.container.textContent).toContain('Profile loading failed. Please try again.'),
+    )
+    expect(view.container.querySelector('img[alt="user-a-post.jpg"]')).toBeNull()
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(
+      cache.readQuery({
+        query: profilePostsQuery,
+        variables: { input: { first: 8, userId: 'user-b' } },
+      }),
+    ).toBeNull()
+    expect(JSON.stringify(cache.extract())).not.toContain('user-a-post')
+  })
+
+  it('keeps accepted first-page cache data when a rejected loadMore response arrives', async () => {
+    const cache = new InMemoryCache()
+    const apolloClient = new ApolloClient({
+      cache,
+      link: new ApolloLink(
+        () =>
+          new Observable((observer) => {
+            observer.error(new Error('Unexpected Apollo network request in ProfilePage tests.'))
+          }),
+      ),
+    })
+    apiMocks.writeQuery.mockImplementation((options) => {
+      apolloClient.writeQuery(options)
+    })
+
+    const firstPage = createConnection([createPost('post-1')], {
+      endCursor: 'end-cursor-1',
+      hasNextPage: true,
+    })
+    apolloClient.writeQuery({
+      data: { profilePosts: firstPage },
+      query: profilePostsQuery,
+      variables: { input: { first: 8, userId: 'profile-user' } },
+    })
+
+    apiMocks.getUser.mockResolvedValue(createUser())
+    apiMocks.result.data = { profilePosts: firstPage }
+    apiMocks.query.mockResolvedValueOnce({
+      data: {
+        profilePosts: createConnection([createPost('rejected-post-2')], {
+          endCursor: 'rejected-cursor-2',
+          hasNextPage: false,
+        }),
+      },
+      error: new CombinedGraphQLErrors({
+        errors: [{ message: 'Failure', path: ['profilePosts'] }],
+      }),
+    })
+
+    const view = renderProfile()
+    mountedRoots.push(view)
+
+    await waitFor(() => expect(observerRecords.some(({ active }) => active)).toBe(true))
+    await triggerIntersection()
+
+    await waitFor(() =>
+      expect(view.container.textContent).toContain(
+        'Could not load more publications. Please try again.',
+      ),
+    )
+    expect(view.container.querySelectorAll('article')).toHaveLength(1)
+    expect(view.container.querySelector('img[alt="post-1.jpg"]')).toBeInstanceOf(HTMLImageElement)
+    expect(view.container.querySelector('img[alt="rejected-post-2.jpg"]')).toBeNull()
+
+    expect(apiMocks.query).toHaveBeenLastCalledWith({
+      errorPolicy: 'all',
+      fetchPolicy: 'no-cache',
+      query: profilePostsQuery,
+      variables: {
+        input: { after: 'end-cursor-1', first: 8, userId: 'profile-user' },
+      },
+    })
+
+    const cachedFirstPage = cache.readQuery<ProfilePostsQueryData>({
+      query: profilePostsQuery,
+      variables: { input: { first: 8, userId: 'profile-user' } },
+    })
+    expect(cachedFirstPage?.profilePosts.pageInfo).toEqual(firstPage.pageInfo)
+    expect(cachedFirstPage?.profilePosts.edges).toHaveLength(1)
+
+    const cacheSnapshot = JSON.stringify(cache.extract())
+    expect(cacheSnapshot).toContain('end-cursor-1')
+    expect(cacheSnapshot).not.toContain('rejected-post-2')
+    expect(cacheSnapshot).not.toContain('rejected-cursor-2')
   })
 })

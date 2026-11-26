@@ -54,6 +54,11 @@ type PaginationStatus = {
   userId: string
 }
 
+type LastGoodProfilePosts = {
+  connection: PostConnection
+  userId: string
+}
+
 function areAllowedProfilePostsErrors(
   error: Error | undefined,
   connection: PostConnection | undefined,
@@ -153,12 +158,11 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   })
   const requestIdRef = useRef(0)
   const loadingMoreRequestRef = useRef<symbol | null>(null)
-  const lastGoodProfilePostsRef = useRef<PostConnection | null>(null)
+  const lastGoodProfilePostsRef = useRef<LastGoodProfilePosts | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const {
     data: profilePostsData,
     error: profilePostsError,
-    fetchMore,
     loading: profilePostsLoading,
     refetch: refetchProfilePosts,
     variables: profilePostsVariables,
@@ -227,17 +231,22 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     }
 
     if (canUseFirstPageConnection && rawFirstPageConnection) {
-      lastGoodProfilePostsRef.current = rawFirstPageConnection
+      lastGoodProfilePostsRef.current = {
+        connection: rawFirstPageConnection,
+        userId,
+      }
       return
     }
 
-    if (!lastGoodProfilePostsRef.current) {
+    const lastGood = lastGoodProfilePostsRef.current
+
+    if (!lastGood || lastGood.userId !== userId) {
       return
     }
 
     apolloClient.writeQuery({
       data: {
-        profilePosts: lastGoodProfilePostsRef.current,
+        profilePosts: lastGood.connection,
       },
       query: profilePostsQuery,
       variables: {
@@ -277,7 +286,10 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     setPaginationStatus({ error: false, isLoading: true, revision: paginationRevision, userId })
 
     try {
-      const response = await fetchMore({
+      const response = await apolloClient.query<ProfilePostsQueryData, ProfilePostsQueryVariables>({
+        errorPolicy: 'all',
+        fetchPolicy: 'no-cache',
+        query: profilePostsQuery,
         variables: {
           input: {
             after: paginationEndCursor,
