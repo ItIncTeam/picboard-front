@@ -25,16 +25,18 @@ function toSeededPost(post: PostEntity) {
           }
         : null,
     })),
-    author: {
-      ...post.author,
-      __typename: 'User' as const,
-      avatar: post.author.avatar
-        ? {
-            ...post.author.avatar,
-            __typename: 'File' as const,
-          }
-        : null,
-    },
+    author: post.author
+      ? {
+          ...post.author,
+          __typename: 'User' as const,
+          avatar: post.author.avatar
+            ? {
+                ...post.author.avatar,
+                __typename: 'File' as const,
+              }
+            : null,
+        }
+      : null,
   }
 }
 

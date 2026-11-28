@@ -1,8 +1,15 @@
 import { gql } from '@apollo/client'
+import { CombinedGraphQLErrors } from '@apollo/client/errors'
 
 import { apolloClient } from '@/shared/api'
 
 import type { PostConnection, PostEntity } from '@/entities/post'
+import {
+  isConsistentFeedAuthorError,
+  isConsistentPostAuthorError,
+  isConsistentProfilePostsAuthorError,
+} from '../lib/graphqlAuthorErrors'
+import { isPostConnection, isPostEntity } from '../lib/isPostEntity'
 import { postFieldsFragment } from './postFragments'
 import { postQuery } from './postQuery'
 import { PROFILE_POSTS_PAGE_SIZE } from './profilePostsConstants'
@@ -119,22 +126,56 @@ function assertProfilePostsFirst(first: number | undefined): void {
   }
 }
 
+function assertAllowedAuthorErrors(
+  error: unknown,
+  isAllowedError: (path: ReadonlyArray<string | number> | undefined) => boolean,
+): void {
+  if (!error) {
+    return
+  }
+
+  if (!CombinedGraphQLErrors.is(error)) {
+    throw error
+  }
+
+  for (const graphQLError of error.errors) {
+    if (!isAllowedError(graphQLError.path)) {
+      throw error
+    }
+  }
+}
+
 export const feed = async (): Promise<PostEntity[]> => {
   const response = await apolloClient.query<FeedQueryData>({
+    errorPolicy: 'all',
+    fetchPolicy: 'no-cache',
     query: feedQuery,
   })
 
   const payload = response.data?.feed
+  const usersCount = response.data?.usersCount
 
-  if (!payload) {
+  if (!payload || !payload.every(isPostEntity) || typeof usersCount !== 'number') {
     throw new Error('Feed loading failed. Please try again.')
   }
+
+  assertAllowedAuthorErrors(response.error, (path) => isConsistentFeedAuthorError(path, payload))
+
+  apolloClient.writeQuery({
+    data: {
+      feed: payload,
+      usersCount,
+    },
+    query: feedQuery,
+  })
 
   return payload
 }
 
 export const post = async (id: string): Promise<PostEntity | null> => {
   const response = await apolloClient.query<PostResponse, { id: string }>({
+    errorPolicy: 'all',
+    fetchPolicy: 'no-cache',
     query: postQuery,
     variables: {
       id,
@@ -145,13 +186,51 @@ export const post = async (id: string): Promise<PostEntity | null> => {
     throw new Error('Post loading failed. Please try again.')
   }
 
-  return response.data.post
+  const postEntity = response.data.post
+
+  if (postEntity === null) {
+    if (response.error) {
+      throw response.error
+    }
+
+    apolloClient.writeQuery({
+      data: {
+        post: null,
+      },
+      query: postQuery,
+      variables: {
+        id,
+      },
+    })
+
+    return null
+  }
+
+  if (!isPostEntity(postEntity)) {
+    throw new Error('Post loading failed. Please try again.')
+  }
+
+  assertAllowedAuthorErrors(response.error, (path) => isConsistentPostAuthorError(path, postEntity))
+
+  apolloClient.writeQuery({
+    data: {
+      post: postEntity,
+    },
+    query: postQuery,
+    variables: {
+      id,
+    },
+  })
+
+  return postEntity
 }
 
 export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnection> => {
   assertProfilePostsFirst(input.first)
 
   const response = await apolloClient.query<ProfilePostsQueryData, ProfilePostsQueryVariables>({
+    errorPolicy: 'all',
+    fetchPolicy: 'no-cache',
     query: profilePostsQuery,
     variables: {
       input,
@@ -160,9 +239,23 @@ export const profilePosts = async (input: ProfilePostsInput): Promise<PostConnec
 
   const payload = response.data?.profilePosts
 
-  if (!payload) {
+  if (!isPostConnection(payload)) {
     throw new Error('Profile posts loading failed. Please try again.')
   }
+
+  assertAllowedAuthorErrors(response.error, (path) =>
+    isConsistentProfilePostsAuthorError(path, payload),
+  )
+
+  apolloClient.writeQuery({
+    data: {
+      profilePosts: payload,
+    },
+    query: profilePostsQuery,
+    variables: {
+      input,
+    },
+  })
 
   return payload
 }

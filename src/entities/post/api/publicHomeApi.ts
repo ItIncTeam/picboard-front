@@ -1,6 +1,8 @@
 import { gql } from '@apollo/client'
 import { print } from 'graphql'
 
+import { isConsistentFeedAuthorError } from '../lib/graphqlAuthorErrors'
+import { isPostEntity } from '../lib/isPostEntity'
 import type { PostEntity } from '../model/backendTypes'
 import { postFieldsFragment } from './postFragments'
 
@@ -11,7 +13,7 @@ export type PublicHomeQueryData = {
 
 type GraphqlResponse<TData> = {
   data?: TData
-  errors?: Array<{ message?: string }>
+  errors?: Array<{ message?: string; path?: Array<string | number> }>
 }
 
 export const publicHomeQuery = gql`
@@ -37,6 +39,19 @@ function logTransportFailure(endpoint: string, error: unknown): void {
     message: cause instanceof Error ? cause.message : String(cause),
     name: cause instanceof Error ? cause.name : 'UnknownError',
   })
+}
+
+function throwGraphqlFailure(
+  endpoint: string,
+  errors: GraphqlResponse<PublicHomeQueryData>['errors'],
+): never {
+  console.error('[PublicHome] request failed', {
+    endpoint,
+    errorCount: errors?.length ?? 0,
+    errors: errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
+    kind: 'graphql',
+  })
+  throw new Error(PUBLIC_HOME_ERROR_MESSAGE)
 }
 
 export async function getPublicHomeQueryData(): Promise<PublicHomeQueryData> {
@@ -88,19 +103,18 @@ export async function getPublicHomeQueryData(): Promise<PublicHomeQueryData> {
 
   const data = payload.data
 
-  if (
-    payload.errors?.length ||
-    !data ||
-    !Array.isArray(data.feed) ||
-    typeof data.usersCount !== 'number'
-  ) {
-    console.error('[PublicHome] request failed', {
-      endpoint,
-      errorCount: payload.errors?.length ?? 0,
-      errors: payload.errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
-      kind: 'graphql',
-    })
-    throw new Error(PUBLIC_HOME_ERROR_MESSAGE)
+  if (!data || !Array.isArray(data.feed) || typeof data.usersCount !== 'number') {
+    throwGraphqlFailure(endpoint, payload.errors)
+  }
+
+  if (!data.feed.every(isPostEntity)) {
+    throwGraphqlFailure(endpoint, payload.errors)
+  }
+
+  for (const error of payload.errors ?? []) {
+    if (!isConsistentFeedAuthorError(error.path, data.feed)) {
+      throwGraphqlFailure(endpoint, payload.errors)
+    }
   }
 
   return data

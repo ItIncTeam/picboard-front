@@ -92,6 +92,6 @@ describe('Public Home display model', () => {
         },
       ],
     })
-    expect(model.posts[0]?.author.username).not.toContain('technical-owner')
+    expect(model.posts[0]?.author?.username).not.toContain('technical-owner')
   })
 })

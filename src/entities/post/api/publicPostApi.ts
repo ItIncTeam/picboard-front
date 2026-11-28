@@ -1,108 +1,20 @@
 import { print } from 'graphql'
 
-import type {
-  File as PostFile,
-  PostAttachmentEntity,
-  PostAuthor,
-  PostEntity,
-} from '../model/backendTypes'
+import { isConsistentPostAuthorError } from '../lib/graphqlAuthorErrors'
+import { isPostEntity } from '../lib/isPostEntity'
+import type { PostEntity } from '../model/backendTypes'
 import { postQuery } from './postQuery'
 
 type GraphqlResponse<TData> = {
   data?: TData
-  errors?: Array<{ message?: string }>
+  errors?: Array<{ message?: string; path?: Array<string | number> }>
 }
 
 type PostQueryData = {
   post: PostEntity | null
 }
 
-const FILE_PURPOSES = ['POST_IMAGE', 'BILL'] as const
-const MIME_TYPES = ['JPEG', 'PNG'] as const
-const FILE_STATUSES = ['PENDING', 'UPLOADED', 'READY', 'FAILED', 'DELETED'] as const
-
 const PUBLIC_POST_ERROR_MESSAGE = 'Post data is temporarily unavailable.'
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-function isKnownValue<T extends string>(value: unknown, allowed: readonly T[]): value is T {
-  return typeof value === 'string' && allowed.some((item) => item === value)
-}
-
-function isPostFile(value: unknown): value is PostFile {
-  if (!isRecord(value)) {
-    return false
-  }
-
-  return (
-    typeof value.id === 'string' &&
-    typeof value.ownerId === 'string' &&
-    typeof value.originalName === 'string' &&
-    isKnownValue(value.purpose, FILE_PURPOSES) &&
-    isKnownValue(value.mimeType, MIME_TYPES) &&
-    typeof value.size === 'number' &&
-    Number.isFinite(value.size) &&
-    isKnownValue(value.status, FILE_STATUSES) &&
-    typeof value.url === 'string'
-  )
-}
-
-function isPostAttachment(value: unknown): value is PostAttachmentEntity {
-  if (!isRecord(value)) {
-    return false
-  }
-
-  if (typeof value.fileId !== 'string' || typeof value.sortOrder !== 'number') {
-    return false
-  }
-
-  return value.file === null || isPostFile(value.file)
-}
-
-function isPostAvatar(value: unknown): value is PostAuthor['avatar'] {
-  if (value === null) {
-    return true
-  }
-
-  if (!isRecord(value)) {
-    return false
-  }
-
-  return typeof value.id === 'string' && typeof value.url === 'string'
-}
-
-function isPostAuthor(value: unknown): value is PostAuthor {
-  if (!isRecord(value)) {
-    return false
-  }
-
-  return (
-    typeof value.id === 'string' &&
-    typeof value.username === 'string' &&
-    (value.displayName === null || typeof value.displayName === 'string') &&
-    (value.profilePictureFileId === null || typeof value.profilePictureFileId === 'string') &&
-    isPostAvatar(value.avatar)
-  )
-}
-
-function isPostEntity(value: unknown): value is PostEntity {
-  if (!isRecord(value)) {
-    return false
-  }
-
-  return (
-    typeof value.id === 'string' &&
-    typeof value.ownerId === 'string' &&
-    typeof value.createdAt === 'string' &&
-    typeof value.updatedAt === 'string' &&
-    (value.description === null || typeof value.description === 'string') &&
-    isPostAuthor(value.author) &&
-    Array.isArray(value.attachments) &&
-    value.attachments.every(isPostAttachment)
-  )
-}
 
 function logTransportFailure(endpoint: string, error: unknown): void {
   const cause = error instanceof Error && error.cause instanceof Error ? error.cause : error
@@ -114,6 +26,21 @@ function logTransportFailure(endpoint: string, error: unknown): void {
     message: cause instanceof Error ? cause.message : String(cause),
     name: cause instanceof Error ? cause.name : 'UnknownError',
   })
+}
+
+function throwGraphqlFailure(
+  endpoint: string,
+  errors: GraphqlResponse<PostQueryData>['errors'],
+  message?: string,
+): never {
+  console.error('[PublicPost] request failed', {
+    endpoint,
+    errorCount: errors?.length ?? 0,
+    errors: errors?.map(({ message: item }) => item ?? 'Unknown GraphQL error') ?? [],
+    kind: 'graphql',
+    ...(message ? { message } : {}),
+  })
+  throw new Error(PUBLIC_POST_ERROR_MESSAGE)
 }
 
 export async function getPostQueryData(id: string): Promise<PostEntity | null> {
@@ -169,27 +96,26 @@ export async function getPostQueryData(id: string): Promise<PostEntity | null> {
 
   const data = payload.data
 
-  if (payload.errors?.length || !data || !('post' in data)) {
-    console.error('[PublicPost] request failed', {
-      endpoint,
-      errorCount: payload.errors?.length ?? 0,
-      errors: payload.errors?.map(({ message }) => message ?? 'Unknown GraphQL error') ?? [],
-      kind: 'graphql',
-    })
-    throw new Error(PUBLIC_POST_ERROR_MESSAGE)
+  if (!data || !('post' in data)) {
+    throwGraphqlFailure(endpoint, payload.errors)
   }
 
   if (data.post === null) {
+    if (payload.errors?.length) {
+      throwGraphqlFailure(endpoint, payload.errors)
+    }
+
     return null
   }
 
   if (!isPostEntity(data.post)) {
-    console.error('[PublicPost] request failed', {
-      endpoint,
-      kind: 'graphql',
-      message: 'Post payload is incomplete.',
-    })
-    throw new Error(PUBLIC_POST_ERROR_MESSAGE)
+    throwGraphqlFailure(endpoint, payload.errors, 'Post payload is incomplete.')
+  }
+
+  for (const error of payload.errors ?? []) {
+    if (!isConsistentPostAuthorError(error.path, data.post)) {
+      throwGraphqlFailure(endpoint, payload.errors)
+    }
   }
 
   return data.post

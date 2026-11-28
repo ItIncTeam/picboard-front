@@ -110,11 +110,14 @@ describe('PublicPostCard', () => {
     const view = renderCard({
       ...post,
       author: {
-        ...post.author,
         avatar: {
           id: 'avatar-file-1',
           url: 'https://example.com/avatar.jpg',
         },
+        displayName: '  Backend Author  ',
+        id: 'owner-1',
+        profilePictureFileId: 'avatar-file-1',
+        username: 'backend_author',
       },
     })
     mountedRoots.push(view)
@@ -137,6 +140,20 @@ describe('PublicPostCard', () => {
     expect(view.container.querySelector('p a[href="/posts/post-1"]')?.textContent).toContain('…')
     expect(view.container.querySelector('a[href="/profile/owner-1"]')?.textContent).toContain(
       'Backend Author',
+    )
+  })
+
+  it('renders a null author with fallback text and without a profile link', () => {
+    const view = renderCard({
+      ...post,
+      author: null,
+    })
+    mountedRoots.push(view)
+
+    expect(view.container.textContent).toContain('Unknown user')
+    expect(view.container.querySelector('a[href^="/profile/"]')).toBeNull()
+    expect(view.container.querySelector('[aria-label="Unknown user avatar"]')?.textContent).toBe(
+      'U',
     )
   })
 
