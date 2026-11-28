@@ -54,8 +54,8 @@ type PaginationStatus = {
   userId: string
 }
 
-type LastGoodProfilePosts = {
-  connection: PostConnection
+type ProfilePostsRequestStatus = {
+  status: 'error' | 'loading' | 'ready'
   userId: string
 }
 
@@ -156,23 +156,75 @@ export function ProfilePage({ userId }: ProfilePageProps) {
     revision: 0,
     userId,
   })
+  const [profilePostsRequestStatus, setProfilePostsRequestStatus] =
+    useState<ProfilePostsRequestStatus>({
+      status: 'loading',
+      userId,
+    })
   const requestIdRef = useRef(0)
   const loadingMoreRequestRef = useRef<symbol | null>(null)
-  const lastGoodProfilePostsRef = useRef<LastGoodProfilePosts | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const {
-    data: profilePostsData,
-    error: profilePostsError,
-    loading: profilePostsLoading,
-    refetch: refetchProfilePosts,
-    variables: profilePostsVariables,
-  } = useQuery<ProfilePostsQueryData, ProfilePostsQueryVariables>(profilePostsQuery, {
-    errorPolicy: 'all',
-    notifyOnNetworkStatusChange: false,
-    pollInterval: 60_000,
+  const { data: profilePostsData, variables: profilePostsVariables } = useQuery<
+    ProfilePostsQueryData,
+    ProfilePostsQueryVariables
+  >(profilePostsQuery, {
+    fetchPolicy: 'cache-only',
     variables: {
       input: { first: PROFILE_POSTS_PAGE_SIZE, userId },
     },
+  })
+
+  const refreshProfilePosts = useEffectEvent(async () => {
+    const requestUserId = userId
+
+    try {
+      const response = await apolloClient.query<ProfilePostsQueryData, ProfilePostsQueryVariables>({
+        errorPolicy: 'all',
+        fetchPolicy: 'no-cache',
+        query: profilePostsQuery,
+        variables: {
+          input: { first: PROFILE_POSTS_PAGE_SIZE, userId: requestUserId },
+        },
+      })
+      const nextConnection = response.data?.profilePosts
+
+      if (
+        !nextConnection ||
+        !areAllowedProfilePostsErrors(response.error ?? undefined, nextConnection)
+      ) {
+        throw new Error('Rejected profile posts response')
+      }
+
+      apolloClient.writeQuery({
+        data: {
+          profilePosts: nextConnection,
+        },
+        query: profilePostsQuery,
+        variables: {
+          input: { first: PROFILE_POSTS_PAGE_SIZE, userId: requestUserId },
+        },
+      })
+
+      if (userId === requestUserId) {
+        setProfilePostsRequestStatus({ status: 'ready', userId: requestUserId })
+      }
+    } catch {
+      if (userId !== requestUserId) {
+        return
+      }
+
+      const cached = apolloClient.readQuery<ProfilePostsQueryData, ProfilePostsQueryVariables>({
+        query: profilePostsQuery,
+        variables: {
+          input: { first: PROFILE_POSTS_PAGE_SIZE, userId: requestUserId },
+        },
+      })
+
+      setProfilePostsRequestStatus({
+        status: isPostConnection(cached?.profilePosts) ? 'ready' : 'error',
+        userId: requestUserId,
+      })
+    }
   })
 
   useEffect(() => {
@@ -199,7 +251,16 @@ export function ProfilePage({ userId }: ProfilePageProps) {
         }
       })
 
+    const initialTimer = window.setTimeout(() => {
+      void refreshProfilePosts()
+    }, 0)
+    const pollTimer = window.setInterval(() => {
+      void refreshProfilePosts()
+    }, 60_000)
+
     return () => {
+      window.clearTimeout(initialTimer)
+      window.clearInterval(pollTimer)
       if (requestIdRef.current === requestId) {
         requestIdRef.current += 1
       }
@@ -208,10 +269,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
 
   const rawFirstPageConnection =
     profilePostsVariables.input.userId === userId ? profilePostsData?.profilePosts : undefined
-  const canUseFirstPageConnection = areAllowedProfilePostsErrors(
-    profilePostsError,
-    rawFirstPageConnection,
-  )
+  const canUseFirstPageConnection = isPostConnection(rawFirstPageConnection)
   const firstPageConnection = canUseFirstPageConnection ? rawFirstPageConnection : undefined
   const resetPaginationState =
     paginationState.userId === userId ? paginationState : createPaginationState(userId)
@@ -219,47 +277,17 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   const currentPaginationState = firstPageConnection
     ? reconcileFirstPage(resetPaginationState, liveFirstPagePosts, firstPageConnection.pageInfo)
     : resetPaginationState
+  let currentProfilePostsRequestStatus: ProfilePostsRequestStatus['status'] = 'loading'
+
+  if (profilePostsRequestStatus.userId === userId) {
+    currentProfilePostsRequestStatus = profilePostsRequestStatus.status
+  } else if (canUseFirstPageConnection) {
+    currentProfilePostsRequestStatus = 'ready'
+  }
 
   if (currentPaginationState !== paginationState) {
     setPaginationState(currentPaginationState)
   }
-
-  useEffect(() => {
-    if (profilePostsVariables.input.userId !== userId) {
-      lastGoodProfilePostsRef.current = null
-      return
-    }
-
-    if (canUseFirstPageConnection && rawFirstPageConnection) {
-      lastGoodProfilePostsRef.current = {
-        connection: rawFirstPageConnection,
-        userId,
-      }
-      return
-    }
-
-    const lastGood = lastGoodProfilePostsRef.current
-
-    if (!lastGood || lastGood.userId !== userId) {
-      return
-    }
-
-    apolloClient.writeQuery({
-      data: {
-        profilePosts: lastGood.connection,
-      },
-      query: profilePostsQuery,
-      variables: {
-        input: { first: PROFILE_POSTS_PAGE_SIZE, userId },
-      },
-    })
-  }, [
-    apolloClient,
-    canUseFirstPageConnection,
-    profilePostsVariables.input.userId,
-    rawFirstPageConnection,
-    userId,
-  ])
 
   const paginationPageInfo = currentPaginationState.pageInfo
   const paginationEndCursor = paginationPageInfo?.endCursor
@@ -398,13 +426,11 @@ export function ProfilePage({ userId }: ProfilePageProps) {
   const hasUsablePostsData =
     Boolean(firstPageConnection) || resetPaginationState.hasFirstPageSnapshot
   const hasBlockingProfilePostsError =
-    !canUseFirstPageConnection &&
-    !resetPaginationState.hasFirstPageSnapshot &&
-    Boolean(rawFirstPageConnection || profilePostsError)
+    currentProfilePostsRequestStatus === 'error' && !hasUsablePostsData
 
   if (
     currentProfileUserState.status === 'loading' ||
-    (profilePostsLoading && !hasUsablePostsData)
+    (currentProfilePostsRequestStatus === 'loading' && !hasUsablePostsData)
   ) {
     return (
       <section aria-labelledby="profile-title" className={styles.root}>
@@ -452,6 +478,7 @@ export function ProfilePage({ userId }: ProfilePageProps) {
           isError
           onRetry={() => {
             setProfileUserState({ status: 'loading', userId })
+            setProfilePostsRequestStatus({ status: 'loading', userId })
             setPaginationStatus({
               error: false,
               isLoading: false,
@@ -459,7 +486,6 @@ export function ProfilePage({ userId }: ProfilePageProps) {
               userId,
             })
             setRetryVersion((version) => version + 1)
-            void refetchProfilePosts().catch(() => undefined)
           }}
         />
       </section>
